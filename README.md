@@ -2,6 +2,8 @@
 
 ![Cedar Logo](https://github.com/cedar-policy/cedar/blob/main/logo.svg)
 
+![Build and Test](https://github.com/cedar-policy/cedar-go/actions/workflows/build_and_test.yml/badge.svg)
+
 This repository contains source code of the Go implentation of the [Cedar](https://www.cedarpolicy.com/) policy language.
 
 Cedar is a language for writing and enforcing authorization policies in your applications. Using Cedar, you can write policies that specify your applications' fine-grained permissions. Your applications then authorize access requests by calling Cedar's authorization engine. Because Cedar policies are separate from application code, they can be independently authored, updated, analyzed, and audited. You can use Cedar's validator to check that Cedar policies are consistent with a declared schema which defines your application's authorization model.
