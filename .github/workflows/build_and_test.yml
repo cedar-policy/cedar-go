@@ -1,19 +1,27 @@
-name: Build and Test
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
 
 on:
-  workflow_call:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
-  build_and_test:
-    name: Build and Test
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
-          go-version: "1.x"
+          go-version: "1.20"
+
       - name: Build
-        run: go build ./...
+        run: go build -v ./...
+
       - name: Test
-        run: go test ./...
+        run: go test -v ./...
