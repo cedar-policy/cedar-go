@@ -1,7 +1,6 @@
 # exp
 
-This subrepository holds experimental and deprecated (in the `old`
-directory) packages.
+This subrepository holds experimental and deprecated packages.
 
 **Warning:** Packages here are experimental and unreliable. Some may
 one day be promoted to the main repository or other subrepository,
