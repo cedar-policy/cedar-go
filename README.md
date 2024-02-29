@@ -3,6 +3,7 @@
 ![Cedar Logo](https://github.com/cedar-policy/cedar/blob/main/logo.svg)
 
 ![Build and Test](https://github.com/cedar-policy/cedar-go/actions/workflows/build_and_test.yml/badge.svg)
+![golangci-lint](https://github.com/cedar-policy/cedar-go/actions/workflows/golangci-lint.yml/badge.svg)
 
 This repository contains source code of the Go implentation of the [Cedar](https://www.cedarpolicy.com/) policy language.
 
