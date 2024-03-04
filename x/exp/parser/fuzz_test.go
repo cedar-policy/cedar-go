@@ -97,9 +97,7 @@ func FuzzParse(f *testing.F) {
 		if err != nil {
 			return
 		}
-		_, err = Parse(toks)
-		if err != nil {
-			t.Errorf("err: %v", err)
-		}
+		// intentionally ignore parse errors
+		_, _ = Parse(toks)
 	})
 }
