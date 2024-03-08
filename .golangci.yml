@@ -195,7 +195,7 @@ linters-settings:
     - name: unexported-return
       disabled: false
     - name: unhandled-error # complains about e.g. fmt.Println
-      disabled: false
+      disabled: true
     - name: unnecessary-stmt # opinionated
       disabled: false
     - name: unreachable-code
