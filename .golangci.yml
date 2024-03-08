@@ -127,6 +127,8 @@ linters-settings:
       severity: error
     - name: if-return # reasonable candidate but too opinonated
       disabled: false
+    - name: import-alias-naming
+      disabled: false
     - name: import-shadowing # sounds nice, but too many good variable names are taken up by packages.
       disabled: false
     - name: increment-decrement # just style
