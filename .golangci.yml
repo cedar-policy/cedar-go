@@ -1,0 +1,218 @@
+run:
+  build-tags:
+  - dev
+  timeout: 10m
+  modules-download-mode: vendor
+  go: 1.22
+
+linters:
+  disable-all: true
+  enable:
+  - bodyclose
+  - errname
+  - gofmt
+  - goimports
+  - govet
+  - ineffassign
+  - staticcheck
+  - unused
+  - revive
+
+issues:
+  max-issues-per-linter: 100
+  max-same-issues: 100
+  exclude-rules:
+  # Exclude some linters from running on tests files.
+  - path: _test\.go
+    linters:
+    - bodyclose
+
+linters-settings:
+  staticcheck:
+    # Disabled checks:
+    # - SA1019: Using a deprecated function, variable, constant or field
+    # - SA9003: Empty body in an if or else branch
+    checks: ["all", "-SA1019", "-SA9003"]
+  revive:
+    rules:
+    - name: add-constant
+      disabled: true
+    - name: atomic
+      disabled: false
+      severity: error
+    - name: argument-limit
+      disabled: false
+    - name: banned-characters
+      disabled: false
+      severity: error
+    - name: bare-return
+      disabled: true
+    - name: blank-imports
+      disabled: false
+      severity: error
+    - name: bool-literal-in-expr
+      disabled: false
+    - name: call-to-gc
+      disabled: false
+    - name: cognitive-complexity # revisit periodically - exclude tests
+      disabled: false
+      arguments: [65] # emprically set to upper bound
+    - name: comment-spacings
+      disabled: false
+    - name: confusing-naming # too opinionated
+      disabled: true
+    - name: confusing-results
+      disabled: false
+    - name: constant-logical-expr
+      disabled: false
+      severity: error
+    - name: context-as-argument
+      disabled: false
+    - name: context-keys-type
+      disabled: false
+    - name: cyclomatic # revisit - exclude tests
+      disabled: false
+      arguments: [92] # emprically set to upper bound
+    - name: datarace
+      disabled: false
+      severity: error
+    - name: deep-exit
+      disabled: false
+    - name: defer # often wrong
+      disabled: false
+    - name: dot-imports
+      disabled: false
+      severity: error
+    - name: duplicated-imports
+      disabled: false
+      severity: error
+    - name: early-return
+      disabled: false
+    - name: empty-block
+      disabled: false
+    - name: empty-lines # maybe correct but annoying
+      disabled: true
+    - name: enforce-map-style
+      disabled: false
+      severity: error
+    - name: enforce-slice-style
+      disabled: false
+      severity: error
+    - name: errorf
+      disabled: false
+      severity: error
+    - name: error-naming
+      disabled: false
+      severity: error
+    - name: error-return # fine, but unnecessarily picky
+      disabled: false
+    - name: error-strings # fine, but unnecessarily picky
+      disabled: false
+    - name: exported # possibly too opinionated
+      disabled: false
+    - name: file-header
+      disabled: false
+      severity: error
+    - name: flag-parameter # often wrong
+      disabled: true
+    - name: function-length # revisit - exclude tests
+      disabled: false
+      arguments: [136, 702] # emprically set to upper bound
+    - name: function-result-limit
+      disabled: false
+    - name: get-return
+      disabled: false
+    - name: identical-branches
+      disabled: false
+      severity: error
+    - name: if-return # reasonable candidate but too opinonated
+      disabled: false
+    - name: import-alias-naming
+      disabled: false
+    - name: import-shadowing # sounds nice, but too many good variable names are taken up by packages.
+      disabled: false
+    - name: increment-decrement # just style
+      disabled: false
+    - name: indent-error-flow # fine, but unnecessarily picky
+      disabled: true
+    - name: line-length-limit
+      disabled: true
+    - name: max-public-structs # too opinionated
+      disabled: true
+    - name: modifies-parameter
+      disabled: false
+      severity: error
+    - name: modifies-value-receiver
+      disabled: false
+      severity: error
+    - name: nested-structs # deliberately used in some places
+      disabled: true
+    - name: optimize-operands-order
+      disabled: false
+      severity: error
+    - name: package-comments
+      disabled: false
+      severity: error
+    - name: range
+      disabled: false
+      severity: error
+    - name: range-val-address
+      disabled: false
+      severity: error
+    - name: range-val-in-closure
+      disabled: false
+      severity: error
+    - name: receiver-naming # unnecessarily picky
+      disabled: true
+    - name: redefines-builtin-id # useful 
+      disabled: false
+    - name: redundant-import-alias
+      disabled: false
+    - name: string-of-int
+      disabled: false
+      severity: error
+    - name: string-format
+      disabled: false
+      severity: error
+    - name: struct-tag # often wrong
+      disabled: false
+    - name: superfluous-else
+      disabled: false
+      severity: error
+    - name: time-equal
+      disabled: false
+      severity: error
+    - name: time-naming
+      disabled: false
+    - name: unchecked-type-assertion # a panic here is sometimes correct as a programming error
+      disabled: false
+    - name: unconditional-recursion
+      disabled: false
+      severity: error
+    - name: unexported-naming
+      disabled: false
+      severity: error
+    - name: unexported-return
+      disabled: false
+    - name: unhandled-error # complains about e.g. fmt.Println
+      disabled: false
+    - name: unnecessary-stmt # opinionated
+      disabled: false
+    - name: unreachable-code
+      disabled: false
+      severity: error
+    - name: unused-parameter
+      disabled: false
+    - name: unused-receiver # too picky
+      disabled: true
+    - name: useless-break
+      disabled: false
+    - name: use-any # opinionated
+      disabled: true
+    - name: var-declaration # too picky
+      disabled: false
+    - name: var-naming # incompatible with this codebase
+      disabled: true
+    - name: waitgroup-by-value
+      disabled: false
+      severity: error

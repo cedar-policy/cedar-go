@@ -473,7 +473,7 @@ func TestScanner(t *testing.T) {
 		t.Parallel()
 		wantErr := fmt.Errorf("wantErr")
 		r := &readerMock{
-			ReadFunc: func(p []byte) (int, error) {
+			ReadFunc: func(_ []byte) (int, error) {
 				return 0, wantErr
 			},
 		}

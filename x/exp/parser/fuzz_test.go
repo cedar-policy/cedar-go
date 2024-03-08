@@ -92,7 +92,7 @@ func FuzzParse(f *testing.F) {
 	for _, tt := range tests {
 		f.Add(tt)
 	}
-	f.Fuzz(func(t *testing.T, orig string) {
+	f.Fuzz(func(_ *testing.T, orig string) {
 		toks, err := Tokenize([]byte(orig))
 		if err != nil {
 			return
