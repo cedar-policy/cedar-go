@@ -2,7 +2,7 @@ name: Nightly Test Corpus
 on:
   schedule:
     - cron: "0 0 * * *"
-  push:
+  # push:
 
 jobs:
   build:
