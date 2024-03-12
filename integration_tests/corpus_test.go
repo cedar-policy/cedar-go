@@ -1,3 +1,5 @@
+//go:build corpus
+
 package integration_tests
 
 import (
@@ -12,13 +14,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// TODO: a way to download the corpus tests and test them
-// for now, since this folder is 235MB.
-//
-// Remove the x before the next line if you have the corpus locally.
-// And remove t.Skip() from the test itself.
-//
-// x go:embed tmp/*
+//go:embed tmp/**/*.json tmp/**/*.cedar
 var integrationFS embed.FS
 
 type corpusTest struct {
@@ -40,11 +36,9 @@ type corpusTest struct {
 
 func TestCorpus(t *testing.T) {
 	t.Parallel()
-	t.Skip()
 	var tests []string
 	for _, p := range []string{
-		"tmp/abac-B/*.json",
-		"tmp/abac-type-directed-B/*.json",
+		"tmp/corpus-tests/*.json",
 	} {
 		more, err := fs.Glob(integrationFS, p)
 		if err != nil || len(more) == 0 {
@@ -79,6 +73,12 @@ func TestCorpus(t *testing.T) {
 	prefix := func(v string) string {
 		return "tmp/" + v
 	}
+
+	// detect possible corpus data pipeline failure
+	if len(tests) < 4_000 {
+		t.Fatalf("corpus test count too low: %v", len(tests))
+	}
+
 	for _, tn := range tests {
 		tn := tn
 		t.Run(tn, func(t *testing.T) {

@@ -1,0 +1,25 @@
+name: Nightly Test Corpus
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.22"
+
+      - name: Download
+        run: curl -L -o integration_tests/corpus-tests.tar.gz https://raw.githubusercontent.com/cedar-policy/cedar-integration-tests/main/corpus-tests.tar.gz
+
+      - name: Extract
+        run: mkdir -p integration_tests/tmp && tar -xzf integration_tests/corpus-tests.tar.gz -C integration_tests/tmp
+
+      - name: Corpus Tests
+        run: go test -tags corpus ./integration_tests/...
