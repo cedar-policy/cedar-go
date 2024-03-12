@@ -1,3 +1,5 @@
+//go:build corpus
+
 package integration_tests
 
 import (
