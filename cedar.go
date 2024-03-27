@@ -146,6 +146,14 @@ const (
 	Deny  = Decision(false)
 )
 
+func (a Decision) Allowed() bool {
+	return a == Allow
+}
+
+func (a Decision) Denied() bool {
+	return a == Deny
+}
+
 func (a Decision) String() string {
 	if a {
 		return "allow"
