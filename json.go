@@ -55,14 +55,14 @@ func unmarshalJSON(b []byte, v *Value) error {
 		if err := json.Unmarshal(b, &res); err == nil && res.Extn != nil {
 			switch res.Extn.Fn {
 			case "ip":
-				val, err := newIPValue(res.Extn.Arg)
+				val, err := ParseIPAddr(res.Extn.Arg)
 				if err != nil {
 					return err
 				}
 				*v = val
 				return nil
 			case "decimal":
-				val, err := newDecimalValue(res.Extn.Arg)
+				val, err := ParseDecimal(res.Extn.Arg)
 				if err != nil {
 					return err
 				}

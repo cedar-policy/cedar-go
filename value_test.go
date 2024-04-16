@@ -377,7 +377,7 @@ func TestDecimal(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%s->%s", tt.in, tt.out), func(t *testing.T) {
 				t.Parallel()
-				d, err := newDecimalValue(tt.in)
+				d, err := ParseDecimal(tt.in)
 				testutilOK(t, err)
 				testutilEquals(t, d.String(), tt.out)
 			})
@@ -413,7 +413,7 @@ func TestDecimal(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%s->%s", tt.in, tt.errStr), func(t *testing.T) {
 				t.Parallel()
-				_, err := newDecimalValue(tt.in)
+				_, err := ParseDecimal(tt.in)
 				assertError(t, err, errDecimal)
 				testutilEquals(t, err.Error(), tt.errStr)
 			})
@@ -422,7 +422,7 @@ func TestDecimal(t *testing.T) {
 
 	t.Run("roundTrip", func(t *testing.T) {
 		t.Parallel()
-		dv, err := newDecimalValue("1.20")
+		dv, err := ParseDecimal("1.20")
 		testutilOK(t, err)
 		v, err := valueToDecimal(dv)
 		testutilOK(t, err)
@@ -498,7 +498,7 @@ func TestIP(t *testing.T) {
 			}
 			t.Run(testName, func(t *testing.T) {
 				t.Parallel()
-				i, err := newIPValue(tt.in)
+				i, err := ParseIPAddr(tt.in)
 				if tt.parses {
 					testutilOK(t, err)
 					testutilEquals(t, i.String(), tt.out)
@@ -549,9 +549,9 @@ func TestIP(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("ip(%v).equal(ip(%v))", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				lhs, err := newIPValue(tt.lhs)
+				lhs, err := ParseIPAddr(tt.lhs)
 				testutilOK(t, err)
-				rhs, err := newIPValue(tt.rhs)
+				rhs, err := ParseIPAddr(tt.rhs)
 				testutilOK(t, err)
 				equal := lhs.equal(rhs)
 				if equal != tt.equal {
@@ -597,7 +597,7 @@ func TestIP(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("ip(%v).isIPv{4,6}()", tt.val), func(t *testing.T) {
 				t.Parallel()
-				val, err := newIPValue(tt.val)
+				val, err := ParseIPAddr(tt.val)
 				testutilOK(t, err)
 				isIPv4 := val.isIPv4()
 				if isIPv4 != tt.isIPv4 {
@@ -646,7 +646,7 @@ func TestIP(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("ip(%v).isLoopback()", tt.val), func(t *testing.T) {
 				t.Parallel()
-				val, err := newIPValue(tt.val)
+				val, err := ParseIPAddr(tt.val)
 				testutilOK(t, err)
 				isLoopback := val.isLoopback()
 				if isLoopback != tt.isLoopback {
@@ -680,7 +680,7 @@ func TestIP(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("ip(%v).isMulticast()", tt.val), func(t *testing.T) {
 				t.Parallel()
-				val, err := newIPValue(tt.val)
+				val, err := ParseIPAddr(tt.val)
 				testutilOK(t, err)
 				isMulticast := val.isMulticast()
 				if isMulticast != tt.isMulticast {
@@ -713,9 +713,9 @@ func TestIP(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("ip(%v).contains(ip(%v))", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				lhs, err := newIPValue(tt.lhs)
+				lhs, err := ParseIPAddr(tt.lhs)
 				testutilOK(t, err)
-				rhs, err := newIPValue(tt.rhs)
+				rhs, err := ParseIPAddr(tt.rhs)
 				testutilOK(t, err)
 				contains := lhs.contains(rhs)
 				if contains != tt.contains {

@@ -713,10 +713,10 @@ func TestDecimalLessThanNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%s<%s", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				lhsd, err := newDecimalValue(tt.lhs)
+				lhsd, err := ParseDecimal(tt.lhs)
 				testutilOK(t, err)
 				lhsv := lhsd
-				rhsd, err := newDecimalValue(tt.rhs)
+				rhsd, err := ParseDecimal(tt.rhs)
 				testutilOK(t, err)
 				rhsv := rhsd
 				n := newDecimalLessThanEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
@@ -770,10 +770,10 @@ func TestDecimalLessThanOrEqualNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%s<=%s", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				lhsd, err := newDecimalValue(tt.lhs)
+				lhsd, err := ParseDecimal(tt.lhs)
 				testutilOK(t, err)
 				lhsv := lhsd
-				rhsd, err := newDecimalValue(tt.rhs)
+				rhsd, err := ParseDecimal(tt.rhs)
 				testutilOK(t, err)
 				rhsv := rhsd
 				n := newDecimalLessThanOrEqualEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
@@ -827,10 +827,10 @@ func TestDecimalGreaterThanNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%s>%s", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				lhsd, err := newDecimalValue(tt.lhs)
+				lhsd, err := ParseDecimal(tt.lhs)
 				testutilOK(t, err)
 				lhsv := lhsd
-				rhsd, err := newDecimalValue(tt.rhs)
+				rhsd, err := ParseDecimal(tt.rhs)
 				testutilOK(t, err)
 				rhsv := rhsd
 				n := newDecimalGreaterThanEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
@@ -884,10 +884,10 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%s>=%s", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				lhsd, err := newDecimalValue(tt.lhs)
+				lhsd, err := ParseDecimal(tt.lhs)
 				testutilOK(t, err)
 				lhsv := lhsd
-				rhsd, err := newDecimalValue(tt.rhs)
+				rhsd, err := ParseDecimal(tt.rhs)
 				testutilOK(t, err)
 				rhsv := rhsd
 				n := newDecimalGreaterThanOrEqualEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
@@ -1748,7 +1748,7 @@ func TestDecimalLiteralNode(t *testing.T) {
 
 func TestIPLiteralNode(t *testing.T) {
 	t.Parallel()
-	ipv6Loopback, err := newIPValue("::1")
+	ipv6Loopback, err := ParseIPAddr("::1")
 	testutilOK(t, err)
 	tests := []struct {
 		name   string
@@ -1775,11 +1775,11 @@ func TestIPLiteralNode(t *testing.T) {
 
 func TestIPTestNode(t *testing.T) {
 	t.Parallel()
-	ipv4Loopback, err := newIPValue("127.0.0.1")
+	ipv4Loopback, err := ParseIPAddr("127.0.0.1")
 	testutilOK(t, err)
-	ipv6Loopback, err := newIPValue("::1")
+	ipv6Loopback, err := ParseIPAddr("::1")
 	testutilOK(t, err)
-	ipv4Multicast, err := newIPValue("224.0.0.1")
+	ipv4Multicast, err := ParseIPAddr("224.0.0.1")
 	testutilOK(t, err)
 	tests := []struct {
 		name   string
@@ -1813,11 +1813,11 @@ func TestIPTestNode(t *testing.T) {
 
 func TestIPIsInRangeNode(t *testing.T) {
 	t.Parallel()
-	ipv4A, err := newIPValue("1.2.3.4")
+	ipv4A, err := ParseIPAddr("1.2.3.4")
 	testutilOK(t, err)
-	ipv4B, err := newIPValue("1.2.3.0/24")
+	ipv4B, err := ParseIPAddr("1.2.3.0/24")
 	testutilOK(t, err)
-	ipv4C, err := newIPValue("1.2.4.0/24")
+	ipv4C, err := ParseIPAddr("1.2.4.0/24")
 	testutilOK(t, err)
 	tests := []struct {
 		name     string
