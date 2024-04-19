@@ -406,9 +406,6 @@ type Decimal int64
 const DecimalPrecision = 10000
 
 // ParseDecimal takes a string representation of a decimal number and converts it into a Decimal type.
-// The function handles optional negative sign and ensures that the decimal part of the number does not exceed four digits.
-// It returns an error if the string is empty, contains non-digit characters, missing decimal point, or if the number overflows.
-// The function also handles the case of negative numbers correctly to avoid overflow.
 func ParseDecimal(s string) (Decimal, error) {
 	// Check for empty string.
 	if len(s) == 0 {
@@ -581,9 +578,6 @@ func (v Decimal) deepClone() Value { return v }
 type IPAddr netip.Prefix
 
 // ParseIPAddr takes a string representation of an IP address and converts it into an IPAddr type.
-// The function handles both IPv4 and IPv6 addresses, and can also handle IP ranges.
-// It disallows IPv4-mapped IPv6 addresses in dotted notation.
-// The function returns an error if the string cannot be parsed into an IP address or IP range.
 func ParseIPAddr(s string) (IPAddr, error) {
 	// We disallow IPv4-mapped IPv6 addresses in dotted notation because Cedar does.
 	if strings.Count(s, ":") >= 2 && strings.Count(s, ".") >= 2 {
