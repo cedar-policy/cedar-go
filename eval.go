@@ -1082,7 +1082,7 @@ func (n *decimalLiteralEval) Eval(ctx *evalContext) (Value, error) {
 		return zeroValue(), err
 	}
 
-	d, err := newDecimalValue(string(literal))
+	d, err := ParseDecimal(string(literal))
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -1104,7 +1104,7 @@ func (n *ipLiteralEval) Eval(ctx *evalContext) (Value, error) {
 		return zeroValue(), err
 	}
 
-	i, err := newIPValue(string(literal))
+	i, err := ParseIPAddr(string(literal))
 	if err != nil {
 		return zeroValue(), err
 	}

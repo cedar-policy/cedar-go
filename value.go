@@ -405,7 +405,8 @@ type Decimal int64
 // DecimalPrecision is the precision of a Decimal.
 const DecimalPrecision = 10000
 
-func newDecimalValue(s string) (Decimal, error) {
+// ParseDecimal takes a string representation of a decimal number and converts it into a Decimal type.
+func ParseDecimal(s string) (Decimal, error) {
 	// Check for empty string.
 	if len(s) == 0 {
 		return Decimal(0), fmt.Errorf("%w: string too short", errDecimal)
@@ -550,7 +551,7 @@ func (v *Decimal) UnmarshalJSON(b []byte) error {
 		}
 		arg = res.Extn.Arg
 	}
-	vv, err := newDecimalValue(arg)
+	vv, err := ParseDecimal(arg)
 	if err != nil {
 		return err
 	}
@@ -576,7 +577,8 @@ func (v Decimal) deepClone() Value { return v }
 // The value can represent an individual address or a range of addresses.
 type IPAddr netip.Prefix
 
-func newIPValue(s string) (IPAddr, error) {
+// ParseIPAddr takes a string representation of an IP address and converts it into an IPAddr type.
+func ParseIPAddr(s string) (IPAddr, error) {
 	// We disallow IPv4-mapped IPv6 addresses in dotted notation because Cedar does.
 	if strings.Count(s, ":") >= 2 && strings.Count(s, ".") >= 2 {
 		return IPAddr{}, fmt.Errorf("%w: cannot parse IPv4 addresses embedded in IPv6 addresses", errIP)
@@ -687,7 +689,7 @@ func (v *IPAddr) UnmarshalJSON(b []byte) error {
 		}
 		arg = res.Extn.Arg
 	}
-	vv, err := newIPValue(arg)
+	vv, err := ParseIPAddr(arg)
 	if err != nil {
 		return err
 	}

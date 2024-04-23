@@ -7,12 +7,12 @@ import (
 )
 
 func mustDecimalValue(v string) Decimal {
-	r, _ := newDecimalValue(v)
+	r, _ := ParseDecimal(v)
 	return r
 }
 
 func mustIPValue(v string) IPAddr {
-	r, _ := newIPValue(v)
+	r, _ := ParseIPAddr(v)
 	return r
 }
 
