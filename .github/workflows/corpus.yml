@@ -22,4 +22,19 @@ jobs:
         run: mkdir -p integration_tests/tmp && tar -xzf integration_tests/corpus-tests.tar.gz -C integration_tests/tmp
 
       - name: Corpus Tests
-        run: go test -tags corpus ./integration_tests/...
+        run: go test -count=1 -v -tags corpus ./integration_tests/... | tail
+
+      - name: Notify on Failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Nightly Test Corpus Failed',
+              body: 'The Nightly Test Corpus workflow failed. Please investigate.',
+              assignees: ['jmccarthy', 'philhassey'],
+              labels: ['bug']
+            })
