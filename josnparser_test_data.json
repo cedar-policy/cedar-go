@@ -1,0 +1,58 @@
+[
+  {
+    "policies": "[{\"effect\":\"permit\",\"principal\":{\"in\":{\"entity\":{\"type\":\"Group\",\"id\":\"cook\"}}},\"action\":{\"op\":\"in\",\"entities\":[{\"type\":\"Action\",\"id\":\"clean\"}]},\"resource\":{\"op\":\"==\",\"entity\":{\"type\":\"Kitchen\",\"id\":\"kitchen\"}}}]",
+    "entities": "[{\"uid\":{\"type\":\"User\",\"id\":\"007\"},\"attrs\":{\"name\":\"Connor Smith\",\"email\":\"michaeldrake@example.org\"},\"parents\":[{\"type\":\"Group\",\"id\":\"cook\"},{\"type\":\"Group\",\"id\":\"waiter\"}]}]",
+    "id": "simple-policy",
+    "vo": "allow",
+    "errorExpected": false
+  },
+  {
+    "policies": "[{\"effect\":\"permit\",\"principal\":{\"op\":\"==\",\"entity\":{\"type\":\"User\",\"id\":\"admin\"}},\"action\":{\"op\":\"in\",\"entities\":[{\"type\":\"Action\",\"id\":\"delete\"}]},\"resource\":{\"op\":\"==\",\"entity\":{\"type\":\"File\",\"id\":\"confidential\"}}}]",
+    "entities": "[{\"uid\":{\"type\":\"User\",\"id\":\"admin\"},\"attrs\":{\"name\":\"Jane Doe\",\"email\":\"janedoe@example.com\"},\"parents\":[]}]",
+    "id": "admin-delete-file",
+    "vo": "allow",
+    "errorExpected": false
+  },
+  {
+    "policies": "[{\"effect\":\"forbid\",\"principal\":{\"in\":{\"entity\":{\"type\":\"Group\",\"id\":\"guest\"}}},\"action\":{\"op\":\"==\",\"entity\":{\"type\":\"Action\",\"id\":\"write\"}},\"resource\":{\"op\":\"==\",\"entity\":{\"type\":\"File\",\"id\":\"readonly\"}}}]",
+    "entities": "[{\"uid\":{\"type\":\"User\",\"id\":\"002\"},\"attrs\":{\"name\":\"Guest User\",\"email\":\"guest@example.com\"},\"parents\":[{\"type\":\"Group\",\"id\":\"guest\"}]}]",
+    "id": "guest-write-readonly",
+    "vo": "deny",
+    "errorExpected": false
+  },
+  {
+    "policies": "[{\"effect\":\"permit\",\"principal\":{\"op\":\"==\",\"entity\":{\"type\":\"User\",\"id\":\"user123\"}},\"action\":{\"op\":\"==\",\"entity\":{\"type\":\"Action\",\"id\":\"read\"}},\"resource\":{\"op\":\"==\",\"entity\":{\"type\":\"Document\",\"id\":\"public\"}},\"conditions\":{\"kind\":\"when\",\"content\":\"context.time == \\\"office_hours\\\"\"}}]",
+    "entities": "[{\"uid\":{\"type\":\"User\",\"id\":\"user123\"},\"attrs\":{\"name\":\"Regular User\",\"email\":\"user123@example.com\"},\"parents\":[]}]",
+    "id": "conditional-access",
+    "vo": "allow",
+    "errorExpected": false
+  },
+  {
+    "policies": "[{\"effect\":\"permit\",\"principal\":{\"op\":\"==\",\"entity\":{\"type\":\"User\",\"id\":\"user123\"}},\"action\":{\"op\":\"==\",\"entity\":{\"type\":\"Action\",\"id\":\"read\"}},\"resource\":{\"op\":\"==\",\"entity\":{\"type\":\"Document\",\"id\":\"public\"}},\"conditions\":{\"kind\":\"when\",\"content\":\"context.time == \\\"office_hours\\\"\"}}]",
+    "entities": "[{\"uid\":{\"type\":\"User\",\"id\":\"valid\"},\"attrs\":{\"name\":\"Mismatch User\",\"email\":\"valid@example.com\"},\"parents\":[]}]",
+    "id": "principal-mismatch",
+    "vo": "deny",
+    "errorExpected": false
+  },
+  {
+    "policies": "[]",
+    "entities": "[]",
+    "id": "empty-policies",
+    "vo": "deny",
+    "errorExpected": false
+  },
+  {
+    "policies": "[{\"effect\":\"permit\",\"principal\":{\"op\":\"==\",\"entity\":{\"type\":\"User\",\"id\":\"userX\"}},\"action\":{\"op\":\"==\",\"entity\":{\"type\":\"Action\",\"id\":\"modify\"}},\"resource\":{\"op\":\"==\",\"entity\":{\"type\":\"System\",\"id\":\"core\"}},\"conditions\":{\"kind\":\"when\",\"content\":\"context.location == \\\"headquarters\\\"\"}}]",
+    "entities": "[{\"uid\":{\"type\":\"User\",\"id\":\"userX\"},\"attrs\":{\"name\":\"User X\",\"email\":\"userx@example.com\"},\"parents\":[]}]",
+    "id": "location-based-condition",
+    "vo": "allow",
+    "errorExpected": false
+  },
+  {
+    "policies": "[{\"effect\":\"unknown\",\"principal\":{\"op\":\"==\",\"entity\":{\"type\":\"User\",\"id\":\"userY\"}},\"action\":{\"op\":\"==\",\"entity\":{\"type\":\"Action\",\"id\":\"access\"}},\"resource\":{\"op\":\"==\",\"entity\":{\"type\":\"Area\",\"id\":\"restricted\"}}}]",
+    "entities": "[{\"uid\":{\"type\":\"User\",\"id\":\"userY\"},\"attrs\":{\"name\":\"User Y\",\"email\":\"usery@example.com\"},\"parents\":[]}]",
+    "id": "invalid-effect",
+    "vo": "deny",
+    "errorExpected": true
+  }
+]
