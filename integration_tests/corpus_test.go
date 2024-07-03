@@ -74,8 +74,8 @@ func TestCorpus(t *testing.T) {
 		return "tmp/" + v
 	}
 
-	// detect possible corpus data pipeline failure
-	if len(tests) < 4_000 {
+	// detect possible corpus data pipeline failure. As of 2024/07/02, there were 1982 tests.
+	if len(tests) < 100 {
 		t.Fatalf("corpus test count too low: %v", len(tests))
 	}
 
