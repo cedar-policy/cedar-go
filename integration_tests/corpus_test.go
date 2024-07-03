@@ -115,7 +115,7 @@ func TestCorpus(t *testing.T) {
 						Resource:  cedar.EntityUID(q.Resource),
 						Context:   q.Context,
 					})
-					if ok != (q.Decision == "Allow") {
+					if ok != (q.Decision == "allow") {
 						t.Fatalf("got %v want %v", ok, q.Decision)
 					}
 					var errors []string
