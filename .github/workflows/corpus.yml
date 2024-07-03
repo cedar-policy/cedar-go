@@ -7,7 +7,11 @@ on:
 
 jobs:
   build:
+    defaults:
+      run:
+        shell: bash
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +30,7 @@ jobs:
         run: go test -count=1 -v -tags corpus ./integration_tests/... | tail
 
       - name: Notify on Failure
-        if: failure()
+        if: failure() && github.event_name == 'schedule'
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -36,6 +40,6 @@ jobs:
               repo: context.repo.repo,
               title: 'Nightly Test Corpus Failed',
               body: 'The Nightly Test Corpus workflow failed. Please investigate.',
-              assignees: ['jmccarthy', 'philhassey'],
+              assignees: ['jmccarthy', 'philhassey', 'patjakdev'],
               labels: ['bug']
             })
