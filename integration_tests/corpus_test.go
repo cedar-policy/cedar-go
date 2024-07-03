@@ -20,10 +20,10 @@ var integrationFS embed.FS
 type corpusTest struct {
 	Schema         string `json:"schema"`
 	Policies       string `json:"policies"`
-	ShouldValidate bool   `json:"should_validate"`
+	ShouldValidate bool   `json:"shouldValidate"`
 	Entities       string `json:"entities"`
 	Requests       []struct {
-		Desc      string       `json:"desc"`
+		Desc      string       `json:"description"`
 		Principal jsonEntity   `json:"principal"`
 		Action    jsonEntity   `json:"action"`
 		Resource  jsonEntity   `json:"resource"`
@@ -45,13 +45,7 @@ func TestCorpus(t *testing.T) {
 			t.Fatal("err loading tests", p, err)
 		}
 		for _, tn := range more {
-			if strings.Contains(tn, "schema_") {
-				continue
-			}
-			if strings.Contains(tn, ".cedarschema.json") {
-				continue
-			}
-			if strings.Contains(tn, ".entities.json") {
+			if strings.Contains(tn, "entities.json") {
 				continue
 			}
 			tests = append(tests, tn)
