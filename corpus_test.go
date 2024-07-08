@@ -50,28 +50,28 @@ type corpusTest struct {
 //go:embed corpus-tests.tar.gz
 var corpusArchive []byte
 
-type FileDataPointer struct {
+type tarFileDataPointer struct {
 	Position int64
 	Size     int64
 }
 
-type FileDataMap struct {
+type TarFileMap struct {
 	buf   io.ReaderAt
-	files map[string]FileDataPointer
+	files map[string]tarFileDataPointer
 }
 
-func NewFileDataMap(buf io.ReaderAt) FileDataMap {
-	return FileDataMap{
+func NewTarFileMap(buf io.ReaderAt) TarFileMap {
+	return TarFileMap{
 		buf:   buf,
-		files: make(map[string]FileDataPointer),
+		files: make(map[string]tarFileDataPointer),
 	}
 }
 
-func (fdm *FileDataMap) AddFileData(path string, position int64, size int64) {
-	fdm.files[path] = FileDataPointer{position, size}
+func (fdm *TarFileMap) AddFileData(path string, position int64, size int64) {
+	fdm.files[path] = tarFileDataPointer{position, size}
 }
 
-func (fdm FileDataMap) GetFileData(path string) ([]byte, error) {
+func (fdm TarFileMap) GetFileData(path string) ([]byte, error) {
 	fdp := fdm.files[path]
 	content := make([]byte, fdp.Size)
 	_, err := fdm.buf.ReadAt(content, fdp.Position)
@@ -99,7 +99,7 @@ func TestCorpus(t *testing.T) {
 	bufReader := bytes.NewReader(buf)
 	archiveReader := tar.NewReader(bufReader)
 
-	fdm := NewFileDataMap(bufReader)
+	fdm := NewTarFileMap(bufReader)
 	var testFiles []string
 	for file, err := archiveReader.Next(); err == nil; file, err = archiveReader.Next() {
 		if file.Typeflag != tar.TypeReg {
