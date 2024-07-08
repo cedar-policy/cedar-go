@@ -4,10 +4,10 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -47,6 +47,9 @@ type corpusTest struct {
 	} `json:"requests"`
 }
 
+//go:embed corpus-tests.tar.gz
+var corpusArchive []byte
+
 type FileDataPointer struct {
 	Position int64
 	Size     int64
@@ -82,13 +85,7 @@ func (fdm FileDataMap) GetFileData(path string) ([]byte, error) {
 func TestCorpus(t *testing.T) {
 	t.Parallel()
 
-	corpusArchive, err := os.Open("corpus-tests.tar.gz")
-	if err != nil {
-		t.Fatal("error opening corpus archive", err)
-	}
-	defer corpusArchive.Close()
-
-	gzipReader, err := gzip.NewReader(corpusArchive)
+	gzipReader, err := gzip.NewReader(bytes.NewReader(corpusArchive))
 	if err != nil {
 		t.Fatal("error reading corpus compressed archive header", err)
 	}
