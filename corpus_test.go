@@ -72,7 +72,10 @@ func (fdm *TarFileMap) AddFileData(path string, position int64, size int64) {
 }
 
 func (fdm TarFileMap) GetFileData(path string) ([]byte, error) {
-	fdp := fdm.files[path]
+	fdp, ok := fdm.files[path]
+	if !ok {
+		return nil, fmt.Errorf("file not found in archive: %v", path)
+	}
 	content := make([]byte, fdp.Size)
 	_, err := fdm.buf.ReadAt(content, fdp.Position)
 	if err != nil {
