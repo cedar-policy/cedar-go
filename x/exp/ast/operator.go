@@ -105,8 +105,25 @@ func (lhs Node) ContainsAny(rhs Node) Node {
 	return newOpNode(nodeTypeContainsAny, lhs, rhs)
 }
 
-func (lhs Node) Access(rhs string) Node {
-	return newOpNode(nodeTypeAccess, lhs, String(types.String(rhs)))
+// Access is a convenience function that wraps a simple string
+// in an ast.String() and passes it along to AccessNode.
+func (lhs Node) Access(attr string) Node {
+	return lhs.AccessNode(String(types.String(attr)))
+}
+
+// AccessNode is a version of the access operator which allows
+// more complex access of attributes, such as might be expressed
+// by this Cedar text:
+//
+//	resource[context.resourceAttribute] == "foo"
+//
+// In Golang, this could be expressed as:
+//
+//	ast.Resource().AccessNode(
+//	    ast.Context().Access("resourceAttribute")
+//	).Equals(ast.String("foo"))
+func (lhs Node) AccessNode(rhs Node) Node {
+	return newOpNode(nodeTypeAccess, lhs, rhs)
 }
 
 //  ___ ____   _       _     _
