@@ -29,11 +29,11 @@ const (
 	nodeTypeLess
 	nodeTypeLessEqual
 	nodeTypeLong
-	nodeTypeMap
 	nodeTypeMult
 	nodeTypeNot
 	nodeTypeNotEquals
 	nodeTypeOr
+	nodeTypeRecord
 	nodeTypeSet
 	nodeTypeSub
 	nodeTypeString

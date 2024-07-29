@@ -11,10 +11,18 @@ import (
 func TestAst(t *testing.T) {
 	t.Parallel()
 
-	johnny := types.EntityUID{"user", "johnny"}
+	johnny := types.EntityUID{"User", "johnny"}
 	sow := types.EntityUID{"Action", "sow"}
 	cast := types.EntityUID{"Action", "cast"}
 
+	// @example("one")
+	// permit (
+	//     principal == User::"johnny"
+	//     action in [Action::"sow", Action::"cast"]
+	//     resource
+	// )
+	// when { true }
+	// unless { false };
 	_ = ast.Permit().
 		Annotate("example", "one").
 		PrincipalEq(johnny).
@@ -22,19 +30,46 @@ func TestAst(t *testing.T) {
 		When(ast.True()).
 		Unless(ast.False())
 
-	_ = ast.Forbid().
-		Annotate("example", "two").
-		PrincipalEq(johnny).
-		ResourceIn(types.EntityUID{"Classification", "Poisonous"})
-
+	// @example("two")
+	// forbid (principal, action, resource)
+	// when { resource.tags.contains("private") }
+	// unless { resource in principal.allowed_resources };
 	private := types.String("private")
-
-	_ = ast.Forbid().Annotate("example", "three").
+	_ = ast.Forbid().Annotate("example", "two").
 		When(
-			// TODO: It's a little annoying that we have to wrap private in ast.String here.
 			ast.Resource().Access("tags").Contains(ast.String(private)),
 		).
 		Unless(
 			ast.Resource().In(ast.Principal().Access("allowed_resources")),
+		)
+
+	// forbid (principal, action, resource)
+	// when { resource[context.resourceField] == "specialValue" }
+	// when { {x: "value"}.x == "value" }
+	// when { {x: 1 + context.fooCount}.x == 3 }
+	// when { [1, 2 + 3, context.fooCount].contains(1) };
+	simpleRecord := types.Record{
+		"x": types.String("value"),
+	}
+	_ = ast.Forbid().
+		When(
+			ast.Resource().AccessNode(
+				ast.Context().Access("resourceField"),
+			).Equals(ast.String("specialValue")),
+		).
+		When(
+			ast.Record(simpleRecord).Access("x").Equals(ast.String("value")),
+		).
+		When(
+			ast.RecordNodes(map[string]ast.Node{
+				"x": ast.Long(1).Plus(ast.Context().Access("fooCount")),
+			}).Access("x").Equals(ast.Long(3)),
+		).
+		When(
+			ast.SetNodes([]ast.Node{
+				ast.Long(1),
+				ast.Long(2).Plus(ast.Long(3)),
+				ast.Context().Access("fooCount"),
+			}).Contains(ast.Long(1)),
 		)
 }

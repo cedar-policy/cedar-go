@@ -42,5 +42,3 @@ func (Decimal) isValue() {}
 type IpAddr net.IPAddr
 
 func (IpAddr) isValue() {}
-
-// TODO: Variable? What if you want a Set{1, 2, context.bananaCount}?
