@@ -11,9 +11,9 @@ import (
 func TestAst(t *testing.T) {
 	t.Parallel()
 
-	johnny := types.EntityUID{"User", "johnny"}
-	sow := types.EntityUID{"Action", "sow"}
-	cast := types.EntityUID{"Action", "cast"}
+	johnny := types.NewEntityUID("User", "johnny")
+	sow := types.NewEntityUID("Action", "sow")
+	cast := types.NewEntityUID("Action", "cast")
 
 	// @example("one")
 	// permit (

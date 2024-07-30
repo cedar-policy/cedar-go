@@ -36,7 +36,7 @@ func (p *Policy) ActionIn(entities ...types.EntityUID) *Policy {
 }
 
 func (p *Policy) ResourceEq(entity types.EntityUID) *Policy {
-	p.principal = Resource().Equals(Entity(entity))
+	p.resource = Resource().Equals(Entity(entity))
 	return p
 }
 
@@ -45,11 +45,11 @@ func (p *Policy) ResourceIn(entities ...types.EntityUID) *Policy {
 	for _, e := range entities {
 		entities = append(entities, e)
 	}
-	p.principal = Resource().In(Set(entityValues))
+	p.resource = Resource().In(Set(entityValues))
 	return p
 }
 
 func (p *Policy) ResourceIs(entityType string) *Policy {
-	p.principal = Resource().Is(EntityType(entityType))
+	p.resource = Resource().Is(EntityType(entityType))
 	return p
 }
