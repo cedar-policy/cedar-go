@@ -52,6 +52,10 @@ func Not(rhs Node) Node {
 	return newOpNode(nodeTypeNot, rhs)
 }
 
+func Negate(rhs Node) Node {
+	return newOpNode(nodeTypeNegate, rhs)
+}
+
 func If(condition Node, ifTrue Node, ifFalse Node) Node {
 	return newOpNode(nodeTypeIf, condition, ifTrue, ifFalse)
 }

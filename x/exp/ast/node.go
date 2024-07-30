@@ -33,6 +33,7 @@ const (
 	nodeTypeLong
 	nodeTypeMult
 	nodeTypeNot
+	nodeTypeNegate
 	nodeTypeNotEquals
 	nodeTypeOr
 	nodeTypeRecord
