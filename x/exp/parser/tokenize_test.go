@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"unicode/utf8"
+
+	"github.com/cedar-policy/cedar-go/testutil"
 )
 
 func TestTokenize(t *testing.T) {
@@ -89,8 +91,8 @@ multiline comment
 		{Type: TokenEOF, Text: "", Pos: Position{Offset: 271, Line: 16, Column: 7}},
 	}
 	got, err := Tokenize([]byte(input))
-	testutilOK(t, err)
-	testutilEquals(t, got, want)
+	testutil.OK(t, err)
+	testutil.Equals(t, got, want)
 }
 
 func TestTokenizeErrors(t *testing.T) {
@@ -125,9 +127,9 @@ func TestTokenizeErrors(t *testing.T) {
 			t.Parallel()
 			got, gotErr := Tokenize([]byte(tt.input))
 			wantErrStr := fmt.Sprintf("%v: %s", tt.wantErrPos, tt.wantErrStr)
-			testutilError(t, gotErr)
-			testutilEquals(t, gotErr.Error(), wantErrStr)
-			testutilEquals(t, got, nil)
+			testutil.Error(t, gotErr)
+			testutil.Equals(t, gotErr.Error(), wantErrStr)
+			testutil.Equals(t, got, nil)
 		})
 	}
 }
@@ -149,16 +151,16 @@ func TestIntTokenValues(t *testing.T) {
 		t.Run(tt.input, func(t *testing.T) {
 			t.Parallel()
 			got, err := Tokenize([]byte(tt.input))
-			testutilOK(t, err)
-			testutilEquals(t, len(got), 2)
-			testutilEquals(t, got[0].Type, TokenInt)
+			testutil.OK(t, err)
+			testutil.Equals(t, len(got), 2)
+			testutil.Equals(t, got[0].Type, TokenInt)
 			gotInt, err := got[0].intValue()
 			if err != nil {
-				testutilEquals(t, tt.wantOk, false)
-				testutilEquals(t, err.Error(), tt.wantErr)
+				testutil.Equals(t, tt.wantOk, false)
+				testutil.Equals(t, err.Error(), tt.wantErr)
 			} else {
-				testutilEquals(t, tt.wantOk, true)
-				testutilEquals(t, gotInt, tt.want)
+				testutil.Equals(t, tt.wantOk, true)
+				testutil.Equals(t, gotInt, tt.want)
 			}
 		})
 	}
@@ -201,16 +203,16 @@ func TestStringTokenValues(t *testing.T) {
 		t.Run(tt.input, func(t *testing.T) {
 			t.Parallel()
 			got, err := Tokenize([]byte(tt.input))
-			testutilOK(t, err)
-			testutilEquals(t, len(got), 2)
-			testutilEquals(t, got[0].Type, TokenString)
+			testutil.OK(t, err)
+			testutil.Equals(t, len(got), 2)
+			testutil.Equals(t, got[0].Type, TokenString)
 			gotStr, err := got[0].stringValue()
 			if err != nil {
-				testutilEquals(t, tt.wantOk, false)
-				testutilEquals(t, err.Error(), tt.wantErr)
+				testutil.Equals(t, tt.wantOk, false)
+				testutil.Equals(t, err.Error(), tt.wantErr)
 			} else {
-				testutilEquals(t, tt.wantOk, true)
-				testutilEquals(t, gotStr, tt.want)
+				testutil.Equals(t, tt.wantOk, true)
+				testutil.Equals(t, gotStr, tt.want)
 			}
 		})
 	}
@@ -225,17 +227,17 @@ func TestParseUnicodeEscape(t *testing.T) {
 		outN int
 		err  func(t testing.TB, err error)
 	}{
-		{"happy", []byte{'{', '4', '2', '}'}, 0x42, 4, testutilOK},
-		{"badRune", []byte{'{', 0x80, 0x81}, 0, 1, testutilError},
-		{"notHex", []byte{'{', 'g'}, 0, 2, testutilError},
+		{"happy", []byte{'{', '4', '2', '}'}, 0x42, 4, testutil.OK},
+		{"badRune", []byte{'{', 0x80, 0x81}, 0, 1, testutil.Error},
+		{"notHex", []byte{'{', 'g'}, 0, 2, testutil.Error},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			out, n, err := parseUnicodeEscape(tt.in, 0)
-			testutilEquals(t, out, tt.out)
-			testutilEquals(t, n, tt.outN)
+			testutil.Equals(t, out, tt.out)
+			testutil.Equals(t, n, tt.outN)
 			tt.err(t, err)
 		})
 	}
@@ -249,14 +251,14 @@ func TestUnquote(t *testing.T) {
 		out  string
 		err  func(t testing.TB, err error)
 	}{
-		{"happy", `"test"`, `test`, testutilOK},
+		{"happy", `"test"`, `test`, testutil.OK},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			out, err := Unquote(tt.in)
-			testutilEquals(t, out, tt.out)
+			testutil.Equals(t, out, tt.out)
 			tt.err(t, err)
 		})
 	}
@@ -319,13 +321,13 @@ func TestRustUnquote(t *testing.T) {
 				t.Parallel()
 				got, rem, err := rustUnquote([]byte(tt.input), false)
 				if err != nil {
-					testutilEquals(t, tt.wantOk, false)
-					testutilEquals(t, err.Error(), tt.wantErr)
-					testutilEquals(t, got, tt.want)
+					testutil.Equals(t, tt.wantOk, false)
+					testutil.Equals(t, err.Error(), tt.wantErr)
+					testutil.Equals(t, got, tt.want)
 				} else {
-					testutilEquals(t, tt.wantOk, true)
-					testutilEquals(t, got, tt.want)
-					testutilEquals(t, rem, []byte(""))
+					testutil.Equals(t, tt.wantOk, true)
+					testutil.Equals(t, got, tt.want)
+					testutil.Equals(t, rem, []byte(""))
 				}
 			})
 		}
@@ -390,13 +392,13 @@ func TestRustUnquote(t *testing.T) {
 				t.Parallel()
 				got, rem, err := rustUnquote([]byte(tt.input), true)
 				if err != nil {
-					testutilEquals(t, tt.wantOk, false)
-					testutilEquals(t, err.Error(), tt.wantErr)
-					testutilEquals(t, got, tt.want)
+					testutil.Equals(t, tt.wantOk, false)
+					testutil.Equals(t, err.Error(), tt.wantErr)
+					testutil.Equals(t, got, tt.want)
 				} else {
-					testutilEquals(t, tt.wantOk, true)
-					testutilEquals(t, got, tt.want)
-					testutilEquals(t, string(rem), tt.wantRem)
+					testutil.Equals(t, tt.wantOk, true)
+					testutil.Equals(t, got, tt.want)
+					testutil.Equals(t, string(rem), tt.wantRem)
 				}
 			})
 		}
@@ -406,7 +408,7 @@ func TestRustUnquote(t *testing.T) {
 func TestFakeRustQuote(t *testing.T) {
 	t.Parallel()
 	out := FakeRustQuote("hello")
-	testutilEquals(t, out, `"hello"`)
+	testutil.Equals(t, out, `"hello"`)
 }
 
 func TestPatternFromStringLiteral(t *testing.T) {
@@ -456,12 +458,12 @@ func TestPatternFromStringLiteral(t *testing.T) {
 			t.Parallel()
 			got, err := NewPattern(tt.input)
 			if err != nil {
-				testutilEquals(t, tt.wantOk, false)
-				testutilEquals(t, err.Error(), tt.wantErr)
+				testutil.Equals(t, tt.wantOk, false)
+				testutil.Equals(t, err.Error(), tt.wantErr)
 			} else {
-				testutilEquals(t, tt.wantOk, true)
-				testutilEquals(t, got.Comps, tt.want)
-				testutilEquals(t, got.String(), tt.input)
+				testutil.Equals(t, tt.wantOk, true)
+				testutil.Equals(t, got.Comps, tt.want)
+				testutil.Equals(t, got.String(), tt.input)
 			}
 		})
 	}
@@ -480,7 +482,7 @@ func TestScanner(t *testing.T) {
 		var s scanner
 		s.Init(r)
 		out := s.next()
-		testutilEquals(t, out, specialRuneEOF)
+		testutil.Equals(t, out, specialRuneEOF)
 	})
 
 	t.Run("MidEmojiEOF", func(t *testing.T) {
@@ -500,9 +502,9 @@ func TestScanner(t *testing.T) {
 		}
 		s.Init(r)
 		out := s.next()
-		testutilEquals(t, out, utf8.RuneError)
+		testutil.Equals(t, out, utf8.RuneError)
 		out = s.next()
-		testutilEquals(t, out, specialRuneEOF)
+		testutil.Equals(t, out, specialRuneEOF)
 	})
 
 	t.Run("NotAsciiEmoji", func(t *testing.T) {
@@ -510,7 +512,7 @@ func TestScanner(t *testing.T) {
 		var s scanner
 		s.Init(strings.NewReader(`🐐`))
 		out := s.next()
-		testutilEquals(t, out, '🐐')
+		testutil.Equals(t, out, '🐐')
 	})
 
 	t.Run("InvalidUTF8", func(t *testing.T) {
@@ -518,7 +520,7 @@ func TestScanner(t *testing.T) {
 		var s scanner
 		s.Init(strings.NewReader(string([]byte{0x80, 0x81})))
 		out := s.next()
-		testutilEquals(t, out, utf8.RuneError)
+		testutil.Equals(t, out, utf8.RuneError)
 	})
 
 	t.Run("tokenTextNone", func(t *testing.T) {
@@ -526,7 +528,7 @@ func TestScanner(t *testing.T) {
 		var s scanner
 		s.Init(strings.NewReader(""))
 		out := s.tokenText()
-		testutilEquals(t, out, "")
+		testutil.Equals(t, out, "")
 	})
 }
 
@@ -546,7 +548,7 @@ func TestDigitVal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			out := digitVal(tt.in)
-			testutilEquals(t, out, tt.out)
+			testutil.Equals(t, out, tt.out)
 		})
 	}
 }
