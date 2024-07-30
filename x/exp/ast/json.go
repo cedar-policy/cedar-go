@@ -57,17 +57,6 @@ type conditionJSON struct {
 	Body nodeJSON `json:"body"`
 }
 
-func (c *conditionJSON) ToNode() (Node, error) {
-	n, err := c.Body.ToNode()
-	if err != nil {
-		return Node{}, fmt.Errorf("error in body: %w", err)
-	}
-	if c.Kind == "unless" {
-		return Not(n), nil
-	}
-	return n, nil
-}
-
 type binaryJSON struct {
 	Left  nodeJSON `json:"left"`
 	Right nodeJSON `json:"right"`
@@ -127,9 +116,13 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &j); err != nil {
 		return err
 	}
-	if j.Effect == "permit" {
-		// TODO: use builder, overwrite *p
-		p.effect = effectPermit
+	switch j.Effect {
+	case "permit":
+		*p = *Permit()
+	case "forbid":
+		*p = *Forbid()
+	default:
+		return fmt.Errorf("unknown effect: %v", j.Effect)
 	}
 	for k, v := range j.Annotations {
 		p.Annotate(types.String(k), types.String(v))
@@ -148,12 +141,18 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("error in resource: %w", err)
 	}
 	for _, c := range j.Conditions {
-		n, err := c.ToNode()
+		n, err := c.Body.ToNode()
 		if err != nil {
 			return fmt.Errorf("error in conditions: %w", err)
 		}
-		p.conditions = append(p.conditions, n)
-		// TODO: use builder?
+		switch c.Kind {
+		case "when":
+			p.When(n)
+		case "unless":
+			p.Unless(n)
+		default:
+			return fmt.Errorf("unknown condition kind: %v", c.Kind)
+		}
 	}
 
 	return nil
