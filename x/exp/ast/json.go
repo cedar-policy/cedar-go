@@ -121,6 +121,34 @@ func (j ifThenElseJSON) ToNode() (Node, error) {
 	return If(if_, then, else_), nil
 }
 
+type jsonSet []nodeJSON
+
+func (j jsonSet) ToNode() (Node, error) {
+	var nodes []Node
+	for _, jj := range j {
+		n, err := jj.ToNode()
+		if err != nil {
+			return Node{}, fmt.Errorf("error in set: %w", err)
+		}
+		nodes = append(nodes, n)
+	}
+	return SetNodes(nodes), nil
+}
+
+type jsonRecord map[string]nodeJSON
+
+func (j jsonRecord) ToNode() (Node, error) {
+	nodes := map[types.String]Node{}
+	for k, v := range j {
+		n, err := v.ToNode()
+		if err != nil {
+			return Node{}, fmt.Errorf("error in record: %w", err)
+		}
+		nodes[types.String(k)] = n
+	}
+	return RecordNodes(nodes), nil
+}
+
 type nodeJSON struct {
 
 	// Value
@@ -162,8 +190,13 @@ type nodeJSON struct {
 
 	// if-then-else
 	IfThenElse *ifThenElseJSON `json:"if-then-else"`
+
 	// Set
+	Set jsonSet `json:"Set"`
+
 	// Record
+	Record jsonRecord `json:"Record"`
+
 	// Any other key
 
 }
@@ -243,8 +276,14 @@ func (j nodeJSON) ToNode() (Node, error) {
 	case j.IfThenElse != nil:
 		return j.IfThenElse.ToNode()
 
-		// Set
-		// Record
+	// Set
+	case j.Set != nil:
+		return j.Set.ToNode()
+
+	// Record
+	case j.Record != nil:
+		return j.Record.ToNode()
+
 		// Any other key
 	}
 
