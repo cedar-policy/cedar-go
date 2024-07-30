@@ -1,5 +1,7 @@
 package ast
 
+import "github.com/cedar-policy/cedar-go/types"
+
 type nodeType uint8
 
 const (
@@ -43,7 +45,6 @@ const (
 
 type Node struct {
 	nodeType nodeType
-	// TODO: Should we just have `value any`?
-	args  []Node
-	value any
+	args     []Node      // For inner nodes like operators, records, etc
+	value    types.Value // For leaf nodes like String, Long, EntityUID
 }
