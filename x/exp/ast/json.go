@@ -99,6 +99,28 @@ func (j strJSON) ToNode(f func(a Node, k string) Node) (Node, error) {
 	return f(left, j.Attr), nil
 }
 
+type ifThenElseJSON struct {
+	If   nodeJSON `json:"if"`
+	Then nodeJSON `json:"then"`
+	Else nodeJSON `json:"else"`
+}
+
+func (j ifThenElseJSON) ToNode() (Node, error) {
+	if_, err := j.If.ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in if: %w", err)
+	}
+	then, err := j.Then.ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in then: %w", err)
+	}
+	else_, err := j.Else.ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in else: %w", err)
+	}
+	return If(if_, then, else_), nil
+}
+
 type nodeJSON struct {
 
 	// Value
@@ -139,6 +161,7 @@ type nodeJSON struct {
 	Like *strJSON `json:"like"`
 
 	// if-then-else
+	IfThenElse *ifThenElseJSON `json:"if-then-else"`
 	// Set
 	// Record
 	// Any other key
@@ -216,7 +239,10 @@ func (j nodeJSON) ToNode() (Node, error) {
 	case j.Like != nil:
 		return j.Like.ToNode(Node.Like)
 
-		// if-then-else
+	// if-then-else
+	case j.IfThenElse != nil:
+		return j.IfThenElse.ToNode()
+
 		// Set
 		// Record
 		// Any other key
