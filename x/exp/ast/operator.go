@@ -89,10 +89,6 @@ func (lhs Node) In(rhs Node) Node {
 	return newOpNode(nodeTypeIn, lhs, rhs)
 }
 
-func (lhs Node) Has(rhs Node) Node {
-	return newOpNode(nodeTypeHas, lhs, rhs)
-}
-
 func (lhs Node) Is(rhs Node) Node {
 	return newOpNode(nodeTypeIs, lhs, rhs)
 }
@@ -128,6 +124,10 @@ func (lhs Node) Access(attr string) Node {
 //	).Equals(ast.String("foo"))
 func (lhs Node) AccessNode(rhs Node) Node {
 	return newOpNode(nodeTypeAccess, lhs, rhs)
+}
+
+func (lhs Node) Has(attr string) Node {
+	return newOpNode(nodeTypeHas, lhs, String(types.String(attr)))
 }
 
 //  ___ ____   _       _     _
