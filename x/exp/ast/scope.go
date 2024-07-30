@@ -7,12 +7,8 @@ func (p *Policy) PrincipalEq(entity types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) PrincipalIn(entities ...types.EntityUID) *Policy {
-	var entityValues []types.Value
-	for _, e := range entities {
-		entities = append(entities, e)
-	}
-	p.principal = Principal().In(Set(entityValues))
+func (p *Policy) PrincipalIn(entity types.EntityUID) *Policy {
+	p.principal = Principal().In(Entity(entity))
 	return p
 }
 
@@ -27,9 +23,13 @@ func (p *Policy) ActionEq(entity types.EntityUID) *Policy {
 }
 
 func (p *Policy) ActionIn(entities ...types.EntityUID) *Policy {
+	if len(entities) == 1 {
+		p.action = Action().In(Entity(entities[0]))
+		return p
+	}
 	var entityValues []types.Value
 	for _, e := range entities {
-		entities = append(entities, e)
+		entityValues = append(entityValues, e)
 	}
 	p.action = Action().In(Set(entityValues))
 	return p
@@ -40,12 +40,8 @@ func (p *Policy) ResourceEq(entity types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) ResourceIn(entities ...types.EntityUID) *Policy {
-	var entityValues []types.Value
-	for _, e := range entities {
-		entities = append(entities, e)
-	}
-	p.resource = Resource().In(Set(entityValues))
+func (p *Policy) ResourceIn(entity types.EntityUID) *Policy {
+	p.resource = Resource().In(Entity(entity))
 	return p
 }
 
