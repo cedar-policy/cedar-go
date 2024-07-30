@@ -1,5 +1,7 @@
 package ast
 
+import "github.com/cedar-policy/cedar-go/types"
+
 func Principal() Node {
 	return newPrincipalNode()
 }
@@ -17,17 +19,17 @@ func Context() Node {
 }
 
 func newPrincipalNode() Node {
-	return newValueNode(nodeTypeVariable, "principal")
+	return newValueNode(nodeTypeVariable, types.String("principal"))
 }
 
 func newActionNode() Node {
-	return newValueNode(nodeTypeVariable, "action")
+	return newValueNode(nodeTypeVariable, types.String("action"))
 }
 
 func newResourceNode() Node {
-	return newValueNode(nodeTypeVariable, "resource")
+	return newValueNode(nodeTypeVariable, types.String("resource"))
 }
 
 func newContextNode() Node {
-	return newValueNode(nodeTypeVariable, "context")
+	return newValueNode(nodeTypeVariable, types.String("context"))
 }

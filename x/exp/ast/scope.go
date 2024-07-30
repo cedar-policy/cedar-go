@@ -16,7 +16,7 @@ func (p *Policy) PrincipalIn(entities ...types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) PrincipalIs(entityType string) *Policy {
+func (p *Policy) PrincipalIs(entityType types.String) *Policy {
 	p.principal = Principal().Is(EntityType(entityType))
 	return p
 }
@@ -49,7 +49,7 @@ func (p *Policy) ResourceIn(entities ...types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) ResourceIs(entityType string) *Policy {
+func (p *Policy) ResourceIs(entityType types.String) *Policy {
 	p.resource = Resource().Is(EntityType(entityType))
 	return p
 }

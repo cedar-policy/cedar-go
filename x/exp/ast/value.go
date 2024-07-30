@@ -86,7 +86,7 @@ func RecordNodes(entries map[types.String]Node) Node {
 	return Node{nodeType: nodeTypeRecord, args: nodes}
 }
 
-func EntityType(e string) Node {
+func EntityType(e types.String) Node {
 	return newValueNode(nodeTypeEntityType, e)
 }
 
@@ -102,7 +102,7 @@ func IPAddr(i types.IPAddr) Node {
 	return newValueNode(nodeTypeIpAddr, i)
 }
 
-func newValueNode(nodeType nodeType, v any) Node {
+func newValueNode(nodeType nodeType, v types.Value) Node {
 	return Node{nodeType: nodeType, value: v}
 }
 
