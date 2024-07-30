@@ -61,7 +61,7 @@ func TestAst(t *testing.T) {
 			ast.Record(simpleRecord).Access("x").Equals(ast.String("value")),
 		).
 		When(
-			ast.RecordNodes(map[string]ast.Node{
+			ast.RecordNodes(map[types.String]ast.Node{
 				"x": ast.Long(1).Plus(ast.Context().Access("fooCount")),
 			}).Access("x").Equals(ast.Long(3)),
 		).
