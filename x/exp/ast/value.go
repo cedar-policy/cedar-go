@@ -95,7 +95,7 @@ func Entity(e types.EntityUID) Node {
 }
 
 func Decimal(d types.Decimal) Node {
-	return newValueNode(nodeTypeEntity, d)
+	return newValueNode(nodeTypeDecimal, d)
 }
 
 func IPAddr(i types.IPAddr) Node {
