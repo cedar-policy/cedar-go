@@ -1,4 +1,4 @@
-package cedar
+package types
 
 import (
 	"bytes"
@@ -10,10 +10,13 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/cedar-policy/cedar-go/x/exp/parser"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
+
+var ErrDecimal = fmt.Errorf("error parsing decimal value")
+var ErrIP = fmt.Errorf("error parsing ip value")
+var ErrType = fmt.Errorf("type error")
 
 type Value interface {
 	// String produces a string representation of the Value.
@@ -24,23 +27,23 @@ type Value interface {
 	// applicable) JSON form, which is necessary for marshalling values within
 	// Sets or Records where the type is not defined.
 	ExplicitMarshalJSON() ([]byte, error)
-	equal(Value) bool
-	typeName() string
+	Equal(Value) bool
+	TypeName() string
 	deepClone() Value
 }
 
-func zeroValue() Value {
+func ZeroValue() Value {
 	return nil
 }
 
 // A Boolean is a value that is either true or false.
 type Boolean bool
 
-func (a Boolean) equal(bi Value) bool {
+func (a Boolean) Equal(bi Value) bool {
 	b, ok := bi.(Boolean)
 	return ok && a == b
 }
-func (v Boolean) typeName() string { return "bool" }
+func (v Boolean) TypeName() string { return "bool" }
 
 // String produces a string representation of the Boolean, e.g. `true`.
 func (v Boolean) String() string { return v.Cedar() }
@@ -54,17 +57,25 @@ func (v Boolean) Cedar() string {
 func (v Boolean) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
 func (v Boolean) deepClone() Value                     { return v }
 
+func ValueToBool(v Value) (Boolean, error) {
+	bv, ok := v.(Boolean)
+	if !ok {
+		return false, fmt.Errorf("%w: expected bool, got %v", ErrType, v.TypeName())
+	}
+	return bv, nil
+}
+
 // A Long is a whole number without decimals that can range from -9223372036854775808 to 9223372036854775807.
 type Long int64
 
-func (a Long) equal(bi Value) bool {
+func (a Long) Equal(bi Value) bool {
 	b, ok := bi.(Long)
 	return ok && a == b
 }
 
 // ExplicitMarshalJSON marshals the Long into JSON.
 func (v Long) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
-func (v Long) typeName() string                     { return "long" }
+func (v Long) TypeName() string                     { return "long" }
 
 // String produces a string representation of the Long, e.g. `42`.
 func (v Long) String() string { return v.Cedar() }
@@ -75,17 +86,25 @@ func (v Long) Cedar() string {
 }
 func (v Long) deepClone() Value { return v }
 
+func ValueToLong(v Value) (Long, error) {
+	lv, ok := v.(Long)
+	if !ok {
+		return 0, fmt.Errorf("%w: expected long, got %v", ErrType, v.TypeName())
+	}
+	return lv, nil
+}
+
 // A String is a sequence of characters consisting of letters, numbers, or symbols.
 type String string
 
-func (a String) equal(bi Value) bool {
+func (a String) Equal(bi Value) bool {
 	b, ok := bi.(String)
 	return ok && a == b
 }
 
 // ExplicitMarshalJSON marshals the String into JSON.
 func (v String) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
-func (v String) typeName() string                     { return "string" }
+func (v String) TypeName() string                     { return "string" }
 
 // String produces an unquoted string representation of the String, e.g. `hello`.
 func (v String) String() string {
@@ -94,37 +113,45 @@ func (v String) String() string {
 
 // Cedar produces a valid Cedar language representation of the String, e.g. `"hello"`.
 func (v String) Cedar() string {
-	return parser.FakeRustQuote(string(v))
+	return strconv.Quote(string(v))
 }
 func (v String) deepClone() Value { return v }
+
+func ValueToString(v Value) (String, error) {
+	sv, ok := v.(String)
+	if !ok {
+		return "", fmt.Errorf("%w: expected string, got %v", ErrType, v.TypeName())
+	}
+	return sv, nil
+}
 
 // A Set is a collection of elements that can be of the same or different types.
 type Set []Value
 
-func (s Set) contains(v Value) bool {
+func (s Set) Contains(v Value) bool {
 	for _, e := range s {
-		if e.equal(v) {
+		if e.Equal(v) {
 			return true
 		}
 	}
 	return false
 }
 
-// Equals returns true if the sets are equal.
-func (s Set) Equals(b Set) bool { return s.equal(b) }
+// Equals returns true if the sets are Equal.
+func (s Set) Equals(b Set) bool { return s.Equal(b) }
 
-func (as Set) equal(bi Value) bool {
+func (as Set) Equal(bi Value) bool {
 	bs, ok := bi.(Set)
 	if !ok {
 		return false
 	}
 	for _, a := range as {
-		if !bs.contains(a) {
+		if !bs.Contains(a) {
 			return false
 		}
 	}
 	for _, b := range bs {
-		if !as.contains(b) {
+		if !as.Contains(b) {
 			return false
 		}
 	}
@@ -170,7 +197,7 @@ func (v Set) MarshalJSON() ([]byte, error) {
 // explicit JSON form for all the values in the Set.
 func (v Set) ExplicitMarshalJSON() ([]byte, error) { return v.MarshalJSON() }
 
-func (v Set) typeName() string { return "set" }
+func (v Set) TypeName() string { return "set" }
 
 // String produces a string representation of the Set, e.g. `[1,2,3]`.
 func (v Set) String() string { return v.Cedar() }
@@ -202,21 +229,29 @@ func (v Set) DeepClone() Set {
 	return res
 }
 
+func ValueToSet(v Value) (Set, error) {
+	sv, ok := v.(Set)
+	if !ok {
+		return nil, fmt.Errorf("%w: expected set, got %v", ErrType, v.TypeName())
+	}
+	return sv, nil
+}
+
 // A Record is a collection of attributes. Each attribute consists of a name and
 // an associated value. Names are simple strings. Values can be of any type.
 type Record map[string]Value
 
-// Equals returns true if the records are equal.
-func (r Record) Equals(b Record) bool { return r.equal(b) }
+// Equals returns true if the records are Equal.
+func (r Record) Equals(b Record) bool { return r.Equal(b) }
 
-func (a Record) equal(bi Value) bool {
+func (a Record) Equal(bi Value) bool {
 	b, ok := bi.(Record)
 	if !ok || len(a) != len(b) {
 		return false
 	}
 	for k, av := range a {
 		bv, ok := b[k]
-		if !ok || !av.equal(bv) {
+		if !ok || !av.Equal(bv) {
 			return false
 		}
 	}
@@ -264,7 +299,7 @@ func (v Record) MarshalJSON() ([]byte, error) {
 // ExplicitMarshalJSON marshals the Record into JSON, the marshaller uses the
 // explicit JSON form for all the values in the Record.
 func (v Record) ExplicitMarshalJSON() ([]byte, error) { return v.MarshalJSON() }
-func (r Record) typeName() string                     { return "record" }
+func (r Record) TypeName() string                     { return "record" }
 
 // String produces a string representation of the Record, e.g. `{"a":1,"b":2,"c":3}`.
 func (r Record) String() string { return r.Cedar() }
@@ -282,7 +317,7 @@ func (r Record) Cedar() string {
 			sb.WriteString(",")
 		}
 		first = false
-		sb.WriteString(parser.FakeRustQuote(k))
+		sb.WriteString(strconv.Quote(k))
 		sb.WriteString(":")
 		sb.WriteString(v.Cedar())
 	}
@@ -303,6 +338,14 @@ func (v Record) DeepClone() Record {
 	return res
 }
 
+func ValueToRecord(v Value) (Record, error) {
+	rv, ok := v.(Record)
+	if !ok {
+		return nil, fmt.Errorf("%w: expected record got %v", ErrType, v.TypeName())
+	}
+	return rv, nil
+}
+
 // An EntityUID is the identifier for a principal, action, or resource.
 type EntityUID struct {
 	Type string
@@ -321,18 +364,18 @@ func (a EntityUID) IsZero() bool {
 	return a.Type == "" && a.ID == ""
 }
 
-func (a EntityUID) equal(bi Value) bool {
+func (a EntityUID) Equal(bi Value) bool {
 	b, ok := bi.(EntityUID)
 	return ok && a == b
 }
-func (v EntityUID) typeName() string { return fmt.Sprintf("(entity of type `%s`)", v.Type) }
+func (v EntityUID) TypeName() string { return fmt.Sprintf("(entity of type `%s`)", v.Type) }
 
 // String produces a string representation of the EntityUID, e.g. `Type::"id"`.
 func (v EntityUID) String() string { return v.Cedar() }
 
 // Cedar produces a valid Cedar language representation of the EntityUID, e.g. `Type::"id"`.
 func (v EntityUID) Cedar() string {
-	return v.Type + "::" + parser.FakeRustQuote(v.ID)
+	return v.Type + "::" + strconv.Quote(v.ID)
 }
 
 func (v *EntityUID) UnmarshalJSON(b []byte) error {
@@ -372,29 +415,45 @@ func (v EntityUID) ExplicitMarshalJSON() ([]byte, error) {
 }
 func (v EntityUID) deepClone() Value { return v }
 
-func entityValueFromSlice(v []string) EntityUID {
+func ValueToEntity(v Value) (EntityUID, error) {
+	ev, ok := v.(EntityUID)
+	if !ok {
+		return EntityUID{}, fmt.Errorf("%w: expected (entity of type `any_entity_type`), got %v", ErrType, v.TypeName())
+	}
+	return ev, nil
+}
+
+func EntityValueFromSlice(v []string) EntityUID {
 	return EntityUID{
 		Type: strings.Join(v[:len(v)-1], "::"),
 		ID:   v[len(v)-1],
 	}
 }
 
-// path is the type portion of an EntityUID
-type path string
+// Path is the type portion of an EntityUID
+type Path string
 
-func (a path) equal(bi Value) bool {
-	b, ok := bi.(path)
+func (a Path) Equal(bi Value) bool {
+	b, ok := bi.(Path)
 	return ok && a == b
 }
-func (v path) typeName() string { return fmt.Sprintf("(path of type `%s`)", v) }
+func (v Path) TypeName() string { return fmt.Sprintf("(Path of type `%s`)", v) }
 
-func (v path) String() string                       { return string(v) }
-func (v path) Cedar() string                        { return string(v) }
-func (v path) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(string(v)) }
-func (v path) deepClone() Value                     { return v }
+func (v Path) String() string                       { return string(v) }
+func (v Path) Cedar() string                        { return string(v) }
+func (v Path) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(string(v)) }
+func (v Path) deepClone() Value                     { return v }
 
-func pathFromSlice(v []string) path {
-	return path(strings.Join(v, "::"))
+func ValueToPath(v Value) (Path, error) {
+	ev, ok := v.(Path)
+	if !ok {
+		return "", fmt.Errorf("%w: expected (Path of type `any_entity_type`), got %v", ErrType, v.TypeName())
+	}
+	return ev, nil
+}
+
+func PathFromSlice(v []string) Path {
+	return Path(strings.Join(v, "::"))
 }
 
 // A Decimal is a value with both a whole number part and a decimal part of no
@@ -409,7 +468,7 @@ const DecimalPrecision = 10000
 func ParseDecimal(s string) (Decimal, error) {
 	// Check for empty string.
 	if len(s) == 0 {
-		return Decimal(0), fmt.Errorf("%w: string too short", errDecimal)
+		return Decimal(0), fmt.Errorf("%w: string too short", ErrDecimal)
 	}
 	i := 0
 
@@ -419,14 +478,14 @@ func ParseDecimal(s string) (Decimal, error) {
 		negative = true
 		i++
 		if i == len(s) {
-			return Decimal(0), fmt.Errorf("%w: string too short", errDecimal)
+			return Decimal(0), fmt.Errorf("%w: string too short", ErrDecimal)
 		}
 	}
 
 	// Parse the required first digit.
 	c := rune(s[i])
 	if !unicode.IsDigit(c) {
-		return Decimal(0), fmt.Errorf("%w: unexpected character %s", errDecimal, strconv.QuoteRune(c))
+		return Decimal(0), fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
 	}
 	integer := int64(c - '0')
 	i++
@@ -434,18 +493,18 @@ func ParseDecimal(s string) (Decimal, error) {
 	// Parse any other digits, ending with i pointing to '.'.
 	for ; ; i++ {
 		if i == len(s) {
-			return Decimal(0), fmt.Errorf("%w: string missing decimal point", errDecimal)
+			return Decimal(0), fmt.Errorf("%w: string missing decimal point", ErrDecimal)
 		}
 		c = rune(s[i])
 		if c == '.' {
 			break
 		}
 		if !unicode.IsDigit(c) {
-			return Decimal(0), fmt.Errorf("%w: unexpected character %s", errDecimal, strconv.QuoteRune(c))
+			return Decimal(0), fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
 		}
 		integer = 10*integer + int64(c-'0')
 		if integer > 922337203685477 {
-			return Decimal(0), fmt.Errorf("%w: overflow", errDecimal)
+			return Decimal(0), fmt.Errorf("%w: overflow", ErrDecimal)
 		}
 	}
 
@@ -458,7 +517,7 @@ func ParseDecimal(s string) (Decimal, error) {
 	for ; i < len(s); i++ {
 		c = rune(s[i])
 		if !unicode.IsDigit(c) {
-			return Decimal(0), fmt.Errorf("%w: unexpected character %s", errDecimal, strconv.QuoteRune(c))
+			return Decimal(0), fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
 		}
 		fraction = 10*fraction + int64(c-'0')
 		fractionDigits++
@@ -467,7 +526,7 @@ func ParseDecimal(s string) (Decimal, error) {
 	// Adjust the fraction part based on how many digits we parsed.
 	switch fractionDigits {
 	case 0:
-		return Decimal(0), fmt.Errorf("%w: missing digits after decimal point", errDecimal)
+		return Decimal(0), fmt.Errorf("%w: missing digits after decimal point", ErrDecimal)
 	case 1:
 		fraction *= 1000
 	case 2:
@@ -476,12 +535,12 @@ func ParseDecimal(s string) (Decimal, error) {
 		fraction *= 10
 	case 4:
 	default:
-		return Decimal(0), fmt.Errorf("%w: too many digits after decimal point", errDecimal)
+		return Decimal(0), fmt.Errorf("%w: too many digits after decimal point", ErrDecimal)
 	}
 
 	// Check for overflow before we put the number together.
 	if integer >= 922337203685477 && (fraction > 5808 || (!negative && fraction == 5808)) {
-		return Decimal(0), fmt.Errorf("%w: overflow", errDecimal)
+		return Decimal(0), fmt.Errorf("%w: overflow", ErrDecimal)
 	}
 
 	// Put the number together.
@@ -496,12 +555,12 @@ func ParseDecimal(s string) (Decimal, error) {
 	}
 }
 
-func (a Decimal) equal(bi Value) bool {
+func (a Decimal) Equal(bi Value) bool {
 	b, ok := bi.(Decimal)
 	return ok && a == b
 }
 
-func (v Decimal) typeName() string { return "decimal" }
+func (v Decimal) TypeName() string { return "decimal" }
 
 // Cedar produces a valid Cedar language representation of the Decimal, e.g. `decimal("12.34")`.
 func (v Decimal) Cedar() string { return `decimal("` + v.String() + `")` }
@@ -573,6 +632,14 @@ func (v Decimal) ExplicitMarshalJSON() ([]byte, error) {
 }
 func (v Decimal) deepClone() Value { return v }
 
+func ValueToDecimal(v Value) (Decimal, error) {
+	d, ok := v.(Decimal)
+	if !ok {
+		return 0, fmt.Errorf("%w: expected decimal, got %v", ErrType, v.TypeName())
+	}
+	return d, nil
+}
+
 // An IPAddr is value that represents an IP address. It can be either IPv4 or IPv6.
 // The value can represent an individual address or a range of addresses.
 type IPAddr netip.Prefix
@@ -581,22 +648,22 @@ type IPAddr netip.Prefix
 func ParseIPAddr(s string) (IPAddr, error) {
 	// We disallow IPv4-mapped IPv6 addresses in dotted notation because Cedar does.
 	if strings.Count(s, ":") >= 2 && strings.Count(s, ".") >= 2 {
-		return IPAddr{}, fmt.Errorf("%w: cannot parse IPv4 addresses embedded in IPv6 addresses", errIP)
+		return IPAddr{}, fmt.Errorf("%w: cannot parse IPv4 addresses embedded in IPv6 addresses", ErrIP)
 	} else if net, err := netip.ParsePrefix(s); err == nil {
 		return IPAddr(net), nil
 	} else if addr, err := netip.ParseAddr(s); err == nil {
 		return IPAddr(netip.PrefixFrom(addr, addr.BitLen())), nil
 	} else {
-		return IPAddr{}, fmt.Errorf("%w: error parsing IP address %s", errIP, s)
+		return IPAddr{}, fmt.Errorf("%w: error parsing IP address %s", ErrIP, s)
 	}
 }
 
-func (a IPAddr) equal(bi Value) bool {
+func (a IPAddr) Equal(bi Value) bool {
 	b, ok := bi.(IPAddr)
 	return ok && a == b
 }
 
-func (v IPAddr) typeName() string { return "IP" }
+func (v IPAddr) TypeName() string { return "IP" }
 
 // Cedar produces a valid Cedar language representation of the IPAddr, e.g. `ip("127.0.0.1")`.
 func (v IPAddr) Cedar() string { return `ip("` + v.String() + `")` }
@@ -613,15 +680,15 @@ func (v IPAddr) Prefix() netip.Prefix {
 	return netip.Prefix(v)
 }
 
-func (v IPAddr) isIPv4() bool {
+func (v IPAddr) IsIPv4() bool {
 	return v.Addr().Is4()
 }
 
-func (v IPAddr) isIPv6() bool {
+func (v IPAddr) IsIPv6() bool {
 	return v.Addr().Is6()
 }
 
-func (v IPAddr) isLoopback() bool {
+func (v IPAddr) IsLoopback() bool {
 	// This comment is in the Cedar Rust implementation:
 	//
 	// 		Loopback addresses are "127.0.0.0/8" for IpV4 and "::1" for IpV6
@@ -640,7 +707,7 @@ func (v IPAddr) Addr() netip.Addr {
 	return netip.Prefix(v).Addr()
 }
 
-func (v IPAddr) isMulticast() bool {
+func (v IPAddr) IsMulticast() bool {
 	// This comment is in the Cedar Rust implementation:
 	//
 	// 		Multicast addresses are "224.0.0.0/4" for IpV4 and "ff00::/8" for
@@ -654,7 +721,7 @@ func (v IPAddr) isMulticast() bool {
 	// 		range `ip2/prefix2`, then `ip1` is in `ip2/prefix2` and `prefix1 >=
 	// 		prefix2`
 	var min_prefix_len int
-	if v.isIPv4() {
+	if v.IsIPv4() {
 		min_prefix_len = 4
 	} else {
 		min_prefix_len = 8
@@ -662,7 +729,7 @@ func (v IPAddr) isMulticast() bool {
 	return v.Addr().IsMulticast() && v.Prefix().Bits() >= min_prefix_len
 }
 
-func (c IPAddr) contains(o IPAddr) bool {
+func (c IPAddr) Contains(o IPAddr) bool {
 	return c.Prefix().Contains(o.Addr()) && c.Prefix().Bits() <= o.Prefix().Bits()
 }
 
@@ -721,3 +788,11 @@ func (v IPAddr) ExplicitMarshalJSON() ([]byte, error) {
 // in this case, netip.Prefix does contain a pointer, but
 // the interface given is immutable, so it is safe to return
 func (v IPAddr) deepClone() Value { return v }
+
+func ValueToIP(v Value) (IPAddr, error) {
+	i, ok := v.(IPAddr)
+	if !ok {
+		return IPAddr{}, fmt.Errorf("%w: expected ipaddr, got %v", ErrType, v.TypeName())
+	}
+	return i, nil
+}

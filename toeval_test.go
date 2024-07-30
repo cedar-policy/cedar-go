@@ -1,11 +1,23 @@
 package cedar
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/testutil"
+	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/parser"
 )
+
+func safeDoErr(f func() error) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
+	return f()
+}
 
 func TestToEval(t *testing.T) {
 	t.Parallel()
@@ -18,7 +30,7 @@ func TestToEval(t *testing.T) {
 		{"happy", parser.Entity{
 			Path: []string{"Action", "test"},
 		},
-			newLiteralEval(entityValueFromSlice([]string{"Action", "test"})), ""},
+			newLiteralEval(types.EntityValueFromSlice([]string{"Action", "test"})), ""},
 		{"missingRelOp", parser.Relation{
 			Add: parser.Add{
 				Mults: []parser.Mult{
@@ -148,10 +160,10 @@ func TestToEval(t *testing.T) {
 				out = toEval(tt.in)
 				return nil
 			})
-			testutilEquals(t, out, tt.out)
-			testutilEquals(t, err != nil, tt.panic != "")
+			testutil.Equals(t, out, tt.out)
+			testutil.Equals(t, err != nil, tt.panic != "")
 			if tt.panic != "" {
-				testutilFatalIf(t, !strings.Contains(err.Error(), tt.panic), "panic got %v want %v", err.Error(), tt.panic)
+				testutil.FatalIf(t, !strings.Contains(err.Error(), tt.panic), "panic got %v want %v", err.Error(), tt.panic)
 			}
 		})
 	}

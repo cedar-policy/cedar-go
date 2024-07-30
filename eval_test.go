@@ -6,15 +6,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/testutil"
+	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/parser"
 )
 
 var errTest = fmt.Errorf("test error")
 
 // not a real parser
-func strEnt(v string) EntityUID {
+func strEnt(v string) types.EntityUID {
 	p := strings.Split(v, "::\"")
-	return EntityUID{Type: p[0], ID: p[1][:len(p[1])-1]}
+	return types.EntityUID{Type: p[0], ID: p[1][:len(p[1])-1]}
 }
 
 func TestOrNode(t *testing.T) {
@@ -32,10 +34,10 @@ func TestOrNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%v%v", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				n := newOrNode(newLiteralEval(Boolean(tt.lhs)), newLiteralEval(Boolean(tt.rhs)))
+				n := newOrNode(newLiteralEval(types.Boolean(tt.lhs)), newLiteralEval(types.Boolean(tt.rhs)))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -43,10 +45,10 @@ func TestOrNode(t *testing.T) {
 	t.Run("TrueXShortCircuit", func(t *testing.T) {
 		t.Parallel()
 		n := newOrNode(
-			newLiteralEval(Boolean(true)), newLiteralEval(Long(1)))
+			newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(1)))
 		v, err := n.Eval(&evalContext{})
-		testutilOK(t, err)
-		assertBoolValue(t, v, true)
+		testutil.OK(t, err)
+		types.AssertBoolValue(t, v, true)
 	})
 
 	{
@@ -55,10 +57,10 @@ func TestOrNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Boolean(true)), errTest},
-			{"LhsTypeError", newLiteralEval(Long(1)), newLiteralEval(Boolean(true)), errType},
-			{"RhsError", newLiteralEval(Boolean(false)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Boolean(false)), newLiteralEval(Long(1)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Boolean(true)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Long(1)), newLiteralEval(types.Boolean(true)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Boolean(false)), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Boolean(false)), newLiteralEval(types.Long(1)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -66,7 +68,7 @@ func TestOrNode(t *testing.T) {
 				t.Parallel()
 				n := newOrNode(tt.lhs, tt.rhs)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -87,10 +89,10 @@ func TestAndNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%v%v", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				n := newAndEval(newLiteralEval(Boolean(tt.lhs)), newLiteralEval(Boolean(tt.rhs)))
+				n := newAndEval(newLiteralEval(types.Boolean(tt.lhs)), newLiteralEval(types.Boolean(tt.rhs)))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -98,10 +100,10 @@ func TestAndNode(t *testing.T) {
 	t.Run("FalseXShortCircuit", func(t *testing.T) {
 		t.Parallel()
 		n := newAndEval(
-			newLiteralEval(Boolean(false)), newLiteralEval(Long(1)))
+			newLiteralEval(types.Boolean(false)), newLiteralEval(types.Long(1)))
 		v, err := n.Eval(&evalContext{})
-		testutilOK(t, err)
-		assertBoolValue(t, v, false)
+		testutil.OK(t, err)
+		types.AssertBoolValue(t, v, false)
 	})
 
 	{
@@ -110,10 +112,10 @@ func TestAndNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Boolean(true)), errTest},
-			{"LhsTypeError", newLiteralEval(Long(1)), newLiteralEval(Boolean(true)), errType},
-			{"RhsError", newLiteralEval(Boolean(true)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Long(1)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Boolean(true)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Long(1)), newLiteralEval(types.Boolean(true)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Boolean(true)), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(1)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -121,7 +123,7 @@ func TestAndNode(t *testing.T) {
 				t.Parallel()
 				n := newAndEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -140,10 +142,10 @@ func TestNotNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%v", tt.arg), func(t *testing.T) {
 				t.Parallel()
-				n := newNotEval(newLiteralEval(Boolean(tt.arg)))
+				n := newNotEval(newLiteralEval(types.Boolean(tt.arg)))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -155,7 +157,7 @@ func TestNotNode(t *testing.T) {
 			err  error
 		}{
 			{"Error", newErrorEval(errTest), errTest},
-			{"TypeError", newLiteralEval(Long(1)), errType},
+			{"TypeError", newLiteralEval(types.Long(1)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -163,7 +165,7 @@ func TestNotNode(t *testing.T) {
 				t.Parallel()
 				n := newNotEval(tt.arg)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -172,7 +174,7 @@ func TestNotNode(t *testing.T) {
 func TestCheckedAddI64(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		lhs, rhs, result Long
+		lhs, rhs, result types.Long
 		ok               bool
 	}{
 		{1, 1, 2, true},
@@ -198,8 +200,8 @@ func TestCheckedAddI64(t *testing.T) {
 		t.Run(fmt.Sprintf("%v+%v=%v(%v)", tt.lhs, tt.rhs, tt.result, tt.ok), func(t *testing.T) {
 			t.Parallel()
 			result, ok := checkedAddI64(tt.lhs, tt.rhs)
-			testutilEquals(t, ok, tt.ok)
-			testutilEquals(t, result, tt.result)
+			testutil.Equals(t, ok, tt.ok)
+			testutil.Equals(t, result, tt.result)
 		})
 	}
 }
@@ -207,7 +209,7 @@ func TestCheckedAddI64(t *testing.T) {
 func TestCheckedSubI64(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		lhs, rhs, result Long
+		lhs, rhs, result types.Long
 		ok               bool
 	}{
 		{1, 1, 0, true},
@@ -233,8 +235,8 @@ func TestCheckedSubI64(t *testing.T) {
 		t.Run(fmt.Sprintf("%v-%v=%v(%v)", tt.lhs, tt.rhs, tt.result, tt.ok), func(t *testing.T) {
 			t.Parallel()
 			result, ok := checkedSubI64(tt.lhs, tt.rhs)
-			testutilEquals(t, ok, tt.ok)
-			testutilEquals(t, result, tt.result)
+			testutil.Equals(t, ok, tt.ok)
+			testutil.Equals(t, result, tt.result)
 		})
 	}
 }
@@ -242,7 +244,7 @@ func TestCheckedSubI64(t *testing.T) {
 func TestCheckedMulI64(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		lhs, rhs, result Long
+		lhs, rhs, result types.Long
 		ok               bool
 	}{
 		{2, 3, 6, true},
@@ -307,8 +309,8 @@ func TestCheckedMulI64(t *testing.T) {
 		t.Run(fmt.Sprintf("%v*%v=%v(%v)", tt.lhs, tt.rhs, tt.result, tt.ok), func(t *testing.T) {
 			t.Parallel()
 			result, ok := checkedMulI64(tt.lhs, tt.rhs)
-			testutilEquals(t, ok, tt.ok)
-			testutilEquals(t, result, tt.result)
+			testutil.Equals(t, ok, tt.ok)
+			testutil.Equals(t, result, tt.result)
 		})
 	}
 }
@@ -316,7 +318,7 @@ func TestCheckedMulI64(t *testing.T) {
 func TestCheckedNegI64(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		arg, result Long
+		arg, result types.Long
 		ok          bool
 	}{
 		{2, -2, true},
@@ -331,8 +333,8 @@ func TestCheckedNegI64(t *testing.T) {
 		t.Run(fmt.Sprintf("-%v*=%v(%v)", tt.arg, tt.result, tt.ok), func(t *testing.T) {
 			t.Parallel()
 			result, ok := checkedNegI64(tt.arg)
-			testutilEquals(t, ok, tt.ok)
-			testutilEquals(t, result, tt.result)
+			testutil.Equals(t, ok, tt.ok)
+			testutil.Equals(t, result, tt.result)
 		})
 	}
 }
@@ -341,10 +343,10 @@ func TestAddNode(t *testing.T) {
 	t.Parallel()
 	t.Run("Basic", func(t *testing.T) {
 		t.Parallel()
-		n := newAddEval(newLiteralEval(Long(1)), newLiteralEval(Long(2)))
+		n := newAddEval(newLiteralEval(types.Long(1)), newLiteralEval(types.Long(2)))
 		v, err := n.Eval(&evalContext{})
-		testutilOK(t, err)
-		assertLongValue(t, v, 3)
+		testutil.OK(t, err)
+		types.AssertLongValue(t, v, 3)
 	})
 
 	tests := []struct {
@@ -352,17 +354,17 @@ func TestAddNode(t *testing.T) {
 		lhs, rhs evaler
 		err      error
 	}{
-		{"LhsError", newErrorEval(errTest), newLiteralEval(Long(0)), errTest},
-		{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Long(0)), errType},
-		{"RhsError", newLiteralEval(Long(0)), newErrorEval(errTest), errTest},
-		{"RhsTypeError", newLiteralEval(Long(0)), newLiteralEval(Boolean(true)), errType},
+		{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
+		{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(0)), types.ErrType},
+		{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
+		{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		{"PositiveOverflow",
-			newLiteralEval(Long(9_223_372_036_854_775_807)),
-			newLiteralEval(Long(1)),
+			newLiteralEval(types.Long(9_223_372_036_854_775_807)),
+			newLiteralEval(types.Long(1)),
 			errOverflow},
 		{"NegativeOverflow",
-			newLiteralEval(Long(-9_223_372_036_854_775_808)),
-			newLiteralEval(Long(-1)),
+			newLiteralEval(types.Long(-9_223_372_036_854_775_808)),
+			newLiteralEval(types.Long(-1)),
 			errOverflow},
 	}
 	for _, tt := range tests {
@@ -371,7 +373,7 @@ func TestAddNode(t *testing.T) {
 			t.Parallel()
 			n := newAddEval(tt.lhs, tt.rhs)
 			_, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
+			testutil.AssertError(t, err, tt.err)
 		})
 	}
 }
@@ -380,10 +382,10 @@ func TestSubtractNode(t *testing.T) {
 	t.Parallel()
 	t.Run("Basic", func(t *testing.T) {
 		t.Parallel()
-		n := newSubtractEval(newLiteralEval(Long(1)), newLiteralEval(Long(2)))
+		n := newSubtractEval(newLiteralEval(types.Long(1)), newLiteralEval(types.Long(2)))
 		v, err := n.Eval(&evalContext{})
-		testutilOK(t, err)
-		assertLongValue(t, v, -1)
+		testutil.OK(t, err)
+		types.AssertLongValue(t, v, -1)
 	})
 
 	tests := []struct {
@@ -391,17 +393,17 @@ func TestSubtractNode(t *testing.T) {
 		lhs, rhs evaler
 		err      error
 	}{
-		{"LhsError", newErrorEval(errTest), newLiteralEval(Long(0)), errTest},
-		{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Long(0)), errType},
-		{"RhsError", newLiteralEval(Long(0)), newErrorEval(errTest), errTest},
-		{"RhsTypeError", newLiteralEval(Long(0)), newLiteralEval(Boolean(true)), errType},
+		{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
+		{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(0)), types.ErrType},
+		{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
+		{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		{"PositiveOverflow",
-			newLiteralEval(Long(9_223_372_036_854_775_807)),
-			newLiteralEval(Long(-1)),
+			newLiteralEval(types.Long(9_223_372_036_854_775_807)),
+			newLiteralEval(types.Long(-1)),
 			errOverflow},
 		{"NegativeOverflow",
-			newLiteralEval(Long(-9_223_372_036_854_775_808)),
-			newLiteralEval(Long(1)),
+			newLiteralEval(types.Long(-9_223_372_036_854_775_808)),
+			newLiteralEval(types.Long(1)),
 			errOverflow},
 	}
 	for _, tt := range tests {
@@ -410,7 +412,7 @@ func TestSubtractNode(t *testing.T) {
 			t.Parallel()
 			n := newSubtractEval(tt.lhs, tt.rhs)
 			_, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
+			testutil.AssertError(t, err, tt.err)
 		})
 	}
 }
@@ -419,10 +421,10 @@ func TestMultiplyNode(t *testing.T) {
 	t.Parallel()
 	t.Run("Basic", func(t *testing.T) {
 		t.Parallel()
-		n := newMultiplyEval(newLiteralEval(Long(-3)), newLiteralEval(Long(2)))
+		n := newMultiplyEval(newLiteralEval(types.Long(-3)), newLiteralEval(types.Long(2)))
 		v, err := n.Eval(&evalContext{})
-		testutilOK(t, err)
-		assertLongValue(t, v, -6)
+		testutil.OK(t, err)
+		types.AssertLongValue(t, v, -6)
 	})
 
 	tests := []struct {
@@ -430,17 +432,17 @@ func TestMultiplyNode(t *testing.T) {
 		lhs, rhs evaler
 		err      error
 	}{
-		{"LhsError", newErrorEval(errTest), newLiteralEval(Long(0)), errTest},
-		{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Long(0)), errType},
-		{"RhsError", newLiteralEval(Long(0)), newErrorEval(errTest), errTest},
-		{"RhsTypeError", newLiteralEval(Long(0)), newLiteralEval(Boolean(true)), errType},
+		{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
+		{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(0)), types.ErrType},
+		{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
+		{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		{"PositiveOverflow",
-			newLiteralEval(Long(9_223_372_036_854_775_807)),
-			newLiteralEval(Long(2)),
+			newLiteralEval(types.Long(9_223_372_036_854_775_807)),
+			newLiteralEval(types.Long(2)),
 			errOverflow},
 		{"NegativeOverflow",
-			newLiteralEval(Long(-9_223_372_036_854_775_808)),
-			newLiteralEval(Long(2)),
+			newLiteralEval(types.Long(-9_223_372_036_854_775_808)),
+			newLiteralEval(types.Long(2)),
 			errOverflow},
 	}
 	for _, tt := range tests {
@@ -449,7 +451,7 @@ func TestMultiplyNode(t *testing.T) {
 			t.Parallel()
 			n := newMultiplyEval(tt.lhs, tt.rhs)
 			_, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
+			testutil.AssertError(t, err, tt.err)
 		})
 	}
 }
@@ -458,10 +460,10 @@ func TestNegateNode(t *testing.T) {
 	t.Parallel()
 	t.Run("Basic", func(t *testing.T) {
 		t.Parallel()
-		n := newNegateEval(newLiteralEval(Long(-3)))
+		n := newNegateEval(newLiteralEval(types.Long(-3)))
 		v, err := n.Eval(&evalContext{})
-		testutilOK(t, err)
-		assertLongValue(t, v, 3)
+		testutil.OK(t, err)
+		types.AssertLongValue(t, v, 3)
 	})
 
 	tests := []struct {
@@ -470,8 +472,8 @@ func TestNegateNode(t *testing.T) {
 		err  error
 	}{
 		{"Error", newErrorEval(errTest), errTest},
-		{"TypeError", newLiteralEval(Boolean(true)), errType},
-		{"Overflow", newLiteralEval(Long(-9_223_372_036_854_775_808)), errOverflow},
+		{"TypeError", newLiteralEval(types.Boolean(true)), types.ErrType},
+		{"Overflow", newLiteralEval(types.Long(-9_223_372_036_854_775_808)), errOverflow},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -479,7 +481,7 @@ func TestNegateNode(t *testing.T) {
 			t.Parallel()
 			n := newNegateEval(tt.arg)
 			_, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
+			testutil.AssertError(t, err, tt.err)
 		})
 	}
 }
@@ -506,10 +508,10 @@ func TestLongLessThanNode(t *testing.T) {
 			t.Run(fmt.Sprintf("%v<%v", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
 				n := newLongLessThanEval(
-					newLiteralEval(Long(tt.lhs)), newLiteralEval(Long(tt.rhs)))
+					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -519,10 +521,10 @@ func TestLongLessThanNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Long(0)), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Long(0)), errType},
-			{"RhsError", newLiteralEval(Long(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Long(0)), newLiteralEval(Boolean(true)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(0)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -530,7 +532,7 @@ func TestLongLessThanNode(t *testing.T) {
 				t.Parallel()
 				n := newLongLessThanEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -558,10 +560,10 @@ func TestLongLessThanOrEqualNode(t *testing.T) {
 			t.Run(fmt.Sprintf("%v<=%v", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
 				n := newLongLessThanOrEqualEval(
-					newLiteralEval(Long(tt.lhs)), newLiteralEval(Long(tt.rhs)))
+					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -571,10 +573,10 @@ func TestLongLessThanOrEqualNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Long(0)), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Long(0)), errType},
-			{"RhsError", newLiteralEval(Long(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Long(0)), newLiteralEval(Boolean(true)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(0)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -582,7 +584,7 @@ func TestLongLessThanOrEqualNode(t *testing.T) {
 				t.Parallel()
 				n := newLongLessThanOrEqualEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -610,10 +612,10 @@ func TestLongGreaterThanNode(t *testing.T) {
 			t.Run(fmt.Sprintf("%v>%v", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
 				n := newLongGreaterThanEval(
-					newLiteralEval(Long(tt.lhs)), newLiteralEval(Long(tt.rhs)))
+					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -623,10 +625,10 @@ func TestLongGreaterThanNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Long(0)), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Long(0)), errType},
-			{"RhsError", newLiteralEval(Long(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Long(0)), newLiteralEval(Boolean(true)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(0)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -634,7 +636,7 @@ func TestLongGreaterThanNode(t *testing.T) {
 				t.Parallel()
 				n := newLongGreaterThanEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -662,10 +664,10 @@ func TestLongGreaterThanOrEqualNode(t *testing.T) {
 			t.Run(fmt.Sprintf("%v>=%v", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
 				n := newLongGreaterThanOrEqualEval(
-					newLiteralEval(Long(tt.lhs)), newLiteralEval(Long(tt.rhs)))
+					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -675,10 +677,10 @@ func TestLongGreaterThanOrEqualNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Long(0)), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Long(0)), errType},
-			{"RhsError", newLiteralEval(Long(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Long(0)), newLiteralEval(Boolean(true)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(0)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -686,7 +688,7 @@ func TestLongGreaterThanOrEqualNode(t *testing.T) {
 				t.Parallel()
 				n := newLongGreaterThanOrEqualEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -713,16 +715,16 @@ func TestDecimalLessThanNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%s<%s", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				lhsd, err := ParseDecimal(tt.lhs)
-				testutilOK(t, err)
+				lhsd, err := types.ParseDecimal(tt.lhs)
+				testutil.OK(t, err)
 				lhsv := lhsd
-				rhsd, err := ParseDecimal(tt.rhs)
-				testutilOK(t, err)
+				rhsd, err := types.ParseDecimal(tt.rhs)
+				testutil.OK(t, err)
 				rhsv := rhsd
 				n := newDecimalLessThanEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -732,10 +734,10 @@ func TestDecimalLessThanNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Decimal(0)), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Decimal(0)), errType},
-			{"RhsError", newLiteralEval(Decimal(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Decimal(0)), newLiteralEval(Boolean(true)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal(0)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Decimal(0)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Decimal(0)), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Decimal(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -743,7 +745,7 @@ func TestDecimalLessThanNode(t *testing.T) {
 				t.Parallel()
 				n := newDecimalLessThanEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -770,16 +772,16 @@ func TestDecimalLessThanOrEqualNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%s<=%s", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				lhsd, err := ParseDecimal(tt.lhs)
-				testutilOK(t, err)
+				lhsd, err := types.ParseDecimal(tt.lhs)
+				testutil.OK(t, err)
 				lhsv := lhsd
-				rhsd, err := ParseDecimal(tt.rhs)
-				testutilOK(t, err)
+				rhsd, err := types.ParseDecimal(tt.rhs)
+				testutil.OK(t, err)
 				rhsv := rhsd
 				n := newDecimalLessThanOrEqualEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -789,10 +791,10 @@ func TestDecimalLessThanOrEqualNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Decimal(0)), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Decimal(0)), errType},
-			{"RhsError", newLiteralEval(Decimal(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Decimal(0)), newLiteralEval(Boolean(true)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal(0)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Decimal(0)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Decimal(0)), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Decimal(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -800,7 +802,7 @@ func TestDecimalLessThanOrEqualNode(t *testing.T) {
 				t.Parallel()
 				n := newDecimalLessThanOrEqualEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -827,16 +829,16 @@ func TestDecimalGreaterThanNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%s>%s", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				lhsd, err := ParseDecimal(tt.lhs)
-				testutilOK(t, err)
+				lhsd, err := types.ParseDecimal(tt.lhs)
+				testutil.OK(t, err)
 				lhsv := lhsd
-				rhsd, err := ParseDecimal(tt.rhs)
-				testutilOK(t, err)
+				rhsd, err := types.ParseDecimal(tt.rhs)
+				testutil.OK(t, err)
 				rhsv := rhsd
 				n := newDecimalGreaterThanEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -846,10 +848,10 @@ func TestDecimalGreaterThanNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Decimal(0)), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Decimal(0)), errType},
-			{"RhsError", newLiteralEval(Decimal(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Decimal(0)), newLiteralEval(Boolean(true)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal(0)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Decimal(0)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Decimal(0)), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Decimal(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -857,7 +859,7 @@ func TestDecimalGreaterThanNode(t *testing.T) {
 				t.Parallel()
 				n := newDecimalGreaterThanEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -884,16 +886,16 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%s>=%s", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				lhsd, err := ParseDecimal(tt.lhs)
-				testutilOK(t, err)
+				lhsd, err := types.ParseDecimal(tt.lhs)
+				testutil.OK(t, err)
 				lhsv := lhsd
-				rhsd, err := ParseDecimal(tt.rhs)
-				testutilOK(t, err)
+				rhsd, err := types.ParseDecimal(tt.rhs)
+				testutil.OK(t, err)
 				rhsv := rhsd
 				n := newDecimalGreaterThanOrEqualEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -903,10 +905,10 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Decimal(0)), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Decimal(0)), errType},
-			{"RhsError", newLiteralEval(Decimal(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Decimal(0)), newLiteralEval(Boolean(true)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal(0)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Decimal(0)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Decimal(0)), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Decimal(0)), newLiteralEval(types.Boolean(true)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -914,7 +916,7 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 				t.Parallel()
 				n := newDecimalGreaterThanOrEqualEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
+				testutil.AssertError(t, err, tt.err)
 			})
 		}
 	}
@@ -925,19 +927,19 @@ func TestIfThenElseNode(t *testing.T) {
 	tests := []struct {
 		name             string
 		if_, then, else_ evaler
-		result           Value
+		result           types.Value
 		err              error
 	}{
-		{"Then", newLiteralEval(Boolean(true)), newLiteralEval(Long(42)),
-			newLiteralEval(Long(-1)), Long(42),
+		{"Then", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(42)),
+			newLiteralEval(types.Long(-1)), types.Long(42),
 			nil},
-		{"Else", newLiteralEval(Boolean(false)), newLiteralEval(Long(-1)),
-			newLiteralEval(Long(42)), Long(42),
+		{"Else", newLiteralEval(types.Boolean(false)), newLiteralEval(types.Long(-1)),
+			newLiteralEval(types.Long(42)), types.Long(42),
 			nil},
-		{"Err", newErrorEval(errTest), newLiteralEval(zeroValue()), newLiteralEval(zeroValue()), zeroValue(),
+		{"Err", newErrorEval(errTest), newLiteralEval(types.ZeroValue()), newLiteralEval(types.ZeroValue()), types.ZeroValue(),
 			errTest},
-		{"ErrType", newLiteralEval(Long(123)), newLiteralEval(zeroValue()), newLiteralEval(zeroValue()), zeroValue(),
-			errType},
+		{"ErrType", newLiteralEval(types.Long(123)), newLiteralEval(types.ZeroValue()), newLiteralEval(types.ZeroValue()), types.ZeroValue(),
+			types.ErrType},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -945,8 +947,8 @@ func TestIfThenElseNode(t *testing.T) {
 			t.Parallel()
 			n := newIfThenElseEval(tt.if_, tt.then, tt.else_)
 			v, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			testutilEquals(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			testutil.Equals(t, v, tt.result)
 		})
 	}
 }
@@ -956,14 +958,14 @@ func TestEqualNode(t *testing.T) {
 	tests := []struct {
 		name     string
 		lhs, rhs evaler
-		result   Value
+		result   types.Value
 		err      error
 	}{
-		{"equals", newLiteralEval(Long(42)), newLiteralEval(Long(42)), Boolean(true), nil},
-		{"notEquals", newLiteralEval(Long(42)), newLiteralEval(Long(1234)), Boolean(false), nil},
-		{"leftErr", newErrorEval(errTest), newLiteralEval(zeroValue()), zeroValue(), errTest},
-		{"rightErr", newLiteralEval(zeroValue()), newErrorEval(errTest), zeroValue(), errTest},
-		{"typesNotEqual", newLiteralEval(Long(1)), newLiteralEval(Boolean(true)), Boolean(false), nil},
+		{"equals", newLiteralEval(types.Long(42)), newLiteralEval(types.Long(42)), types.Boolean(true), nil},
+		{"notEquals", newLiteralEval(types.Long(42)), newLiteralEval(types.Long(1234)), types.Boolean(false), nil},
+		{"leftErr", newErrorEval(errTest), newLiteralEval(types.ZeroValue()), types.ZeroValue(), errTest},
+		{"rightErr", newLiteralEval(types.ZeroValue()), newErrorEval(errTest), types.ZeroValue(), errTest},
+		{"typesNotEqual", newLiteralEval(types.Long(1)), newLiteralEval(types.Boolean(true)), types.Boolean(false), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -971,8 +973,8 @@ func TestEqualNode(t *testing.T) {
 			t.Parallel()
 			n := newEqualEval(tt.lhs, tt.rhs)
 			v, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
@@ -982,14 +984,14 @@ func TestNotEqualNode(t *testing.T) {
 	tests := []struct {
 		name     string
 		lhs, rhs evaler
-		result   Value
+		result   types.Value
 		err      error
 	}{
-		{"equals", newLiteralEval(Long(42)), newLiteralEval(Long(42)), Boolean(false), nil},
-		{"notEquals", newLiteralEval(Long(42)), newLiteralEval(Long(1234)), Boolean(true), nil},
-		{"leftErr", newErrorEval(errTest), newLiteralEval(zeroValue()), zeroValue(), errTest},
-		{"rightErr", newLiteralEval(zeroValue()), newErrorEval(errTest), zeroValue(), errTest},
-		{"typesNotEqual", newLiteralEval(Long(1)), newLiteralEval(Boolean(true)), Boolean(true), nil},
+		{"equals", newLiteralEval(types.Long(42)), newLiteralEval(types.Long(42)), types.Boolean(false), nil},
+		{"notEquals", newLiteralEval(types.Long(42)), newLiteralEval(types.Long(1234)), types.Boolean(true), nil},
+		{"leftErr", newErrorEval(errTest), newLiteralEval(types.ZeroValue()), types.ZeroValue(), errTest},
+		{"rightErr", newLiteralEval(types.ZeroValue()), newErrorEval(errTest), types.ZeroValue(), errTest},
+		{"typesNotEqual", newLiteralEval(types.Long(1)), newLiteralEval(types.Boolean(true)), types.Boolean(true), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -997,8 +999,8 @@ func TestNotEqualNode(t *testing.T) {
 			t.Parallel()
 			n := newNotEqualEval(tt.lhs, tt.rhs)
 			v, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
@@ -1008,27 +1010,27 @@ func TestSetLiteralNode(t *testing.T) {
 	tests := []struct {
 		name   string
 		elems  []evaler
-		result Value
+		result types.Value
 		err    error
 	}{
-		{"empty", []evaler{}, Set{}, nil},
-		{"errorNode", []evaler{newErrorEval(errTest)}, zeroValue(), errTest},
+		{"empty", []evaler{}, types.Set{}, nil},
+		{"errorNode", []evaler{newErrorEval(errTest)}, types.ZeroValue(), errTest},
 		{"nested",
 			[]evaler{
-				newLiteralEval(Boolean(true)),
-				newLiteralEval(Set{
-					Boolean(false),
-					Long(1),
+				newLiteralEval(types.Boolean(true)),
+				newLiteralEval(types.Set{
+					types.Boolean(false),
+					types.Long(1),
 				}),
-				newLiteralEval(Long(10)),
+				newLiteralEval(types.Long(10)),
 			},
-			Set{
-				Boolean(true),
-				Set{
-					Boolean(false),
-					Long(1),
+			types.Set{
+				types.Boolean(true),
+				types.Set{
+					types.Boolean(false),
+					types.Long(1),
 				},
-				Long(10),
+				types.Long(10),
 			},
 			nil},
 	}
@@ -1038,8 +1040,8 @@ func TestSetLiteralNode(t *testing.T) {
 			t.Parallel()
 			n := newSetLiteralEval(tt.elems)
 			v, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
@@ -1052,9 +1054,9 @@ func TestContainsNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Long(0)), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Long(0)), errType},
-			{"RhsError", newLiteralEval(Set{}), newErrorEval(errTest), errTest},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Long(0)), types.ErrType},
+			{"RhsError", newLiteralEval(types.Set{}), newErrorEval(errTest), errTest},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1062,28 +1064,28 @@ func TestContainsNode(t *testing.T) {
 				t.Parallel()
 				n := newContainsEval(tt.lhs, tt.rhs)
 				v, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
-				assertZeroValue(t, v)
+				testutil.AssertError(t, err, tt.err)
+				types.AssertZeroValue(t, v)
 			})
 		}
 	}
 	{
-		empty := Set{}
-		trueAndOne := Set{Boolean(true), Long(1)}
-		nested := Set{trueAndOne, Boolean(false), Long(2)}
+		empty := types.Set{}
+		trueAndOne := types.Set{types.Boolean(true), types.Long(1)}
+		nested := types.Set{trueAndOne, types.Boolean(false), types.Long(2)}
 
 		tests := []struct {
 			name     string
 			lhs, rhs evaler
 			result   bool
 		}{
-			{"empty", newLiteralEval(empty), newLiteralEval(Boolean(true)), false},
-			{"trueAndOneContainsTrue", newLiteralEval(trueAndOne), newLiteralEval(Boolean(true)), true},
-			{"trueAndOneContainsOne", newLiteralEval(trueAndOne), newLiteralEval(Long(1)), true},
-			{"trueAndOneDoesNotContainTwo", newLiteralEval(trueAndOne), newLiteralEval(Long(2)), false},
-			{"nestedContainsFalse", newLiteralEval(nested), newLiteralEval(Boolean(false)), true},
+			{"empty", newLiteralEval(empty), newLiteralEval(types.Boolean(true)), false},
+			{"trueAndOneContainsTrue", newLiteralEval(trueAndOne), newLiteralEval(types.Boolean(true)), true},
+			{"trueAndOneContainsOne", newLiteralEval(trueAndOne), newLiteralEval(types.Long(1)), true},
+			{"trueAndOneDoesNotContainTwo", newLiteralEval(trueAndOne), newLiteralEval(types.Long(2)), false},
+			{"nestedContainsFalse", newLiteralEval(nested), newLiteralEval(types.Boolean(false)), true},
 			{"nestedContainsSet", newLiteralEval(nested), newLiteralEval(trueAndOne), true},
-			{"nestedDoesNotContainTrue", newLiteralEval(nested), newLiteralEval(Boolean(true)), false},
+			{"nestedDoesNotContainTrue", newLiteralEval(nested), newLiteralEval(types.Boolean(true)), false},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1091,8 +1093,8 @@ func TestContainsNode(t *testing.T) {
 				t.Parallel()
 				n := newContainsEval(tt.lhs, tt.rhs)
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -1106,10 +1108,10 @@ func TestContainsAllNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Set{}), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Set{}), errType},
-			{"RhsError", newLiteralEval(Set{}), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Set{}), newLiteralEval(Long(0)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Set{}), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Set{}), types.ErrType},
+			{"RhsError", newLiteralEval(types.Set{}), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Set{}), newLiteralEval(types.Long(0)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1117,16 +1119,16 @@ func TestContainsAllNode(t *testing.T) {
 				t.Parallel()
 				n := newContainsAllEval(tt.lhs, tt.rhs)
 				v, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
-				assertZeroValue(t, v)
+				testutil.AssertError(t, err, tt.err)
+				types.AssertZeroValue(t, v)
 			})
 		}
 	}
 	{
-		empty := Set{}
-		trueOnly := Set{Boolean(true)}
-		trueAndOne := Set{Boolean(true), Long(1)}
-		nested := Set{trueAndOne, Boolean(false), Long(2)}
+		empty := types.Set{}
+		trueOnly := types.Set{types.Boolean(true)}
+		trueAndOne := types.Set{types.Boolean(true), types.Long(1)}
+		nested := types.Set{trueAndOne, types.Boolean(false), types.Long(2)}
 
 		tests := []struct {
 			name     string
@@ -1145,8 +1147,8 @@ func TestContainsAllNode(t *testing.T) {
 				t.Parallel()
 				n := newContainsAllEval(tt.lhs, tt.rhs)
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -1160,10 +1162,10 @@ func TestContainsAnyNode(t *testing.T) {
 			lhs, rhs evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(Set{}), errTest},
-			{"LhsTypeError", newLiteralEval(Boolean(true)), newLiteralEval(Set{}), errType},
-			{"RhsError", newLiteralEval(Set{}), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(Set{}), newLiteralEval(Long(0)), errType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Set{}), errTest},
+			{"LhsTypeError", newLiteralEval(types.Boolean(true)), newLiteralEval(types.Set{}), types.ErrType},
+			{"RhsError", newLiteralEval(types.Set{}), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Set{}), newLiteralEval(types.Long(0)), types.ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1171,17 +1173,17 @@ func TestContainsAnyNode(t *testing.T) {
 				t.Parallel()
 				n := newContainsAnyEval(tt.lhs, tt.rhs)
 				v, err := n.Eval(&evalContext{})
-				assertError(t, err, tt.err)
-				assertZeroValue(t, v)
+				testutil.AssertError(t, err, tt.err)
+				types.AssertZeroValue(t, v)
 			})
 		}
 	}
 	{
-		empty := Set{}
-		trueOnly := Set{Boolean(true)}
-		trueAndOne := Set{Boolean(true), Long(1)}
-		trueAndTwo := Set{Boolean(true), Long(2)}
-		nested := Set{trueAndOne, Boolean(false), Long(2)}
+		empty := types.Set{}
+		trueOnly := types.Set{types.Boolean(true)}
+		trueAndOne := types.Set{types.Boolean(true), types.Long(1)}
+		trueAndTwo := types.Set{types.Boolean(true), types.Long(2)}
+		nested := types.Set{trueAndOne, types.Boolean(false), types.Long(2)}
 
 		tests := []struct {
 			name     string
@@ -1202,8 +1204,8 @@ func TestContainsAnyNode(t *testing.T) {
 				t.Parallel()
 				n := newContainsAnyEval(tt.lhs, tt.rhs)
 				v, err := n.Eval(&evalContext{})
-				testutilOK(t, err)
-				assertBoolValue(t, v, tt.result)
+				testutil.OK(t, err)
+				types.AssertBoolValue(t, v, tt.result)
 			})
 		}
 	}
@@ -1214,18 +1216,18 @@ func TestRecordLiteralNode(t *testing.T) {
 	tests := []struct {
 		name   string
 		elems  map[string]evaler
-		result Value
+		result types.Value
 		err    error
 	}{
-		{"empty", map[string]evaler{}, Record{}, nil},
-		{"errorNode", map[string]evaler{"foo": newErrorEval(errTest)}, zeroValue(), errTest},
+		{"empty", map[string]evaler{}, types.Record{}, nil},
+		{"errorNode", map[string]evaler{"foo": newErrorEval(errTest)}, types.ZeroValue(), errTest},
 		{"ok",
 			map[string]evaler{
-				"foo": newLiteralEval(Boolean(true)),
-				"bar": newLiteralEval(String("baz")),
-			}, Record{
-				"foo": Boolean(true),
-				"bar": String("baz"),
+				"foo": newLiteralEval(types.Boolean(true)),
+				"bar": newLiteralEval(types.String("baz")),
+			}, types.Record{
+				"foo": types.Boolean(true),
+				"bar": types.String("baz"),
 			}, nil},
 	}
 	for _, tt := range tests {
@@ -1234,8 +1236,8 @@ func TestRecordLiteralNode(t *testing.T) {
 			t.Parallel()
 			n := newRecordLiteralEval(tt.elems)
 			v, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
@@ -1246,35 +1248,35 @@ func TestAttributeAccessNode(t *testing.T) {
 		name      string
 		object    evaler
 		attribute string
-		result    Value
+		result    types.Value
 		err       error
 	}{
-		{"RecordError", newErrorEval(errTest), "foo", zeroValue(), errTest},
-		{"RecordTypeError", newLiteralEval(Boolean(true)), "foo", zeroValue(), errType},
+		{"RecordError", newErrorEval(errTest), "foo", types.ZeroValue(), errTest},
+		{"RecordTypeError", newLiteralEval(types.Boolean(true)), "foo", types.ZeroValue(), types.ErrType},
 		{"UnknownAttribute",
-			newLiteralEval(Record{}),
+			newLiteralEval(types.Record{}),
 			"foo",
-			zeroValue(),
+			types.ZeroValue(),
 			errAttributeAccess},
 		{"KnownAttribute",
-			newLiteralEval(Record{"foo": Long(42)}),
+			newLiteralEval(types.Record{"foo": types.Long(42)}),
 			"foo",
-			Long(42),
+			types.Long(42),
 			nil},
 		{"KnownAttributeOnEntity",
-			newLiteralEval(EntityUID{"knownType", "knownID"}),
+			newLiteralEval(types.EntityUID{"knownType", "knownID"}),
 			"knownAttr",
-			Long(42),
+			types.Long(42),
 			nil},
 		{"UnknownEntity",
-			newLiteralEval(EntityUID{"unknownType", "unknownID"}),
+			newLiteralEval(types.EntityUID{"unknownType", "unknownID"}),
 			"unknownAttr",
-			zeroValue(),
+			types.ZeroValue(),
 			errEntityNotExist},
 		{"UnspecifiedEntity",
-			newLiteralEval(EntityUID{"", ""}),
+			newLiteralEval(types.EntityUID{"", ""}),
 			"knownAttr",
-			zeroValue(),
+			types.ZeroValue(),
 			errUnspecifiedEntity},
 	}
 	for _, tt := range tests {
@@ -1285,13 +1287,13 @@ func TestAttributeAccessNode(t *testing.T) {
 			v, err := n.Eval(&evalContext{
 				Entities: entitiesFromSlice([]Entity{
 					{
-						UID:        NewEntityUID("knownType", "knownID"),
-						Attributes: Record{"knownAttr": Long(42)},
+						UID:        types.NewEntityUID("knownType", "knownID"),
+						Attributes: types.Record{"knownAttr": types.Long(42)},
 					},
 				}),
 			})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
@@ -1302,35 +1304,35 @@ func TestHasNode(t *testing.T) {
 		name      string
 		record    evaler
 		attribute string
-		result    Value
+		result    types.Value
 		err       error
 	}{
-		{"RecordError", newErrorEval(errTest), "foo", zeroValue(), errTest},
-		{"RecordTypeError", newLiteralEval(Boolean(true)), "foo", zeroValue(), errType},
+		{"RecordError", newErrorEval(errTest), "foo", types.ZeroValue(), errTest},
+		{"RecordTypeError", newLiteralEval(types.Boolean(true)), "foo", types.ZeroValue(), types.ErrType},
 		{"UnknownAttribute",
-			newLiteralEval(Record{}),
+			newLiteralEval(types.Record{}),
 			"foo",
-			Boolean(false),
+			types.Boolean(false),
 			nil},
 		{"KnownAttribute",
-			newLiteralEval(Record{"foo": Long(42)}),
+			newLiteralEval(types.Record{"foo": types.Long(42)}),
 			"foo",
-			Boolean(true),
+			types.Boolean(true),
 			nil},
 		{"KnownAttributeOnEntity",
-			newLiteralEval(EntityUID{"knownType", "knownID"}),
+			newLiteralEval(types.EntityUID{"knownType", "knownID"}),
 			"knownAttr",
-			Boolean(true),
+			types.Boolean(true),
 			nil},
 		{"UnknownAttributeOnEntity",
-			newLiteralEval(EntityUID{"knownType", "knownID"}),
+			newLiteralEval(types.EntityUID{"knownType", "knownID"}),
 			"unknownAttr",
-			Boolean(false),
+			types.Boolean(false),
 			nil},
 		{"UnknownEntity",
-			newLiteralEval(EntityUID{"unknownType", "unknownID"}),
+			newLiteralEval(types.EntityUID{"unknownType", "unknownID"}),
 			"unknownAttr",
-			Boolean(false),
+			types.Boolean(false),
 			nil},
 	}
 	for _, tt := range tests {
@@ -1341,13 +1343,13 @@ func TestHasNode(t *testing.T) {
 			v, err := n.Eval(&evalContext{
 				Entities: entitiesFromSlice([]Entity{
 					{
-						UID:        NewEntityUID("knownType", "knownID"),
-						Attributes: Record{"knownAttr": Long(42)},
+						UID:        types.NewEntityUID("knownType", "knownID"),
+						Attributes: types.Record{"knownAttr": types.Long(42)},
 					},
 				}),
 			})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
@@ -1358,50 +1360,50 @@ func TestLikeNode(t *testing.T) {
 		name    string
 		str     evaler
 		pattern string
-		result  Value
+		result  types.Value
 		err     error
 	}{
-		{"leftError", newErrorEval(errTest), `"foo"`, zeroValue(), errTest},
-		{"leftTypeError", newLiteralEval(Boolean(true)), `"foo"`, zeroValue(), errType},
-		{"noMatch", newLiteralEval(String("test")), `"zebra"`, Boolean(false), nil},
-		{"match", newLiteralEval(String("test")), `"*es*"`, Boolean(true), nil},
+		{"leftError", newErrorEval(errTest), `"foo"`, types.ZeroValue(), errTest},
+		{"leftTypeError", newLiteralEval(types.Boolean(true)), `"foo"`, types.ZeroValue(), types.ErrType},
+		{"noMatch", newLiteralEval(types.String("test")), `"zebra"`, types.Boolean(false), nil},
+		{"match", newLiteralEval(types.String("test")), `"*es*"`, types.Boolean(true), nil},
 
-		{"case-1", newLiteralEval(String("eggs")), `"ham*"`, Boolean(false), nil},
-		{"case-2", newLiteralEval(String("eggs")), `"*ham"`, Boolean(false), nil},
-		{"case-3", newLiteralEval(String("eggs")), `"*ham*"`, Boolean(false), nil},
-		{"case-4", newLiteralEval(String("ham and eggs")), `"ham*"`, Boolean(true), nil},
-		{"case-5", newLiteralEval(String("ham and eggs")), `"*ham"`, Boolean(false), nil},
-		{"case-6", newLiteralEval(String("ham and eggs")), `"*ham*"`, Boolean(true), nil},
-		{"case-7", newLiteralEval(String("ham and eggs")), `"*h*a*m*"`, Boolean(true), nil},
-		{"case-8", newLiteralEval(String("eggs and ham")), `"ham*"`, Boolean(false), nil},
-		{"case-9", newLiteralEval(String("eggs and ham")), `"*ham"`, Boolean(true), nil},
-		{"case-10", newLiteralEval(String("eggs, ham, and spinach")), `"ham*"`, Boolean(false), nil},
-		{"case-11", newLiteralEval(String("eggs, ham, and spinach")), `"*ham"`, Boolean(false), nil},
-		{"case-12", newLiteralEval(String("eggs, ham, and spinach")), `"*ham*"`, Boolean(true), nil},
-		{"case-13", newLiteralEval(String("Gotham")), `"ham*"`, Boolean(false), nil},
-		{"case-14", newLiteralEval(String("Gotham")), `"*ham"`, Boolean(true), nil},
-		{"case-15", newLiteralEval(String("ham")), `"ham"`, Boolean(true), nil},
-		{"case-16", newLiteralEval(String("ham")), `"ham*"`, Boolean(true), nil},
-		{"case-17", newLiteralEval(String("ham")), `"*ham"`, Boolean(true), nil},
-		{"case-18", newLiteralEval(String("ham")), `"*h*a*m*"`, Boolean(true), nil},
-		{"case-19", newLiteralEval(String("ham and ham")), `"ham*"`, Boolean(true), nil},
-		{"case-20", newLiteralEval(String("ham and ham")), `"*ham"`, Boolean(true), nil},
-		{"case-21", newLiteralEval(String("ham")), `"*ham and eggs*"`, Boolean(false), nil},
-		{"case-22", newLiteralEval(String("\\afterslash")), `"\\*"`, Boolean(true), nil},
-		{"case-23", newLiteralEval(String("string\\with\\backslashes")), `"string\\with\\backslashes"`, Boolean(true), nil},
-		{"case-24", newLiteralEval(String("string\\with\\backslashes")), `"string*with*backslashes"`, Boolean(true), nil},
-		{"case-25", newLiteralEval(String("string*with*stars")), `"string\*with\*stars"`, Boolean(true), nil},
+		{"case-1", newLiteralEval(types.String("eggs")), `"ham*"`, types.Boolean(false), nil},
+		{"case-2", newLiteralEval(types.String("eggs")), `"*ham"`, types.Boolean(false), nil},
+		{"case-3", newLiteralEval(types.String("eggs")), `"*ham*"`, types.Boolean(false), nil},
+		{"case-4", newLiteralEval(types.String("ham and eggs")), `"ham*"`, types.Boolean(true), nil},
+		{"case-5", newLiteralEval(types.String("ham and eggs")), `"*ham"`, types.Boolean(false), nil},
+		{"case-6", newLiteralEval(types.String("ham and eggs")), `"*ham*"`, types.Boolean(true), nil},
+		{"case-7", newLiteralEval(types.String("ham and eggs")), `"*h*a*m*"`, types.Boolean(true), nil},
+		{"case-8", newLiteralEval(types.String("eggs and ham")), `"ham*"`, types.Boolean(false), nil},
+		{"case-9", newLiteralEval(types.String("eggs and ham")), `"*ham"`, types.Boolean(true), nil},
+		{"case-10", newLiteralEval(types.String("eggs, ham, and spinach")), `"ham*"`, types.Boolean(false), nil},
+		{"case-11", newLiteralEval(types.String("eggs, ham, and spinach")), `"*ham"`, types.Boolean(false), nil},
+		{"case-12", newLiteralEval(types.String("eggs, ham, and spinach")), `"*ham*"`, types.Boolean(true), nil},
+		{"case-13", newLiteralEval(types.String("Gotham")), `"ham*"`, types.Boolean(false), nil},
+		{"case-14", newLiteralEval(types.String("Gotham")), `"*ham"`, types.Boolean(true), nil},
+		{"case-15", newLiteralEval(types.String("ham")), `"ham"`, types.Boolean(true), nil},
+		{"case-16", newLiteralEval(types.String("ham")), `"ham*"`, types.Boolean(true), nil},
+		{"case-17", newLiteralEval(types.String("ham")), `"*ham"`, types.Boolean(true), nil},
+		{"case-18", newLiteralEval(types.String("ham")), `"*h*a*m*"`, types.Boolean(true), nil},
+		{"case-19", newLiteralEval(types.String("ham and ham")), `"ham*"`, types.Boolean(true), nil},
+		{"case-20", newLiteralEval(types.String("ham and ham")), `"*ham"`, types.Boolean(true), nil},
+		{"case-21", newLiteralEval(types.String("ham")), `"*ham and eggs*"`, types.Boolean(false), nil},
+		{"case-22", newLiteralEval(types.String("\\afterslash")), `"\\*"`, types.Boolean(true), nil},
+		{"case-23", newLiteralEval(types.String("string\\with\\backslashes")), `"string\\with\\backslashes"`, types.Boolean(true), nil},
+		{"case-24", newLiteralEval(types.String("string\\with\\backslashes")), `"string*with*backslashes"`, types.Boolean(true), nil},
+		{"case-25", newLiteralEval(types.String("string*with*stars")), `"string\*with\*stars"`, types.Boolean(true), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			pat, err := parser.NewPattern(tt.pattern)
-			testutilOK(t, err)
+			testutil.OK(t, err)
 			n := newLikeEval(tt.str, pat)
 			v, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
@@ -1412,24 +1414,24 @@ func TestVariableNode(t *testing.T) {
 		name     string
 		context  evalContext
 		variable variableName
-		result   Value
+		result   types.Value
 	}{
 		{"principal",
-			evalContext{Principal: String("foo")},
+			evalContext{Principal: types.String("foo")},
 			variableNamePrincipal,
-			String("foo")},
+			types.String("foo")},
 		{"action",
-			evalContext{Action: String("bar")},
+			evalContext{Action: types.String("bar")},
 			variableNameAction,
-			String("bar")},
+			types.String("bar")},
 		{"resource",
-			evalContext{Resource: String("baz")},
+			evalContext{Resource: types.String("baz")},
 			variableNameResource,
-			String("baz")},
+			types.String("baz")},
 		{"context",
-			evalContext{Context: String("frob")},
+			evalContext{Context: types.String("frob")},
 			variableNameContext,
-			String("frob")},
+			types.String("frob")},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -1437,8 +1439,8 @@ func TestVariableNode(t *testing.T) {
 			t.Parallel()
 			n := newVariableEval(tt.variable)
 			v, err := n.Eval(&tt.context)
-			testutilOK(t, err)
-			assertValue(t, v, tt.result)
+			testutil.OK(t, err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
@@ -1530,13 +1532,13 @@ func TestEntityIn(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rhs := map[EntityUID]struct{}{}
+			rhs := map[types.EntityUID]struct{}{}
 			for _, v := range tt.rhs {
 				rhs[strEnt(v)] = struct{}{}
 			}
 			entities := Entities{}
 			for k, p := range tt.parents {
-				var ps []EntityUID
+				var ps []types.EntityUID
 				for _, pp := range p {
 					ps = append(ps, strEnt(pp))
 				}
@@ -1547,7 +1549,7 @@ func TestEntityIn(t *testing.T) {
 				}
 			}
 			res := entityIn(strEnt(tt.lhs), rhs, entities)
-			testutilEquals(t, res, tt.result)
+			testutil.Equals(t, res, tt.result)
 		})
 	}
 	t.Run("exponentialWithoutCaching", func(t *testing.T) {
@@ -1557,24 +1559,24 @@ func TestEntityIn(t *testing.T) {
 
 		entities := Entities{}
 		for i := 0; i < 100; i++ {
-			p := []EntityUID{
-				NewEntityUID(fmt.Sprint(i+1), "1"),
-				NewEntityUID(fmt.Sprint(i+1), "2"),
+			p := []types.EntityUID{
+				types.NewEntityUID(fmt.Sprint(i+1), "1"),
+				types.NewEntityUID(fmt.Sprint(i+1), "2"),
 			}
-			uid1 := NewEntityUID(fmt.Sprint(i), "1")
+			uid1 := types.NewEntityUID(fmt.Sprint(i), "1")
 			entities[uid1] = Entity{
 				UID:     uid1,
 				Parents: p,
 			}
-			uid2 := NewEntityUID(fmt.Sprint(i), "2")
+			uid2 := types.NewEntityUID(fmt.Sprint(i), "2")
 			entities[uid2] = Entity{
 				UID:     uid2,
 				Parents: p,
 			}
 
 		}
-		res := entityIn(NewEntityUID("0", "1"), map[EntityUID]struct{}{NewEntityUID("0", "3"): {}}, entities)
-		testutilEquals(t, res, false)
+		res := entityIn(types.NewEntityUID("0", "1"), map[types.EntityUID]struct{}{types.NewEntityUID("0", "3"): {}}, entities)
+		testutil.Equals(t, res, false)
 	})
 }
 
@@ -1583,23 +1585,23 @@ func TestIsNode(t *testing.T) {
 	tests := []struct {
 		name     string
 		lhs, rhs evaler
-		result   Value
+		result   types.Value
 		err      error
 	}{
-		{"happyEq", newLiteralEval(NewEntityUID("X", "z")), newLiteralEval(path("X")), Boolean(true), nil},
-		{"happyNeq", newLiteralEval(NewEntityUID("X", "z")), newLiteralEval(path("Y")), Boolean(false), nil},
-		{"badLhs", newLiteralEval(Long(42)), newLiteralEval(path("X")), zeroValue(), errType},
-		{"badRhs", newLiteralEval(NewEntityUID("X", "z")), newLiteralEval(Long(42)), zeroValue(), errType},
-		{"errLhs", newErrorEval(errTest), newLiteralEval(path("X")), zeroValue(), errTest},
-		{"errRhs", newLiteralEval(NewEntityUID("X", "z")), newErrorEval(errTest), zeroValue(), errTest},
+		{"happyEq", newLiteralEval(types.NewEntityUID("X", "z")), newLiteralEval(types.Path("X")), types.Boolean(true), nil},
+		{"happyNeq", newLiteralEval(types.NewEntityUID("X", "z")), newLiteralEval(types.Path("Y")), types.Boolean(false), nil},
+		{"badLhs", newLiteralEval(types.Long(42)), newLiteralEval(types.Path("X")), types.ZeroValue(), types.ErrType},
+		{"badRhs", newLiteralEval(types.NewEntityUID("X", "z")), newLiteralEval(types.Long(42)), types.ZeroValue(), types.ErrType},
+		{"errLhs", newErrorEval(errTest), newLiteralEval(types.Path("X")), types.ZeroValue(), errTest},
+		{"errRhs", newLiteralEval(types.NewEntityUID("X", "z")), newErrorEval(errTest), types.ZeroValue(), errTest},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got, err := newIsEval(tt.lhs, tt.rhs).Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			assertValue(t, got, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, got, tt.result)
 		})
 	}
 }
@@ -1610,89 +1612,89 @@ func TestInNode(t *testing.T) {
 		name     string
 		lhs, rhs evaler
 		parents  map[string][]string
-		result   Value
+		result   types.Value
 		err      error
 	}{
 		{
 			"LhsError",
 			newErrorEval(errTest),
-			newLiteralEval(Set{}),
+			newLiteralEval(types.Set{}),
 			map[string][]string{},
-			zeroValue(),
+			types.ZeroValue(),
 			errTest,
 		},
 		{
 			"LhsTypeError",
-			newLiteralEval(String("foo")),
-			newLiteralEval(Set{}),
+			newLiteralEval(types.String("foo")),
+			newLiteralEval(types.Set{}),
 			map[string][]string{},
-			zeroValue(),
-			errType,
+			types.ZeroValue(),
+			types.ErrType,
 		},
 		{
 			"RhsError",
-			newLiteralEval(EntityUID{"human", "joe"}),
+			newLiteralEval(types.EntityUID{"human", "joe"}),
 			newErrorEval(errTest),
 			map[string][]string{},
-			zeroValue(),
+			types.ZeroValue(),
 			errTest,
 		},
 		{
 			"RhsTypeError1",
-			newLiteralEval(EntityUID{"human", "joe"}),
-			newLiteralEval(String("foo")),
+			newLiteralEval(types.EntityUID{"human", "joe"}),
+			newLiteralEval(types.String("foo")),
 			map[string][]string{},
-			zeroValue(),
-			errType,
+			types.ZeroValue(),
+			types.ErrType,
 		},
 		{
 			"RhsTypeError2",
-			newLiteralEval(EntityUID{"human", "joe"}),
-			newLiteralEval(Set{
-				String("foo"),
+			newLiteralEval(types.EntityUID{"human", "joe"}),
+			newLiteralEval(types.Set{
+				types.String("foo"),
 			}),
 			map[string][]string{},
-			zeroValue(),
-			errType,
+			types.ZeroValue(),
+			types.ErrType,
 		},
 		{
 			"Reflexive1",
-			newLiteralEval(EntityUID{"human", "joe"}),
-			newLiteralEval(EntityUID{"human", "joe"}),
+			newLiteralEval(types.EntityUID{"human", "joe"}),
+			newLiteralEval(types.EntityUID{"human", "joe"}),
 			map[string][]string{},
-			Boolean(true),
+			types.Boolean(true),
 			nil,
 		},
 		{
 			"Reflexive2",
-			newLiteralEval(EntityUID{"human", "joe"}),
-			newLiteralEval(Set{
-				EntityUID{"human", "joe"},
+			newLiteralEval(types.EntityUID{"human", "joe"}),
+			newLiteralEval(types.Set{
+				types.EntityUID{"human", "joe"},
 			}),
 			map[string][]string{},
-			Boolean(true),
+			types.Boolean(true),
 			nil,
 		},
 		{
 			"BasicTrue",
-			newLiteralEval(EntityUID{"human", "joe"}),
-			newLiteralEval(EntityUID{"kingdom", "animal"}),
+			newLiteralEval(types.EntityUID{"human", "joe"}),
+			newLiteralEval(types.EntityUID{"kingdom", "animal"}),
 			map[string][]string{
 				`human::"joe"`:     {`species::"human"`},
 				`species::"human"`: {`kingdom::"animal"`},
 			},
-			Boolean(true),
+			types.Boolean(true),
 			nil,
 		},
 		{
 			"BasicFalse",
-			newLiteralEval(EntityUID{"human", "joe"}),
-			newLiteralEval(EntityUID{"kingdom", "plant"}),
+			newLiteralEval(types.EntityUID{"human", "joe"}),
+			newLiteralEval(types.EntityUID{"kingdom", "plant"}),
 			map[string][]string{
 				`human::"joe"`:     {`species::"human"`},
 				`species::"human"`: {`kingdom::"animal"`},
 			},
-			Boolean(false),
+			types.Boolean(false),
 			nil,
 		},
 	}
@@ -1703,7 +1705,7 @@ func TestInNode(t *testing.T) {
 			n := newInEval(tt.lhs, tt.rhs)
 			entities := Entities{}
 			for k, p := range tt.parents {
-				var ps []EntityUID
+				var ps []types.EntityUID
 				for _, pp := range p {
 					ps = append(ps, strEnt(pp))
 				}
@@ -1715,8 +1717,8 @@ func TestInNode(t *testing.T) {
 			}
 			evalContext := evalContext{Entities: entities}
 			v, err := n.Eval(&evalContext)
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
@@ -1726,13 +1728,13 @@ func TestDecimalLiteralNode(t *testing.T) {
 	tests := []struct {
 		name   string
 		arg    evaler
-		result Value
+		result types.Value
 		err    error
 	}{
-		{"Error", newErrorEval(errTest), zeroValue(), errTest},
-		{"TypeError", newLiteralEval(Long(1)), zeroValue(), errType},
-		{"DecimalError", newLiteralEval(String("frob")), zeroValue(), errDecimal},
-		{"Success", newLiteralEval(String("1.0")), Decimal(10000), nil},
+		{"Error", newErrorEval(errTest), types.ZeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), types.ZeroValue(), types.ErrType},
+		{"DecimalError", newLiteralEval(types.String("frob")), types.ZeroValue(), types.ErrDecimal},
+		{"Success", newLiteralEval(types.String("1.0")), types.Decimal(10000), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -1740,26 +1742,26 @@ func TestDecimalLiteralNode(t *testing.T) {
 			t.Parallel()
 			n := newDecimalLiteralEval(tt.arg)
 			v, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
 
 func TestIPLiteralNode(t *testing.T) {
 	t.Parallel()
-	ipv6Loopback, err := ParseIPAddr("::1")
-	testutilOK(t, err)
+	ipv6Loopback, err := types.ParseIPAddr("::1")
+	testutil.OK(t, err)
 	tests := []struct {
 		name   string
 		arg    evaler
-		result Value
+		result types.Value
 		err    error
 	}{
-		{"Error", newErrorEval(errTest), zeroValue(), errTest},
-		{"TypeError", newLiteralEval(Long(1)), zeroValue(), errType},
-		{"IPError", newLiteralEval(String("not-an-IP-address")), zeroValue(), errIP},
-		{"Success", newLiteralEval(String("::1/128")), ipv6Loopback, nil},
+		{"Error", newErrorEval(errTest), types.ZeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), types.ZeroValue(), types.ErrType},
+		{"IPError", newLiteralEval(types.String("not-an-IP-address")), types.ZeroValue(), types.ErrIP},
+		{"Success", newLiteralEval(types.String("::1/128")), ipv6Loopback, nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -1767,37 +1769,37 @@ func TestIPLiteralNode(t *testing.T) {
 			t.Parallel()
 			n := newIPLiteralEval(tt.arg)
 			v, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
 
 func TestIPTestNode(t *testing.T) {
 	t.Parallel()
-	ipv4Loopback, err := ParseIPAddr("127.0.0.1")
-	testutilOK(t, err)
-	ipv6Loopback, err := ParseIPAddr("::1")
-	testutilOK(t, err)
-	ipv4Multicast, err := ParseIPAddr("224.0.0.1")
-	testutilOK(t, err)
+	ipv4Loopback, err := types.ParseIPAddr("127.0.0.1")
+	testutil.OK(t, err)
+	ipv6Loopback, err := types.ParseIPAddr("::1")
+	testutil.OK(t, err)
+	ipv4Multicast, err := types.ParseIPAddr("224.0.0.1")
+	testutil.OK(t, err)
 	tests := []struct {
 		name   string
 		lhs    evaler
 		rhs    ipTestType
-		result Value
+		result types.Value
 		err    error
 	}{
-		{"Error", newErrorEval(errTest), ipTestIPv4, zeroValue(), errTest},
-		{"TypeError", newLiteralEval(Long(1)), ipTestIPv4, zeroValue(), errType},
-		{"IPv4True", newLiteralEval(ipv4Loopback), ipTestIPv4, Boolean(true), nil},
-		{"IPv4False", newLiteralEval(ipv6Loopback), ipTestIPv4, Boolean(false), nil},
-		{"IPv6True", newLiteralEval(ipv6Loopback), ipTestIPv6, Boolean(true), nil},
-		{"IPv6False", newLiteralEval(ipv4Loopback), ipTestIPv6, Boolean(false), nil},
-		{"LoopbackTrue", newLiteralEval(ipv6Loopback), ipTestLoopback, Boolean(true), nil},
-		{"LoopbackFalse", newLiteralEval(ipv4Multicast), ipTestLoopback, Boolean(false), nil},
-		{"MulticastTrue", newLiteralEval(ipv4Multicast), ipTestMulticast, Boolean(true), nil},
-		{"MulticastFalse", newLiteralEval(ipv6Loopback), ipTestMulticast, Boolean(false), nil},
+		{"Error", newErrorEval(errTest), ipTestIPv4, types.ZeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), ipTestIPv4, types.ZeroValue(), types.ErrType},
+		{"IPv4True", newLiteralEval(ipv4Loopback), ipTestIPv4, types.Boolean(true), nil},
+		{"IPv4False", newLiteralEval(ipv6Loopback), ipTestIPv4, types.Boolean(false), nil},
+		{"IPv6True", newLiteralEval(ipv6Loopback), ipTestIPv6, types.Boolean(true), nil},
+		{"IPv6False", newLiteralEval(ipv4Loopback), ipTestIPv6, types.Boolean(false), nil},
+		{"LoopbackTrue", newLiteralEval(ipv6Loopback), ipTestLoopback, types.Boolean(true), nil},
+		{"LoopbackFalse", newLiteralEval(ipv4Multicast), ipTestLoopback, types.Boolean(false), nil},
+		{"MulticastTrue", newLiteralEval(ipv4Multicast), ipTestMulticast, types.Boolean(true), nil},
+		{"MulticastFalse", newLiteralEval(ipv6Loopback), ipTestMulticast, types.Boolean(false), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -1805,37 +1807,37 @@ func TestIPTestNode(t *testing.T) {
 			t.Parallel()
 			n := newIPTestEval(tt.lhs, tt.rhs)
 			v, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
 
 func TestIPIsInRangeNode(t *testing.T) {
 	t.Parallel()
-	ipv4A, err := ParseIPAddr("1.2.3.4")
-	testutilOK(t, err)
-	ipv4B, err := ParseIPAddr("1.2.3.0/24")
-	testutilOK(t, err)
-	ipv4C, err := ParseIPAddr("1.2.4.0/24")
-	testutilOK(t, err)
+	ipv4A, err := types.ParseIPAddr("1.2.3.4")
+	testutil.OK(t, err)
+	ipv4B, err := types.ParseIPAddr("1.2.3.0/24")
+	testutil.OK(t, err)
+	ipv4C, err := types.ParseIPAddr("1.2.4.0/24")
+	testutil.OK(t, err)
 	tests := []struct {
 		name     string
 		lhs, rhs evaler
-		result   Value
+		result   types.Value
 		err      error
 	}{
-		{"LhsError", newErrorEval(errTest), newLiteralEval(ipv4A), zeroValue(), errTest},
-		{"LhsTypeError", newLiteralEval(Long(1)), newLiteralEval(ipv4A), zeroValue(), errType},
-		{"RhsError", newLiteralEval(ipv4A), newErrorEval(errTest), zeroValue(), errTest},
-		{"RhsTypeError", newLiteralEval(ipv4A), newLiteralEval(Long(1)), zeroValue(), errType},
-		{"AA", newLiteralEval(ipv4A), newLiteralEval(ipv4A), Boolean(true), nil},
-		{"AB", newLiteralEval(ipv4A), newLiteralEval(ipv4B), Boolean(true), nil},
-		{"BA", newLiteralEval(ipv4B), newLiteralEval(ipv4A), Boolean(false), nil},
-		{"AC", newLiteralEval(ipv4A), newLiteralEval(ipv4C), Boolean(false), nil},
-		{"CA", newLiteralEval(ipv4C), newLiteralEval(ipv4A), Boolean(false), nil},
-		{"BC", newLiteralEval(ipv4B), newLiteralEval(ipv4C), Boolean(false), nil},
-		{"CB", newLiteralEval(ipv4C), newLiteralEval(ipv4B), Boolean(false), nil},
+		{"LhsError", newErrorEval(errTest), newLiteralEval(ipv4A), types.ZeroValue(), errTest},
+		{"LhsTypeError", newLiteralEval(types.Long(1)), newLiteralEval(ipv4A), types.ZeroValue(), types.ErrType},
+		{"RhsError", newLiteralEval(ipv4A), newErrorEval(errTest), types.ZeroValue(), errTest},
+		{"RhsTypeError", newLiteralEval(ipv4A), newLiteralEval(types.Long(1)), types.ZeroValue(), types.ErrType},
+		{"AA", newLiteralEval(ipv4A), newLiteralEval(ipv4A), types.Boolean(true), nil},
+		{"AB", newLiteralEval(ipv4A), newLiteralEval(ipv4B), types.Boolean(true), nil},
+		{"BA", newLiteralEval(ipv4B), newLiteralEval(ipv4A), types.Boolean(false), nil},
+		{"AC", newLiteralEval(ipv4A), newLiteralEval(ipv4C), types.Boolean(false), nil},
+		{"CA", newLiteralEval(ipv4C), newLiteralEval(ipv4A), types.Boolean(false), nil},
+		{"BC", newLiteralEval(ipv4B), newLiteralEval(ipv4C), types.Boolean(false), nil},
+		{"CB", newLiteralEval(ipv4C), newLiteralEval(ipv4B), types.Boolean(false), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -1843,8 +1845,8 @@ func TestIPIsInRangeNode(t *testing.T) {
 			t.Parallel()
 			n := newIPIsInRangeEval(tt.lhs, tt.rhs)
 			v, err := n.Eval(&evalContext{})
-			assertError(t, err, tt.err)
-			assertValue(t, v, tt.result)
+			testutil.AssertError(t, err, tt.err)
+			types.AssertValue(t, v, tt.result)
 		})
 	}
 }
@@ -1853,27 +1855,27 @@ func TestCedarString(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name       string
-		in         Value
+		in         types.Value
 		wantString string
 		wantCedar  string
 	}{
-		{"string", String("hello"), `hello`, `"hello"`},
-		{"number", Long(42), `42`, `42`},
-		{"bool", Boolean(true), `true`, `true`},
-		{"record", Record{"a": Long(42), "b": Long(43)}, `{"a":42,"b":43}`, `{"a":42,"b":43}`},
-		{"set", Set{Long(42), Long(43)}, `[42,43]`, `[42,43]`},
-		{"singleIP", IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
-		{"ipPrefix", IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
-		{"decimal", Decimal(12345678), `1234.5678`, `decimal("1234.5678")`},
+		{"string", types.String("hello"), `hello`, `"hello"`},
+		{"number", types.Long(42), `42`, `42`},
+		{"bool", types.Boolean(true), `true`, `true`},
+		{"record", types.Record{"a": types.Long(42), "b": types.Long(43)}, `{"a":42,"b":43}`, `{"a":42,"b":43}`},
+		{"set", types.Set{types.Long(42), types.Long(43)}, `[42,43]`, `[42,43]`},
+		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
+		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
+		{"decimal", types.Decimal(12345678), `1234.5678`, `decimal("1234.5678")`},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			gotString := tt.in.String()
-			testutilEquals(t, gotString, tt.wantString)
+			testutil.Equals(t, gotString, tt.wantString)
 			gotCedar := tt.in.Cedar()
-			testutilEquals(t, gotCedar, tt.wantCedar)
+			testutil.Equals(t, gotCedar, tt.wantCedar)
 		})
 	}
 }

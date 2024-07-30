@@ -1,48 +1,50 @@
-package cedar
+package types
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/cedar-policy/cedar-go/testutil"
 )
 
 func TestBool(t *testing.T) {
 	t.Parallel()
 	t.Run("roundTrip", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToBool(Boolean(true))
-		testutilOK(t, err)
-		testutilEquals(t, v, true)
+		v, err := ValueToBool(Boolean(true))
+		testutil.OK(t, err)
+		testutil.Equals(t, v, true)
 	})
 
 	t.Run("toBoolOnNonBool", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToBool(Long(0))
-		assertError(t, err, errType)
-		testutilEquals(t, v, false)
+		v, err := ValueToBool(Long(0))
+		testutil.AssertError(t, err, ErrType)
+		testutil.Equals(t, v, false)
 	})
 
-	t.Run("equal", func(t *testing.T) {
+	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		t1 := Boolean(true)
 		t2 := Boolean(true)
 		f := Boolean(false)
 		zero := Long(0)
-		testutilFatalIf(t, !t1.equal(t1), "%v not equal to %v", t1, t1)
-		testutilFatalIf(t, !t1.equal(t2), "%v not equal to %v", t1, t2)
-		testutilFatalIf(t, t1.equal(f), "%v equal to %v", t1, f)
-		testutilFatalIf(t, f.equal(t1), "%v equal to %v", f, t1)
-		testutilFatalIf(t, f.equal(zero), "%v equal to %v", f, zero)
+		testutil.FatalIf(t, !t1.Equal(t1), "%v not Equal to %v", t1, t1)
+		testutil.FatalIf(t, !t1.Equal(t2), "%v not Equal to %v", t1, t2)
+		testutil.FatalIf(t, t1.Equal(f), "%v Equal to %v", t1, f)
+		testutil.FatalIf(t, f.Equal(t1), "%v Equal to %v", f, t1)
+		testutil.FatalIf(t, f.Equal(zero), "%v Equal to %v", f, zero)
 	})
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		assertValueString(t, Boolean(true), "true")
+		AssertValueString(t, Boolean(true), "true")
 	})
 
-	t.Run("typeName", func(t *testing.T) {
+	t.Run("TypeName", func(t *testing.T) {
 		t.Parallel()
-		tn := Boolean(true).typeName()
-		testutilEquals(t, tn, "bool")
+		tn := Boolean(true).TypeName()
+		testutil.Equals(t, tn, "bool")
 	})
 }
 
@@ -50,40 +52,40 @@ func TestLong(t *testing.T) {
 	t.Parallel()
 	t.Run("roundTrip", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToLong(Long(42))
-		testutilOK(t, err)
-		testutilEquals(t, v, 42)
+		v, err := ValueToLong(Long(42))
+		testutil.OK(t, err)
+		testutil.Equals(t, v, 42)
 	})
 
 	t.Run("toLongOnNonLong", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToLong(Boolean(true))
-		assertError(t, err, errType)
-		testutilEquals(t, v, 0)
+		v, err := ValueToLong(Boolean(true))
+		testutil.AssertError(t, err, ErrType)
+		testutil.Equals(t, v, 0)
 	})
 
-	t.Run("equal", func(t *testing.T) {
+	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		one := Long(1)
 		one2 := Long(1)
 		zero := Long(0)
 		f := Boolean(false)
-		testutilFatalIf(t, !one.equal(one), "%v not equal to %v", one, one)
-		testutilFatalIf(t, !one.equal(one2), "%v not equal to %v", one, one2)
-		testutilFatalIf(t, one.equal(zero), "%v equal to %v", one, zero)
-		testutilFatalIf(t, zero.equal(one), "%v equal to %v", zero, one)
-		testutilFatalIf(t, zero.equal(f), "%v equal to %v", zero, f)
+		testutil.FatalIf(t, !one.Equal(one), "%v not Equal to %v", one, one)
+		testutil.FatalIf(t, !one.Equal(one2), "%v not Equal to %v", one, one2)
+		testutil.FatalIf(t, one.Equal(zero), "%v Equal to %v", one, zero)
+		testutil.FatalIf(t, zero.Equal(one), "%v Equal to %v", zero, one)
+		testutil.FatalIf(t, zero.Equal(f), "%v Equal to %v", zero, f)
 	})
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		assertValueString(t, Long(1), "1")
+		AssertValueString(t, Long(1), "1")
 	})
 
-	t.Run("typeName", func(t *testing.T) {
+	t.Run("TypeName", func(t *testing.T) {
 		t.Parallel()
-		tn := Long(1).typeName()
-		testutilEquals(t, tn, "long")
+		tn := Long(1).TypeName()
+		testutil.Equals(t, tn, "long")
 	})
 }
 
@@ -91,38 +93,38 @@ func TestString(t *testing.T) {
 	t.Parallel()
 	t.Run("roundTrip", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToString(String("hello"))
-		testutilOK(t, err)
-		testutilEquals(t, v, "hello")
+		v, err := ValueToString(String("hello"))
+		testutil.OK(t, err)
+		testutil.Equals(t, v, "hello")
 	})
 
 	t.Run("toStringOnNonString", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToString(Boolean(true))
-		assertError(t, err, errType)
-		testutilEquals(t, v, "")
+		v, err := ValueToString(Boolean(true))
+		testutil.AssertError(t, err, ErrType)
+		testutil.Equals(t, v, "")
 	})
 
-	t.Run("equal", func(t *testing.T) {
+	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		hello := String("hello")
 		hello2 := String("hello")
 		goodbye := String("goodbye")
-		testutilFatalIf(t, !hello.equal(hello), "%v not equal to %v", hello, hello)
-		testutilFatalIf(t, !hello.equal(hello2), "%v not equal to %v", hello, hello2)
-		testutilFatalIf(t, hello.equal(goodbye), "%v equal to %v", hello, goodbye)
+		testutil.FatalIf(t, !hello.Equal(hello), "%v not Equal to %v", hello, hello)
+		testutil.FatalIf(t, !hello.Equal(hello2), "%v not Equal to %v", hello, hello2)
+		testutil.FatalIf(t, hello.Equal(goodbye), "%v Equal to %v", hello, goodbye)
 	})
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		assertValueString(t, String("hello"), `hello`)
-		assertValueString(t, String("hello\ngoodbye"), "hello\ngoodbye")
+		AssertValueString(t, String("hello"), `hello`)
+		AssertValueString(t, String("hello\ngoodbye"), "hello\ngoodbye")
 	})
 
-	t.Run("typeName", func(t *testing.T) {
+	t.Run("TypeName", func(t *testing.T) {
 		t.Parallel()
-		tn := String("hello").typeName()
-		testutilEquals(t, tn, "string")
+		tn := String("hello").TypeName()
+		testutil.Equals(t, tn, "string")
 	})
 }
 
@@ -131,20 +133,20 @@ func TestSet(t *testing.T) {
 	t.Run("roundTrip", func(t *testing.T) {
 		t.Parallel()
 		v := Set{Boolean(true), Long(1)}
-		slice, err := valueToSet(v)
-		testutilOK(t, err)
+		slice, err := ValueToSet(v)
+		testutil.OK(t, err)
 		v2 := slice
-		testutilFatalIf(t, !v.equal(v2), "got %v want %v", v, v2)
+		testutil.FatalIf(t, !v.Equal(v2), "got %v want %v", v, v2)
 	})
 
 	t.Run("ToSetOnNonSet", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToSet(Boolean(true))
-		assertError(t, err, errType)
-		testutilEquals(t, v, nil)
+		v, err := ValueToSet(Boolean(true))
+		testutil.AssertError(t, err, ErrType)
+		testutil.Equals(t, v, nil)
 	})
 
-	t.Run("equal", func(t *testing.T) {
+	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		empty := Set{}
 		empty2 := Set{}
@@ -162,34 +164,34 @@ func TestSet(t *testing.T) {
 			Long(3), Long(2), Long(2), Long(1),
 		}
 
-		testutilFatalIf(t, !empty.Equals(empty), "%v not equal to %v", empty, empty)
-		testutilFatalIf(t, !empty.Equals(empty2), "%v not equal to %v", empty, empty2)
-		testutilFatalIf(t, !oneTrue.Equals(oneTrue), "%v not equal to %v", oneTrue, oneTrue)
-		testutilFatalIf(t, !oneTrue.Equals(oneTrue2), "%v not equal to %v", oneTrue, oneTrue2)
-		testutilFatalIf(t, !nestedOnce.Equals(nestedOnce), "%v not equal to %v", nestedOnce, nestedOnce)
-		testutilFatalIf(t, !nestedOnce.Equals(nestedOnce2), "%v not equal to %v", nestedOnce, nestedOnce2)
-		testutilFatalIf(t, !nestedTwice.Equals(nestedTwice), "%v not equal to %v", nestedTwice, nestedTwice)
-		testutilFatalIf(t, !nestedTwice.Equals(nestedTwice2), "%v not equal to %v", nestedTwice, nestedTwice2)
-		testutilFatalIf(t, !oneTwoThree.Equals(threeTwoTwoOne), "%v not equal to %v", oneTwoThree, threeTwoTwoOne)
+		testutil.FatalIf(t, !empty.Equals(empty), "%v not Equal to %v", empty, empty)
+		testutil.FatalIf(t, !empty.Equals(empty2), "%v not Equal to %v", empty, empty2)
+		testutil.FatalIf(t, !oneTrue.Equals(oneTrue), "%v not Equal to %v", oneTrue, oneTrue)
+		testutil.FatalIf(t, !oneTrue.Equals(oneTrue2), "%v not Equal to %v", oneTrue, oneTrue2)
+		testutil.FatalIf(t, !nestedOnce.Equals(nestedOnce), "%v not Equal to %v", nestedOnce, nestedOnce)
+		testutil.FatalIf(t, !nestedOnce.Equals(nestedOnce2), "%v not Equal to %v", nestedOnce, nestedOnce2)
+		testutil.FatalIf(t, !nestedTwice.Equals(nestedTwice), "%v not Equal to %v", nestedTwice, nestedTwice)
+		testutil.FatalIf(t, !nestedTwice.Equals(nestedTwice2), "%v not Equal to %v", nestedTwice, nestedTwice2)
+		testutil.FatalIf(t, !oneTwoThree.Equals(threeTwoTwoOne), "%v not Equal to %v", oneTwoThree, threeTwoTwoOne)
 
-		testutilFatalIf(t, empty.Equals(oneFalse), "%v equal to %v", empty, oneFalse)
-		testutilFatalIf(t, oneTrue.Equals(oneFalse), "%v equal to %v", oneTrue, oneFalse)
-		testutilFatalIf(t, nestedOnce.Equals(nestedTwice), "%v equal to %v", nestedOnce, nestedTwice)
+		testutil.FatalIf(t, empty.Equals(oneFalse), "%v Equal to %v", empty, oneFalse)
+		testutil.FatalIf(t, oneTrue.Equals(oneFalse), "%v Equal to %v", oneTrue, oneFalse)
+		testutil.FatalIf(t, nestedOnce.Equals(nestedTwice), "%v Equal to %v", nestedOnce, nestedTwice)
 	})
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		assertValueString(t, Set{}, "[]")
-		assertValueString(
+		AssertValueString(t, Set{}, "[]")
+		AssertValueString(
 			t,
 			Set{Boolean(true), Long(1)},
 			"[true,1]")
 	})
 
-	t.Run("typeName", func(t *testing.T) {
+	t.Run("TypeName", func(t *testing.T) {
 		t.Parallel()
-		tn := Set{}.typeName()
-		testutilEquals(t, tn, "set")
+		tn := Set{}.TypeName()
+		testutil.Equals(t, tn, "set")
 	})
 }
 
@@ -201,20 +203,20 @@ func TestRecord(t *testing.T) {
 			"foo": Boolean(true),
 			"bar": Long(1),
 		}
-		map_, err := valueToRecord(v)
-		testutilOK(t, err)
+		map_, err := ValueToRecord(v)
+		testutil.OK(t, err)
 		v2 := map_
-		testutilFatalIf(t, !v.equal(v2), "got %v want %v", v, v2)
+		testutil.FatalIf(t, !v.Equal(v2), "got %v want %v", v, v2)
 	})
 
 	t.Run("toRecordOnNonRecord", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToRecord(String("hello"))
-		assertError(t, err, errType)
-		testutilEquals(t, v, nil)
+		v, err := ValueToRecord(String("hello"))
+		testutil.AssertError(t, err, ErrType)
+		testutil.Equals(t, v, nil)
 	})
 
-	t.Run("equal", func(t *testing.T) {
+	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		empty := Record{}
 		empty2 := Record{}
@@ -245,28 +247,28 @@ func TestRecord(t *testing.T) {
 			"nest": twoElems,
 		}
 
-		testutilFatalIf(t, !empty.Equals(empty), "%v not equal to %v", empty, empty)
-		testutilFatalIf(t, !empty.Equals(empty2), "%v not equal to %v", empty, empty2)
+		testutil.FatalIf(t, !empty.Equals(empty), "%v not Equal to %v", empty, empty)
+		testutil.FatalIf(t, !empty.Equals(empty2), "%v not Equal to %v", empty, empty2)
 
-		testutilFatalIf(t, !twoElems.Equals(twoElems), "%v not equal to %v", twoElems, twoElems)
-		testutilFatalIf(t, !twoElems.Equals(twoElems2), "%v not equal to %v", twoElems, twoElems2)
+		testutil.FatalIf(t, !twoElems.Equals(twoElems), "%v not Equal to %v", twoElems, twoElems)
+		testutil.FatalIf(t, !twoElems.Equals(twoElems2), "%v not Equal to %v", twoElems, twoElems2)
 
-		testutilFatalIf(t, !nested.Equals(nested), "%v not equal to %v", nested, nested)
-		testutilFatalIf(t, !nested.Equals(nested2), "%v not equal to %v", nested, nested2)
+		testutil.FatalIf(t, !nested.Equals(nested), "%v not Equal to %v", nested, nested)
+		testutil.FatalIf(t, !nested.Equals(nested2), "%v not Equal to %v", nested, nested2)
 
-		testutilFatalIf(t, nested.Equals(twoElems), "%v equal to %v", nested, twoElems)
-		testutilFatalIf(t, twoElems.Equals(differentValues), "%v equal to %v", twoElems, differentValues)
-		testutilFatalIf(t, twoElems.Equals(differentKeys), "%v equal to %v", twoElems, differentKeys)
+		testutil.FatalIf(t, nested.Equals(twoElems), "%v Equal to %v", nested, twoElems)
+		testutil.FatalIf(t, twoElems.Equals(differentValues), "%v Equal to %v", twoElems, differentValues)
+		testutil.FatalIf(t, twoElems.Equals(differentKeys), "%v Equal to %v", twoElems, differentKeys)
 	})
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		assertValueString(t, Record{}, "{}")
-		assertValueString(
+		AssertValueString(t, Record{}, "{}")
+		AssertValueString(
 			t,
 			Record{"foo": Boolean(true)},
 			`{"foo":true}`)
-		assertValueString(
+		AssertValueString(
 			t,
 			Record{
 				"foo": Boolean(true),
@@ -275,10 +277,10 @@ func TestRecord(t *testing.T) {
 			`{"bar":"blah","foo":true}`)
 	})
 
-	t.Run("typeName", func(t *testing.T) {
+	t.Run("TypeName", func(t *testing.T) {
 		t.Parallel()
-		tn := Record{}.typeName()
-		testutilEquals(t, tn, "record")
+		tn := Record{}.TypeName()
+		testutil.Equals(t, tn, "record")
 	})
 }
 
@@ -287,37 +289,37 @@ func TestEntity(t *testing.T) {
 	t.Run("roundTrip", func(t *testing.T) {
 		t.Parallel()
 		want := EntityUID{Type: "User", ID: "bananas"}
-		v, err := valueToEntity(want)
-		testutilOK(t, err)
-		testutilEquals(t, v, want)
+		v, err := ValueToEntity(want)
+		testutil.OK(t, err)
+		testutil.Equals(t, v, want)
 	})
 	t.Run("ToEntityOnNonEntity", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToEntity(String("hello"))
-		assertError(t, err, errType)
-		testutilEquals(t, v, EntityUID{})
+		v, err := ValueToEntity(String("hello"))
+		testutil.AssertError(t, err, ErrType)
+		testutil.Equals(t, v, EntityUID{})
 	})
 
-	t.Run("equal", func(t *testing.T) {
+	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		twoElems := EntityUID{"type", "id"}
 		twoElems2 := EntityUID{"type", "id"}
 		differentValues := EntityUID{"asdf", "vfds"}
-		testutilFatalIf(t, !twoElems.equal(twoElems), "%v not equal to %v", twoElems, twoElems)
-		testutilFatalIf(t, !twoElems.equal(twoElems2), "%v not equal to %v", twoElems, twoElems2)
-		testutilFatalIf(t, twoElems.equal(differentValues), "%v equal to %v", twoElems, differentValues)
+		testutil.FatalIf(t, !twoElems.Equal(twoElems), "%v not Equal to %v", twoElems, twoElems)
+		testutil.FatalIf(t, !twoElems.Equal(twoElems2), "%v not Equal to %v", twoElems, twoElems2)
+		testutil.FatalIf(t, twoElems.Equal(differentValues), "%v Equal to %v", twoElems, differentValues)
 	})
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		assertValueString(t, EntityUID{Type: "type", ID: "id"}, `type::"id"`)
-		assertValueString(t, EntityUID{Type: "namespace::type", ID: "id"}, `namespace::type::"id"`)
+		AssertValueString(t, EntityUID{Type: "type", ID: "id"}, `type::"id"`)
+		AssertValueString(t, EntityUID{Type: "namespace::type", ID: "id"}, `namespace::type::"id"`)
 	})
 
-	t.Run("typeName", func(t *testing.T) {
+	t.Run("TypeName", func(t *testing.T) {
 		t.Parallel()
-		tn := EntityUID{"T", "id"}.typeName()
-		testutilEquals(t, tn, "(entity of type `T`)")
+		tn := EntityUID{"T", "id"}.TypeName()
+		testutil.Equals(t, tn, "(entity of type `T`)")
 	})
 }
 
@@ -378,8 +380,8 @@ func TestDecimal(t *testing.T) {
 			t.Run(fmt.Sprintf("%s->%s", tt.in, tt.out), func(t *testing.T) {
 				t.Parallel()
 				d, err := ParseDecimal(tt.in)
-				testutilOK(t, err)
-				testutilEquals(t, d.String(), tt.out)
+				testutil.OK(t, err)
+				testutil.Equals(t, d.String(), tt.out)
 			})
 		}
 	}
@@ -414,8 +416,8 @@ func TestDecimal(t *testing.T) {
 			t.Run(fmt.Sprintf("%s->%s", tt.in, tt.errStr), func(t *testing.T) {
 				t.Parallel()
 				_, err := ParseDecimal(tt.in)
-				assertError(t, err, errDecimal)
-				testutilEquals(t, err.Error(), tt.errStr)
+				testutil.AssertError(t, err, ErrDecimal)
+				testutil.Equals(t, err.Error(), tt.errStr)
 			})
 		}
 	}
@@ -423,36 +425,36 @@ func TestDecimal(t *testing.T) {
 	t.Run("roundTrip", func(t *testing.T) {
 		t.Parallel()
 		dv, err := ParseDecimal("1.20")
-		testutilOK(t, err)
-		v, err := valueToDecimal(dv)
-		testutilOK(t, err)
-		testutilFatalIf(t, !v.equal(dv), "got %v want %v", v, dv)
+		testutil.OK(t, err)
+		v, err := ValueToDecimal(dv)
+		testutil.OK(t, err)
+		testutil.FatalIf(t, !v.Equal(dv), "got %v want %v", v, dv)
 	})
 
 	t.Run("toDecimalOnNonDecimal", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToDecimal(Boolean(true))
-		assertError(t, err, errType)
-		testutilEquals(t, v, 0)
+		v, err := ValueToDecimal(Boolean(true))
+		testutil.AssertError(t, err, ErrType)
+		testutil.Equals(t, v, 0)
 	})
 
-	t.Run("equal", func(t *testing.T) {
+	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		one := Decimal(10000)
 		one2 := Decimal(10000)
 		zero := Decimal(0)
 		f := Boolean(false)
-		testutilFatalIf(t, !one.equal(one), "%v not equal to %v", one, one)
-		testutilFatalIf(t, !one.equal(one2), "%v not equal to %v", one, one2)
-		testutilFatalIf(t, one.equal(zero), "%v equal to %v", one, zero)
-		testutilFatalIf(t, zero.equal(one), "%v equal to %v", zero, one)
-		testutilFatalIf(t, zero.equal(f), "%v equal to %v", zero, f)
+		testutil.FatalIf(t, !one.Equal(one), "%v not Equal to %v", one, one)
+		testutil.FatalIf(t, !one.Equal(one2), "%v not Equal to %v", one, one2)
+		testutil.FatalIf(t, one.Equal(zero), "%v Equal to %v", one, zero)
+		testutil.FatalIf(t, zero.Equal(one), "%v Equal to %v", zero, one)
+		testutil.FatalIf(t, zero.Equal(f), "%v Equal to %v", zero, f)
 	})
 
-	t.Run("typeName", func(t *testing.T) {
+	t.Run("TypeName", func(t *testing.T) {
 		t.Parallel()
-		tn := Decimal(0).typeName()
-		testutilEquals(t, tn, "decimal")
+		tn := Decimal(0).TypeName()
+		testutil.Equals(t, tn, "decimal")
 	})
 }
 
@@ -500,10 +502,10 @@ func TestIP(t *testing.T) {
 				t.Parallel()
 				i, err := ParseIPAddr(tt.in)
 				if tt.parses {
-					testutilOK(t, err)
-					testutilEquals(t, i.String(), tt.out)
+					testutil.OK(t, err)
+					testutil.Equals(t, i.String(), tt.out)
 				} else {
-					testutilError(t, err)
+					testutil.Error(t, err)
 				}
 			})
 		}
@@ -511,9 +513,9 @@ func TestIP(t *testing.T) {
 
 	t.Run("toIPOnNonIP", func(t *testing.T) {
 		t.Parallel()
-		v, err := valueToIP(Boolean(true))
-		assertError(t, err, errType)
-		testutilEquals(t, v, IPAddr{})
+		v, err := ValueToIP(Boolean(true))
+		testutil.AssertError(t, err, ErrType)
+		testutil.Equals(t, v, IPAddr{})
 	})
 
 	t.Run("Equal", func(t *testing.T) {
@@ -547,25 +549,25 @@ func TestIP(t *testing.T) {
 		}
 		for _, tt := range tests {
 			tt := tt
-			t.Run(fmt.Sprintf("ip(%v).equal(ip(%v))", tt.lhs, tt.rhs), func(t *testing.T) {
+			t.Run(fmt.Sprintf("ip(%v).Equal(ip(%v))", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
 				lhs, err := ParseIPAddr(tt.lhs)
-				testutilOK(t, err)
+				testutil.OK(t, err)
 				rhs, err := ParseIPAddr(tt.rhs)
-				testutilOK(t, err)
-				equal := lhs.equal(rhs)
+				testutil.OK(t, err)
+				equal := lhs.Equal(rhs)
 				if equal != tt.equal {
-					t.Fatalf("expected ip(%v).equal(ip(%v)) to be %v instead of %v", tt.lhs, tt.rhs, tt.equal, equal)
+					t.Fatalf("expected ip(%v).Equal(ip(%v)) to be %v instead of %v", tt.lhs, tt.rhs, tt.equal, equal)
 				}
 				if equal {
-					testutilFatalIf(
+					testutil.FatalIf(
 						t,
-						!lhs.contains(rhs),
-						"ip(%v) and ip(%v) compare equal but !ip(%v).contains(ip(%v))", tt.lhs, tt.rhs, tt.lhs, tt.rhs)
-					testutilFatalIf(
+						!lhs.Contains(rhs),
+						"ip(%v) and ip(%v) compare Equal but !ip(%v).contains(ip(%v))", tt.lhs, tt.rhs, tt.lhs, tt.rhs)
+					testutil.FatalIf(
 						t,
-						!rhs.contains(lhs),
-						"ip(%v) and ip(%v) compare equal but !ip(%v).contains(ip(%v))", tt.rhs, tt.lhs, tt.rhs, tt.lhs)
+						!rhs.Contains(lhs),
+						"ip(%v) and ip(%v) compare Equal but !ip(%v).contains(ip(%v))", tt.rhs, tt.lhs, tt.rhs, tt.lhs)
 				}
 			})
 		}
@@ -598,12 +600,12 @@ func TestIP(t *testing.T) {
 			t.Run(fmt.Sprintf("ip(%v).isIPv{4,6}()", tt.val), func(t *testing.T) {
 				t.Parallel()
 				val, err := ParseIPAddr(tt.val)
-				testutilOK(t, err)
-				isIPv4 := val.isIPv4()
+				testutil.OK(t, err)
+				isIPv4 := val.IsIPv4()
 				if isIPv4 != tt.isIPv4 {
 					t.Fatalf("expected ip(%v).isIPv4() to be %v instead of %v", tt.val, tt.isIPv4, isIPv4)
 				}
-				isIPv6 := val.isIPv6()
+				isIPv6 := val.IsIPv6()
 				if isIPv6 != tt.isIPv6 {
 					t.Fatalf("expected ip(%v).isIPv6() to be %v instead of %v", tt.val, tt.isIPv6, isIPv6)
 				}
@@ -647,8 +649,8 @@ func TestIP(t *testing.T) {
 			t.Run(fmt.Sprintf("ip(%v).isLoopback()", tt.val), func(t *testing.T) {
 				t.Parallel()
 				val, err := ParseIPAddr(tt.val)
-				testutilOK(t, err)
-				isLoopback := val.isLoopback()
+				testutil.OK(t, err)
+				isLoopback := val.IsLoopback()
 				if isLoopback != tt.isLoopback {
 					t.Fatalf("expected ip(%v).isLoopback() to be %v instead of %v", tt.val, tt.isLoopback, isLoopback)
 				}
@@ -681,8 +683,8 @@ func TestIP(t *testing.T) {
 			t.Run(fmt.Sprintf("ip(%v).isMulticast()", tt.val), func(t *testing.T) {
 				t.Parallel()
 				val, err := ParseIPAddr(tt.val)
-				testutilOK(t, err)
-				isMulticast := val.isMulticast()
+				testutil.OK(t, err)
+				isMulticast := val.IsMulticast()
 				if isMulticast != tt.isMulticast {
 					t.Fatalf("expected ip(%v).isMulticast() to be %v instead of %v", tt.val, tt.isMulticast, isMulticast)
 				}
@@ -714,10 +716,10 @@ func TestIP(t *testing.T) {
 			t.Run(fmt.Sprintf("ip(%v).contains(ip(%v))", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
 				lhs, err := ParseIPAddr(tt.lhs)
-				testutilOK(t, err)
+				testutil.OK(t, err)
 				rhs, err := ParseIPAddr(tt.rhs)
-				testutilOK(t, err)
-				contains := lhs.contains(rhs)
+				testutil.OK(t, err)
+				contains := lhs.Contains(rhs)
 				if contains != tt.contains {
 					t.Fatalf("expected ip(%v).contains(ip(%v)) to be %v instead of %v", tt.lhs, tt.rhs, tt.contains, contains)
 				}
@@ -725,10 +727,10 @@ func TestIP(t *testing.T) {
 		}
 	})
 
-	t.Run("typeName", func(t *testing.T) {
+	t.Run("TypeName", func(t *testing.T) {
 		t.Parallel()
-		tn := IPAddr{}.typeName()
-		testutilEquals(t, tn, "IP")
+		tn := IPAddr{}.TypeName()
+		testutil.Equals(t, tn, "IP")
 	})
 }
 
@@ -738,140 +740,140 @@ func TestDeepClone(t *testing.T) {
 		t.Parallel()
 		a := Boolean(true)
 		b := a.deepClone()
-		testutilEquals(t, Value(a), b)
+		testutil.Equals(t, Value(a), b)
 		a = Boolean(false)
-		testutilEquals(t, a, Boolean(false))
-		testutilEquals(t, b, Value(Boolean(true)))
+		testutil.Equals(t, a, Boolean(false))
+		testutil.Equals(t, b, Value(Boolean(true)))
 	})
 	t.Run("Long", func(t *testing.T) {
 		t.Parallel()
 		a := Long(42)
 		b := a.deepClone()
-		testutilEquals(t, Value(a), b)
+		testutil.Equals(t, Value(a), b)
 		a = Long(43)
-		testutilEquals(t, a, Long(43))
-		testutilEquals(t, b, Value(Long(42)))
+		testutil.Equals(t, a, Long(43))
+		testutil.Equals(t, b, Value(Long(42)))
 	})
 	t.Run("String", func(t *testing.T) {
 		t.Parallel()
 		a := String("cedar")
 		b := a.deepClone()
-		testutilEquals(t, Value(a), b)
+		testutil.Equals(t, Value(a), b)
 		a = String("policy")
-		testutilEquals(t, a, String("policy"))
-		testutilEquals(t, b, Value(String("cedar")))
+		testutil.Equals(t, a, String("policy"))
+		testutil.Equals(t, b, Value(String("cedar")))
 	})
 	t.Run("EntityUID", func(t *testing.T) {
 		t.Parallel()
 		a := NewEntityUID("Action", "test")
 		b := a.deepClone()
-		testutilEquals(t, Value(a), b)
+		testutil.Equals(t, Value(a), b)
 		a.ID = "bananas"
-		testutilEquals(t, a, NewEntityUID("Action", "bananas"))
-		testutilEquals(t, b, Value(NewEntityUID("Action", "test")))
+		testutil.Equals(t, a, NewEntityUID("Action", "bananas"))
+		testutil.Equals(t, b, Value(NewEntityUID("Action", "test")))
 	})
 
 	t.Run("Set", func(t *testing.T) {
 		t.Parallel()
 		a := Set{Long(42)}
 		b := a.deepClone()
-		testutilEquals(t, Value(a), b)
+		testutil.Equals(t, Value(a), b)
 		a[0] = String("bananas")
-		testutilEquals(t, a, Set{String("bananas")})
-		testutilEquals(t, b, Value(Set{Long(42)}))
+		testutil.Equals(t, a, Set{String("bananas")})
+		testutil.Equals(t, b, Value(Set{Long(42)}))
 	})
 	t.Run("NilSet", func(t *testing.T) {
 		t.Parallel()
 		var a Set
 		b := a.deepClone()
-		testutilEquals(t, Value(a), b)
+		testutil.Equals(t, Value(a), b)
 	})
 
 	t.Run("Record", func(t *testing.T) {
 		t.Parallel()
 		a := Record{"key": Long(42)}
 		b := a.deepClone()
-		testutilEquals(t, Value(a), b)
+		testutil.Equals(t, Value(a), b)
 		a["key"] = String("bananas")
-		testutilEquals(t, a, Record{"key": String("bananas")})
-		testutilEquals(t, b, Value(Record{"key": Long(42)}))
+		testutil.Equals(t, a, Record{"key": String("bananas")})
+		testutil.Equals(t, b, Value(Record{"key": Long(42)}))
 	})
 
 	t.Run("NilRecord", func(t *testing.T) {
 		t.Parallel()
 		var a Record
 		b := a.deepClone()
-		testutilEquals(t, Value(a), b)
+		testutil.Equals(t, Value(a), b)
 	})
 
 	t.Run("Decimal", func(t *testing.T) {
 		t.Parallel()
 		a := Decimal(42)
 		b := a.deepClone()
-		testutilEquals(t, Value(a), b)
+		testutil.Equals(t, Value(a), b)
 		a = Decimal(43)
-		testutilEquals(t, a, Decimal(43))
-		testutilEquals(t, b, Value(Decimal(42)))
+		testutil.Equals(t, a, Decimal(43))
+		testutil.Equals(t, b, Value(Decimal(42)))
 	})
 
 	t.Run("IPAddr", func(t *testing.T) {
 		t.Parallel()
 		a := mustIPValue("127.0.0.42")
 		b := a.deepClone()
-		testutilEquals(t, a.Cedar(), b.Cedar())
+		testutil.Equals(t, a.Cedar(), b.Cedar())
 		a = mustIPValue("127.0.0.43")
-		testutilEquals(t, a.Cedar(), mustIPValue("127.0.0.43").Cedar())
-		testutilEquals(t, b.Cedar(), mustIPValue("127.0.0.42").Cedar())
+		testutil.Equals(t, a.Cedar(), mustIPValue("127.0.0.43").Cedar())
+		testutil.Equals(t, b.Cedar(), mustIPValue("127.0.0.42").Cedar())
 	})
 }
 
 func TestPath(t *testing.T) {
 	t.Parallel()
-	t.Run("equal", func(t *testing.T) {
+	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
-		a := path("X")
-		b := path("X")
-		c := path("Y")
-		testutilEquals(t, a.equal(b), true)
-		testutilEquals(t, b.equal(a), true)
-		testutilEquals(t, a.equal(c), false)
-		testutilEquals(t, c.equal(a), false)
+		a := Path("X")
+		b := Path("X")
+		c := Path("Y")
+		testutil.Equals(t, a.Equal(b), true)
+		testutil.Equals(t, b.Equal(a), true)
+		testutil.Equals(t, a.Equal(c), false)
+		testutil.Equals(t, c.Equal(a), false)
 	})
-	t.Run("typeName", func(t *testing.T) {
+	t.Run("TypeName", func(t *testing.T) {
 		t.Parallel()
-		a := path("X")
-		testutilEquals(t, a.typeName(), "(path of type `X`)")
+		a := Path("X")
+		testutil.Equals(t, a.TypeName(), "(Path of type `X`)")
 	})
 	t.Run("String", func(t *testing.T) {
 		t.Parallel()
-		a := path("X")
-		testutilEquals(t, a.String(), "X")
+		a := Path("X")
+		testutil.Equals(t, a.String(), "X")
 	})
 	t.Run("Cedar", func(t *testing.T) {
 		t.Parallel()
-		a := path("X")
-		testutilEquals(t, a.Cedar(), "X")
+		a := Path("X")
+		testutil.Equals(t, a.Cedar(), "X")
 	})
 	t.Run("ExplicitMarshalJSON", func(t *testing.T) {
 		t.Parallel()
-		a := path("X")
+		a := Path("X")
 		v, err := a.ExplicitMarshalJSON()
-		testutilOK(t, err)
-		testutilEquals(t, string(v), `"X"`)
+		testutil.OK(t, err)
+		testutil.Equals(t, string(v), `"X"`)
 	})
 	t.Run("deepClone", func(t *testing.T) {
 		t.Parallel()
-		a := path("X")
+		a := Path("X")
 		b := a.deepClone()
-		c, ok := b.(path)
-		testutilEquals(t, ok, true)
-		testutilEquals(t, c, a)
+		c, ok := b.(Path)
+		testutil.Equals(t, ok, true)
+		testutil.Equals(t, c, a)
 	})
 
 	t.Run("pathFromSlice", func(t *testing.T) {
 		t.Parallel()
-		a := pathFromSlice([]string{"X", "Y"})
-		testutilEquals(t, a, path("X::Y"))
+		a := PathFromSlice([]string{"X", "Y"})
+		testutil.Equals(t, a, Path("X::Y"))
 	})
 
 }

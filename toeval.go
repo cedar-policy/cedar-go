@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/parser"
 )
 
@@ -21,7 +22,7 @@ func toEval(n any) evaler {
 		var res evaler
 		switch v.Type {
 		case parser.MatchAny:
-			res = newLiteralEval(Boolean(true))
+			res = newLiteralEval(types.Boolean(true))
 		case parser.MatchEquals:
 			res = newEqualEval(newVariableEval(variableNamePrincipal), toEval(v.Entity))
 		case parser.MatchIn:
@@ -38,7 +39,7 @@ func toEval(n any) evaler {
 		var res evaler
 		switch v.Type {
 		case parser.MatchAny:
-			res = newLiteralEval(Boolean(true))
+			res = newLiteralEval(types.Boolean(true))
 		case parser.MatchEquals:
 			res = newEqualEval(newVariableEval(variableNameAction), toEval(v.Entities[0]))
 		case parser.MatchIn:
@@ -56,7 +57,7 @@ func toEval(n any) evaler {
 		var res evaler
 		switch v.Type {
 		case parser.MatchAny:
-			res = newLiteralEval(Boolean(true))
+			res = newLiteralEval(types.Boolean(true))
 		case parser.MatchEquals:
 			res = newEqualEval(newVariableEval(variableNameResource), toEval(v.Entity))
 		case parser.MatchIn:
@@ -70,9 +71,9 @@ func toEval(n any) evaler {
 		}
 		return res
 	case parser.Entity:
-		return newLiteralEval(entityValueFromSlice(v.Path))
+		return newLiteralEval(types.EntityValueFromSlice(v.Path))
 	case parser.Path:
-		return newLiteralEval(pathFromSlice(v.Path))
+		return newLiteralEval(types.PathFromSlice(v.Path))
 	case parser.Condition:
 		var res evaler
 		switch v.Type {
@@ -210,11 +211,11 @@ func toEval(n any) evaler {
 	case parser.Literal:
 		switch v.Type {
 		case parser.LiteralBool:
-			return newLiteralEval(Boolean(v.Bool))
+			return newLiteralEval(types.Boolean(v.Bool))
 		case parser.LiteralInt:
-			return newLiteralEval(Long(v.Long))
+			return newLiteralEval(types.Long(v.Long))
 		case parser.LiteralString:
-			return newLiteralEval(String(v.Str))
+			return newLiteralEval(types.String(v.Str))
 		default:
 			panic("missing LiteralType case")
 		}

@@ -1,9 +1,9 @@
 package ast
 
-import "github.com/cedar-policy/cedar-go/x/exp/types"
+import "github.com/cedar-policy/cedar-go/types"
 
-//  ____                                 _
-// / ___|___  _ __ ___  _ __   __ _ _ __(_)___  ___  _ __
+//   ____                                 _
+//  / ___|___  _ __ ___  _ __   __ _ _ __(_)___  ___  _ __
 // | |   / _ \| '_ ` _ \| '_ \ / _` | '__| / __|/ _ \| '_ \
 // | |__| (_) | | | | | | |_) | (_| | |  | \__ \ (_) | | | |
 //  \____\___/|_| |_| |_| .__/ \__,_|_|  |_|___/\___/|_| |_|
@@ -152,6 +152,6 @@ func (lhs Node) IsInRange(rhs Node) Node {
 	return newOpNode(nodeTypeIsInRange, lhs, rhs)
 }
 
-func newOpNode(op opType, args ...Node) Node {
-	return Node{op: op, args: args}
+func newOpNode(op nodeType, args ...Node) Node {
+	return Node{nodeType: op, args: args}
 }

@@ -3,7 +3,7 @@ package ast
 import (
 	"fmt"
 
-	"github.com/cedar-policy/cedar-go/x/exp/types"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 func Boolean(b types.Boolean) Node {
@@ -76,7 +76,7 @@ func RecordNodes(nodes map[string]Node) Node {
 	return newValueNode(nodeTypeRecord, nodes)
 }
 
-func EntityType(e types.EntityType) Node {
+func EntityType(e string) Node {
 	return newValueNode(nodeTypeEntityType, e)
 }
 
@@ -88,12 +88,12 @@ func Decimal(d types.Decimal) Node {
 	return newValueNode(nodeTypeEntity, d)
 }
 
-func IpAddr(i types.IpAddr) Node {
+func IPAddr(i types.IPAddr) Node {
 	return newValueNode(nodeTypeIpAddr, i)
 }
 
-func newValueNode(op opType, v any) Node {
-	return Node{op: op, value: v}
+func newValueNode(nodeType nodeType, v any) Node {
+	return Node{nodeType: nodeType, value: v}
 }
 
 func valueToNode(v types.Value) Node {
@@ -112,8 +112,8 @@ func valueToNode(v types.Value) Node {
 		return Entity(x)
 	case types.Decimal:
 		return Decimal(x)
-	case types.IpAddr:
-		return IpAddr(x)
+	case types.IPAddr:
+		return IPAddr(x)
 	default:
 		panic(fmt.Sprintf("unexpected value type: %T(%v)", v, v))
 	}

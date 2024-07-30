@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/parser"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -94,13 +95,13 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 // An Entities is a collection of all the Entities that are needed to evaluate
 // authorization requests.  The key is an EntityUID which uniquely identifies
 // the Entity (it must be the same as the UID within the Entity itself.)
-type Entities map[EntityUID]Entity
+type Entities map[types.EntityUID]Entity
 
 // An Entity defines the parents and attributes for an EntityUID.
 type Entity struct {
-	UID        EntityUID   `json:"uid"`
-	Parents    []EntityUID `json:"parents,omitempty"`
-	Attributes Record      `json:"attrs"`
+	UID        types.EntityUID   `json:"uid"`
+	Parents    []types.EntityUID `json:"parents,omitempty"`
+	Attributes types.Record      `json:"attrs"`
 }
 
 func (e Entities) MarshalJSON() ([]byte, error) {
@@ -188,10 +189,10 @@ type Reason struct {
 // A Request is the Principal, Action, Resource, and Context portion of an
 // authorization request.
 type Request struct {
-	Principal EntityUID `json:"principal"`
-	Action    EntityUID `json:"action"`
-	Resource  EntityUID `json:"resource"`
-	Context   Record    `json:"context"`
+	Principal types.EntityUID `json:"principal"`
+	Action    types.EntityUID `json:"action"`
+	Resource  types.EntityUID `json:"resource"`
+	Context   types.Record    `json:"context"`
 }
 
 // IsAuthorized uses the combination of the PolicySet and Entities to determine
@@ -220,7 +221,7 @@ func (p PolicySet) IsAuthorized(entities Entities, req Request) (Decision, Diagn
 			diag.Errors = append(diag.Errors, Error{Policy: n, Position: po.Position, Message: err.Error()})
 			continue
 		}
-		vb, err := valueToBool(v)
+		vb, err := types.ValueToBool(v)
 		if err != nil {
 			// should never happen, maybe remove this case
 			diag.Errors = append(diag.Errors, Error{Policy: n, Position: po.Position, Message: err.Error()})

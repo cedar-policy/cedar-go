@@ -11,18 +11,20 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 // jsonEntity is not part of entityValue as I can find
 // no evidence this is part of the JSON spec.  It also
 // requires creating a parser, so it's quite expensive.
-type jsonEntity EntityUID
+type jsonEntity types.EntityUID
 
 func (e *jsonEntity) UnmarshalJSON(b []byte) error {
 	if string(b) == "null" {
 		return nil
 	}
-	var input EntityUID
+	var input types.EntityUID
 	if err := json.Unmarshal(b, &input); err != nil {
 		return err
 	}
@@ -36,14 +38,14 @@ type corpusTest struct {
 	ShouldValidate bool   `json:"shouldValidate"`
 	Entities       string `json:"entities"`
 	Requests       []struct {
-		Desc      string     `json:"description"`
-		Principal jsonEntity `json:"principal"`
-		Action    jsonEntity `json:"action"`
-		Resource  jsonEntity `json:"resource"`
-		Context   Record     `json:"context"`
-		Decision  string     `json:"decision"`
-		Reasons   []string   `json:"reason"`
-		Errors    []string   `json:"errors"`
+		Desc      string       `json:"description"`
+		Principal jsonEntity   `json:"principal"`
+		Action    jsonEntity   `json:"action"`
+		Resource  jsonEntity   `json:"resource"`
+		Context   types.Record `json:"context"`
+		Decision  string       `json:"decision"`
+		Reasons   []string     `json:"reason"`
+		Errors    []string     `json:"errors"`
 	} `json:"requests"`
 }
 
@@ -157,9 +159,9 @@ func TestCorpus(t *testing.T) {
 					ok, diag := policySet.IsAuthorized(
 						entities,
 						Request{
-							Principal: EntityUID(request.Principal),
-							Action:    EntityUID(request.Action),
-							Resource:  EntityUID(request.Resource),
+							Principal: types.EntityUID(request.Principal),
+							Action:    types.EntityUID(request.Action),
+							Resource:  types.EntityUID(request.Resource),
 							Context:   request.Context,
 						})
 
