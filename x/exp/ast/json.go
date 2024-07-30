@@ -62,13 +62,40 @@ type binaryJSON struct {
 	Right nodeJSON `json:"right"`
 }
 
+func (j binaryJSON) ToNode(f func(a, b Node) Node) (Node, error) {
+	left, err := j.Left.ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in left: %w", err)
+	}
+	right, err := j.Right.ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in right: %w", err)
+	}
+	return f(left, right), nil
+}
+
 type accessJSON struct {
 	Left nodeJSON `json:"left"`
 	Attr string   `json:"attr"`
 }
 
 type nodeJSON struct {
-	Equals *binaryJSON `json:"=="`
+	Equals             *binaryJSON `json:"=="`
+	NotEquals          *binaryJSON `json:"!="`
+	In                 *binaryJSON `json:"in"`
+	LessThan           *binaryJSON `json:"<"`
+	LessThanOrEqual    *binaryJSON `json:"<="`
+	GreaterThan        *binaryJSON `json:">"`
+	GreaterThanOrEqual *binaryJSON `json:">="`
+	And                *binaryJSON `json:"&&"`
+	Or                 *binaryJSON `json:"||"`
+	Plus               *binaryJSON `json:"+"`
+	Minus              *binaryJSON `json:"-"`
+	Times              *binaryJSON `json:"*"`
+	Contains           *binaryJSON `json:"contains"`
+	ContainsAll        *binaryJSON `json:"containsAll"`
+	ContainsAny        *binaryJSON `json:"containsAny"`
+
 	Access *accessJSON `json:"."`
 	Var    *string     `json:"Var"`
 	Value  *string     `json:"Value"` // could be any
@@ -77,15 +104,35 @@ type nodeJSON struct {
 func (j nodeJSON) ToNode() (Node, error) {
 	switch {
 	case j.Equals != nil:
-		left, err := j.Equals.Left.ToNode()
-		if err != nil {
-			return Node{}, fmt.Errorf("error in left of equals: %w", err)
-		}
-		right, err := j.Equals.Right.ToNode()
-		if err != nil {
-			return Node{}, fmt.Errorf("error in right of equals: %w", err)
-		}
-		return left.Equals(right), nil
+		return j.Equals.ToNode(Node.Equals)
+	case j.NotEquals != nil:
+		return j.NotEquals.ToNode(Node.NotEquals)
+	case j.In != nil:
+		return j.In.ToNode(Node.In)
+	case j.LessThan != nil:
+		return j.LessThan.ToNode(Node.LessThan)
+	case j.LessThanOrEqual != nil:
+		return j.LessThanOrEqual.ToNode(Node.LessThanOrEqual)
+	case j.GreaterThan != nil:
+		return j.GreaterThan.ToNode(Node.GreaterThan)
+	case j.GreaterThanOrEqual != nil:
+		return j.GreaterThanOrEqual.ToNode(Node.GreaterThanOrEqual)
+	case j.And != nil:
+		return j.And.ToNode(Node.And)
+	case j.Or != nil:
+		return j.Or.ToNode(Node.Or)
+	case j.Plus != nil:
+		return j.Plus.ToNode(Node.Plus)
+	case j.Minus != nil:
+		return j.Minus.ToNode(Node.Minus)
+	case j.Times != nil:
+		return j.Times.ToNode(Node.Times)
+	case j.Contains != nil:
+		return j.Contains.ToNode(Node.Contains)
+	case j.ContainsAll != nil:
+		return j.ContainsAll.ToNode(Node.ContainsAll)
+	case j.ContainsAny != nil:
+		return j.ContainsAny.ToNode(Node.ContainsAny)
 	case j.Access != nil:
 		left, err := j.Access.Left.ToNode()
 		if err != nil {
