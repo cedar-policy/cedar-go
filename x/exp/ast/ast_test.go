@@ -23,8 +23,8 @@ func TestAst(t *testing.T) {
 	// )
 	// when { true }
 	// unless { false };
-	_ = ast.Permit().
-		Annotate("example", "one").
+	_ = ast.Annotation("example", "one").
+		Permit().
 		PrincipalEq(johnny).
 		ActionIn(sow, cast).
 		When(ast.True()).
@@ -35,7 +35,8 @@ func TestAst(t *testing.T) {
 	// when { resource.tags.contains("private") }
 	// unless { resource in principal.allowed_resources };
 	private := types.String("private")
-	_ = ast.Forbid().Annotate("example", "two").
+	_ = ast.Annotation("example", "two").
+		Forbid().
 		When(
 			ast.Resource().Access("tags").Contains(ast.String(private)),
 		).
