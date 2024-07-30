@@ -1,6 +1,6 @@
 package ast
 
-import "github.com/cedar-policy/cedar-go/x/exp/types"
+import "github.com/cedar-policy/cedar-go/types"
 
 func (p *Policy) PrincipalEq(entity types.EntityUID) *Policy {
 	p.principal = Principal().Equals(Entity(entity))
@@ -16,7 +16,7 @@ func (p *Policy) PrincipalIn(entities ...types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) PrincipalIs(entityType types.EntityType) *Policy {
+func (p *Policy) PrincipalIs(entityType string) *Policy {
 	p.principal = Principal().Is(EntityType(entityType))
 	return p
 }
@@ -49,7 +49,7 @@ func (p *Policy) ResourceIn(entities ...types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) ResourceIs(entityType types.EntityType) *Policy {
+func (p *Policy) ResourceIs(entityType string) *Policy {
 	p.principal = Resource().Is(EntityType(entityType))
 	return p
 }

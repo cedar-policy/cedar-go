@@ -1,9 +1,9 @@
 package ast
 
-type opType uint8
+type nodeType uint8
 
 const (
-	nodeTypeAccess opType = iota
+	nodeTypeAccess nodeType = iota
 	nodeTypeAdd
 	nodeTypeAnd
 	nodeTypeAnnotation
@@ -41,7 +41,7 @@ const (
 )
 
 type Node struct {
-	op opType
+	nodeType nodeType
 	// TODO: Should we just have `value any`?
 	args  []Node
 	value any

@@ -3,6 +3,7 @@ package cedar
 import (
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/testutil"
 	"github.com/cedar-policy/cedar-go/x/exp/parser"
 )
 
@@ -38,9 +39,9 @@ func TestMatch(t *testing.T) {
 		t.Run(tt.pattern+":"+tt.target, func(t *testing.T) {
 			t.Parallel()
 			pat, err := parser.NewPattern(tt.pattern)
-			testutilOK(t, err)
+			testutil.OK(t, err)
 			got := match(pat, tt.target)
-			testutilEquals(t, got, tt.want)
+			testutil.Equals(t, got, tt.want)
 		})
 	}
 }

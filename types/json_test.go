@@ -1,9 +1,11 @@
-package cedar
+package types
 
 import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/cedar-policy/cedar-go/testutil"
 )
 
 func mustDecimalValue(v string) Decimal {
@@ -28,15 +30,15 @@ func TestJSON_Value(t *testing.T) {
 		{"explicitEntity", `{ "__entity": { "type": "User", "id": "alice" } }`, EntityUID{Type: "User", ID: "alice"}, nil},
 		{"impliedLongEntity", `{ "type": "User::External", "id": "alice" }`, EntityUID{Type: "User::External", ID: "alice"}, nil},
 		{"explicitLongEntity", `{ "__entity": { "type": "User::External", "id": "alice" } }`, EntityUID{Type: "User::External", ID: "alice"}, nil},
-		{"invalidJSON", `!@#$`, zeroValue(), errJSONDecode},
-		{"numericOverflow", "12341234123412341234", zeroValue(), errJSONLongOutOfRange},
-		{"unsupportedNull", "null", zeroValue(), errJSONUnsupportedType},
+		{"invalidJSON", `!@#$`, ZeroValue(), errJSONDecode},
+		{"numericOverflow", "12341234123412341234", ZeroValue(), errJSONLongOutOfRange},
+		{"unsupportedNull", "null", ZeroValue(), errJSONUnsupportedType},
 		{"explicitIP", `{ "__extn": { "fn": "ip", "arg": "222.222.222.7" } }`, mustIPValue("222.222.222.7"), nil},
 		{"explicitSubnet", `{ "__extn": { "fn": "ip", "arg": "192.168.0.0/16" } }`, mustIPValue("192.168.0.0/16"), nil},
 		{"explicitDecimal", `{ "__extn": { "fn": "decimal", "arg": "33.57" } }`, mustDecimalValue("33.57"), nil},
-		{"invalidExtension", `{ "__extn": { "fn": "asdf", "arg": "blah" } }`, zeroValue(), errJSONInvalidExtn},
-		{"badIP", `{ "__extn": { "fn": "ip", "arg": "bad" } }`, zeroValue(), errIP},
-		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), errDecimal},
+		{"invalidExtension", `{ "__extn": { "fn": "asdf", "arg": "blah" } }`, ZeroValue(), errJSONInvalidExtn},
+		{"badIP", `{ "__extn": { "fn": "ip", "arg": "bad" } }`, ZeroValue(), ErrIP},
+		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, ZeroValue(), ErrDecimal},
 		{"set", `[42]`, Set{Long(42)}, nil},
 		{"record", `{"a":"b"}`, Record{"a": String("b")}, nil},
 		{"bool", `false`, Boolean(false), nil},
@@ -48,8 +50,8 @@ func TestJSON_Value(t *testing.T) {
 			var got Value
 			ptr := &got
 			err := unmarshalJSON([]byte(tt.in), ptr)
-			assertError(t, err, tt.err)
-			assertValue(t, got, tt.want)
+			testutil.AssertError(t, err, tt.err)
+			AssertValue(t, got, tt.want)
 			if tt.err != nil {
 				return
 			}
@@ -57,12 +59,12 @@ func TestJSON_Value(t *testing.T) {
 			// Now assert that when we Marshal/Unmarshal that value, we still
 			// have what we started with
 			gotJSON, err := (*ptr).ExplicitMarshalJSON()
-			testutilOK(t, err)
+			testutil.OK(t, err)
 			var gotRetry Value
 			ptr = &gotRetry
 			err = unmarshalJSON(gotJSON, ptr)
-			testutilOK(t, err)
-			testutilEquals(t, gotRetry, tt.want)
+			testutil.OK(t, err)
+			testutil.Equals(t, gotRetry, tt.want)
 		})
 	}
 }
@@ -129,7 +131,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			},
 			in:        `{ "__extn": { "fn": "ip", "arg": "bad" } }`,
 			wantValue: IPAddr{},
-			wantErr:   errIP,
+			wantErr:   ErrIP,
 		},
 		{
 			name: "ip/badJSON",
@@ -207,7 +209,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			},
 			in:        `{ "__extn": { "fn": "decimal", "arg": "bad" } }`,
 			wantValue: Decimal(0),
-			wantErr:   errDecimal,
+			wantErr:   ErrDecimal,
 		},
 		{
 			name: "decimal/badJSON",
@@ -248,8 +250,8 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			gotValue, gotErr := tt.f([]byte(tt.in))
-			testutilEquals(t, gotValue, tt.wantValue)
-			assertError(t, gotErr, tt.wantErr)
+			testutil.Equals(t, gotValue, tt.wantValue)
+			testutil.AssertError(t, gotErr, tt.wantErr)
 		})
 	}
 }
@@ -286,11 +288,11 @@ func TestJSONMarshal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			outExplicit, err := tt.in.ExplicitMarshalJSON()
-			testutilOK(t, err)
-			testutilEquals(t, string(outExplicit), tt.outExplicit)
+			testutil.OK(t, err)
+			testutil.Equals(t, string(outExplicit), tt.outExplicit)
 			outImplicit, err := json.Marshal(tt.in)
-			testutilOK(t, err)
-			testutilEquals(t, string(outImplicit), tt.outImplicit)
+			testutil.OK(t, err)
+			testutil.Equals(t, string(outImplicit), tt.outImplicit)
 		})
 	}
 }
@@ -299,9 +301,9 @@ type jsonErr struct{}
 
 func (j *jsonErr) String() string                       { return "" }
 func (j *jsonErr) Cedar() string                        { return "" }
-func (j *jsonErr) equal(Value) bool                     { return false }
+func (j *jsonErr) Equal(Value) bool                     { return false }
 func (j *jsonErr) ExplicitMarshalJSON() ([]byte, error) { return nil, fmt.Errorf("jsonErr") }
-func (j *jsonErr) typeName() string                     { return "jsonErr" }
+func (j *jsonErr) TypeName() string                     { return "jsonErr" }
 func (j *jsonErr) deepClone() Value                     { return nil }
 
 func TestJSONSet(t *testing.T) {
@@ -310,13 +312,13 @@ func TestJSONSet(t *testing.T) {
 		t.Parallel()
 		var s Set
 		err := json.Unmarshal([]byte(`[{"__extn":{"fn":"err"}}]`), &s)
-		testutilError(t, err)
+		testutil.Error(t, err)
 	})
 	t.Run("MarshalErr", func(t *testing.T) {
 		t.Parallel()
 		s := Set{&jsonErr{}}
 		_, err := json.Marshal(s)
-		testutilError(t, err)
+		testutil.Error(t, err)
 	})
 }
 
@@ -326,7 +328,7 @@ func TestJSONRecord(t *testing.T) {
 		t.Parallel()
 		var r Record
 		err := json.Unmarshal([]byte(`{"key":{"__extn":{"fn":"err"}}}`), &r)
-		testutilError(t, err)
+		testutil.Error(t, err)
 	})
 	t.Run("MarshalKeyErrImpossible", func(t *testing.T) {
 		t.Parallel()
@@ -335,117 +337,13 @@ func TestJSONRecord(t *testing.T) {
 		r[string(k)] = Boolean(false)
 		v, err := json.Marshal(r)
 		// this demonstrates that invalid keys will still result in json
-		testutilEquals(t, string(v), `{"\ufffd\u0001":false}`)
-		testutilOK(t, err)
+		testutil.Equals(t, string(v), `{"\ufffd\u0001":false}`)
+		testutil.OK(t, err)
 	})
 	t.Run("MarshalValueErr", func(t *testing.T) {
 		t.Parallel()
 		r := Record{"key": &jsonErr{}}
 		_, err := json.Marshal(r)
-		testutilError(t, err)
-	})
-}
-
-func TestEntitiesJSON(t *testing.T) {
-	t.Parallel()
-	t.Run("Marshal", func(t *testing.T) {
-		t.Parallel()
-		e := Entities{}
-		ent := Entity{
-			UID:        NewEntityUID("Type", "id"),
-			Parents:    []EntityUID{},
-			Attributes: Record{"key": Long(42)},
-		}
-		e[ent.UID] = ent
-		b, err := e.MarshalJSON()
-		testutilOK(t, err)
-		testutilEquals(t, string(b), `[{"uid":{"type":"Type","id":"id"},"attrs":{"key":42}}]`)
-	})
-
-	t.Run("Unmarshal", func(t *testing.T) {
-		t.Parallel()
-		b := []byte(`[{"uid":{"type":"Type","id":"id"},"parents":[],"attrs":{"key":42}}]`)
-		var e Entities
-		err := json.Unmarshal(b, &e)
-		testutilOK(t, err)
-		want := Entities{}
-		ent := Entity{
-			UID:        NewEntityUID("Type", "id"),
-			Parents:    []EntityUID{},
-			Attributes: Record{"key": Long(42)},
-		}
-		want[ent.UID] = ent
-		testutilEquals(t, e, want)
-	})
-
-	t.Run("UnmarshalErr", func(t *testing.T) {
-		t.Parallel()
-		var e Entities
-		err := e.UnmarshalJSON([]byte(`!@#$`))
-		testutilError(t, err)
-	})
-}
-
-func TestJSONEffect(t *testing.T) {
-	t.Parallel()
-	t.Run("MarshalPermit", func(t *testing.T) {
-		t.Parallel()
-		e := Permit
-		b, err := e.MarshalJSON()
-		testutilOK(t, err)
-		testutilEquals(t, string(b), `"permit"`)
-	})
-	t.Run("MarshalForbid", func(t *testing.T) {
-		t.Parallel()
-		e := Forbid
-		b, err := e.MarshalJSON()
-		testutilOK(t, err)
-		testutilEquals(t, string(b), `"forbid"`)
-	})
-	t.Run("UnmarshalPermit", func(t *testing.T) {
-		t.Parallel()
-		var e Effect
-		err := json.Unmarshal([]byte(`"permit"`), &e)
-		testutilOK(t, err)
-		testutilEquals(t, e, Permit)
-	})
-	t.Run("UnmarshalForbid", func(t *testing.T) {
-		t.Parallel()
-		var e Effect
-		err := json.Unmarshal([]byte(`"forbid"`), &e)
-		testutilOK(t, err)
-		testutilEquals(t, e, Forbid)
-	})
-}
-
-func TestJSONDecision(t *testing.T) {
-	t.Parallel()
-	t.Run("MarshalAllow", func(t *testing.T) {
-		t.Parallel()
-		d := Allow
-		b, err := d.MarshalJSON()
-		testutilOK(t, err)
-		testutilEquals(t, string(b), `"allow"`)
-	})
-	t.Run("MarshalDeny", func(t *testing.T) {
-		t.Parallel()
-		d := Deny
-		b, err := d.MarshalJSON()
-		testutilOK(t, err)
-		testutilEquals(t, string(b), `"deny"`)
-	})
-	t.Run("UnmarshalAllow", func(t *testing.T) {
-		t.Parallel()
-		var d Decision
-		err := json.Unmarshal([]byte(`"allow"`), &d)
-		testutilOK(t, err)
-		testutilEquals(t, d, Allow)
-	})
-	t.Run("UnmarshalDeny", func(t *testing.T) {
-		t.Parallel()
-		var d Decision
-		err := json.Unmarshal([]byte(`"deny"`), &d)
-		testutilOK(t, err)
-		testutilEquals(t, d, Deny)
+		testutil.Error(t, err)
 	})
 }

@@ -5,7 +5,7 @@ func Principal() Node {
 }
 
 func Action() Node {
-	return newPrincipalNode()
+	return newActionNode()
 }
 
 func Resource() Node {
