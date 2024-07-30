@@ -55,9 +55,9 @@ func SetNodes(nodes []Node) Node {
 // Record is a convenience function that wraps concrete instances of a Cedar Record type
 // types in AST value nodes and passes them along to RecordNodes.
 func Record(r types.Record) Node {
-	recordNodes := map[string]Node{}
+	recordNodes := map[types.String]Node{}
 	for k, v := range r {
-		recordNodes[k] = valueToNode(v)
+		recordNodes[types.String(k)] = valueToNode(v)
 	}
 	return RecordNodes(recordNodes)
 }
@@ -72,8 +72,18 @@ func Record(r types.Record) Node {
 //		ast.RecordNodes([]ast.RecordNode{
 //	     {Key: "x", Value: ast.Long(1).Plus(ast.Context().Access("resourceField"))},
 //	 })
-func RecordNodes(nodes map[string]Node) Node {
-	return newValueNode(nodeTypeRecord, nodes)
+func RecordNodes(entries map[types.String]Node) Node {
+	var nodes []Node
+	for k, v := range entries {
+		nodes = append(
+			nodes,
+			Node{
+				nodeType: nodeTypeRecordEntry,
+				args:     []Node{String(k), v},
+			},
+		)
+	}
+	return Node{nodeType: nodeTypeRecord, args: nodes}
 }
 
 func EntityType(e string) Node {

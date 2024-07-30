@@ -34,6 +34,7 @@ const (
 	nodeTypeNotEquals
 	nodeTypeOr
 	nodeTypeRecord
+	nodeTypeRecordEntry
 	nodeTypeSet
 	nodeTypeSub
 	nodeTypeString
