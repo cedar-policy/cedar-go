@@ -59,7 +59,7 @@ func Record(r types.Record) Node {
 	for k, v := range r {
 		recordNodes[types.String(k)] = valueToNode(v)
 	}
-	return RecordNodes(recordNodes)
+	return RecordNodes(recordNodes) // TODO: maybe inline this to avoid the double conversion
 }
 
 // RecordNodes allows for a complex record definition with values potentially
