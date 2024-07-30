@@ -33,6 +33,10 @@ func (lhs Node) GreaterThanOrEqual(rhs Node) Node {
 	return newOpNode(nodeTypeGreaterEqual, lhs, rhs)
 }
 
+func (lhs Node) Like(patt string) Node {
+	return newOpNode(nodeTypeLike, lhs, String(types.String(patt)))
+}
+
 //  _                _           _
 // | |    ___   __ _(_) ___ __ _| |
 // | |   / _ \ / _` | |/ __/ _` | |
