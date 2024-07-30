@@ -36,6 +36,7 @@ func (a *Annotations) Forbid() *Policy {
 
 func (p *Policy) Annotate(name, value types.String) *Policy {
 	p.annotations = append(p.annotations, newAnnotationNode(name, value))
+	return p
 }
 
 func newAnnotationNode(name, value types.String) Node {
