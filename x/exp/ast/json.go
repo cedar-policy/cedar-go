@@ -74,12 +74,39 @@ func (j binaryJSON) ToNode(f func(a, b Node) Node) (Node, error) {
 	return f(left, right), nil
 }
 
+type unaryJSON struct {
+	Arg nodeJSON `json:"arg"`
+}
+
+func (j unaryJSON) ToNode(f func(a Node) Node) (Node, error) {
+	arg, err := j.Arg.ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in arg: %w", err)
+	}
+	return f(arg), nil
+}
+
 type accessJSON struct {
 	Left nodeJSON `json:"left"`
 	Attr string   `json:"attr"`
 }
 
 type nodeJSON struct {
+
+	// Value
+	Value *string `json:"Value"` // could be any
+
+	// Var
+	Var *string `json:"Var"`
+
+	// Slot
+	// Unknown
+
+	// ! or neg operators
+	Not    *unaryJSON `json:"!"`
+	Negate *unaryJSON `json:"neg"`
+
+	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
 	Equals             *binaryJSON `json:"=="`
 	NotEquals          *binaryJSON `json:"!="`
 	In                 *binaryJSON `json:"in"`
@@ -96,13 +123,47 @@ type nodeJSON struct {
 	ContainsAll        *binaryJSON `json:"containsAll"`
 	ContainsAny        *binaryJSON `json:"containsAny"`
 
+	// ., has
 	Access *accessJSON `json:"."`
-	Var    *string     `json:"Var"`
-	Value  *string     `json:"Value"` // could be any
+
+	// like
+	// if-then-else
+	// Set
+	// Record
+	// Any other key
+
 }
 
 func (j nodeJSON) ToNode() (Node, error) {
 	switch {
+	// Value
+	case j.Value != nil:
+		return String(types.String(*j.Value)), nil
+
+	// Var
+	case j.Var != nil:
+		switch *j.Var {
+		case "principal":
+			return Principal(), nil
+		case "action":
+			return Action(), nil
+		case "resource":
+			return Resource(), nil
+		case "context":
+			return Context(), nil
+		}
+		return Node{}, fmt.Errorf("unknown var: %v", j.Var)
+
+	// Slot
+	// Unknown
+
+	// ! or neg operators
+	case j.Not != nil:
+		return j.Not.ToNode(Not)
+	case j.Negate != nil:
+		return j.Negate.ToNode(Negate)
+
+	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
 	case j.Equals != nil:
 		return j.Equals.ToNode(Node.Equals)
 	case j.NotEquals != nil:
@@ -133,27 +194,21 @@ func (j nodeJSON) ToNode() (Node, error) {
 		return j.ContainsAll.ToNode(Node.ContainsAll)
 	case j.ContainsAny != nil:
 		return j.ContainsAny.ToNode(Node.ContainsAny)
+
+	// ., has
 	case j.Access != nil:
 		left, err := j.Access.Left.ToNode()
 		if err != nil {
 			return Node{}, fmt.Errorf("error in left of access: %w", err)
 		}
 		return left.Access(j.Access.Attr), nil
-	case j.Var != nil:
-		switch *j.Var {
-		case "principal":
-			return Principal(), nil
-		case "action":
-			return Action(), nil
-		case "resource":
-			return Resource(), nil
-		case "context":
-			return Context(), nil
-		}
-		return Node{}, fmt.Errorf("unknown var: %v", j.Var)
-	case j.Value != nil:
-		return String(types.String(*j.Value)), nil
 	}
+
+	// like
+	// if-then-else
+	// Set
+	// Record
+	// Any other key
 
 	return Node{}, fmt.Errorf("unknown node")
 }
