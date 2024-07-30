@@ -33,6 +33,22 @@ func (lhs Node) GreaterThanOrEqual(rhs Node) Node {
 	return newOpNode(nodeTypeGreaterEqual, lhs, rhs)
 }
 
+func (lhs Node) LessThanExt(rhs Node) Node {
+	return newOpNode(nodeTypeLessExt, lhs, rhs)
+}
+
+func (lhs Node) LessThanOrEqualExt(rhs Node) Node {
+	return newOpNode(nodeTypeLessEqualExt, lhs, rhs)
+}
+
+func (lhs Node) GreaterThanExt(rhs Node) Node {
+	return newOpNode(nodeTypeGreaterExt, lhs, rhs)
+}
+
+func (lhs Node) GreaterThanOrEqualExt(rhs Node) Node {
+	return newOpNode(nodeTypeGreaterEqualExt, lhs, rhs)
+}
+
 func (lhs Node) Like(patt string) Node {
 	return newOpNode(nodeTypeLike, lhs, String(types.String(patt)))
 }

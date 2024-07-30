@@ -121,9 +121,9 @@ func (j ifThenElseJSON) ToNode() (Node, error) {
 	return If(if_, then, else_), nil
 }
 
-type jsonSet []nodeJSON
+type arrayJSON []nodeJSON
 
-func (j jsonSet) ToNode() (Node, error) {
+func (j arrayJSON) ToNode() (Node, error) {
 	var nodes []Node
 	for _, jj := range j {
 		n, err := jj.ToNode()
@@ -135,9 +135,73 @@ func (j jsonSet) ToNode() (Node, error) {
 	return SetNodes(nodes), nil
 }
 
-type jsonRecord map[string]nodeJSON
+func (j arrayJSON) ToExt1(f func(Node) Node) (Node, error) {
+	if len(j) != 1 {
+		return Node{}, fmt.Errorf("unexpected number of arguments for extension: %v", len(j))
+	}
+	arg, err := j[0].ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in extension: %w", err)
+	}
+	return f(arg), nil
+}
 
-func (j jsonRecord) ToNode() (Node, error) {
+func (j arrayJSON) ToDecimalNode() (Node, error) {
+	if len(j) != 1 {
+		return Node{}, fmt.Errorf("unexpected number of arguments for extension: %v", len(j))
+	}
+	arg, err := j[0].ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in extension: %w", err)
+	}
+	s, ok := arg.value.(types.String)
+	if !ok {
+		return Node{}, fmt.Errorf("unexpected type for decimal")
+	}
+	v, err := types.ParseDecimal(string(s))
+	if err != nil {
+		return Node{}, fmt.Errorf("error parsing decimal: %w", err)
+	}
+	return Decimal(v), nil
+}
+
+func (j arrayJSON) ToIPAddrNode() (Node, error) {
+	if len(j) != 1 {
+		return Node{}, fmt.Errorf("unexpected number of arguments for extension: %v", len(j))
+	}
+	arg, err := j[0].ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in extension: %w", err)
+	}
+	s, ok := arg.value.(types.String)
+	if !ok {
+		return Node{}, fmt.Errorf("unexpected type for ipaddr")
+	}
+	v, err := types.ParseIPAddr(string(s))
+	if err != nil {
+		return Node{}, fmt.Errorf("error parsing ipaddr: %w", err)
+	}
+	return IPAddr(v), nil
+}
+
+func (j arrayJSON) ToExt2(f func(Node, Node) Node) (Node, error) {
+	if len(j) != 2 {
+		return Node{}, fmt.Errorf("unexpected number of arguments for extension: %v", len(j))
+	}
+	left, err := j[0].ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in argument 0: %w", err)
+	}
+	right, err := j[1].ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in argument 1: %w", err)
+	}
+	return f(left, right), nil
+}
+
+type recordJSON map[string]nodeJSON
+
+func (j recordJSON) ToNode() (Node, error) {
 	nodes := map[types.String]Node{}
 	for k, v := range j {
 		n, err := v.ToNode()
@@ -192,13 +256,25 @@ type nodeJSON struct {
 	IfThenElse *ifThenElseJSON `json:"if-then-else"`
 
 	// Set
-	Set jsonSet `json:"Set"`
+	Set arrayJSON `json:"Set"`
 
 	// Record
-	Record jsonRecord `json:"Record"`
+	Record recordJSON `json:"Record"`
 
-	// Any other key
+	// Any other function: decimal, ip
+	Decimal arrayJSON `json:"decimal"`
+	IP      arrayJSON `json:"ip"`
 
+	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
+	LessThanExt           arrayJSON `json:"lessThan"`
+	LessThanOrEqualExt    arrayJSON `json:"lessThanOrEqual"`
+	GreaterThanExt        arrayJSON `json:"greaterThan"`
+	GreaterThanOrEqualExt arrayJSON `json:"greaterThanOrEqual"`
+	IsIpv4Ext             arrayJSON `json:"isIpv4"`
+	IsIpv6Ext             arrayJSON `json:"isIpv6"`
+	IsLoopbackExt         arrayJSON `json:"isLoopback"`
+	IsMulticastExt        arrayJSON `json:"isMulticast"`
+	IsInRangeExt          arrayJSON `json:"isInRange"`
 }
 
 func (j nodeJSON) ToNode() (Node, error) {
@@ -284,7 +360,31 @@ func (j nodeJSON) ToNode() (Node, error) {
 	case j.Record != nil:
 		return j.Record.ToNode()
 
-		// Any other key
+	// Any other function: decimal, ip
+	case j.Decimal != nil:
+		return j.Decimal.ToDecimalNode()
+	case j.IP != nil:
+		return j.IP.ToIPAddrNode()
+
+	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
+	case j.LessThanExt != nil:
+		return j.LessThanExt.ToExt2(Node.LessThanExt)
+	case j.LessThanOrEqualExt != nil:
+		return j.LessThanOrEqualExt.ToExt2(Node.LessThanOrEqualExt)
+	case j.GreaterThanExt != nil:
+		return j.GreaterThanExt.ToExt2(Node.GreaterThanExt)
+	case j.GreaterThanOrEqualExt != nil:
+		return j.GreaterThanOrEqualExt.ToExt2(Node.GreaterThanOrEqualExt)
+	case j.IsIpv4Ext != nil:
+		return j.IsIpv4Ext.ToExt1(Node.IsIpv4)
+	case j.IsIpv6Ext != nil:
+		return j.IsIpv6Ext.ToExt1(Node.IsIpv6)
+	case j.IsLoopbackExt != nil:
+		return j.IsLoopbackExt.ToExt1(Node.IsLoopback)
+	case j.IsMulticastExt != nil:
+		return j.IsMulticastExt.ToExt1(Node.IsMulticast)
+	case j.IsInRangeExt != nil:
+		return j.IsInRangeExt.ToExt2(Node.IsInRange)
 	}
 
 	return Node{}, fmt.Errorf("unknown node")

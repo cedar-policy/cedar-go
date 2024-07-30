@@ -23,6 +23,7 @@ const (
 	nodeTypeIf
 	nodeTypeIn
 	nodeTypeIpAddr
+	nodeTypeDecimal
 	nodeTypeIs
 	nodeTypeIsInRange
 	nodeTypeIsIpv4
@@ -43,6 +44,10 @@ const (
 	nodeTypeSub
 	nodeTypeString
 	nodeTypeVariable
+	nodeTypeLessExt
+	nodeTypeLessEqualExt
+	nodeTypeGreaterExt
+	nodeTypeGreaterEqualExt
 )
 
 type Node struct {
