@@ -2,6 +2,8 @@ package parser
 
 import (
 	"testing"
+
+	"github.com/cedar-policy/cedar-go/testutil"
 )
 
 func TestParse(t *testing.T) {
@@ -291,16 +293,16 @@ func TestParse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			tokens, err := Tokenize([]byte(tt.in))
-			testutilOK(t, err)
+			testutil.OK(t, err)
 			got, err := Parse(tokens)
-			testutilEquals(t, err != nil, tt.err)
+			testutil.Equals(t, err != nil, tt.err)
 			if err != nil {
-				testutilEquals(t, got, nil)
+				testutil.Equals(t, got, nil)
 				return
 			}
 
 			gotTokens, err := Tokenize([]byte(got.String()))
-			testutilOK(t, err)
+			testutil.OK(t, err)
 
 			var tokenStrs []string
 			for _, t := range tokens {
@@ -312,7 +314,7 @@ func TestParse(t *testing.T) {
 				gotTokenStrs = append(gotTokenStrs, t.toString())
 			}
 
-			testutilEquals(t, gotTokenStrs, tokenStrs)
+			testutil.Equals(t, gotTokenStrs, tokenStrs)
 		})
 	}
 }
@@ -408,10 +410,10 @@ func TestParseTypes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			tokens, err := Tokenize([]byte(tt.in))
-			testutilOK(t, err)
+			testutil.OK(t, err)
 			got, err := Parse(tokens)
-			testutilOK(t, err)
-			testutilEquals(t, got, tt.out)
+			testutil.OK(t, err)
+			testutil.Equals(t, got, tt.out)
 		})
 	}
 }
@@ -424,16 +426,16 @@ func TestParseEntity(t *testing.T) {
 		out  Entity
 		err  func(testing.TB, error)
 	}{
-		{"happy", `Action::"test"`, Entity{Path: []string{"Action", "test"}}, testutilOK},
+		{"happy", `Action::"test"`, Entity{Path: []string{"Action", "test"}}, testutil.OK},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			toks, err := Tokenize([]byte(tt.in))
-			testutilOK(t, err)
+			testutil.OK(t, err)
 			out, err := ParseEntity(toks)
-			testutilEquals(t, out, tt.out)
+			testutil.Equals(t, out, tt.out)
 			tt.err(t, err)
 		})
 	}
@@ -453,11 +455,11 @@ permit( principal, action, resource );
  @test("1234") permit (principal, action, resource );
 `
 	toks, err := Tokenize([]byte(in))
-	testutilOK(t, err)
+	testutil.OK(t, err)
 	out, err := Parse(toks)
-	testutilOK(t, err)
-	testutilEquals(t, len(out), 3)
-	testutilEquals(t, out[0].Position, Position{Offset: 17, Line: 2, Column: 1})
-	testutilEquals(t, out[1].Position, Position{Offset: 86, Line: 7, Column: 3})
-	testutilEquals(t, out[2].Position, Position{Offset: 148, Line: 10, Column: 2})
+	testutil.OK(t, err)
+	testutil.Equals(t, len(out), 3)
+	testutil.Equals(t, out[0].Position, Position{Offset: 17, Line: 2, Column: 1})
+	testutil.Equals(t, out[1].Position, Position{Offset: 86, Line: 7, Column: 3})
+	testutil.Equals(t, out[2].Position, Position{Offset: 148, Line: 10, Column: 2})
 }
