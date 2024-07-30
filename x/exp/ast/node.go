@@ -18,6 +18,7 @@ const (
 	nodeTypeEquals
 	nodeTypeGreater
 	nodeTypeGreaterEqual
+	nodeTypeLike
 	nodeTypeHas
 	nodeTypeIf
 	nodeTypeIn

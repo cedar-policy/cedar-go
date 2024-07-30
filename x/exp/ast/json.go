@@ -86,12 +86,12 @@ func (j unaryJSON) ToNode(f func(a Node) Node) (Node, error) {
 	return f(arg), nil
 }
 
-type attrJSON struct {
+type strJSON struct {
 	Left nodeJSON `json:"left"`
 	Attr string   `json:"attr"`
 }
 
-func (j attrJSON) ToNode(f func(a Node, k string) Node) (Node, error) {
+func (j strJSON) ToNode(f func(a Node, k string) Node) (Node, error) {
 	left, err := j.Left.ToNode()
 	if err != nil {
 		return Node{}, fmt.Errorf("error in left: %w", err)
@@ -132,10 +132,12 @@ type nodeJSON struct {
 	ContainsAny        *binaryJSON `json:"containsAny"`
 
 	// ., has
-	Access *attrJSON `json:"."`
-	Has    *attrJSON `json:"has"`
+	Access *strJSON `json:"."`
+	Has    *strJSON `json:"has"`
 
 	// like
+	Like *strJSON `json:"like"`
+
 	// if-then-else
 	// Set
 	// Record
@@ -209,13 +211,16 @@ func (j nodeJSON) ToNode() (Node, error) {
 		return j.Access.ToNode(Node.Access)
 	case j.Has != nil:
 		return j.Has.ToNode(Node.Has)
-	}
 
 	// like
-	// if-then-else
-	// Set
-	// Record
-	// Any other key
+	case j.Like != nil:
+		return j.Like.ToNode(Node.Like)
+
+		// if-then-else
+		// Set
+		// Record
+		// Any other key
+	}
 
 	return Node{}, fmt.Errorf("unknown node")
 }
