@@ -49,7 +49,7 @@ func Set(s types.Set) Node {
 //	    ast.Context().Access("fooCount"),
 //	})
 func SetNodes(nodes []Node) Node {
-	return newValueNode(nodeTypeSet, nodes)
+	return Node{nodeType: nodeTypeSet, args: nodes}
 }
 
 // Record is a convenience function that wraps concrete instances of a Cedar Record type
