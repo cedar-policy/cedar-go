@@ -40,7 +40,7 @@ type explicitValue struct {
 	Value Value
 }
 
-func unmarshalJSON(b []byte, v *Value) error {
+func UnmarshalJSON(b []byte, v *Value) error {
 	// TODO: make this faster if it matters
 	{
 		var res EntityUID

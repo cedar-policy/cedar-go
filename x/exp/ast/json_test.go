@@ -3,8 +3,10 @@ package ast_test
 import (
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
@@ -91,7 +93,8 @@ func TestUnmarshalJSON(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var p ast.Policy
-			err := json.Unmarshal([]byte(tt.input), &p)
+			fixedInput := strings.ReplaceAll(tt.input, "\t", "    ")
+			err := json.Unmarshal([]byte(fixedInput), &p)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("error got: %v want: %v", err, tt.wantErr)
 			}
@@ -99,9 +102,9 @@ func TestUnmarshalJSON(t *testing.T) {
 				t.Errorf("policy mismatch: got: %+v want: %+v", p, *tt.want)
 			}
 
-			// b, err := json.MarshalIndent(&p, "", "    ")
-			// testutil.OK(t, err)
-			// testutil.Equals(t, string(b), tt.input)
+			b, err := json.MarshalIndent(&p, "", "    ")
+			testutil.OK(t, err)
+			testutil.Equals(t, string(b), fixedInput)
 		})
 	}
 

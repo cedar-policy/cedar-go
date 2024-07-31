@@ -77,10 +77,7 @@ func RecordNodes(entries map[types.String]Node) Node {
 	for k, v := range entries {
 		nodes = append(
 			nodes,
-			Node{
-				nodeType: nodeTypeRecordEntry,
-				args:     []Node{String(k), v},
-			},
+			newBinaryNode(nodeTypeRecordEntry, String(k), v),
 		)
 	}
 	return Node{nodeType: nodeTypeRecord, args: nodes}

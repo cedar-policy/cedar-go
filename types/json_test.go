@@ -49,7 +49,7 @@ func TestJSON_Value(t *testing.T) {
 			t.Parallel()
 			var got Value
 			ptr := &got
-			err := unmarshalJSON([]byte(tt.in), ptr)
+			err := UnmarshalJSON([]byte(tt.in), ptr)
 			testutil.AssertError(t, err, tt.err)
 			AssertValue(t, got, tt.want)
 			if tt.err != nil {
@@ -62,7 +62,7 @@ func TestJSON_Value(t *testing.T) {
 			testutil.OK(t, err)
 			var gotRetry Value
 			ptr = &gotRetry
-			err = unmarshalJSON(gotJSON, ptr)
+			err = UnmarshalJSON(gotJSON, ptr)
 			testutil.OK(t, err)
 			testutil.Equals(t, gotRetry, tt.want)
 		})

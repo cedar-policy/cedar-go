@@ -159,7 +159,7 @@ func (as Set) Equal(bi Value) bool {
 }
 
 func (v *explicitValue) UnmarshalJSON(b []byte) error {
-	return unmarshalJSON(b, &v.Value)
+	return UnmarshalJSON(b, &v.Value)
 }
 
 func (v *Set) UnmarshalJSON(b []byte) error {

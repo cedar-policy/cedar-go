@@ -33,3 +33,9 @@ func newResourceNode() Node {
 func newContextNode() Node {
 	return newValueNode(nodeTypeVariable, types.String("context"))
 }
+
+type variableNode Node
+
+func (v variableNode) String() types.String {
+	return v.value.(types.String)
+}
