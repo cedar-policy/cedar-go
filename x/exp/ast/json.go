@@ -9,46 +9,49 @@ import (
 )
 
 type policyJSON struct {
+	Annotations map[string]string `json:"annotations,omitempty"`
 	Effect      string            `json:"effect"`
-	Annotations map[string]string `json:"annotations"`
 	Principal   scopeJSON         `json:"principal"`
 	Action      scopeJSON         `json:"action"`
 	Resource    scopeJSON         `json:"resource"`
-	Conditions  []conditionJSON   `json:"conditions"`
+	Conditions  []conditionJSON   `json:"conditions,omitempty"`
+}
+
+type inJSON struct {
+	Entity types.EntityUID `json:"entity"`
 }
 
 type scopeJSON struct {
 	Op         string            `json:"op"`
-	Entity     types.EntityUID   `json:"entity"`
-	Entities   []types.EntityUID `json:"entities"`
-	EntityType string            `json:"entity_type"`
-	In         *struct {
-		Entity types.EntityUID `json:"entity"`
-	} `json:"in"`
+	Entity     *types.EntityUID  `json:"entity,omitempty"`
+	Entities   []types.EntityUID `json:"entities,omitempty"`
+	EntityType string            `json:"entity_type,omitempty"`
+	In         *inJSON           `json:"in,omitempty"`
 }
 
-func (s *scopeJSON) ToNode(n Node) (Node, error) {
+func (s *scopeJSON) ToNode(variable Node) (Node, error) {
 	switch s.Op {
 	case "All":
 		return True(), nil
 	case "==":
-		return n.Equals(Entity(s.Entity)), nil
+		if s.Entity == nil {
+			return Node{}, fmt.Errorf("missing entity")
+		}
+		return variable.Equals(Entity(*s.Entity)), nil
 	case "in":
-		var zero types.EntityUID
-		if s.Entity != zero {
-			return n.In(Entity(s.Entity)), nil // TODO: review shape, maybe .In vs .InNode
+		if s.Entity != nil {
+			return variable.In(Entity(*s.Entity)), nil // TODO: review shape, maybe .In vs .InNode
 		}
 		var set types.Set
 		for _, e := range s.Entities {
 			set = append(set, e)
 		}
-		return n.In(Set(set)), nil // TODO: maybe there is an In and an InSet Node?
+		return variable.In(Set(set)), nil // TODO: maybe there is an In and an InSet Node?
 	case "is":
-		isNode := n.Is(String(types.String(s.EntityType))) // TODO: hmmm, I'm not sure can this be Stronger-typed?
 		if s.In == nil {
-			return isNode, nil
+			return variable.Is(types.String(s.EntityType)), nil // TODO: hmmm, I'm not sure can this be Stronger-typed?
 		}
-		return isNode.And(n.In(Entity(s.In.Entity))), nil
+		return variable.IsIn(types.String(s.EntityType), Entity(s.In.Entity)), nil
 	}
 	return Node{}, fmt.Errorf("unknown op: %v", s.Op)
 }
@@ -433,7 +436,7 @@ func (j nodeJSON) ToNode() (Node, error) {
 func (p *Policy) UnmarshalJSON(b []byte) error {
 	var j policyJSON
 	if err := json.Unmarshal(b, &j); err != nil {
-		return err
+		return fmt.Errorf("error unmarshalling json: %w", err)
 	}
 	switch j.Effect {
 	case "permit":

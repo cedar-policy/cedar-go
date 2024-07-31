@@ -48,6 +48,9 @@ const (
 	nodeTypeLessEqualExt
 	nodeTypeGreaterExt
 	nodeTypeGreaterEqualExt
+	nodeTypeWhen
+	nodeTypeUnless
+	nodeTypeIsIn
 )
 
 type Node struct {
