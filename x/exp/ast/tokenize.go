@@ -36,6 +36,10 @@ func (t Token) isIdent() bool {
 	return t.Type == TokenIdent
 }
 
+func (t Token) isString() bool {
+	return t.Type == TokenString
+}
+
 func (t Token) stringValue() (string, error) {
 	s := t.Text
 	s = strings.TrimPrefix(s, "\"")
