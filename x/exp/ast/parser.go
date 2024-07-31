@@ -6,7 +6,7 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func PolicyFromCedar(p *parser) (*Policy, error) {
+func policyFromCedar(p *parser) (*Policy, error) {
 	annotations, err := p.annotations()
 	if err != nil {
 		return nil, err

@@ -128,7 +128,7 @@ func TestParse(t *testing.T) {
 
 			parser := newParser(tokens)
 
-			policy, err := PolicyFromCedar(&parser)
+			policy, err := policyFromCedar(&parser)
 			testutil.OK(t, err)
 
 			testutil.Equals(t, policy, tt.ExpectedPolicy)
