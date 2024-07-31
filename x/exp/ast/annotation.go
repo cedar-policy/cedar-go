@@ -33,15 +33,11 @@ func (n annotationNode) Value() types.String {
 }
 
 func (a *Annotations) Permit() *Policy {
-	p := Permit()
-	p.annotations = a.nodes
-	return p
+	return newPolicy(effectPermit, a.nodes)
 }
 
 func (a *Annotations) Forbid() *Policy {
-	p := Forbid()
-	p.annotations = a.nodes
-	return p
+	return newPolicy(effectForbid, a.nodes)
 }
 
 func (p *Policy) Annotate(name, value types.String) *Policy {

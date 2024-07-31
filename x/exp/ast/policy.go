@@ -9,12 +9,22 @@ type Policy struct {
 	conditions  []Node
 }
 
+func newPolicy(effect effect, annotations []Node) *Policy {
+	return &Policy{
+		effect:      effect,
+		annotations: annotations,
+		principal:   Node{nodeType: nodeTypeAll},
+		action:      Node{nodeType: nodeTypeAll},
+		resource:    Node{nodeType: nodeTypeAll},
+	}
+}
+
 func Permit() *Policy {
-	return &Policy{effect: effectPermit}
+	return newPolicy(effectPermit, nil)
 }
 
 func Forbid() *Policy {
-	return &Policy{effect: effectForbid}
+	return newPolicy(effectForbid, nil)
 }
 
 func (p *Policy) When(node Node) *Policy {
