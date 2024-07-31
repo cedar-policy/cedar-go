@@ -46,6 +46,12 @@ type strJSON struct {
 	Attr string   `json:"attr"`
 }
 
+type isJSON struct {
+	Left       nodeJSON `json:"left"`
+	EntityType string   `json:"entity_type"`
+	In         *inJSON  `json:"in,omitempty"`
+}
+
 type ifThenElseJSON struct {
 	If   nodeJSON `json:"if"`
 	Then nodeJSON `json:"then"`
@@ -92,7 +98,7 @@ type nodeJSON struct {
 	Has    *strJSON `json:"has,omitempty"`
 
 	// is
-	// TODO: https://docs.cedarpolicy.com/policies/json-format.html#JsonExpr-is
+	Is *isJSON `json:"is,omitempty"`
 
 	// like
 	Like *strJSON `json:"like,omitempty"`
