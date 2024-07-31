@@ -22,6 +22,16 @@ func (a *Annotations) Annotation(name, value types.String) *Annotations {
 	return a
 }
 
+type annotationNode Node
+
+func (n annotationNode) Key() types.String {
+	return n.args[0].value.(types.String)
+}
+
+func (n annotationNode) Value() types.String {
+	return n.args[1].value.(types.String)
+}
+
 func (a *Annotations) Permit() *Policy {
 	p := Permit()
 	p.annotations = a.nodes

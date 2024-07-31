@@ -26,7 +26,7 @@ func TestAst(t *testing.T) {
 	_ = ast.Annotation("example", "one").
 		Permit().
 		PrincipalIsIn("User", johnny).
-		ActionIn(sow, cast).
+		ActionInSet(sow, cast).
 		When(ast.True()).
 		Unless(ast.False())
 
