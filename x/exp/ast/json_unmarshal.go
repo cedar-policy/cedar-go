@@ -59,6 +59,16 @@ func (j strJSON) ToNode(f func(a Node, k string) Node) (Node, error) {
 	}
 	return f(left, j.Attr), nil
 }
+func (j isJSON) ToNode() (Node, error) {
+	left, err := j.Left.ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in left: %w", err)
+	}
+	if j.In != nil {
+		return left.IsIn(types.String(j.EntityType), Entity(j.In.Entity)), nil
+	}
+	return left.Is(types.String(j.EntityType)), nil
+}
 func (j ifThenElseJSON) ToNode() (Node, error) {
 	if_, err := j.If.ToNode()
 	if err != nil {
@@ -231,6 +241,10 @@ func (j nodeJSON) ToNode() (Node, error) {
 		return j.Access.ToNode(Node.Access)
 	case j.Has != nil:
 		return j.Has.ToNode(Node.Has)
+
+	// is
+	case j.Is != nil:
+		return j.Is.ToNode()
 
 	// like
 	case j.Like != nil:

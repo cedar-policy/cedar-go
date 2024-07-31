@@ -3,6 +3,8 @@ package ast
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 func (s *scopeJSON) FromNode(src Node) error {
@@ -161,7 +163,7 @@ func (j *nodeJSON) FromNode(src Node) error {
 	case nodeTypeSub:
 		n := binaryNode(src)
 		j.Minus = &binaryJSON{}
-		j.Minus.Left.FromNode(n.Left())
+		j.Minus.Left.FromNode(n.Left()) // TODO: in all these cases, check for an error, handle it ...
 		j.Minus.Right.FromNode(n.Right())
 		return nil
 
@@ -182,7 +184,21 @@ func (j *nodeJSON) FromNode(src Node) error {
 		return nil
 	// is
 	case nodeTypeIs:
-	case nodeTypeIsIn: // TODO
+		n := binaryNode(src)
+		j.Is = &isJSON{
+			EntityType: string(n.Right().value.(types.String)), // TODO: make this nicer
+		}
+		j.Is.Left.FromNode(n.Left())
+		return nil
+	case nodeTypeIsIn:
+		n := trinaryNode(src)
+		j.Is = &isJSON{
+			EntityType: string(n.B().value.(types.String)), // TODO: make this nicer
+			In:         &inJSON{},
+		}
+		j.Is.Left.FromNode(n.A())
+		j.Is.In.Entity = n.C().value.(types.EntityUID)
+		return nil
 
 	// like
 	// Like *strJSON `json:"like"`
