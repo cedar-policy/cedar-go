@@ -32,24 +32,8 @@ type Token struct {
 	Text string
 }
 
-func (t Token) isEOF() bool {
-	return t.Type == TokenEOF
-}
-
 func (t Token) isIdent() bool {
 	return t.Type == TokenIdent
-}
-
-func (t Token) isInt() bool {
-	return t.Type == TokenInt
-}
-
-func (t Token) isString() bool {
-	return t.Type == TokenString
-}
-
-func (t Token) toString() string {
-	return t.Text
 }
 
 func (t Token) stringValue() (string, error) {
@@ -59,10 +43,6 @@ func (t Token) stringValue() (string, error) {
 	b := []byte(s)
 	res, _, err := rustUnquote(b, false)
 	return res, err
-}
-
-func (t Token) patternValue() (Pattern, error) {
-	return NewPattern(t.Text)
 }
 
 func nextRune(b []byte, i int) (rune, int, error) {
