@@ -125,7 +125,7 @@ func TestParse(t *testing.T) {
 			action in [ActionType::"farming", ActionType::"forestry"],
 			resource
 		);`,
-			Permit().ActionIn(farming, forestry),
+			Permit().ActionInSet(farming, forestry),
 		},
 	}
 

@@ -251,7 +251,7 @@ func (p *parser) action(policy *Policy) error {
 			if err != nil {
 				return err
 			}
-			policy.ActionIn(entities...)
+			policy.ActionInSet(entities...)
 			p.advance() // entlist guarantees "]"
 			return nil
 		} else {
