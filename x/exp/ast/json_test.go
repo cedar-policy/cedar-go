@@ -34,15 +34,24 @@ func TestUnmarshalJSON(t *testing.T) {
     "effect": "permit",
     "principal": {
         "op": "==",
-        "entity": { "type": "User", "id": "12UA45" }
+        "entity": {
+			"type": "User",
+			"id": "12UA45"
+		}
     },
     "action": {
         "op": "==",
-        "entity": { "type": "Action", "id": "view" }
+        "entity": {
+			"type": "Action",
+			"id": "view"
+		}
     },
     "resource": {
         "op": "in",
-        "entity": { "type": "Folder", "id": "abc" }
+        "entity": {
+			"type": "Folder",
+			"id": "abc"
+		}
     },
     "conditions": [
         {
@@ -89,6 +98,10 @@ func TestUnmarshalJSON(t *testing.T) {
 			if !reflect.DeepEqual(&p, tt.want) {
 				t.Errorf("policy mismatch: got: %+v want: %+v", p, *tt.want)
 			}
+
+			// b, err := json.MarshalIndent(&p, "", "    ")
+			// testutil.OK(t, err)
+			// testutil.Equals(t, string(b), tt.input)
 		})
 	}
 

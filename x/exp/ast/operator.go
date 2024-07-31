@@ -109,8 +109,12 @@ func (lhs Node) In(rhs Node) Node {
 	return newOpNode(nodeTypeIn, lhs, rhs)
 }
 
-func (lhs Node) Is(rhs Node) Node {
-	return newOpNode(nodeTypeIs, lhs, rhs)
+func (lhs Node) Is(entityType types.String) Node {
+	return newOpNode(nodeTypeIs, lhs, String(entityType))
+}
+
+func (lhs Node) IsIn(entityType types.String, rhs Node) Node {
+	return newOpNode(nodeTypeIsIn, lhs, String(entityType), rhs)
 }
 
 func (lhs Node) Contains(rhs Node) Node {

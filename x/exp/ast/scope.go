@@ -13,7 +13,12 @@ func (p *Policy) PrincipalIn(entity types.EntityUID) *Policy {
 }
 
 func (p *Policy) PrincipalIs(entityType types.String) *Policy {
-	p.principal = Principal().Is(EntityType(entityType))
+	p.principal = Principal().Is(entityType)
+	return p
+}
+
+func (p *Policy) PrincipalIsIn(entityType types.String, entity types.EntityUID) *Policy {
+	p.principal = Principal().IsIn(entityType, Entity(entity))
 	return p
 }
 
@@ -46,6 +51,11 @@ func (p *Policy) ResourceIn(entity types.EntityUID) *Policy {
 }
 
 func (p *Policy) ResourceIs(entityType types.String) *Policy {
-	p.resource = Resource().Is(EntityType(entityType))
+	p.resource = Resource().Is(entityType)
+	return p
+}
+
+func (p *Policy) ResourceIsIn(entityType types.String, entity types.EntityUID) *Policy {
+	p.resource = Resource().IsIn(entityType, Entity(entity))
 	return p
 }

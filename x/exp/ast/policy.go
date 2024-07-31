@@ -18,12 +18,12 @@ func Forbid() *Policy {
 }
 
 func (p *Policy) When(node Node) *Policy {
-	p.conditions = append(p.conditions, node)
+	p.conditions = append(p.conditions, Node{nodeType: nodeTypeUnless, args: []Node{node}})
 	return p
 }
 
 func (p *Policy) Unless(node Node) *Policy {
-	p.conditions = append(p.conditions, Not(node))
+	p.conditions = append(p.conditions, Node{nodeType: nodeTypeWhen, args: []Node{node}})
 	return p
 }
 
