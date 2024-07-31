@@ -44,6 +44,130 @@ func (s *scopeJSON) FromNode(src Node) error {
 	}
 	return fmt.Errorf("unexpected scope node: %v", src.nodeType)
 }
+
+func unaryToJSON(dest **unaryJSON, src Node) error {
+	n := unaryNode(src)
+	res := &unaryJSON{}
+	if err := res.Arg.FromNode(n.Arg()); err != nil {
+		return fmt.Errorf("error in arg: %w", err)
+	}
+	*dest = res
+	return nil
+}
+
+func binaryToJSON(dest **binaryJSON, src Node) error {
+	n := binaryNode(src)
+	res := &binaryJSON{}
+	if err := res.Left.FromNode(n.Left()); err != nil {
+		return fmt.Errorf("error in left: %w", err)
+	}
+	if err := res.Right.FromNode(n.Right()); err != nil {
+		return fmt.Errorf("error in right: %w", err)
+	}
+	*dest = res
+	return nil
+}
+
+func arrayToJSON(dest *arrayJSON, src Node) error {
+	res := arrayJSON{}
+	for _, n := range src.args {
+		var nn nodeJSON
+		if err := nn.FromNode(n); err != nil {
+			return fmt.Errorf("error in array: %w", err)
+		}
+		res = append(res, nn)
+	}
+	*dest = res
+	return nil
+}
+
+func extToJSON(dest *arrayJSON, src Node) error {
+	res := arrayJSON{}
+	if src.value == nil {
+		return fmt.Errorf("missing value")
+	}
+	str := src.value.String() // TODO: is this the correct string?
+	b := []byte(str)
+	res = append(res, nodeJSON{
+		Value: (*json.RawMessage)(&b),
+	})
+	*dest = res
+	return nil
+}
+
+func strToJSON(dest **strJSON, src Node) error {
+	n := binaryNode(src)
+	res := &strJSON{}
+	if err := res.Left.FromNode(n.Left()); err != nil {
+		return fmt.Errorf("error in left: %w", err)
+	}
+	str, ok := n.Right().value.(types.String)
+	if !ok {
+		return fmt.Errorf("right not string")
+	}
+	res.Attr = string(str)
+	*dest = res
+	return nil
+}
+
+func recordToJSON(dest *recordJSON, src Node) error {
+	res := recordJSON{}
+	for _, kv := range src.args {
+		n := binaryNode(kv)
+		var nn nodeJSON
+		if err := nn.FromNode(n.Right()); err != nil {
+			return err
+		}
+		str, ok := n.Left().value.(types.String)
+		if !ok {
+			return fmt.Errorf("left not string")
+		}
+		res[string(str)] = nn
+	}
+	*dest = res
+	return nil
+}
+
+func ifToJSON(dest **ifThenElseJSON, src Node) error {
+	n := trinaryNode(src)
+	res := &ifThenElseJSON{}
+	if err := res.If.FromNode(n.A()); err != nil {
+		return fmt.Errorf("error in if: %w", err)
+	}
+	if err := res.Then.FromNode(n.B()); err != nil {
+		return fmt.Errorf("error in then: %w", err)
+	}
+	if err := res.Else.FromNode(n.C()); err != nil {
+		return fmt.Errorf("error in else: %w", err)
+	}
+	*dest = res
+	return nil
+}
+
+func isToJSON(dest **isJSON, src Node) error {
+	n := binaryNode(src)
+	res := &isJSON{}
+	if err := res.Left.FromNode(n.Left()); err != nil {
+		return fmt.Errorf("error in left: %w", err)
+	}
+	str, ok := n.Right().value.(types.String)
+	if !ok {
+		return fmt.Errorf("right not a string")
+	}
+	res.EntityType = string(str)
+	if len(src.args) == 3 {
+		ent, ok := src.args[2].value.(types.EntityUID)
+		if !ok {
+			return fmt.Errorf("in not an entity")
+		}
+		res.In = &inJSON{
+			Entity: ent,
+		}
+	}
+	*dest = res
+	return nil
+}
+
 func (j *nodeJSON) FromNode(src Node) error {
 	switch src.nodeType {
 	// Value
@@ -65,208 +189,81 @@ func (j *nodeJSON) FromNode(src Node) error {
 	// Not    *unaryJSON `json:"!"`
 	// Negate *unaryJSON `json:"neg"`
 	case nodeTypeNot:
-		n := unaryNode(src)
-		j.Not = &unaryJSON{}
-		j.Not.Arg.FromNode(n.Arg())
-		return nil
+		return unaryToJSON(&j.Not, src)
 	case nodeTypeNegate:
-		n := unaryNode(src)
-		j.Negate = &unaryJSON{}
-		j.Negate.Arg.FromNode(n.Arg())
-		return nil
+		return unaryToJSON(&j.Not, src)
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
 	case nodeTypeAdd:
-		n := binaryNode(src)
-		j.Plus = &binaryJSON{}
-		j.Plus.Left.FromNode(n.Left())
-		j.Plus.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.Plus, src)
 	case nodeTypeAnd:
-		n := binaryNode(src)
-		j.And = &binaryJSON{}
-		j.And.Left.FromNode(n.Left())
-		j.And.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.And, src)
 	case nodeTypeContains:
-		n := binaryNode(src)
-		j.Contains = &binaryJSON{}
-		j.Contains.Left.FromNode(n.Left())
-		j.Contains.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.Contains, src)
 	case nodeTypeContainsAll:
-		n := binaryNode(src)
-		j.ContainsAll = &binaryJSON{}
-		j.ContainsAll.Left.FromNode(n.Left())
-		j.ContainsAll.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.ContainsAll, src)
 	case nodeTypeContainsAny:
-		n := binaryNode(src)
-		j.ContainsAny = &binaryJSON{}
-		j.ContainsAny.Left.FromNode(n.Left())
-		j.ContainsAny.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.ContainsAny, src)
 	case nodeTypeEquals:
-		n := binaryNode(src)
-		j.Equals = &binaryJSON{}
-		j.Equals.Left.FromNode(n.Left())
-		j.Equals.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.Equals, src)
 	case nodeTypeGreater:
-		n := binaryNode(src)
-		j.GreaterThan = &binaryJSON{}
-		j.GreaterThan.Left.FromNode(n.Left())
-		j.GreaterThan.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.GreaterThan, src)
 	case nodeTypeGreaterEqual:
-		n := binaryNode(src)
-		j.GreaterThanOrEqual = &binaryJSON{}
-		j.GreaterThanOrEqual.Left.FromNode(n.Left())
-		j.GreaterThanOrEqual.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.GreaterThanOrEqual, src)
 	case nodeTypeIn:
-		n := binaryNode(src)
-		j.In = &binaryJSON{}
-		j.In.Left.FromNode(n.Left())
-		j.In.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.In, src)
 	case nodeTypeLess:
-		n := binaryNode(src)
-		j.LessThan = &binaryJSON{}
-		j.LessThan.Left.FromNode(n.Left())
-		j.LessThan.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.LessThan, src)
 	case nodeTypeLessEqual:
-		n := binaryNode(src)
-		j.LessThanOrEqual = &binaryJSON{}
-		j.LessThanOrEqual.Left.FromNode(n.Left())
-		j.LessThanOrEqual.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.LessThanOrEqual, src)
 	case nodeTypeMult:
-		n := binaryNode(src)
-		j.Times = &binaryJSON{}
-		j.Times.Left.FromNode(n.Left())
-		j.Times.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.Times, src)
 	case nodeTypeNotEquals:
-		n := binaryNode(src)
-		j.NotEquals = &binaryJSON{}
-		j.NotEquals.Left.FromNode(n.Left())
-		j.NotEquals.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.NotEquals, src)
 	case nodeTypeOr:
-		n := binaryNode(src)
-		j.Or = &binaryJSON{}
-		j.Or.Left.FromNode(n.Left())
-		j.Or.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.Or, src)
 	case nodeTypeSub:
-		n := binaryNode(src)
-		j.Minus = &binaryJSON{}
-		j.Minus.Left.FromNode(n.Left()) // TODO: in all these cases, check for an error, handle it ...
-		j.Minus.Right.FromNode(n.Right())
-		return nil
+		return binaryToJSON(&j.Minus, src)
 
 	// ., has
 	// Access *strJSON `json:"."`
 	// Has    *strJSON `json:"has"`
 	case nodeTypeAccess:
-		n := binaryNode(src)
-		j.Access = &strJSON{}
-		j.Access.Left.FromNode(n.Left())
-		j.Access.Attr = n.Right().value.String() // TODO: make this nicer
-		return nil
+		return strToJSON(&j.Access, src)
 	case nodeTypeHas:
-		n := binaryNode(src)
-		j.Has = &strJSON{}
-		j.Has.Left.FromNode(n.Left())
-		j.Has.Attr = n.Right().value.String() // TODO: make this nicer
-		return nil
+		return strToJSON(&j.Access, src)
 	// is
-	case nodeTypeIs:
-		n := binaryNode(src)
-		j.Is = &isJSON{
-			EntityType: string(n.Right().value.(types.String)), // TODO: make this nicer
-		}
-		j.Is.Left.FromNode(n.Left())
-		return nil
-	case nodeTypeIsIn:
-		n := trinaryNode(src)
-		j.Is = &isJSON{
-			EntityType: string(n.B().value.(types.String)), // TODO: make this nicer
-			In:         &inJSON{},
-		}
-		j.Is.Left.FromNode(n.A())
-		j.Is.In.Entity = n.C().value.(types.EntityUID)
-		return nil
+	case nodeTypeIs, nodeTypeIsIn:
+		return isToJSON(&j.Is, src)
 
 	// like
 	// Like *strJSON `json:"like"`
 	case nodeTypeLike:
-		n := binaryNode(src)
-		j.Like = &strJSON{}
-		j.Like.Left.FromNode(n.Left())
-		j.Like.Attr = n.Right().value.String() // TODO: make this nicer
+		return strToJSON(&j.Access, src)
 
 	// if-then-else
 	// IfThenElse *ifThenElseJSON `json:"if-then-else"`
 	case nodeTypeIf:
-		n := trinaryNode(src)
-		j.IfThenElse = &ifThenElseJSON{}
-		j.IfThenElse.If.FromNode(n.A())
-		j.IfThenElse.Then.FromNode(n.B())
-		j.IfThenElse.Else.FromNode(n.C())
+		return ifToJSON(&j.IfThenElse, src)
 
 	// Set
 	// Set arrayJSON `json:"Set"`
 	case nodeTypeSet:
-		j.Set = arrayJSON{}
-		for _, v := range src.args {
-			var nn nodeJSON
-			if err := nn.FromNode(v); err != nil {
-				return err
-			}
-			j.Set = append(j.Set, nn)
-		}
-		return nil
+		return arrayToJSON(&j.Set, src)
 
 	// Record
 	// Record recordJSON `json:"Record"`
 	case nodeTypeRecord:
-		j.Record = recordJSON{}
-		for _, kv := range src.args {
-			n := binaryNode(kv)
-			// TODO: make this nicer
-			var nn nodeJSON
-			if err := nn.FromNode(n.Right()); err != nil {
-				return err
-			}
-			j.Record[n.Left().value.String()] = nn
-		}
-		return nil
+		return recordToJSON(&j.Record, src)
 
 	// Any other function: decimal, ip
 	// Decimal arrayJSON `json:"decimal"`
 	// IP      arrayJSON `json:"ip"`
 	case nodeTypeDecimal:
-		j.Decimal = arrayJSON{}
-		str := src.value.String() // TODO: make this nicer
-		b := []byte(str)
-		j.Decimal = append(j.Decimal, nodeJSON{
-			Value: (*json.RawMessage)(&b),
-		},
-		)
-		return nil
+		return extToJSON(&j.Decimal, src)
 
 	case nodeTypeIpAddr:
-		j.IP = arrayJSON{}
-		str := src.value.String() // TODO: make this nicer
-		b := []byte(str)
-		j.IP = append(j.IP, nodeJSON{
-			Value: (*json.RawMessage)(&b),
-		},
-		)
-		return nil
+		return extToJSON(&j.IP, src)
 
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
 	// LessThanExt           arrayJSON `json:"lessThan"`
@@ -279,103 +276,23 @@ func (j *nodeJSON) FromNode(src Node) error {
 	// IsMulticastExt        arrayJSON `json:"isMulticast"`
 	// IsInRangeExt          arrayJSON `json:"isInRange"`
 	case nodeTypeLessExt:
-		n := binaryNode(src)
-		j.LessThanExt = arrayJSON{}
-		var left, right nodeJSON
-		if err := left.FromNode(n.Left()); err != nil {
-			return err
-		}
-		if err := right.FromNode(n.Right()); err != nil {
-			return err
-		}
-		j.LessThanExt = append(j.LessThanExt, left, right)
-		return nil
+		return arrayToJSON(&j.LessThanExt, src)
 	case nodeTypeLessEqualExt:
-		n := binaryNode(src)
-		j.LessThanOrEqualExt = arrayJSON{}
-		var left, right nodeJSON
-		if err := left.FromNode(n.Left()); err != nil {
-			return err
-		}
-		if err := right.FromNode(n.Right()); err != nil {
-			return err
-		}
-		j.LessThanOrEqualExt = append(j.LessThanOrEqualExt, left, right)
-		return nil
+		return arrayToJSON(&j.LessThanOrEqualExt, src)
 	case nodeTypeGreaterExt:
-		n := binaryNode(src)
-		j.GreaterThanExt = arrayJSON{}
-		var left, right nodeJSON
-		if err := left.FromNode(n.Left()); err != nil {
-			return err
-		}
-		if err := right.FromNode(n.Right()); err != nil {
-			return err
-		}
-		j.GreaterThanExt = append(j.GreaterThanExt, left, right)
-		return nil
+		return arrayToJSON(&j.GreaterThanExt, src)
 	case nodeTypeGreaterEqualExt:
-		n := binaryNode(src)
-		j.GreaterThanOrEqualExt = arrayJSON{}
-		var left, right nodeJSON
-		if err := left.FromNode(n.Left()); err != nil {
-			return err
-		}
-		if err := right.FromNode(n.Right()); err != nil {
-			return err
-		}
-		j.GreaterThanOrEqualExt = append(j.GreaterThanOrEqualExt, left, right)
-		return nil
+		return arrayToJSON(&j.GreaterThanOrEqualExt, src)
 	case nodeTypeIsInRange:
-		n := binaryNode(src)
-		j.IsInRangeExt = arrayJSON{}
-		var left, right nodeJSON
-		if err := left.FromNode(n.Left()); err != nil {
-			return err
-		}
-		if err := right.FromNode(n.Right()); err != nil {
-			return err
-		}
-		j.IsInRangeExt = append(j.IsInRangeExt, left, right)
-		return nil
-
+		return arrayToJSON(&j.IsInRangeExt, src)
 	case nodeTypeIsIpv4:
-		n := unaryNode(src)
-		j.IsIpv4Ext = arrayJSON{}
-		var arg nodeJSON
-		if err := arg.FromNode(n.Arg()); err != nil {
-			return err
-		}
-		j.IsIpv4Ext = append(j.IsIpv4Ext, arg)
-		return nil
+		return arrayToJSON(&j.IsIpv4Ext, src)
 	case nodeTypeIsIpv6:
-		n := unaryNode(src)
-		j.IsIpv6Ext = arrayJSON{}
-		var arg nodeJSON
-		if err := arg.FromNode(n.Arg()); err != nil {
-			return err
-		}
-		j.IsIpv6Ext = append(j.IsIpv6Ext, arg)
-		return nil
+		return arrayToJSON(&j.IsIpv6Ext, src)
 	case nodeTypeIsLoopback:
-		n := unaryNode(src)
-		j.IsLoopbackExt = arrayJSON{}
-		var arg nodeJSON
-		if err := arg.FromNode(n.Arg()); err != nil {
-			return err
-		}
-		j.IsLoopbackExt = append(j.IsLoopbackExt, arg)
-		return nil
+		return arrayToJSON(&j.IsLoopbackExt, src)
 	case nodeTypeIsMulticast:
-		n := unaryNode(src)
-		j.IsMulticastExt = arrayJSON{}
-		var arg nodeJSON
-		if err := arg.FromNode(n.Arg()); err != nil {
-			return err
-		}
-		j.IsMulticastExt = append(j.IsMulticastExt, arg)
-		return nil
-
+		return arrayToJSON(&j.IsMulticastExt, src)
 	}
 	// case nodeTypeRecordEntry:
 	// case nodeTypeEntityType:
