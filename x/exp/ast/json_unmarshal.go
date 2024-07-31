@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -11,7 +10,7 @@ import (
 func (s *scopeJSON) ToNode(variable Node) (Node, error) {
 	switch s.Op {
 	case "All":
-		return True(), nil
+		return Node{}, nil
 	case "==":
 		if s.Entity == nil {
 			return Node{}, fmt.Errorf("missing entity")
@@ -162,50 +161,15 @@ func (j recordJSON) ToNode() (Node, error) {
 	return RecordNodes(nodes), nil
 }
 
-var ( // TODO: de-dupe from types?
-	errJSONDecode          = fmt.Errorf("error decoding json")
-	errJSONLongOutOfRange  = fmt.Errorf("long out of range")
-	errJSONUnsupportedType = fmt.Errorf("unsupported type")
-)
-
-func parseRawMessage(j *json.RawMessage) (Node, error) {
-	// TODO: de-dupe from types?  though it's not 100% compat, because of extensions :(
-	// TODO: make this faster if it matters
-	{
-		var res types.EntityUID
-		ptr := &res
-		if err := ptr.UnmarshalJSON(*j); err == nil {
-			return Entity(res), nil
-		}
-	}
-
-	var res interface{}
-	dec := json.NewDecoder(bytes.NewBuffer(*j))
-	dec.UseNumber()
-	if err := dec.Decode(&res); err != nil {
-		return Node{}, fmt.Errorf("%w: %w", errJSONDecode, err)
-	}
-	switch vv := res.(type) {
-	case string:
-		return String(types.String(vv)), nil
-	case bool:
-		return Boolean(types.Boolean(vv)), nil
-	case json.Number:
-		l, err := vv.Int64()
-		if err != nil {
-			return Node{}, fmt.Errorf("%w: %w", errJSONLongOutOfRange, err)
-		}
-		return Long(types.Long(l)), nil
-	}
-	return Node{}, errJSONUnsupportedType
-
-}
-
 func (j nodeJSON) ToNode() (Node, error) {
 	switch {
 	// Value
 	case j.Value != nil:
-		return parseRawMessage(j.Value)
+		var v types.Value
+		if err := types.UnmarshalJSON(*j.Value, &v); err != nil {
+			return Node{}, fmt.Errorf("error unmarshalling value: %w", err)
+		}
+		return valueToNode(v), nil
 
 	// Var
 	case j.Var != nil:

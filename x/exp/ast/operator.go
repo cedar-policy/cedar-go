@@ -10,47 +10,47 @@ import "github.com/cedar-policy/cedar-go/types"
 //                      |_|
 
 func (lhs Node) Equals(rhs Node) Node {
-	return newOpNode(nodeTypeEquals, lhs, rhs)
+	return newBinaryNode(nodeTypeEquals, lhs, rhs)
 }
 
 func (lhs Node) NotEquals(rhs Node) Node {
-	return newOpNode(nodeTypeNotEquals, lhs, rhs)
+	return newBinaryNode(nodeTypeNotEquals, lhs, rhs)
 }
 
 func (lhs Node) LessThan(rhs Node) Node {
-	return newOpNode(nodeTypeLess, lhs, rhs)
+	return newBinaryNode(nodeTypeLess, lhs, rhs)
 }
 
 func (lhs Node) LessThanOrEqual(rhs Node) Node {
-	return newOpNode(nodeTypeLessEqual, lhs, rhs)
+	return newBinaryNode(nodeTypeLessEqual, lhs, rhs)
 }
 
 func (lhs Node) GreaterThan(rhs Node) Node {
-	return newOpNode(nodeTypeGreater, lhs, rhs)
+	return newBinaryNode(nodeTypeGreater, lhs, rhs)
 }
 
 func (lhs Node) GreaterThanOrEqual(rhs Node) Node {
-	return newOpNode(nodeTypeGreaterEqual, lhs, rhs)
+	return newBinaryNode(nodeTypeGreaterEqual, lhs, rhs)
 }
 
 func (lhs Node) LessThanExt(rhs Node) Node {
-	return newOpNode(nodeTypeLessExt, lhs, rhs)
+	return newBinaryNode(nodeTypeLessExt, lhs, rhs)
 }
 
 func (lhs Node) LessThanOrEqualExt(rhs Node) Node {
-	return newOpNode(nodeTypeLessEqualExt, lhs, rhs)
+	return newBinaryNode(nodeTypeLessEqualExt, lhs, rhs)
 }
 
 func (lhs Node) GreaterThanExt(rhs Node) Node {
-	return newOpNode(nodeTypeGreaterExt, lhs, rhs)
+	return newBinaryNode(nodeTypeGreaterExt, lhs, rhs)
 }
 
 func (lhs Node) GreaterThanOrEqualExt(rhs Node) Node {
-	return newOpNode(nodeTypeGreaterEqualExt, lhs, rhs)
+	return newBinaryNode(nodeTypeGreaterEqualExt, lhs, rhs)
 }
 
 func (lhs Node) Like(patt string) Node {
-	return newOpNode(nodeTypeLike, lhs, String(types.String(patt)))
+	return newBinaryNode(nodeTypeLike, lhs, String(types.String(patt)))
 }
 
 //  _                _           _
@@ -61,23 +61,23 @@ func (lhs Node) Like(patt string) Node {
 //             |___/
 
 func (lhs Node) And(rhs Node) Node {
-	return newOpNode(nodeTypeAnd, lhs, rhs)
+	return newBinaryNode(nodeTypeAnd, lhs, rhs)
 }
 
 func (lhs Node) Or(rhs Node) Node {
-	return newOpNode(nodeTypeOr, lhs, rhs)
+	return newBinaryNode(nodeTypeOr, lhs, rhs)
 }
 
 func Not(rhs Node) Node {
-	return newOpNode(nodeTypeNot, rhs)
+	return newUnaryNode(nodeTypeNot, rhs)
 }
 
 func Negate(rhs Node) Node {
-	return newOpNode(nodeTypeNegate, rhs)
+	return newUnaryNode(nodeTypeNegate, rhs)
 }
 
 func If(condition Node, ifTrue Node, ifFalse Node) Node {
-	return newOpNode(nodeTypeIf, condition, ifTrue, ifFalse)
+	return newTrinaryNode(nodeTypeIf, condition, ifTrue, ifFalse)
 }
 
 //     _         _ _   _                    _   _
@@ -87,15 +87,15 @@ func If(condition Node, ifTrue Node, ifFalse Node) Node {
 // /_/   \_\_|  |_|\__|_| |_|_| |_| |_|\___|\__|_|\___|
 
 func (lhs Node) Plus(rhs Node) Node {
-	return newOpNode(nodeTypeAdd, lhs, rhs)
+	return newBinaryNode(nodeTypeAdd, lhs, rhs)
 }
 
 func (lhs Node) Minus(rhs Node) Node {
-	return newOpNode(nodeTypeSub, lhs, rhs)
+	return newBinaryNode(nodeTypeSub, lhs, rhs)
 }
 
 func (lhs Node) Times(rhs Node) Node {
-	return newOpNode(nodeTypeMult, lhs, rhs)
+	return newBinaryNode(nodeTypeMult, lhs, rhs)
 }
 
 //  _   _ _                         _
@@ -106,27 +106,27 @@ func (lhs Node) Times(rhs Node) Node {
 //                                        |___/
 
 func (lhs Node) In(rhs Node) Node {
-	return newOpNode(nodeTypeIn, lhs, rhs)
+	return newBinaryNode(nodeTypeIn, lhs, rhs)
 }
 
 func (lhs Node) Is(entityType types.String) Node {
-	return newOpNode(nodeTypeIs, lhs, String(entityType))
+	return newBinaryNode(nodeTypeIs, lhs, String(entityType))
 }
 
 func (lhs Node) IsIn(entityType types.String, rhs Node) Node {
-	return newOpNode(nodeTypeIsIn, lhs, String(entityType), rhs)
+	return newTrinaryNode(nodeTypeIsIn, lhs, String(entityType), rhs)
 }
 
 func (lhs Node) Contains(rhs Node) Node {
-	return newOpNode(nodeTypeContains, lhs, rhs)
+	return newBinaryNode(nodeTypeContains, lhs, rhs)
 }
 
 func (lhs Node) ContainsAll(rhs Node) Node {
-	return newOpNode(nodeTypeContainsAll, lhs, rhs)
+	return newBinaryNode(nodeTypeContainsAll, lhs, rhs)
 }
 
 func (lhs Node) ContainsAny(rhs Node) Node {
-	return newOpNode(nodeTypeContainsAny, lhs, rhs)
+	return newBinaryNode(nodeTypeContainsAny, lhs, rhs)
 }
 
 // Access is a convenience function that wraps a simple string
@@ -147,11 +147,11 @@ func (lhs Node) Access(attr string) Node {
 //	    ast.Context().Access("resourceAttribute")
 //	).Equals(ast.String("foo"))
 func (lhs Node) AccessNode(rhs Node) Node {
-	return newOpNode(nodeTypeAccess, lhs, rhs)
+	return newBinaryNode(nodeTypeAccess, lhs, rhs)
 }
 
 func (lhs Node) Has(attr string) Node {
-	return newOpNode(nodeTypeHas, lhs, String(types.String(attr)))
+	return newBinaryNode(nodeTypeHas, lhs, String(types.String(attr)))
 }
 
 //  ___ ____   _       _     _
@@ -161,25 +161,21 @@ func (lhs Node) Has(attr string) Node {
 // |___|_| /_/   \_\__,_|\__,_|_|  \___||___/___/
 
 func (lhs Node) IsIpv4() Node {
-	return newOpNode(nodeTypeIsIpv4, lhs)
+	return newUnaryNode(nodeTypeIsIpv4, lhs)
 }
 
 func (lhs Node) IsIpv6() Node {
-	return newOpNode(nodeTypeIsIpv6, lhs)
+	return newUnaryNode(nodeTypeIsIpv6, lhs)
 }
 
 func (lhs Node) IsMulticast() Node {
-	return newOpNode(nodeTypeIsMulticast, lhs)
+	return newUnaryNode(nodeTypeIsMulticast, lhs)
 }
 
 func (lhs Node) IsLoopback() Node {
-	return newOpNode(nodeTypeIsLoopback, lhs)
+	return newUnaryNode(nodeTypeIsLoopback, lhs)
 }
 
 func (lhs Node) IsInRange(rhs Node) Node {
-	return newOpNode(nodeTypeIsInRange, lhs, rhs)
-}
-
-func newOpNode(op nodeType, args ...Node) Node {
-	return Node{nodeType: op, args: args}
+	return newBinaryNode(nodeTypeIsInRange, lhs, rhs)
 }

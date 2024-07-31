@@ -57,65 +57,67 @@ type arrayJSON []nodeJSON
 type recordJSON map[string]nodeJSON
 
 type nodeJSON struct {
-
 	// Value
-	Value *json.RawMessage `json:"Value"` // could be any
+	Value *json.RawMessage `json:"Value,omitempty"` // could be any
 
 	// Var
-	Var *string `json:"Var"`
+	Var *string `json:"Var,omitempty"`
 
 	// Slot
 	// Unknown
 
 	// ! or neg operators
-	Not    *unaryJSON `json:"!"`
-	Negate *unaryJSON `json:"neg"`
+	Not    *unaryJSON `json:"!,omitempty"`
+	Negate *unaryJSON `json:"neg,omitempty"`
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
-	Equals             *binaryJSON `json:"=="`
-	NotEquals          *binaryJSON `json:"!="`
-	In                 *binaryJSON `json:"in"`
-	LessThan           *binaryJSON `json:"<"`
-	LessThanOrEqual    *binaryJSON `json:"<="`
-	GreaterThan        *binaryJSON `json:">"`
-	GreaterThanOrEqual *binaryJSON `json:">="`
-	And                *binaryJSON `json:"&&"`
-	Or                 *binaryJSON `json:"||"`
-	Plus               *binaryJSON `json:"+"`
-	Minus              *binaryJSON `json:"-"`
-	Times              *binaryJSON `json:"*"`
-	Contains           *binaryJSON `json:"contains"`
-	ContainsAll        *binaryJSON `json:"containsAll"`
-	ContainsAny        *binaryJSON `json:"containsAny"`
+	Equals             *binaryJSON `json:"==,omitempty"`
+	NotEquals          *binaryJSON `json:"!=,omitempty"`
+	In                 *binaryJSON `json:"in,omitempty"`
+	LessThan           *binaryJSON `json:"<,omitempty"`
+	LessThanOrEqual    *binaryJSON `json:"<=,omitempty"`
+	GreaterThan        *binaryJSON `json:">,omitempty"`
+	GreaterThanOrEqual *binaryJSON `json:">=,omitempty"`
+	And                *binaryJSON `json:"&&,omitempty"`
+	Or                 *binaryJSON `json:"||,omitempty"`
+	Plus               *binaryJSON `json:"+,omitempty"`
+	Minus              *binaryJSON `json:"-,omitempty"`
+	Times              *binaryJSON `json:"*,omitempty"`
+	Contains           *binaryJSON `json:"contains,omitempty"`
+	ContainsAll        *binaryJSON `json:"containsAll,omitempty"`
+	ContainsAny        *binaryJSON `json:"containsAny,omitempty"`
 
 	// ., has
-	Access *strJSON `json:"."`
-	Has    *strJSON `json:"has"`
+	Access *strJSON `json:".,omitempty"`
+	Has    *strJSON `json:"has,omitempty"`
+
+	// is
+	// TODO: https://docs.cedarpolicy.com/policies/json-format.html#JsonExpr-is
 
 	// like
-	Like *strJSON `json:"like"`
+	Like *strJSON `json:"like,omitempty"`
 
 	// if-then-else
-	IfThenElse *ifThenElseJSON `json:"if-then-else"`
+	IfThenElse *ifThenElseJSON `json:"if-then-else,omitempty"`
 
 	// Set
-	Set arrayJSON `json:"Set"`
+	Set arrayJSON `json:"Set,omitempty"`
 
 	// Record
-	Record recordJSON `json:"Record"`
+	Record recordJSON `json:"Record,omitempty"`
 
 	// Any other function: decimal, ip
-	Decimal arrayJSON `json:"decimal"`
-	IP      arrayJSON `json:"ip"`
+	Decimal arrayJSON `json:"decimal,omitempty"`
+	IP      arrayJSON `json:"ip,omitempty"`
 
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	LessThanExt           arrayJSON `json:"lessThan"`
-	LessThanOrEqualExt    arrayJSON `json:"lessThanOrEqual"`
-	GreaterThanExt        arrayJSON `json:"greaterThan"`
-	GreaterThanOrEqualExt arrayJSON `json:"greaterThanOrEqual"`
-	IsIpv4Ext             arrayJSON `json:"isIpv4"`
-	IsIpv6Ext             arrayJSON `json:"isIpv6"`
-	IsLoopbackExt         arrayJSON `json:"isLoopback"`
-	IsMulticastExt        arrayJSON `json:"isMulticast"`
-	IsInRangeExt          arrayJSON `json:"isInRange"`
+	LessThanExt           arrayJSON `json:"lessThan,omitempty"`
+	LessThanOrEqualExt    arrayJSON `json:"lessThanOrEqual,omitempty"`
+	GreaterThanExt        arrayJSON `json:"greaterThan,omitempty"`
+	GreaterThanOrEqualExt arrayJSON `json:"greaterThanOrEqual,omitempty"`
+	IsIpv4Ext             arrayJSON `json:"isIpv4,omitempty"`
+	IsIpv6Ext             arrayJSON `json:"isIpv6,omitempty"`
+	IsLoopbackExt         arrayJSON `json:"isLoopback,omitempty"`
+	IsMulticastExt        arrayJSON `json:"isMulticast,omitempty"`
+	IsInRangeExt          arrayJSON `json:"isInRange,omitempty"`
 }
