@@ -7,6 +7,7 @@ type nodeType uint8
 const (
 	nodeTypeAccess nodeType = iota
 	nodeTypeAdd
+	nodeTypeAll
 	nodeTypeAnd
 	nodeTypeAnnotation
 	nodeTypeBoolean
