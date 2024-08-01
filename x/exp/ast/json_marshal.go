@@ -86,8 +86,8 @@ func extToJSON(dest *arrayJSON, src Node) error {
 	if src.value == nil {
 		return fmt.Errorf("missing value")
 	}
-	str := src.value.String() // TODO: is this the correct string?
-	b := []byte(str)
+	str := src.value.String()         // TODO: is this the correct string?
+	b, _ := json.Marshal(string(str)) // error impossible
 	res = append(res, nodeJSON{
 		Value: (*json.RawMessage)(&b),
 	})
@@ -106,6 +106,21 @@ func strToJSON(dest **strJSON, src Node) error {
 		return fmt.Errorf("right not string")
 	}
 	res.Attr = string(str)
+	*dest = res
+	return nil
+}
+
+func patternToJSON(dest **patternJSON, src Node) error {
+	n := binaryNode(src)
+	res := &patternJSON{}
+	if err := res.Left.FromNode(n.Left()); err != nil {
+		return fmt.Errorf("error in left: %w", err)
+	}
+	str, ok := n.Right().value.(types.String)
+	if !ok {
+		return fmt.Errorf("right not string")
+	}
+	res.Pattern = string(str)
 	*dest = res
 	return nil
 }
@@ -191,7 +206,7 @@ func (j *nodeJSON) FromNode(src Node) error {
 	case nodeTypeNot:
 		return unaryToJSON(&j.Not, src)
 	case nodeTypeNegate:
-		return unaryToJSON(&j.Not, src)
+		return unaryToJSON(&j.Negate, src)
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
 	case nodeTypeAdd:
@@ -231,7 +246,7 @@ func (j *nodeJSON) FromNode(src Node) error {
 	case nodeTypeAccess:
 		return strToJSON(&j.Access, src)
 	case nodeTypeHas:
-		return strToJSON(&j.Access, src)
+		return strToJSON(&j.Has, src)
 	// is
 	case nodeTypeIs, nodeTypeIsIn:
 		return isToJSON(&j.Is, src)
@@ -239,7 +254,7 @@ func (j *nodeJSON) FromNode(src Node) error {
 	// like
 	// Like *strJSON `json:"like"`
 	case nodeTypeLike:
-		return strToJSON(&j.Access, src)
+		return patternToJSON(&j.Like, src)
 
 	// if-then-else
 	// IfThenElse *ifThenElseJSON `json:"if-then-else"`
