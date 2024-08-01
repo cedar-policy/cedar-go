@@ -55,6 +55,13 @@ func (j strJSON) ToNode(f func(a Node, k string) Node) (Node, error) {
 	}
 	return f(left, j.Attr), nil
 }
+func (j patternJSON) ToNode(f func(a Node, k string) Node) (Node, error) {
+	left, err := j.Left.ToNode()
+	if err != nil {
+		return Node{}, fmt.Errorf("error in left: %w", err)
+	}
+	return f(left, j.Pattern), nil
+}
 func (j isJSON) ToNode() (Node, error) {
 	left, err := j.Left.ToNode()
 	if err != nil {

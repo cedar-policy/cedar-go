@@ -46,6 +46,11 @@ type strJSON struct {
 	Attr string   `json:"attr"`
 }
 
+type patternJSON struct {
+	Left    nodeJSON `json:"left"`
+	Pattern string   `json:"pattern"`
+}
+
 type isJSON struct {
 	Left       nodeJSON `json:"left"`
 	EntityType string   `json:"entity_type"`
@@ -101,7 +106,7 @@ type nodeJSON struct {
 	Is *isJSON `json:"is,omitempty"`
 
 	// like
-	Like *strJSON `json:"like,omitempty"`
+	Like *patternJSON `json:"like,omitempty"`
 
 	// if-then-else
 	IfThenElse *ifThenElseJSON `json:"if-then-else,omitempty"`
