@@ -5,8 +5,7 @@ import "github.com/cedar-policy/cedar-go/types"
 type nodeType uint8
 
 const (
-	nodeTypeNone nodeType = iota
-	nodeTypeAccess
+	nodeTypeAccess = iota
 	nodeTypeAdd
 	nodeTypeAll
 	nodeTypeAnd
@@ -15,44 +14,36 @@ const (
 	nodeTypeContains
 	nodeTypeContainsAll
 	nodeTypeContainsAny
+	nodeTypeDecimal
 	nodeTypeEntity
 	nodeTypeEntityType
 	nodeTypeEquals
 	nodeTypeGreater
 	nodeTypeGreaterEqual
-	nodeTypeLike
 	nodeTypeHas
 	nodeTypeIf
 	nodeTypeIn
 	nodeTypeIpAddr
-	nodeTypeDecimal
 	nodeTypeIs
-	nodeTypeIsInRange
-	nodeTypeIsIpv4
-	nodeTypeIsIpv6
-	nodeTypeIsLoopback
-	nodeTypeIsMulticast
+	nodeTypeIsIn
 	nodeTypeLess
 	nodeTypeLessEqual
+	nodeTypeLike
 	nodeTypeLong
+	nodeTypeExtMethodCall
 	nodeTypeMult
-	nodeTypeNot
 	nodeTypeNegate
+	nodeTypeNot
 	nodeTypeNotEquals
 	nodeTypeOr
 	nodeTypeRecord
 	nodeTypeRecordEntry
 	nodeTypeSet
-	nodeTypeSub
 	nodeTypeString
-	nodeTypeVariable
-	nodeTypeLessExt
-	nodeTypeLessEqualExt
-	nodeTypeGreaterExt
-	nodeTypeGreaterEqualExt
-	nodeTypeWhen
+	nodeTypeSub
 	nodeTypeUnless
-	nodeTypeIsIn
+	nodeTypeVariable
+	nodeTypeWhen
 )
 
 type Node struct {
@@ -87,3 +78,25 @@ type trinaryNode Node
 func (n trinaryNode) A() Node { return n.args[0] }
 func (n trinaryNode) B() Node { return n.args[1] }
 func (n trinaryNode) C() Node { return n.args[2] }
+
+func newExtMethodCallNode(object Node, methodName string, args ...Node) Node {
+	nodes := []Node{object, String(types.String(methodName))}
+	return Node{
+		nodeType: nodeTypeExtMethodCall,
+		args:     append(nodes, args...),
+	}
+}
+
+type extMethodCallNode Node
+
+func (n extMethodCallNode) Object() Node {
+	return n.args[0]
+}
+
+func (n extMethodCallNode) Name() string {
+	return string(n.args[1].value.(types.String))
+}
+
+func (n extMethodCallNode) Args() []Node {
+	return n.args[2:]
+}

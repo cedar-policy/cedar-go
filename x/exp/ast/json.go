@@ -67,6 +67,8 @@ type arrayJSON []nodeJSON
 
 type recordJSON map[string]nodeJSON
 
+type extMethodCallJSON map[string]arrayJSON
+
 type nodeJSON struct {
 	// Value
 	Value *json.RawMessage `json:"Value,omitempty"` // could be any
@@ -122,13 +124,5 @@ type nodeJSON struct {
 	IP      arrayJSON `json:"ip,omitempty"`
 
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	LessThanExt           arrayJSON `json:"lessThan,omitempty"`
-	LessThanOrEqualExt    arrayJSON `json:"lessThanOrEqual,omitempty"`
-	GreaterThanExt        arrayJSON `json:"greaterThan,omitempty"`
-	GreaterThanOrEqualExt arrayJSON `json:"greaterThanOrEqual,omitempty"`
-	IsIpv4Ext             arrayJSON `json:"isIpv4,omitempty"`
-	IsIpv6Ext             arrayJSON `json:"isIpv6,omitempty"`
-	IsLoopbackExt         arrayJSON `json:"isLoopback,omitempty"`
-	IsMulticastExt        arrayJSON `json:"isMulticast,omitempty"`
-	IsInRangeExt          arrayJSON `json:"isInRange,omitempty"`
+	ExtensionMethod extMethodCallJSON `json:"-"`
 }
