@@ -9,7 +9,7 @@ import (
 
 func (s *scopeJSON) FromNode(src Node) error {
 	switch src.nodeType {
-	case nodeTypeNone:
+	case nodeTypeAll:
 		s.Op = "All"
 		return nil
 	case nodeTypeEquals:
