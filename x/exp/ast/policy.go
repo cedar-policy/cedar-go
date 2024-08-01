@@ -13,9 +13,9 @@ func newPolicy(effect effect, annotations []Node) *Policy {
 	return &Policy{
 		effect:      effect,
 		annotations: annotations,
-		principal:   Node{nodeType: nodeTypeAll},
-		action:      Node{nodeType: nodeTypeAll},
-		resource:    Node{nodeType: nodeTypeAll},
+		principal:   scope(Principal()).All(),
+		action:      scope(Action()).All(),
+		resource:    scope(Resource()).All(),
 	}
 }
 

@@ -4,6 +4,10 @@ import "github.com/cedar-policy/cedar-go/types"
 
 type scope Node
 
+func (s scope) All() Node {
+	return Node{nodeType: nodeTypeAll, args: []Node{Node(s)}}
+}
+
 func (s scope) Eq(entity types.EntityUID) Node {
 	return Node(s).Equals(Entity(entity))
 }

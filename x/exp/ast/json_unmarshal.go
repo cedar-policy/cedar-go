@@ -7,29 +7,25 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func (s *scopeJSON) ToNode(variable Node) (Node, error) {
+func (s *scopeJSON) ToNode(variable scope) (Node, error) {
 	switch s.Op {
 	case "All":
-		return Node{}, nil
+		return variable.All(), nil
 	case "==":
 		if s.Entity == nil {
 			return Node{}, fmt.Errorf("missing entity")
 		}
-		return variable.Equals(Entity(*s.Entity)), nil
+		return variable.Eq(*s.Entity), nil
 	case "in":
 		if s.Entity != nil {
-			return variable.In(Entity(*s.Entity)), nil // TODO: review shape, maybe .In vs .InNode
+			return variable.In(*s.Entity), nil
 		}
-		var set types.Set
-		for _, e := range s.Entities {
-			set = append(set, e)
-		}
-		return variable.In(Set(set)), nil // TODO: maybe there is an In and an InSet Node?
+		return variable.InSet(s.Entities), nil
 	case "is":
 		if s.In == nil {
-			return variable.Is(types.String(s.EntityType)), nil // TODO: hmmm, I'm not sure can this be Stronger-typed?
+			return variable.Is(types.String(s.EntityType)), nil
 		}
-		return variable.IsIn(types.String(s.EntityType), Entity(s.In.Entity)), nil
+		return variable.IsIn(types.String(s.EntityType), s.In.Entity), nil
 	}
 	return Node{}, fmt.Errorf("unknown op: %v", s.Op)
 }
@@ -309,15 +305,15 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		p.Annotate(types.String(k), types.String(v))
 	}
 	var err error
-	p.principal, err = j.Principal.ToNode(Principal())
+	p.principal, err = j.Principal.ToNode(scope(Principal()))
 	if err != nil {
 		return fmt.Errorf("error in principal: %w", err)
 	}
-	p.action, err = j.Action.ToNode(Action())
+	p.action, err = j.Action.ToNode(scope(Action()))
 	if err != nil {
 		return fmt.Errorf("error in action: %w", err)
 	}
-	p.resource, err = j.Resource.ToNode(Resource())
+	p.resource, err = j.Resource.ToNode(scope(Resource()))
 	if err != nil {
 		return fmt.Errorf("error in resource: %w", err)
 	}
