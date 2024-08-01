@@ -1,8 +1,10 @@
 package ast
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -99,17 +101,6 @@ func (j arrayJSON) ToNode() (Node, error) {
 	return SetNodes(nodes), nil
 }
 
-func (j arrayJSON) ToExt1(f func(Node) Node) (Node, error) {
-	if len(j) != 1 {
-		return Node{}, fmt.Errorf("unexpected number of arguments for extension: %v", len(j))
-	}
-	arg, err := j[0].ToNode()
-	if err != nil {
-		return Node{}, fmt.Errorf("error in extension: %w", err)
-	}
-	return f(arg), nil
-}
-
 func (j arrayJSON) ToDecimalNode() (Node, error) {
 	if len(j) != 1 {
 		return Node{}, fmt.Errorf("unexpected number of arguments for extension: %v", len(j))
@@ -148,20 +139,6 @@ func (j arrayJSON) ToIPAddrNode() (Node, error) {
 	return IPAddr(v), nil
 }
 
-func (j arrayJSON) ToExt2(f func(Node, Node) Node) (Node, error) {
-	if len(j) != 2 {
-		return Node{}, fmt.Errorf("unexpected number of arguments for extension: %v", len(j))
-	}
-	left, err := j[0].ToNode()
-	if err != nil {
-		return Node{}, fmt.Errorf("error in argument 0: %w", err)
-	}
-	right, err := j[1].ToNode()
-	if err != nil {
-		return Node{}, fmt.Errorf("error in argument 1: %w", err)
-	}
-	return f(left, right), nil
-}
 func (j recordJSON) ToNode() (Node, error) {
 	nodes := map[types.String]Node{}
 	for k, v := range j {
@@ -172,6 +149,27 @@ func (j recordJSON) ToNode() (Node, error) {
 		nodes[types.String(k)] = n
 	}
 	return RecordNodes(nodes), nil
+}
+
+func (e extMethodCallJSON) ToNode() (Node, error) {
+	if len(e) != 1 {
+		return Node{}, fmt.Errorf("unexpected number of extension methods in node: %v", len(e))
+	}
+	for k, v := range e {
+		if len(v) == 0 {
+			return Node{}, fmt.Errorf("extension method '%v' must have at least one argument", k)
+		}
+		var argNodes []Node
+		for _, n := range v {
+			node, err := n.ToNode()
+			if err != nil {
+				return Node{}, fmt.Errorf("error in extension method argument: %w", err)
+			}
+			argNodes = append(argNodes, node)
+		}
+		return newExtMethodCallNode(argNodes[0], k, argNodes[1:]...), nil
+	}
+	panic("unreachable code")
 }
 
 func (j nodeJSON) ToNode() (Node, error) {
@@ -272,27 +270,30 @@ func (j nodeJSON) ToNode() (Node, error) {
 		return j.IP.ToIPAddrNode()
 
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	case j.LessThanExt != nil:
-		return j.LessThanExt.ToExt2(Node.LessThanExt)
-	case j.LessThanOrEqualExt != nil:
-		return j.LessThanOrEqualExt.ToExt2(Node.LessThanOrEqualExt)
-	case j.GreaterThanExt != nil:
-		return j.GreaterThanExt.ToExt2(Node.GreaterThanExt)
-	case j.GreaterThanOrEqualExt != nil:
-		return j.GreaterThanOrEqualExt.ToExt2(Node.GreaterThanOrEqualExt)
-	case j.IsIpv4Ext != nil:
-		return j.IsIpv4Ext.ToExt1(Node.IsIpv4)
-	case j.IsIpv6Ext != nil:
-		return j.IsIpv6Ext.ToExt1(Node.IsIpv6)
-	case j.IsLoopbackExt != nil:
-		return j.IsLoopbackExt.ToExt1(Node.IsLoopback)
-	case j.IsMulticastExt != nil:
-		return j.IsMulticastExt.ToExt1(Node.IsMulticast)
-	case j.IsInRangeExt != nil:
-		return j.IsInRangeExt.ToExt2(Node.IsInRange)
+	case j.ExtensionMethod != nil:
+		return j.ExtensionMethod.ToNode()
 	}
 
 	return Node{}, fmt.Errorf("unknown node")
+}
+
+func (n *nodeJSON) UnmarshalJSON(b []byte) error {
+	decoder := json.NewDecoder(bytes.NewReader(b))
+	decoder.DisallowUnknownFields()
+
+	type nodeJSONAlias nodeJSON
+	if err := decoder.Decode((*nodeJSONAlias)(n)); err == nil {
+		return nil
+	} else if !strings.HasPrefix(err.Error(), "json: unknown field") {
+		return err
+	}
+
+	// If an unknown field was parsed, the spec tells us to treat it as an extension method:
+	// > Any other key
+	// > This key is treated as the name of an extension function or method. The value must
+	// > be a JSON array of values, each of which is itself an JsonExpr object. Note that for
+	// > method calls, the method receiver is the first argument.
+	return json.Unmarshal(b, &n.ExtensionMethod)
 }
 
 func (p *Policy) UnmarshalJSON(b []byte) error {

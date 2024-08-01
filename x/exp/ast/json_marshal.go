@@ -95,6 +95,26 @@ func extToJSON(dest *arrayJSON, src Node) error {
 	return nil
 }
 
+func extMethodToJSON(dest extMethodCallJSON, src Node) error {
+	n := extMethodCallNode(src)
+	objectNode := &nodeJSON{}
+	err := objectNode.FromNode(n.Object())
+	if err != nil {
+		return err
+	}
+	jsonArgs := arrayJSON{*objectNode}
+	for _, n := range n.Args() {
+		argNode := &nodeJSON{}
+		err := argNode.FromNode(n)
+		if err != nil {
+			return err
+		}
+		jsonArgs = append(jsonArgs, *argNode)
+	}
+	dest[n.Name()] = jsonArgs
+	return nil
+}
+
 func strToJSON(dest **strJSON, src Node) error {
 	n := binaryNode(src)
 	res := &strJSON{}
@@ -281,33 +301,10 @@ func (j *nodeJSON) FromNode(src Node) error {
 		return extToJSON(&j.IP, src)
 
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	// LessThanExt           arrayJSON `json:"lessThan"`
-	// LessThanOrEqualExt    arrayJSON `json:"lessThanOrEqual"`
-	// GreaterThanExt        arrayJSON `json:"greaterThan"`
-	// GreaterThanOrEqualExt arrayJSON `json:"greaterThanOrEqual"`
-	// IsIpv4Ext             arrayJSON `json:"isIpv4"`
-	// IsIpv6Ext             arrayJSON `json:"isIpv6"`
-	// IsLoopbackExt         arrayJSON `json:"isLoopback"`
-	// IsMulticastExt        arrayJSON `json:"isMulticast"`
-	// IsInRangeExt          arrayJSON `json:"isInRange"`
-	case nodeTypeLessExt:
-		return arrayToJSON(&j.LessThanExt, src)
-	case nodeTypeLessEqualExt:
-		return arrayToJSON(&j.LessThanOrEqualExt, src)
-	case nodeTypeGreaterExt:
-		return arrayToJSON(&j.GreaterThanExt, src)
-	case nodeTypeGreaterEqualExt:
-		return arrayToJSON(&j.GreaterThanOrEqualExt, src)
-	case nodeTypeIsInRange:
-		return arrayToJSON(&j.IsInRangeExt, src)
-	case nodeTypeIsIpv4:
-		return arrayToJSON(&j.IsIpv4Ext, src)
-	case nodeTypeIsIpv6:
-		return arrayToJSON(&j.IsIpv6Ext, src)
-	case nodeTypeIsLoopback:
-		return arrayToJSON(&j.IsLoopbackExt, src)
-	case nodeTypeIsMulticast:
-		return arrayToJSON(&j.IsMulticastExt, src)
+	// ExtensionMethod map[string]arrayJSON `json:"-"`
+	case nodeTypeExtMethodCall:
+		j.ExtensionMethod = extMethodCallJSON{}
+		return extMethodToJSON(j.ExtensionMethod, src)
 	}
 	// case nodeTypeRecordEntry:
 	// case nodeTypeEntityType:
@@ -316,6 +313,16 @@ func (j *nodeJSON) FromNode(src Node) error {
 	// case nodeTypeUnless:
 	return fmt.Errorf("unknown node type: %v", src.nodeType)
 }
+
+func (j *nodeJSON) MarshalJSON() ([]byte, error) {
+	if len(j.ExtensionMethod) > 0 {
+		return json.Marshal(j.ExtensionMethod)
+	}
+
+	type nodeJSONAlias nodeJSON
+	return json.Marshal((*nodeJSONAlias)(j))
+}
+
 func (p *Policy) MarshalJSON() ([]byte, error) {
 	var j policyJSON
 	j.Effect = "forbid"
