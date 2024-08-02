@@ -364,7 +364,7 @@ func TestParsePolicy(t *testing.T) {
 			t.Parallel()
 
 			var policy Policy
-			testutil.OK(t, policy.FromCedar([]byte(tt.Text)))
+			testutil.OK(t, policy.UnmarshalCedar([]byte(tt.Text)))
 			testutil.Equals(t, policy, *tt.ExpectedPolicy)
 		})
 	}
@@ -406,7 +406,7 @@ func TestParsePolicySet(t *testing.T) {
 			t.Parallel()
 
 			var policies PolicySet
-			testutil.OK(t, policies.FromCedar([]byte(tt.Text)))
+			testutil.OK(t, policies.UnmarshalCedar([]byte(tt.Text)))
 			testutil.Equals(t, policies, tt.ExpectedPolicies)
 		})
 	}
