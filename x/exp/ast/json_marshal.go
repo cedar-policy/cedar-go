@@ -117,12 +117,19 @@ func strToJSON(dest **strJSON, src strOpNode) error {
 	return nil
 }
 
-func patternToJSON(dest **patternJSON, src strOpNode) error {
+func patternToJSON(dest **patternJSON, src nodeTypeLike) error {
 	res := &patternJSON{}
 	if err := res.Left.FromNode(src.Arg); err != nil {
 		return fmt.Errorf("error in left: %w", err)
 	}
-	res.Pattern = string(src.Value)
+	for _, comp := range src.Value.Comps {
+		if comp.Star {
+			res.Pattern = append(res.Pattern, patternComponentJSON{Wildcard: true})
+		}
+		if comp.Chunk != "" {
+			res.Pattern = append(res.Pattern, patternComponentJSON{Literal: patternComponentLiteralJSON{Literal: comp.Chunk}})
+		}
+	}
 	*dest = res
 	return nil
 }
@@ -260,7 +267,7 @@ func (j *nodeJSON) FromNode(src node) error {
 	// like
 	// Like *strJSON `json:"like"`
 	case nodeTypeLike:
-		return patternToJSON(&j.Like, t.strOpNode)
+		return patternToJSON(&j.Like, t)
 
 	// if-then-else
 	// IfThenElse *ifThenElseJSON `json:"if-then-else"`
@@ -298,6 +305,13 @@ func (j *nodeJSON) MarshalJSON() ([]byte, error) {
 
 	type nodeJSONAlias nodeJSON
 	return json.Marshal((*nodeJSONAlias)(j))
+}
+
+func (p *patternComponentJSON) MarshalJSON() ([]byte, error) {
+	if p.Wildcard {
+		return json.Marshal("Wildcard")
+	}
+	return json.Marshal(p.Literal)
 }
 
 func (p *Policy) MarshalJSON() ([]byte, error) {

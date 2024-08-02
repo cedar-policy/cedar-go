@@ -46,9 +46,18 @@ type strJSON struct {
 	Attr string   `json:"attr"`
 }
 
+type patternComponentLiteralJSON struct {
+	Literal string `json:"Literal,omitempty"`
+}
+
+type patternComponentJSON struct {
+	Wildcard bool
+	Literal  patternComponentLiteralJSON
+}
+
 type patternJSON struct {
-	Left    nodeJSON `json:"left"`
-	Pattern string   `json:"pattern"`
+	Left    nodeJSON               `json:"left"`
+	Pattern []patternComponentJSON `json:"pattern"`
 }
 
 type isJSON struct {

@@ -42,3 +42,10 @@ func AssertError(t *testing.T, got, want error) {
 	t.Helper()
 	FatalIf(t, !errors.Is(got, want), "err got %v want %v", got, want)
 }
+
+func Must[T any](obj T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}

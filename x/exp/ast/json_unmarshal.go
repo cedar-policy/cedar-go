@@ -58,12 +58,21 @@ func (j strJSON) ToNode(f func(a Node, k string) Node) (Node, error) {
 	}
 	return f(left, j.Attr), nil
 }
-func (j patternJSON) ToNode(f func(a Node, k string) Node) (Node, error) {
+func (j patternJSON) ToNode(f func(a Node, k Pattern) Node) (Node, error) {
 	left, err := j.Left.ToNode()
 	if err != nil {
 		return Node{}, fmt.Errorf("error in left: %w", err)
 	}
-	return f(left, j.Pattern), nil
+	pattern := &Pattern{}
+	for _, compJSON := range j.Pattern {
+		if compJSON.Wildcard {
+			pattern = pattern.AddWildcard()
+		} else {
+			pattern = pattern.AddLiteral(compJSON.Literal.Literal)
+		}
+	}
+
+	return f(left, *pattern), nil
 }
 func (j isJSON) ToNode() (Node, error) {
 	left, err := j.Left.ToNode()
@@ -299,6 +308,20 @@ func (n *nodeJSON) UnmarshalJSON(b []byte) error {
 	// > be a JSON array of values, each of which is itself an JsonExpr object. Note that for
 	// > method calls, the method receiver is the first argument.
 	return json.Unmarshal(b, &n.ExtensionMethod)
+}
+
+func (p *patternComponentJSON) UnmarshalJSON(b []byte) error {
+	var wildcard string
+	err := json.Unmarshal(b, &wildcard)
+	if err == nil {
+		if wildcard != "Wildcard" {
+			return fmt.Errorf("unknown pattern component: \"%v\"", wildcard)
+		}
+		p.Wildcard = true
+		return nil
+	}
+
+	return json.Unmarshal(b, &p.Literal)
 }
 
 func (p *Policy) UnmarshalJSON(b []byte) error {
