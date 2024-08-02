@@ -72,10 +72,6 @@ func Not(rhs Node) Node {
 	return newUnaryNode(nodeTypeNot, rhs)
 }
 
-func Negate(rhs Node) Node {
-	return newUnaryNode(nodeTypeNegate, rhs)
-}
-
 func If(condition Node, ifTrue Node, ifFalse Node) Node {
 	return newTrinaryNode(nodeTypeIf, condition, ifTrue, ifFalse)
 }
@@ -96,6 +92,10 @@ func (lhs Node) Minus(rhs Node) Node {
 
 func (lhs Node) Times(rhs Node) Node {
 	return newBinaryNode(nodeTypeMult, lhs, rhs)
+}
+
+func Negate(rhs Node) Node {
+	return newUnaryNode(nodeTypeNegate, rhs)
 }
 
 //  _   _ _                         _

@@ -36,6 +36,10 @@ func (t Token) isIdent() bool {
 	return t.Type == TokenIdent
 }
 
+func (t Token) isInt() bool {
+	return t.Type == TokenInt
+}
+
 func (t Token) isString() bool {
 	return t.Type == TokenString
 }

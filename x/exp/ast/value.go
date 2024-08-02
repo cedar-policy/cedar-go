@@ -33,7 +33,7 @@ func Set(s types.Set) Node {
 	for _, v := range s {
 		nodes = append(nodes, valueToNode(v))
 	}
-	return SetNodes(nodes)
+	return SetNodes(nodes...)
 }
 
 // SetNodes allows for a complex set definition with values potentially
@@ -43,12 +43,12 @@ func Set(s types.Set) Node {
 //
 // could be expressed in Golang as:
 //
-//	ast.SetNodes([]ast.Node{
+//	ast.SetNodes(
 //	    ast.Long(1),
 //	    ast.Long(2).Plus(ast.Long(3)),
 //	    ast.Context().Access("fooCount"),
-//	})
-func SetNodes(nodes []Node) Node {
+//	)
+func SetNodes(nodes ...Node) Node {
 	return Node{nodeType: nodeTypeSet, args: nodes}
 }
 
@@ -59,7 +59,7 @@ func Record(r types.Record) Node {
 	for k, v := range r {
 		recordNodes[types.String(k)] = valueToNode(v)
 	}
-	return RecordNodes(recordNodes) // TODO: maybe inline this to avoid the double conversion
+	return RecordNodes(recordNodes)
 }
 
 // RecordNodes allows for a complex record definition with values potentially
@@ -69,9 +69,9 @@ func Record(r types.Record) Node {
 //
 // could be expressed in Golang as:
 //
-//		ast.RecordNodes([]ast.RecordNode{
-//	     {Key: "x", Value: ast.Long(1).Plus(ast.Context().Access("resourceField"))},
-//	 })
+//	ast.RecordNodes(map[types.String]Node{
+//	    "x": ast.Long(1).Plus(ast.Context().Access("fooCount"))},
+//	})
 func RecordNodes(entries map[types.String]Node) Node {
 	var nodes []Node
 	for k, v := range entries {
