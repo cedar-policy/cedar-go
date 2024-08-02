@@ -7,7 +7,7 @@ import (
 )
 
 func Boolean(b types.Boolean) Node {
-	return newValueNode(nodeTypeBoolean, b)
+	return newValueNode(b)
 }
 
 func True() Node {
@@ -19,21 +19,21 @@ func False() Node {
 }
 
 func String(s types.String) Node {
-	return newValueNode(nodeTypeString, s)
+	return newValueNode(s)
 }
 
 func Long(l types.Long) Node {
-	return newValueNode(nodeTypeLong, l)
+	return newValueNode(l)
 }
 
 // Set is a convenience function that wraps concrete instances of a Cedar Set type
 // types in AST value nodes and passes them along to SetNodes.
 func Set(s types.Set) Node {
-	var nodes []Node
+	var nodes []node
 	for _, v := range s {
-		nodes = append(nodes, valueToNode(v))
+		nodes = append(nodes, valueToNode(v).v)
 	}
-	return SetNodes(nodes...)
+	return newNode(nodeTypeSet{Elements: nodes})
 }
 
 // SetNodes allows for a complex set definition with values potentially
@@ -49,7 +49,7 @@ func Set(s types.Set) Node {
 //	    ast.Context().Access("fooCount"),
 //	)
 func SetNodes(nodes ...Node) Node {
-	return Node{nodeType: nodeTypeSet, args: nodes}
+	return newNode(nodeTypeSet{Elements: stripNodes(nodes)})
 }
 
 // Record is a convenience function that wraps concrete instances of a Cedar Record type
@@ -73,34 +73,31 @@ func Record(r types.Record) Node {
 //	    "x": ast.Long(1).Plus(ast.Context().Access("fooCount"))},
 //	})
 func RecordNodes(entries map[types.String]Node) Node {
-	var nodes []Node
+	var res nodeTypeRecord
 	for k, v := range entries {
-		nodes = append(
-			nodes,
-			newBinaryNode(nodeTypeRecordEntry, String(k), v),
-		)
+		res.Elements = append(res.Elements, recordElement{Key: k, Value: v.v})
 	}
-	return Node{nodeType: nodeTypeRecord, args: nodes}
+	return newNode(res)
 }
 
 func EntityType(e types.String) Node {
-	return newValueNode(nodeTypeEntityType, e)
+	return newValueNode(e)
 }
 
 func Entity(e types.EntityUID) Node {
-	return newValueNode(nodeTypeEntity, e)
+	return newValueNode(e)
 }
 
 func Decimal(d types.Decimal) Node {
-	return newValueNode(nodeTypeDecimal, d)
+	return newValueNode(d)
 }
 
 func IPAddr(i types.IPAddr) Node {
-	return newValueNode(nodeTypeIpAddr, i)
+	return newValueNode(i)
 }
 
-func newValueNode(nodeType nodeType, v types.Value) Node {
-	return Node{nodeType: nodeType, value: v}
+func newValueNode(v types.Value) Node {
+	return newNode(nodeValue{Value: v})
 }
 
 func valueToNode(v types.Value) Node {

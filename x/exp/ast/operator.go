@@ -10,27 +10,27 @@ import "github.com/cedar-policy/cedar-go/types"
 //                      |_|
 
 func (lhs Node) Equals(rhs Node) Node {
-	return newBinaryNode(nodeTypeEquals, lhs, rhs)
+	return newNode(nodeTypeEquals{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) NotEquals(rhs Node) Node {
-	return newBinaryNode(nodeTypeNotEquals, lhs, rhs)
+	return newNode(nodeTypeNotEquals{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) LessThan(rhs Node) Node {
-	return newBinaryNode(nodeTypeLess, lhs, rhs)
+	return newNode(nodeTypeLessThan{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) LessThanOrEqual(rhs Node) Node {
-	return newBinaryNode(nodeTypeLessEqual, lhs, rhs)
+	return newNode(nodeTypeLessThanOrEqual{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) GreaterThan(rhs Node) Node {
-	return newBinaryNode(nodeTypeGreater, lhs, rhs)
+	return newNode(nodeTypeGreaterThan{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) GreaterThanOrEqual(rhs Node) Node {
-	return newBinaryNode(nodeTypeGreaterEqual, lhs, rhs)
+	return newNode(nodeTypeGreaterThanOrEqual{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) LessThanExt(rhs Node) Node {
@@ -50,7 +50,7 @@ func (lhs Node) GreaterThanOrEqualExt(rhs Node) Node {
 }
 
 func (lhs Node) Like(patt string) Node {
-	return newBinaryNode(nodeTypeLike, lhs, String(types.String(patt)))
+	return newNode(nodeTypeLike{strOpNode: strOpNode{Arg: lhs.v, Value: types.String(patt)}})
 }
 
 //  _                _           _
@@ -61,19 +61,19 @@ func (lhs Node) Like(patt string) Node {
 //             |___/
 
 func (lhs Node) And(rhs Node) Node {
-	return newBinaryNode(nodeTypeAnd, lhs, rhs)
+	return newNode(nodeTypeAnd{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) Or(rhs Node) Node {
-	return newBinaryNode(nodeTypeOr, lhs, rhs)
+	return newNode(nodeTypeOr{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func Not(rhs Node) Node {
-	return newUnaryNode(nodeTypeNot, rhs)
+	return newNode(nodeTypeNot{unaryNode: unaryNode{Arg: rhs.v}})
 }
 
 func If(condition Node, ifTrue Node, ifFalse Node) Node {
-	return newTrinaryNode(nodeTypeIf, condition, ifTrue, ifFalse)
+	return newNode(nodeTypeIf{If: condition.v, Then: ifTrue.v, Else: ifFalse.v})
 }
 
 //     _         _ _   _                    _   _
@@ -83,19 +83,19 @@ func If(condition Node, ifTrue Node, ifFalse Node) Node {
 // /_/   \_\_|  |_|\__|_| |_|_| |_| |_|\___|\__|_|\___|
 
 func (lhs Node) Plus(rhs Node) Node {
-	return newBinaryNode(nodeTypeAdd, lhs, rhs)
+	return newNode(nodeTypeAdd{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) Minus(rhs Node) Node {
-	return newBinaryNode(nodeTypeSub, lhs, rhs)
+	return newNode(nodeTypeSub{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) Times(rhs Node) Node {
-	return newBinaryNode(nodeTypeMult, lhs, rhs)
+	return newNode(nodeTypeMult{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func Negate(rhs Node) Node {
-	return newUnaryNode(nodeTypeNegate, rhs)
+	return newNode(nodeTypeNegate{unaryNode: unaryNode{Arg: rhs.v}})
 }
 
 //  _   _ _                         _
@@ -106,52 +106,37 @@ func Negate(rhs Node) Node {
 //                                        |___/
 
 func (lhs Node) In(rhs Node) Node {
-	return newBinaryNode(nodeTypeIn, lhs, rhs)
+	return newNode(nodeTypeIn{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) Is(entityType types.String) Node {
-	return newBinaryNode(nodeTypeIs, lhs, String(entityType))
+	return newNode(nodeTypeIs{Left: lhs.v, EntityType: entityType})
 }
 
 func (lhs Node) IsIn(entityType types.String, rhs Node) Node {
-	return newTrinaryNode(nodeTypeIsIn, lhs, String(entityType), rhs)
+	return newNode(nodeTypeIsIn{nodeTypeIs: nodeTypeIs{Left: lhs.v, EntityType: entityType}, Entity: rhs.v})
 }
 
 func (lhs Node) Contains(rhs Node) Node {
-	return newBinaryNode(nodeTypeContains, lhs, rhs)
+	return newNode(nodeTypeContains{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) ContainsAll(rhs Node) Node {
-	return newBinaryNode(nodeTypeContainsAll, lhs, rhs)
+	return newNode(nodeTypeContainsAll{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) ContainsAny(rhs Node) Node {
-	return newBinaryNode(nodeTypeContainsAny, lhs, rhs)
+	return newNode(nodeTypeContainsAny{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 // Access is a convenience function that wraps a simple string
 // in an ast.String() and passes it along to AccessNode.
 func (lhs Node) Access(attr string) Node {
-	return lhs.AccessNode(String(types.String(attr)))
-}
-
-// AccessNode is a version of the access operator which allows
-// more complex access of attributes, such as might be expressed
-// by this Cedar text:
-//
-//	resource[context.resourceAttribute] == "foo"
-//
-// In Golang, this could be expressed as:
-//
-//	ast.Resource().AccessNode(
-//	    ast.Context().Access("resourceAttribute")
-//	).Equals(ast.String("foo"))
-func (lhs Node) AccessNode(rhs Node) Node {
-	return newBinaryNode(nodeTypeAccess, lhs, rhs)
+	return newNode(nodeTypeAccess{strOpNode: strOpNode{Arg: lhs.v, Value: types.String(attr)}})
 }
 
 func (lhs Node) Has(attr string) Node {
-	return newBinaryNode(nodeTypeHas, lhs, String(types.String(attr)))
+	return newNode(nodeTypeHas{strOpNode: strOpNode{Arg: lhs.v, Value: types.String(attr)}})
 }
 
 //  ___ ____   _       _     _

@@ -2,101 +2,140 @@ package ast
 
 import "github.com/cedar-policy/cedar-go/types"
 
-type nodeType uint8
+type strOpNode struct {
+	node
+	Arg   node
+	Value types.String
+}
+
+type nodeTypeAccess struct{ strOpNode }
+type nodeTypeHas struct{ strOpNode }
+type nodeTypeLike struct{ strOpNode }
+
+type nodeTypeAnnotation struct {
+	node
+	Key   types.String // TODO: review type
+	Value types.String
+}
+
+type nodeTypeIf struct {
+	node
+	If, Then, Else node
+}
+
+type nodeTypeIs struct {
+	node
+	Left       node
+	EntityType types.String // TODO: review type
+}
+
+type nodeTypeIsIn struct {
+	nodeTypeIs
+	Entity node
+}
+
+type nodeTypeScopeIsIn struct {
+	nodeTypeIs
+	Entity types.EntityUID
+}
+
+type nodeTypeExtMethodCall struct {
+	node
+	Left   node
+	Method types.String // TODO: review type
+	Args   []node
+}
+
+func stripNodes(args []Node) []node {
+	res := make([]node, len(args))
+	for i, v := range args {
+		res[i] = v.v
+	}
+	return res
+}
+
+func newExtMethodCallNode(left Node, method types.String, args ...Node) Node {
+	return newNode(nodeTypeExtMethodCall{
+		Left:   left.v,
+		Method: method,
+		Args:   stripNodes(args),
+	})
+}
+
+type nodeValue struct {
+	node
+	Value types.Value
+}
+
+type recordElement struct {
+	Key   types.String
+	Value node
+}
+type nodeTypeRecord struct {
+	node
+	Elements []recordElement
+}
+
+type nodeTypeSet struct {
+	node
+	Elements []node
+}
+
+type unaryNode struct {
+	node
+	Arg node
+}
+
+type nodeTypeNegate struct{ unaryNode }
+type nodeTypeNot struct{ unaryNode }
+
+type condition bool
 
 const (
-	nodeTypeAccess = iota
-	nodeTypeAdd
-	nodeTypeAll
-	nodeTypeAnd
-	nodeTypeAnnotation
-	nodeTypeBoolean
-	nodeTypeContains
-	nodeTypeContainsAll
-	nodeTypeContainsAny
-	nodeTypeDecimal
-	nodeTypeEntity
-	nodeTypeEntityType
-	nodeTypeEquals
-	nodeTypeGreater
-	nodeTypeGreaterEqual
-	nodeTypeHas
-	nodeTypeIf
-	nodeTypeIn
-	nodeTypeIpAddr
-	nodeTypeIs
-	nodeTypeIsIn
-	nodeTypeLess
-	nodeTypeLessEqual
-	nodeTypeLike
-	nodeTypeLong
-	nodeTypeExtMethodCall
-	nodeTypeMult
-	nodeTypeNegate
-	nodeTypeNot
-	nodeTypeNotEquals
-	nodeTypeOr
-	nodeTypeRecord
-	nodeTypeRecordEntry
-	nodeTypeSet
-	nodeTypeString
-	nodeTypeSub
-	nodeTypeUnless
-	nodeTypeVariable
-	nodeTypeWhen
+	conditionWhen   = true
+	conditionUnless = false
 )
 
+type nodeTypeCondition struct {
+	node
+	Condition condition
+	Body      node
+}
+
+type nodeTypeVariable struct {
+	node
+	Name types.String // TODO: Review type
+}
+
+type binaryNode struct {
+	node
+	Left, Right node
+}
+
+type nodeTypeIn struct{ binaryNode }
+type nodeTypeAnd struct{ binaryNode }
+type nodeTypeEquals struct{ binaryNode }
+type nodeTypeGreaterThan struct{ binaryNode }
+type nodeTypeGreaterThanOrEqual struct{ binaryNode }
+type nodeTypeLessThan struct{ binaryNode }
+type nodeTypeLessThanOrEqual struct{ binaryNode }
+type nodeTypeSub struct{ binaryNode }
+type nodeTypeAdd struct{ binaryNode }
+type nodeTypeContains struct{ binaryNode }
+type nodeTypeContainsAll struct{ binaryNode }
+type nodeTypeContainsAny struct{ binaryNode }
+type nodeTypeMult struct{ binaryNode }
+type nodeTypeNotEquals struct{ binaryNode }
+type nodeTypeOr struct{ binaryNode }
+
+type node interface {
+	isNode()
+}
+
 type Node struct {
-	nodeType nodeType
-	args     []Node      // For inner nodes like operators, records, etc
-	value    types.Value // For leaf nodes like String, Long, EntityUID
+	v node // NOTE: not an embed because a `Node` is not a `node`
 }
 
-func newUnaryNode(op nodeType, arg Node) Node {
-	return Node{nodeType: op, args: []Node{arg}}
-}
-
-type unaryNode Node
-
-func (n unaryNode) Arg() Node { return n.args[0] }
-
-func newBinaryNode(op nodeType, arg1, arg2 Node) Node {
-	return Node{nodeType: op, args: []Node{arg1, arg2}}
-}
-
-type binaryNode Node
-
-func (n binaryNode) Left() Node  { return n.args[0] }
-func (n binaryNode) Right() Node { return n.args[1] }
-
-func newTrinaryNode(op nodeType, arg1, arg2, arg3 Node) Node {
-	return Node{nodeType: op, args: []Node{arg1, arg2, arg3}}
-}
-
-type trinaryNode Node
-
-func (n trinaryNode) A() Node { return n.args[0] }
-func (n trinaryNode) B() Node { return n.args[1] }
-func (n trinaryNode) C() Node { return n.args[2] }
-
-func newExtMethodCallNode(object Node, methodName string, args ...Node) Node {
-	nodes := []Node{object, String(types.String(methodName))}
-	return Node{
-		nodeType: nodeTypeExtMethodCall,
-		args:     append(nodes, args...),
-	}
-}
-
-type extMethodCallNode Node
-
-func (n extMethodCallNode) Object() Node {
-	return n.args[0]
-}
-
-func (n extMethodCallNode) Name() string {
-	return string(n.args[1].value.(types.String))
-}
-
-func (n extMethodCallNode) Args() []Node {
-	return n.args[2:]
+func newNode(v node) Node {
+	return Node{v: v}
 }

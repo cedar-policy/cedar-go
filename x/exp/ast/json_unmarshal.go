@@ -9,13 +9,14 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func (s *scopeJSON) ToNode(variable scope) (Node, error) {
+func (s *scopeJSON) ToNode(variable scope) (isScopeNode, error) {
+	// TODO: should we be careful to be more strict about what is allowed here?
 	switch s.Op {
 	case "All":
 		return variable.All(), nil
 	case "==":
 		if s.Entity == nil {
-			return Node{}, fmt.Errorf("missing entity")
+			return nil, fmt.Errorf("missing entity")
 		}
 		return variable.Eq(*s.Entity), nil
 	case "in":
@@ -29,7 +30,7 @@ func (s *scopeJSON) ToNode(variable scope) (Node, error) {
 		}
 		return variable.IsIn(types.String(s.EntityType), s.In.Entity), nil
 	}
-	return Node{}, fmt.Errorf("unknown op: %v", s.Op)
+	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }
 
 func (j binaryJSON) ToNode(f func(a, b Node) Node) (Node, error) {
@@ -70,7 +71,11 @@ func (j isJSON) ToNode() (Node, error) {
 		return Node{}, fmt.Errorf("error in left: %w", err)
 	}
 	if j.In != nil {
-		return left.IsIn(types.String(j.EntityType), Entity(j.In.Entity)), nil
+		right, err := j.In.ToNode()
+		if err != nil {
+			return Node{}, fmt.Errorf("error in entity: %w", err)
+		}
+		return left.IsIn(types.String(j.EntityType), right), nil
 	}
 	return left.Is(types.String(j.EntityType)), nil
 }
@@ -109,11 +114,11 @@ func (j arrayJSON) ToDecimalNode() (Node, error) {
 	if err != nil {
 		return Node{}, fmt.Errorf("error in extension: %w", err)
 	}
-	s, ok := arg.value.(types.String)
+	s, ok := arg.v.(nodeValue)
 	if !ok {
 		return Node{}, fmt.Errorf("unexpected type for decimal")
 	}
-	v, err := types.ParseDecimal(string(s))
+	v, err := types.ParseDecimal(s.Value.String()) // TODO: this maybe isn't correct
 	if err != nil {
 		return Node{}, fmt.Errorf("error parsing decimal: %w", err)
 	}
@@ -128,11 +133,11 @@ func (j arrayJSON) ToIPAddrNode() (Node, error) {
 	if err != nil {
 		return Node{}, fmt.Errorf("error in extension: %w", err)
 	}
-	s, ok := arg.value.(types.String)
+	s, ok := arg.v.(nodeValue)
 	if !ok {
 		return Node{}, fmt.Errorf("unexpected type for ipaddr")
 	}
-	v, err := types.ParseIPAddr(string(s))
+	v, err := types.ParseIPAddr(s.Value.String())
 	if err != nil {
 		return Node{}, fmt.Errorf("error parsing ipaddr: %w", err)
 	}
@@ -167,7 +172,7 @@ func (e extMethodCallJSON) ToNode() (Node, error) {
 			}
 			argNodes = append(argNodes, node)
 		}
-		return newExtMethodCallNode(argNodes[0], k, argNodes[1:]...), nil
+		return newExtMethodCallNode(argNodes[0], types.String(k), argNodes[1:]...), nil
 	}
 	panic("unreachable code")
 }
@@ -313,15 +318,15 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		p.Annotate(types.String(k), types.String(v))
 	}
 	var err error
-	p.principal, err = j.Principal.ToNode(scope(Principal()))
+	p.principal, err = j.Principal.ToNode(scope(rawPrincipalNode()))
 	if err != nil {
 		return fmt.Errorf("error in principal: %w", err)
 	}
-	p.action, err = j.Action.ToNode(scope(Action()))
+	p.action, err = j.Action.ToNode(scope(rawActionNode()))
 	if err != nil {
 		return fmt.Errorf("error in action: %w", err)
 	}
-	p.resource, err = j.Resource.ToNode(scope(Resource()))
+	p.resource, err = j.Resource.ToNode(scope(rawResourceNode()))
 	if err != nil {
 		return fmt.Errorf("error in resource: %w", err)
 	}

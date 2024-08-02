@@ -2,20 +2,20 @@ package ast
 
 type Policy struct {
 	effect      effect
-	annotations []Node
-	principal   Node
-	action      Node
-	resource    Node
-	conditions  []Node
+	annotations []nodeTypeAnnotation
+	principal   isScopeNode
+	action      isScopeNode
+	resource    isScopeNode
+	conditions  []nodeTypeCondition
 }
 
-func newPolicy(effect effect, annotations []Node) *Policy {
+func newPolicy(effect effect, annotations []nodeTypeAnnotation) *Policy {
 	return &Policy{
 		effect:      effect,
 		annotations: annotations,
-		principal:   scope(Principal()).All(),
-		action:      scope(Action()).All(),
-		resource:    scope(Resource()).All(),
+		principal:   scope(rawPrincipalNode()).All(),
+		action:      scope(rawActionNode()).All(),
+		resource:    scope(rawResourceNode()).All(),
 	}
 }
 
@@ -28,12 +28,12 @@ func Forbid() *Policy {
 }
 
 func (p *Policy) When(node Node) *Policy {
-	p.conditions = append(p.conditions, Node{nodeType: nodeTypeWhen, args: []Node{node}})
+	p.conditions = append(p.conditions, nodeTypeCondition{Condition: conditionWhen, Body: node.v})
 	return p
 }
 
 func (p *Policy) Unless(node Node) *Policy {
-	p.conditions = append(p.conditions, Node{nodeType: nodeTypeUnless, args: []Node{node}})
+	p.conditions = append(p.conditions, nodeTypeCondition{Condition: conditionUnless, Body: node.v})
 	return p
 }
 

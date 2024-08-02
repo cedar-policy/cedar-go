@@ -19,23 +19,33 @@ func Context() Node {
 }
 
 func newPrincipalNode() Node {
-	return newValueNode(nodeTypeVariable, types.String("principal"))
+	return newNode(rawPrincipalNode())
 }
 
 func newActionNode() Node {
-	return newValueNode(nodeTypeVariable, types.String("action"))
+	return newNode(rawActionNode())
 }
 
 func newResourceNode() Node {
-	return newValueNode(nodeTypeVariable, types.String("resource"))
+	return newNode(rawResourceNode())
 }
 
 func newContextNode() Node {
-	return newValueNode(nodeTypeVariable, types.String("context"))
+	return newNode(rawContextNode())
 }
 
-type variableNode Node
+func rawPrincipalNode() nodeTypeVariable {
+	return nodeTypeVariable{Name: types.String("principal")}
+}
 
-func (v variableNode) String() types.String {
-	return v.value.(types.String)
+func rawActionNode() nodeTypeVariable {
+	return nodeTypeVariable{Name: types.String("action")}
+}
+
+func rawResourceNode() nodeTypeVariable {
+	return nodeTypeVariable{Name: types.String("resource")}
+}
+
+func rawContextNode() nodeTypeVariable {
+	return nodeTypeVariable{Name: types.String("context")}
 }
