@@ -67,10 +67,10 @@ func TestAst(t *testing.T) {
 			}).Access("x").Equals(ast.Long(3)),
 		).
 		When(
-			ast.SetNodes([]ast.Node{
+			ast.SetNodes(
 				ast.Long(1),
 				ast.Long(2).Plus(ast.Long(3)),
 				ast.Context().Access("fooCount"),
-			}).Contains(ast.Long(1)),
+			).Contains(ast.Long(1)),
 		)
 }

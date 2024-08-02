@@ -127,10 +127,173 @@ func TestParse(t *testing.T) {
 		);`,
 			Permit().ActionInSet(farming, forestry),
 		},
+		{
+			"trivial conditions",
+			`permit (principal, action, resource)
+			when { true }
+			unless { false };`,
+			Permit().When(Boolean(true)).Unless(Boolean(false)),
+		},
+		{
+			"not operator",
+			`permit (principal, action, resource)
+			when { !true };`,
+			Permit().When(Not(Boolean(true))),
+		},
+		//{
+		//	"negate operator",
+		//	`permit (principal, action, resource)
+		//	when { -1 };`,
+		//	Permit().When(Long(-1)),
+		//},
+		{
+			"variable member",
+			`permit (principal, action, resource)
+			when { context.boolValue };`,
+			Permit().When(Context().Access("boolValue")),
+		},
+		{
+			"contains method call",
+			`permit (principal, action, resource)
+			when { context.strings.contains("foo") };`,
+			Permit().When(Context().Access("strings").Contains(String("foo"))),
+		},
+		{
+			"containsAll method call",
+			`permit (principal, action, resource)
+			when { context.strings.containsAll(["foo"]) };`,
+			Permit().When(Context().Access("strings").ContainsAll(SetNodes(String("foo")))),
+		},
+		{
+			"containsAny method call",
+			`permit (principal, action, resource)
+			when { context.strings.containsAny(["foo"]) };`,
+			Permit().When(Context().Access("strings").ContainsAny(SetNodes(String("foo")))),
+		},
+		{
+			"extension method call",
+			`permit (principal, action, resource)
+			when { context.sourceIP.isIpv4() };`,
+			Permit().When(Context().Access("sourceIP").IsIpv4()),
+		},
+		{
+			"multiplication",
+			`permit (principal, action, resource)
+			when { 42 * 2 };`,
+			Permit().When(Long(42).Times(Long(2))),
+		},
+		{
+			"addition",
+			`permit (principal, action, resource)
+			when { 42 + 2 };`,
+			Permit().When(Long(42).Plus(Long(2))),
+		},
+		{
+			"subtraction",
+			`permit (principal, action, resource)
+			when { 42 - 2 };`,
+			Permit().When(Long(42).Minus(Long(2))),
+		},
+		{
+			"less than",
+			`permit (principal, action, resource)
+			when { 2 < 42 };`,
+			Permit().When(Long(2).LessThan(Long(42))),
+		},
+		{
+			"less than or equal",
+			`permit (principal, action, resource)
+			when { 2 <= 42 };`,
+			Permit().When(Long(2).LessThanOrEqual(Long(42))),
+		},
+		{
+			"greater than",
+			`permit (principal, action, resource)
+			when { 2 > 42 };`,
+			Permit().When(Long(2).GreaterThan(Long(42))),
+		},
+		{
+			"greater than or equal",
+			`permit (principal, action, resource)
+			when { 2 >= 42 };`,
+			Permit().When(Long(2).GreaterThanOrEqual(Long(42))),
+		},
+		{
+			"equal",
+			`permit (principal, action, resource)
+			when { 2 == 42 };`,
+			Permit().When(Long(2).Equals(Long(42))),
+		},
+		{
+			"not equal",
+			`permit (principal, action, resource)
+			when { 2 != 42 };`,
+			Permit().When(Long(2).NotEquals(Long(42))),
+		},
+		{
+			"in",
+			`permit (principal, action, resource)
+			when { principal in Group::"folkHeroes" };`,
+			Permit().When(Principal().In(Entity(folkHeroes))),
+		},
+		{
+			"has ident",
+			`permit (principal, action, resource)
+			when { principal has firstName };`,
+			Permit().When(Principal().Has("firstName")),
+		},
+		{
+			"has string",
+			`permit (principal, action, resource)
+			when { principal has "firstName" };`,
+			Permit().When(Principal().Has("firstName")),
+		},
+		//{
+		//	"like no wildcards",
+		//	`permit (principal, action, resource)
+		//	when { principal.firstName like "johnny" };`,
+		//	Permit().When(Principal().Has("firstName")),
+		//},
+		{
+			"is",
+			`permit (principal, action, resource)
+			when { principal is User };`,
+			Permit().When(Principal().Is("User")),
+		},
+		{
+			"is in",
+			`permit (principal, action, resource)
+			when { principal is User in Group::"folkHeroes" };`,
+			Permit().When(Principal().IsIn("User", Entity(folkHeroes))),
+		},
+		{
+			"is in",
+			`permit (principal, action, resource)
+			when { principal is User in Group::"folkHeroes" };`,
+			Permit().When(Principal().IsIn("User", Entity(folkHeroes))),
+		},
+		{
+			"and",
+			`permit (principal, action, resource)
+			when { true && false };`,
+			Permit().When(True().And(False())),
+		},
+		{
+			"or",
+			`permit (principal, action, resource)
+			when { true || false };`,
+			Permit().When(True().Or(False())),
+		},
+		{
+			"if then else",
+			`permit (principal, action, resource)
+			when { if true then true else false };`,
+			Permit().When(If(True(), True(), False())),
+		},
 	}
 
 	for _, tt := range parseTests {
-		t.Run(tt.Text, func(t *testing.T) {
+		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 
 			tokens, err := Tokenize([]byte(tt.Text))

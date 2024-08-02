@@ -98,7 +98,7 @@ func (j arrayJSON) ToNode() (Node, error) {
 		}
 		nodes = append(nodes, n)
 	}
-	return SetNodes(nodes), nil
+	return SetNodes(nodes...), nil
 }
 
 func (j arrayJSON) ToDecimalNode() (Node, error) {
