@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/netip"
 	"strconv"
+	"strings"
 
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -482,8 +483,19 @@ func (p *parser) relation() (Node, error) {
 		}
 		return Node{}, p.errorf("expected ident or string")
 	} else if t.Text == "like" {
-		// TODO: Deal with pattern matching
-		return Node{}, p.errorf("unimplemented")
+		p.advance()
+		t = p.advance()
+		if !t.isString() {
+			return Node{}, p.errorf("expected string literal")
+		}
+		patternRaw := t.Text
+		patternRaw = strings.TrimPrefix(patternRaw, "\"")
+		patternRaw = strings.TrimSuffix(patternRaw, "\"")
+		pattern, err := PatternFromCedar(patternRaw)
+		if err != nil {
+			return Node{}, err
+		}
+		return lhs.Like(pattern), nil
 	} else if t.Text == "is" {
 		p.advance()
 		entityType, err := p.path()

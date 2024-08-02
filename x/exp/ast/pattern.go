@@ -1,7 +1,5 @@
 package ast
 
-import "strings"
-
 type PatternComponent struct {
 	Star  bool
 	Chunk string
@@ -9,20 +7,10 @@ type PatternComponent struct {
 
 type Pattern struct {
 	Comps []PatternComponent
-	Raw   string
 }
 
-func (p Pattern) String() string {
-	return p.Raw
-}
-
-func NewPattern(literal string) (Pattern, error) {
-	rawPat := literal
-
-	literal = strings.TrimPrefix(literal, "\"")
-	literal = strings.TrimSuffix(literal, "\"")
-
-	b := []byte(literal)
+func PatternFromCedar(cedar string) (Pattern, error) {
+	b := []byte(cedar)
 
 	var comps []PatternComponent
 	for len(b) > 0 {
@@ -40,6 +28,31 @@ func NewPattern(literal string) (Pattern, error) {
 	}
 	return Pattern{
 		Comps: comps,
-		Raw:   rawPat,
 	}, nil
+}
+
+func (p *Pattern) AddWildcard() *Pattern {
+	star := PatternComponent{Star: true}
+	if len(p.Comps) == 0 {
+		p.Comps = []PatternComponent{star}
+		return p
+	}
+
+	lastComp := p.Comps[len(p.Comps)-1]
+	if lastComp.Star && lastComp.Chunk == "" {
+		return p
+	}
+
+	p.Comps = append(p.Comps, star)
+	return p
+}
+
+func (p *Pattern) AddLiteral(s string) *Pattern {
+	if len(p.Comps) == 0 {
+		p.Comps = []PatternComponent{{}}
+	}
+
+	lastComp := &p.Comps[len(p.Comps)-1]
+	lastComp.Chunk = lastComp.Chunk + s
+	return p
 }

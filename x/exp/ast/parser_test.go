@@ -248,12 +248,25 @@ func TestParse(t *testing.T) {
 			when { principal has "firstName" };`,
 			Permit().When(Principal().Has("firstName")),
 		},
-		// {
-		// 	"like no wildcards",
-		// 	`permit (principal, action, resource)
-		// 	when { principal.firstName like "johnny" };`,
-		// 	Permit().When(Principal().Has("firstName")),
-		// },
+		// N.B. Most pattern parsing tests can be found in pattern_test.go
+		{
+			"like no wildcards",
+			`permit (principal, action, resource)
+			when { principal.firstName like "johnny" };`,
+			Permit().When(Principal().Access("firstName").Like(testutil.Must(PatternFromCedar("johnny")))),
+		},
+		{
+			"like escaped asterisk",
+			`permit (principal, action, resource)
+			when { principal.firstName like "joh\*nny" };`,
+			Permit().When(Principal().Access("firstName").Like(testutil.Must(PatternFromCedar(`joh\*nny`)))),
+		},
+		{
+			"like wildcard",
+			`permit (principal, action, resource)
+			when { principal.firstName like "*" };`,
+			Permit().When(Principal().Access("firstName").Like(testutil.Must(PatternFromCedar("*")))),
+		},
 		{
 			"is",
 			`permit (principal, action, resource)

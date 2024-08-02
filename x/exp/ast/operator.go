@@ -49,8 +49,8 @@ func (lhs Node) GreaterThanOrEqualExt(rhs Node) Node {
 	return newExtMethodCallNode(lhs, "greaterThanOrEqual", rhs)
 }
 
-func (lhs Node) Like(patt string) Node {
-	return newNode(nodeTypeLike{strOpNode: strOpNode{Arg: lhs.v, Value: types.String(patt)}})
+func (lhs Node) Like(pattern Pattern) Node {
+	return newNode(nodeTypeLike{Arg: lhs.v, Value: pattern})
 }
 
 //  _                _           _

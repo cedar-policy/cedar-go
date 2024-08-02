@@ -10,7 +10,12 @@ type strOpNode struct {
 
 type nodeTypeAccess struct{ strOpNode }
 type nodeTypeHas struct{ strOpNode }
-type nodeTypeLike struct{ strOpNode }
+
+type nodeTypeLike struct {
+	node
+	Arg   node
+	Value Pattern
+}
 
 type nodeTypeAnnotation struct {
 	node
