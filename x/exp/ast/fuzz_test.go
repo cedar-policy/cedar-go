@@ -93,14 +93,8 @@ func FuzzParse(f *testing.F) {
 		f.Add(tt)
 	}
 	f.Fuzz(func(_ *testing.T, orig string) {
-		tokens, err := Tokenize([]byte(orig))
-		if err != nil {
-			return
-		}
-
-		parser := newParser(tokens)
-
 		// intentionally ignore parse errors
-		_, _ = policyFromCedar(&parser)
+		var policy Policy
+		_ = policy.FromCedar([]byte(orig))
 	})
 }

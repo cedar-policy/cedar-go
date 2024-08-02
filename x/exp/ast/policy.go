@@ -1,5 +1,7 @@
 package ast
 
+type PolicySet []Policy
+
 type Policy struct {
 	effect      effect
 	annotations []nodeTypeAnnotation
