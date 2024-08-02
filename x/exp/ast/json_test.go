@@ -403,7 +403,7 @@ func TestUnmarshalJSON(t *testing.T) {
 		{
 			"isIn",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"resource"},"entity_type":"T","in":{"entity":{"type":"P","id":"42"}}}}}]}`,
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"resource"},"entity_type":"T","in":{"Value":{"__entity":{"type":"P","id":"42"}}}}}}]}`,
 			ast.Permit().When(ast.Resource().IsIn("T", ast.Entity(types.NewEntityUID("P", "42")))),
 			testutil.OK,
 		},

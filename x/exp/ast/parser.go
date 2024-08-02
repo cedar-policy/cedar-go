@@ -792,7 +792,7 @@ func (p *parser) access(lhs Node) (Node, bool, error) {
 				}
 				return f(exprs[0]), true, nil
 			}
-			return newExtMethodCallNode(lhs, methodName, exprs...), true, nil
+			return newExtMethodCallNode(lhs, types.String(methodName), exprs...), true, nil
 		} else {
 			return lhs.Access(t.Text), true, nil
 		}

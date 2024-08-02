@@ -45,7 +45,6 @@ func TestAst(t *testing.T) {
 		)
 
 	// forbid (principal, action, resource)
-	// when { resource[context.resourceField] == "specialValue" }
 	// when { {x: "value"}.x == "value" }
 	// when { {x: 1 + context.fooCount}.x == 3 }
 	// when { [1, 2 + 3, context.fooCount].contains(1) };
@@ -53,11 +52,6 @@ func TestAst(t *testing.T) {
 		"x": types.String("value"),
 	}
 	_ = ast.Forbid().
-		When(
-			ast.Resource().AccessNode(
-				ast.Context().Access("resourceField"),
-			).Equals(ast.String("specialValue")),
-		).
 		When(
 			ast.Record(simpleRecord).Access("x").Equals(ast.String("value")),
 		).

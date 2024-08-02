@@ -15,7 +15,7 @@ type policyJSON struct {
 	Conditions  []conditionJSON   `json:"conditions,omitempty"`
 }
 
-type inJSON struct {
+type scopeInJSON struct {
 	Entity types.EntityUID `json:"entity"`
 }
 
@@ -24,7 +24,7 @@ type scopeJSON struct {
 	Entity     *types.EntityUID  `json:"entity,omitempty"`
 	Entities   []types.EntityUID `json:"entities,omitempty"`
 	EntityType string            `json:"entity_type,omitempty"`
-	In         *inJSON           `json:"in,omitempty"`
+	In         *scopeInJSON      `json:"in,omitempty"`
 }
 
 type conditionJSON struct {
@@ -52,9 +52,9 @@ type patternJSON struct {
 }
 
 type isJSON struct {
-	Left       nodeJSON `json:"left"`
-	EntityType string   `json:"entity_type"`
-	In         *inJSON  `json:"in,omitempty"`
+	Left       nodeJSON  `json:"left"`
+	EntityType string    `json:"entity_type"`
+	In         *nodeJSON `json:"in,omitempty"`
 }
 
 type ifThenElseJSON struct {
