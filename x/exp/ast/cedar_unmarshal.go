@@ -9,7 +9,7 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func (p *PolicySet) FromCedar(b []byte) error {
+func (p *PolicySet) UnmarshalCedar(b []byte) error {
 	tokens, err := Tokenize(b)
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func (p *PolicySet) FromCedar(b []byte) error {
 	return nil
 }
 
-func (p *Policy) FromCedar(b []byte) error {
+func (p *Policy) UnmarshalCedar(b []byte) error {
 	tokens, err := Tokenize(b)
 	if err != nil {
 		return err

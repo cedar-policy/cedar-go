@@ -95,6 +95,6 @@ func FuzzParse(f *testing.F) {
 	f.Fuzz(func(_ *testing.T, orig string) {
 		// intentionally ignore parse errors
 		var policy Policy
-		_ = policy.FromCedar([]byte(orig))
+		_ = policy.UnmarshalCedar([]byte(orig))
 	})
 }
