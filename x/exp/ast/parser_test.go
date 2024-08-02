@@ -290,6 +290,54 @@ func TestParse(t *testing.T) {
 			when { if true then true else false };`,
 			Permit().When(If(True(), True(), False())),
 		},
+		{
+			"and over or precedence",
+			`permit (principal, action, resource)
+			when { true && false || true && true };`,
+			Permit().When(True().And(False()).Or(True().And(True()))),
+		},
+		{
+			"rel over and precedence",
+			`permit (principal, action, resource)
+			when { 1 < 2 && true };`,
+			Permit().When(Long(1).LessThan(Long(2)).And(True())),
+		},
+		{
+			"add over rel precedence",
+			`permit (principal, action, resource)
+			when { 1 + 1 < 3 };`,
+			Permit().When(Long(1).Plus(Long(1)).LessThan(Long(3))),
+		},
+		{
+			"mult over add precedence",
+			`permit (principal, action, resource)
+			when { 2 * 3 + 4 == 10 };`,
+			Permit().When(Long(2).Times(Long(3)).Plus(Long(4)).Equals(Long(10))),
+		},
+		{
+			"unary over mult precedence",
+			`permit (principal, action, resource)
+			when { -2 * 3 == -6 };`,
+			Permit().When(Negate(Long(2)).Times(Long(3)).Equals(Negate(Long(6)))),
+		},
+		{
+			"member over unary precedence",
+			`permit (principal, action, resource)
+			when { -context.num };`,
+			Permit().When(Negate(Context().Access("num"))),
+		},
+		{
+			"member over unary precedence",
+			`permit (principal, action, resource)
+			when { -context.num };`,
+			Permit().When(Negate(Context().Access("num"))),
+		},
+		{
+			"parens over unary precedence",
+			`permit (principal, action, resource)
+			when { -(2 + 3) == -5 };`,
+			Permit().When(Negate(Long(2).Plus(Long(3))).Equals(Negate(Long(5)))),
+		},
 	}
 
 	for _, tt := range parseTests {
