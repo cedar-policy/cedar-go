@@ -9,46 +9,78 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func policyFromCedar(p *parser) (*Policy, error) {
-	annotations, err := p.annotations()
+func (p *PolicySet) FromCedar(b []byte) error {
+	tokens, err := Tokenize(b)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	policy, err := p.effect(&annotations)
+	var policySet PolicySet
+	parser := newParser(tokens)
+	for !parser.peek().isEOF() {
+		var policy Policy
+		if err = policy.fromCedarWithParser(&parser); err != nil {
+			return err
+		}
+
+		policySet = append(policySet, policy)
+	}
+
+	*p = policySet
+	return nil
+}
+
+func (p *Policy) FromCedar(b []byte) error {
+	tokens, err := Tokenize(b)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if err = p.exact("("); err != nil {
-		return nil, err
-	}
-	if err = p.principal(policy); err != nil {
-		return nil, err
-	}
-	if err = p.exact(","); err != nil {
-		return nil, err
-	}
-	if err = p.action(policy); err != nil {
-		return nil, err
-	}
-	if err = p.exact(","); err != nil {
-		return nil, err
-	}
-	if err = p.resource(policy); err != nil {
-		return nil, err
-	}
-	if err = p.exact(")"); err != nil {
-		return nil, err
-	}
-	if err = p.conditions(policy); err != nil {
-		return nil, err
-	}
-	if err = p.exact(";"); err != nil {
-		return nil, err
+	parser := newParser(tokens)
+	return p.fromCedarWithParser(&parser)
+}
+
+func (p *Policy) fromCedarWithParser(parser *parser) error {
+	annotations, err := parser.annotations()
+	if err != nil {
+		return err
 	}
 
-	return policy, nil
+	newPolicy, err := parser.effect(&annotations)
+	if err != nil {
+		return err
+	}
+
+	if err = parser.exact("("); err != nil {
+		return err
+	}
+	if err = parser.principal(newPolicy); err != nil {
+		return err
+	}
+	if err = parser.exact(","); err != nil {
+		return err
+	}
+	if err = parser.action(newPolicy); err != nil {
+		return err
+	}
+	if err = parser.exact(","); err != nil {
+		return err
+	}
+	if err = parser.resource(newPolicy); err != nil {
+		return err
+	}
+	if err = parser.exact(")"); err != nil {
+		return err
+	}
+	if err = parser.conditions(newPolicy); err != nil {
+		return err
+	}
+	if err = parser.exact(";"); err != nil {
+		return err
+	}
+
+	*p = *newPolicy
+	return nil
 }
 
 type parser struct {

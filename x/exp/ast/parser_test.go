@@ -36,7 +36,7 @@ var malus = types.EntityUID{
 	ID:   "malus",
 }
 
-func TestParse(t *testing.T) {
+func TestParsePolicy(t *testing.T) {
 	t.Parallel()
 	parseTests := []struct {
 		Name           string
@@ -363,15 +363,51 @@ func TestParse(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 
-			tokens, err := Tokenize([]byte(tt.Text))
-			testutil.OK(t, err)
+			var policy Policy
+			testutil.OK(t, policy.FromCedar([]byte(tt.Text)))
+			testutil.Equals(t, policy, *tt.ExpectedPolicy)
+		})
+	}
+}
 
-			parser := newParser(tokens)
+func TestParsePolicySet(t *testing.T) {
+	t.Parallel()
+	parseTests := []struct {
+		Name             string
+		Text             string
+		ExpectedPolicies PolicySet
+	}{
+		{
+			"single policy",
+			`permit (
+			principal,
+			action,
+			resource
+		);`,
+			PolicySet{*Permit()},
+		},
+		{
+			"two policies",
+			`permit (
+			principal,
+			action,
+			resource
+		);
+		forbid (
+			principal,
+			action,
+			resource
+		);`,
+			PolicySet{*Permit(), *Forbid()},
+		},
+	}
+	for _, tt := range parseTests {
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
 
-			policy, err := policyFromCedar(&parser)
-			testutil.OK(t, err)
-
-			testutil.Equals(t, policy, tt.ExpectedPolicy)
+			var policies PolicySet
+			testutil.OK(t, policies.FromCedar([]byte(tt.Text)))
+			testutil.Equals(t, policies, tt.ExpectedPolicies)
 		})
 	}
 }

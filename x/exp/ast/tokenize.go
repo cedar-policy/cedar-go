@@ -32,6 +32,10 @@ type Token struct {
 	Text string
 }
 
+func (t Token) isEOF() bool {
+	return t.Type == TokenEOF
+}
+
 func (t Token) isIdent() bool {
 	return t.Type == TokenIdent
 }
