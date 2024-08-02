@@ -147,6 +147,12 @@ func TestParse(t *testing.T) {
 			Permit().When(Negate(Long(1))),
 		},
 		{
+			"mutliple negate operators",
+			`permit (principal, action, resource)
+			when { !--1 };`,
+			Permit().When(Not(Negate(Negate(Long(1))))),
+		},
+		{
 			"variable member",
 			`permit (principal, action, resource)
 			when { context.boolValue };`,

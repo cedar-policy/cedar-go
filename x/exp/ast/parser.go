@@ -558,30 +558,31 @@ func (p *parser) mult() (Node, error) {
 }
 
 func (p *parser) unary() (Node, error) {
-	var res Node
-	var ops [](func(Node) Node)
-	for {
-		op := p.peek()
-		switch op.Text {
-		case "!":
-			p.advance()
-			ops = append(ops, Not)
-		case "-":
-			p.advance()
-			ops = append(ops, Negate)
-		default:
-			var err error
-			res, err = p.member()
-			if err != nil {
-				return res, err
-			}
-
-			for i := len(ops) - 1; i >= 0; i-- {
-				res = ops[i](res)
-			}
-			return res, nil
-		}
+	opMap := map[string]func(Node) Node{
+		"-": Negate,
+		"!": Not,
 	}
+
+	var ops []func(Node) Node
+	for {
+		opToken := p.peek()
+		op, ok := opMap[opToken.Text]
+		if !ok {
+			break
+		}
+		p.advance()
+		ops = append(ops, op)
+	}
+
+	res, err := p.member()
+	if err != nil {
+		return res, err
+	}
+
+	for i := len(ops) - 1; i >= 0; i-- {
+		res = ops[i](res)
+	}
+	return res, nil
 }
 
 func (p *parser) member() (Node, error) {
