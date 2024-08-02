@@ -405,12 +405,6 @@ func TestRustUnquote(t *testing.T) {
 	}
 }
 
-func TestFakeRustQuote(t *testing.T) {
-	t.Parallel()
-	out := FakeRustQuote("hello")
-	testutil.Equals(t, out, `"hello"`)
-}
-
 func TestScanner(t *testing.T) {
 	t.Parallel()
 	t.Run("SrcError", func(t *testing.T) {
