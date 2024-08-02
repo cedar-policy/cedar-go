@@ -140,12 +140,12 @@ func TestParse(t *testing.T) {
 			when { !true };`,
 			Permit().When(Not(Boolean(true))),
 		},
-		//{
-		//	"negate operator",
-		//	`permit (principal, action, resource)
-		//	when { -1 };`,
-		//	Permit().When(Long(-1)),
-		//},
+		// {
+		// 	"negate operator",
+		// 	`permit (principal, action, resource)
+		// 	when { -1 };`,
+		// 	Permit().When(Long(-1)),
+		// },
 		{
 			"variable member",
 			`permit (principal, action, resource)
@@ -248,12 +248,12 @@ func TestParse(t *testing.T) {
 			when { principal has "firstName" };`,
 			Permit().When(Principal().Has("firstName")),
 		},
-		//{
-		//	"like no wildcards",
-		//	`permit (principal, action, resource)
-		//	when { principal.firstName like "johnny" };`,
-		//	Permit().When(Principal().Has("firstName")),
-		//},
+		// {
+		// 	"like no wildcards",
+		// 	`permit (principal, action, resource)
+		// 	when { principal.firstName like "johnny" };`,
+		// 	Permit().When(Principal().Has("firstName")),
+		// },
 		{
 			"is",
 			`permit (principal, action, resource)

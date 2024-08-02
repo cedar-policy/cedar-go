@@ -34,11 +34,6 @@ type nodeTypeIsIn struct {
 	Entity node
 }
 
-type nodeTypeScopeIsIn struct {
-	nodeTypeIs
-	Entity types.EntityUID
-}
-
 type nodeTypeExtMethodCall struct {
 	node
 	Left   node
