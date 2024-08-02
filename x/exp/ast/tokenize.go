@@ -194,11 +194,6 @@ func isHexadecimal(ch rune) bool {
 	return isDecimal(ch) || ('a' <= lower(ch) && lower(ch) <= 'f')
 }
 
-// TODO: make FakeRustQuote actually accurate in all cases
-func FakeRustQuote(s string) string {
-	return strconv.Quote(s)
-}
-
 func (t Token) intValue() (int64, error) {
 	return strconv.ParseInt(t.Text, 10, 64)
 }
