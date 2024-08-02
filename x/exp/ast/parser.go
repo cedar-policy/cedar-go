@@ -561,8 +561,8 @@ func (p *parser) unary() (Node, error) {
 	var res Node
 	var ops [](func(Node) Node)
 	for {
-		op := p.peek().Text
-		switch op {
+		op := p.peek()
+		switch op.Text {
 		case "!":
 			p.advance()
 			ops = append(ops, Not)
@@ -576,7 +576,6 @@ func (p *parser) unary() (Node, error) {
 				return res, err
 			}
 
-			// TODO: add support for parsing -1 into a negative Long rather than a Negate(Long)
 			for i := len(ops) - 1; i >= 0; i-- {
 				res = ops[i](res)
 			}
