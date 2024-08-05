@@ -483,69 +483,91 @@ func (p *parser) relation() (Node, error) {
 	}
 
 	t := p.peek()
-	operators := map[string]func(Node) Node{
-		"<":  lhs.LessThan,
-		"<=": lhs.LessThanOrEqual,
-		">":  lhs.GreaterThan,
-		">=": lhs.GreaterThanOrEqual,
-		"!=": lhs.NotEquals,
-		"==": lhs.Equals,
-		"in": lhs.In,
-	}
-	if f, ok := operators[t.Text]; ok {
-		p.advance()
-		rhs, err := p.add()
-		if err != nil {
-			return Node{}, err
-		}
-		return f(rhs), nil
-	}
 
 	if t.Text == "has" {
 		p.advance()
-		t = p.advance()
-		if t.isIdent() {
-			return lhs.Has(t.Text), nil
-		} else if t.isString() {
-			str, err := t.stringValue()
-			if err != nil {
-				return Node{}, err
-			}
-			return lhs.Has(str), nil
-		}
-		return Node{}, p.errorf("expected ident or string")
+		return p.has(lhs)
 	} else if t.Text == "like" {
 		p.advance()
-		t = p.advance()
-		if !t.isString() {
-			return Node{}, p.errorf("expected string literal")
-		}
-		patternRaw := t.Text
-		patternRaw = strings.TrimPrefix(patternRaw, "\"")
-		patternRaw = strings.TrimSuffix(patternRaw, "\"")
-		pattern, err := PatternFromCedar(patternRaw)
-		if err != nil {
-			return Node{}, err
-		}
-		return lhs.Like(pattern), nil
+		return p.like(lhs)
 	} else if t.Text == "is" {
 		p.advance()
-		entityType, err := p.path()
+		return p.is(lhs)
+	}
+
+	// RELOP
+	var operator func(Node, Node) Node
+	switch t.Text {
+	case "<":
+		operator = Node.LessThan
+	case "<=":
+		operator = Node.LessThanOrEqual
+	case ">":
+		operator = Node.GreaterThan
+	case ">=":
+		operator = Node.GreaterThanOrEqual
+	case "!=":
+		operator = Node.NotEquals
+	case "==":
+		operator = Node.Equals
+	case "in":
+		operator = Node.In
+	default:
+		return lhs, nil
+
+	}
+
+	p.advance()
+	rhs, err := p.add()
+	if err != nil {
+		return Node{}, err
+	}
+	return operator(lhs, rhs), nil
+}
+
+func (p *parser) has(lhs Node) (Node, error) {
+	t := p.advance()
+	if t.isIdent() {
+		return lhs.Has(t.Text), nil
+	} else if t.isString() {
+		str, err := t.stringValue()
 		if err != nil {
 			return Node{}, err
 		}
-		if p.peek().Text == "in" {
-			p.advance()
-			inEntity, err := p.add()
-			if err != nil {
-				return Node{}, err
-			}
-			return lhs.IsIn(entityType, inEntity), nil
-		}
-		return lhs.Is(entityType), nil
+		return lhs.Has(str), nil
 	}
+	return Node{}, p.errorf("expected ident or string")
+}
 
-	return lhs, err
+func (p *parser) like(lhs Node) (Node, error) {
+	t := p.advance()
+	if !t.isString() {
+		return Node{}, p.errorf("expected string literal")
+	}
+	patternRaw := t.Text
+	patternRaw = strings.TrimPrefix(patternRaw, "\"")
+	patternRaw = strings.TrimSuffix(patternRaw, "\"")
+	pattern, err := PatternFromCedar(patternRaw)
+	if err != nil {
+		return Node{}, err
+	}
+	return lhs.Like(pattern), nil
+}
+
+func (p *parser) is(lhs Node) (Node, error) {
+	entityType, err := p.path()
+	if err != nil {
+		return Node{}, err
+	}
+	if p.peek().Text == "in" {
+		p.advance()
+		inEntity, err := p.add()
+		if err != nil {
+			return Node{}, err
+		}
+		return lhs.IsIn(entityType, inEntity), nil
+	}
+	return lhs.Is(entityType), nil
 }
 
 func (p *parser) add() (Node, error) {
@@ -554,21 +576,23 @@ func (p *parser) add() (Node, error) {
 		return Node{}, err
 	}
 
-	t := p.peek().Text
-	operators := map[string]func(Node) Node{
-		"+": lhs.Plus,
-		"-": lhs.Minus,
-	}
-	if f, ok := operators[t]; ok {
-		p.advance()
-		rhs, err := p.mult()
-		if err != nil {
-			return Node{}, err
-		}
-		return f(rhs), nil
+	t := p.peek()
+	var operator func(Node, Node) Node
+	switch t.Text {
+	case "+":
+		operator = Node.Plus
+	case "-":
+		operator = Node.Minus
+	default:
+		return lhs, nil
 	}
 
-	return lhs, nil
+	p.advance()
+	rhs, err := p.mult()
+	if err != nil {
+		return Node{}, err
+	}
+	return operator(lhs, rhs), nil
 }
 
 func (p *parser) mult() (Node, error) {
@@ -825,18 +849,22 @@ func (p *parser) access(lhs Node) (Node, bool, error) {
 			}
 			p.advance() // expressions guarantees ")"
 
-			knownMethods := map[string]func(Node) Node{
-				"contains":    lhs.Contains,
-				"containsAll": lhs.ContainsAll,
-				"containsAny": lhs.ContainsAny,
+			var knownMethod func(Node, Node) Node
+			switch methodName {
+			case "contains":
+				knownMethod = Node.Contains
+			case "containsAll":
+				knownMethod = Node.ContainsAll
+			case "containsAny":
+				knownMethod = Node.ContainsAny
+			default:
+				return newExtMethodCallNode(lhs, types.String(methodName), exprs...), true, nil
 			}
-			if f, ok := knownMethods[methodName]; ok {
-				if len(exprs) != 1 {
-					return Node{}, false, p.errorf("%v expects one argument", methodName)
-				}
-				return f(exprs[0]), true, nil
+
+			if len(exprs) != 1 {
+				return Node{}, false, p.errorf("%v expects one argument", methodName)
 			}
-			return newExtMethodCallNode(lhs, types.String(methodName), exprs...), true, nil
+			return knownMethod(lhs, exprs[0]), true, nil
 		} else {
 			return lhs.Access(t.Text), true, nil
 		}
