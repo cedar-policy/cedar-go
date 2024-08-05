@@ -2,7 +2,12 @@ package ast
 
 import "github.com/cedar-policy/cedar-go/types"
 
-type PolicySet map[string]Policy
+type PolicySet map[string]PolicySetEntry
+
+type PolicySetEntry struct {
+	Policy   Policy
+	Position Position
+}
 
 type annotationType struct {
 	Key   types.String // TODO: review type

@@ -28,7 +28,7 @@ const (
 
 type Token struct {
 	Type TokenType
-	Pos  position
+	Pos  Position
 	Text string
 }
 
@@ -216,15 +216,15 @@ func Tokenize(src []byte) ([]Token, error) {
 	return res, nil
 }
 
-// position is a value that represents a source position.
-// A position is valid if Line > 0.
-type position struct {
+// Position is a value that represents a source Position.
+// A Position is valid if Line > 0.
+type Position struct {
 	Offset int // byte offset, starting at 0
 	Line   int // line number, starting at 1
 	Column int // column number, starting at 1 (character count per line)
 }
 
-func (pos position) String() string {
+func (pos Position) String() string {
 	return fmt.Sprintf("<input>:%d:%d", pos.Line, pos.Column)
 }
 
@@ -272,7 +272,7 @@ type scanner struct {
 	// the scanner is not inside a token. Call Pos to obtain an error
 	// position in that case, or to obtain the position immediately
 	// after the most recently scanned token.
-	position position
+	position Position
 }
 
 // Init initializes a Scanner with a new source and returns s.
@@ -285,7 +285,7 @@ func (s *scanner) Init(src io.Reader) *scanner {
 	s.srcPos = 0
 	s.srcEnd = 0
 
-	// initialize source position
+	// initialize source Position
 	s.srcBufOffset = 0
 	s.line = 1
 	s.column = 0
@@ -300,7 +300,7 @@ func (s *scanner) Init(src io.Reader) *scanner {
 	s.ch = specialRuneBOF // no char read yet, not EOF
 
 	// initialize public fields
-	s.position.Line = 0 // invalidate token position
+	s.position.Line = 0 // invalidate token Position
 
 	return s
 }
@@ -360,7 +360,7 @@ func (s *scanner) next() rune {
 			// uncommon case: not ASCII
 			ch, width = utf8.DecodeRune(s.srcBuf[s.srcPos:s.srcEnd])
 			if ch == utf8.RuneError && width == 1 {
-				// advance for correct error position
+				// advance for correct error Position
 				s.srcPos += width
 				s.lastCharLen = width
 				s.column++
@@ -562,7 +562,7 @@ func (s *scanner) nextToken() Token {
 
 	ch := s.ch
 
-	// reset token text position
+	// reset token text Position
 	s.tokPos = -1
 	s.position.Line = 0
 
@@ -576,7 +576,7 @@ redo:
 	s.tokBuf.Reset()
 	s.tokPos = s.srcPos - s.lastCharLen
 
-	// set token position
+	// set token Position
 	s.position.Offset = s.srcBufOffset + s.tokPos
 	if s.column > 0 {
 		// common case: last character was not a '\n'

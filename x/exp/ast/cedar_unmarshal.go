@@ -20,13 +20,14 @@ func (p *PolicySet) UnmarshalCedar(b []byte) error {
 	policySet := PolicySet{}
 	parser := newParser(tokens)
 	for !parser.peek().isEOF() {
+		pos := parser.peek().Pos
 		var policy Policy
 		if err = policy.fromCedarWithParser(&parser); err != nil {
 			return err
 		}
 
 		policyName := fmt.Sprintf("policy%v", i)
-		policySet[policyName] = policy
+		policySet[policyName] = PolicySetEntry{Policy: policy, Position: pos}
 		i++
 	}
 
