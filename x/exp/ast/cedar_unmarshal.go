@@ -15,7 +15,9 @@ func (p *PolicySet) UnmarshalCedar(b []byte) error {
 		return err
 	}
 
-	var policySet PolicySet
+	i := 0
+
+	policySet := PolicySet{}
 	parser := newParser(tokens)
 	for !parser.peek().isEOF() {
 		var policy Policy
@@ -23,7 +25,9 @@ func (p *PolicySet) UnmarshalCedar(b []byte) error {
 			return err
 		}
 
-		policySet = append(policySet, policy)
+		policyName := fmt.Sprintf("policy%v", i)
+		policySet[policyName] = policy
+		i++
 	}
 
 	*p = policySet
