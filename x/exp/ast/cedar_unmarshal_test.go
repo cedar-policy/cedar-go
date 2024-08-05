@@ -241,7 +241,7 @@ func TestParsePolicy(t *testing.T) {
 			"in",
 			`permit (principal, action, resource)
 			when { principal in Group::"folkHeroes" };`,
-			ast.Permit().When(ast.Principal().In(ast.Entity(folkHeroes))),
+			ast.Permit().When(ast.Principal().In(ast.EntityUID(folkHeroes))),
 		},
 		{
 			"has ident",
@@ -284,13 +284,13 @@ func TestParsePolicy(t *testing.T) {
 			"is in",
 			`permit (principal, action, resource)
 			when { principal is User in Group::"folkHeroes" };`,
-			ast.Permit().When(ast.Principal().IsIn("User", ast.Entity(folkHeroes))),
+			ast.Permit().When(ast.Principal().IsIn("User", ast.EntityUID(folkHeroes))),
 		},
 		{
 			"is in",
 			`permit (principal, action, resource)
 			when { principal is User in Group::"folkHeroes" };`,
-			ast.Permit().When(ast.Principal().IsIn("User", ast.Entity(folkHeroes))),
+			ast.Permit().When(ast.Principal().IsIn("User", ast.EntityUID(folkHeroes))),
 		},
 		{
 			"and",

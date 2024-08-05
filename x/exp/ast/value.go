@@ -84,7 +84,7 @@ func EntityType(e types.String) Node {
 	return newValueNode(e)
 }
 
-func Entity(e types.EntityUID) Node {
+func EntityUID(e types.EntityUID) Node {
 	return newValueNode(e)
 }
 
@@ -113,7 +113,7 @@ func valueToNode(v types.Value) Node {
 	case types.Record:
 		return Record(x)
 	case types.EntityUID:
-		return Entity(x)
+		return EntityUID(x)
 	case types.Decimal:
 		return Decimal(x)
 	case types.IPAddr:

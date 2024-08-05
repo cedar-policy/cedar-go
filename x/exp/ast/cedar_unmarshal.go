@@ -755,7 +755,7 @@ func (p *parser) entityOrExtFun(ident string) (Node, error) {
 		if err != nil {
 			return res, err
 		}
-		res = Entity(entity)
+		res = EntityUID(entity)
 	}
 
 	return res, nil
