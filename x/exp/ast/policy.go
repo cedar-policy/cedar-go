@@ -9,6 +9,7 @@ type Policy struct {
 	action      isScopeNode
 	resource    isScopeNode
 	conditions  []nodeTypeCondition
+	pos         position
 }
 
 func newPolicy(effect effect, annotations []nodeTypeAnnotation) *Policy {

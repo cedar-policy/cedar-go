@@ -28,7 +28,7 @@ const (
 
 type Token struct {
 	Type TokenType
-	Pos  Position
+	Pos  position
 	Text string
 }
 
@@ -216,15 +216,15 @@ func Tokenize(src []byte) ([]Token, error) {
 	return res, nil
 }
 
-// Position is a value that represents a source position.
+// position is a value that represents a source position.
 // A position is valid if Line > 0.
-type Position struct {
+type position struct {
 	Offset int // byte offset, starting at 0
 	Line   int // line number, starting at 1
 	Column int // column number, starting at 1 (character count per line)
 }
 
-func (pos Position) String() string {
+func (pos position) String() string {
 	return fmt.Sprintf("<input>:%d:%d", pos.Line, pos.Column)
 }
 
@@ -272,7 +272,7 @@ type scanner struct {
 	// the scanner is not inside a token. Call Pos to obtain an error
 	// position in that case, or to obtain the position immediately
 	// after the most recently scanned token.
-	position Position
+	position position
 }
 
 // Init initializes a Scanner with a new source and returns s.
