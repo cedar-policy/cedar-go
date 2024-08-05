@@ -385,7 +385,12 @@ func TestParsePolicySet(t *testing.T) {
 			action,
 			resource
 		);`,
-			ast.PolicySet{"policy0": *ast.Permit()},
+			ast.PolicySet{
+				"policy0": ast.PolicySetEntry{
+					*ast.Permit(),
+					ast.Position{Offset: 0, Line: 1, Column: 1},
+				},
+			},
 		},
 		{
 			"two policies",
@@ -399,7 +404,16 @@ func TestParsePolicySet(t *testing.T) {
 			action,
 			resource
 		);`,
-			ast.PolicySet{"policy0": *ast.Permit(), "policy1": *ast.Forbid()},
+			ast.PolicySet{
+				"policy0": ast.PolicySetEntry{
+					*ast.Permit(),
+					ast.Position{Offset: 0, Line: 1, Column: 1},
+				},
+				"policy1": ast.PolicySetEntry{
+					*ast.Forbid(),
+					ast.Position{Offset: 53, Line: 6, Column: 3},
+				},
+			},
 		},
 	}
 	for _, tt := range parseTests {
