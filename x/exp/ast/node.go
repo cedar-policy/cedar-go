@@ -17,12 +17,6 @@ type nodeTypeLike struct {
 	Value Pattern
 }
 
-type nodeTypeAnnotation struct {
-	node
-	Key   types.String // TODO: review type
-	Value types.String
-}
-
 type nodeTypeIf struct {
 	node
 	If, Then, Else node
@@ -88,19 +82,6 @@ type unaryNode struct {
 
 type nodeTypeNegate struct{ unaryNode }
 type nodeTypeNot struct{ unaryNode }
-
-type condition bool
-
-const (
-	conditionWhen   = true
-	conditionUnless = false
-)
-
-type nodeTypeCondition struct {
-	node
-	Condition condition
-	Body      node
-}
 
 type nodeTypeVariable struct {
 	node
