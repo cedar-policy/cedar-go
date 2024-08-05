@@ -41,6 +41,8 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 }
 
 func (p *Policy) fromCedarWithParser(parser *parser) error {
+	pos := parser.peek().Pos
+
 	annotations, err := parser.annotations()
 	if err != nil {
 		return err
@@ -50,6 +52,8 @@ func (p *Policy) fromCedarWithParser(parser *parser) error {
 	if err != nil {
 		return err
 	}
+
+	newPolicy.pos = pos
 
 	if err = parser.exact("("); err != nil {
 		return err
