@@ -1,17 +1,42 @@
 package ast
 
+import "github.com/cedar-policy/cedar-go/types"
+
 type PolicySet []Policy
+
+type annotationType struct {
+	Key   types.String // TODO: review type
+	Value types.String
+}
+type condition bool
+
+const (
+	conditionWhen   = true
+	conditionUnless = false
+)
+
+type conditionType struct {
+	Condition condition
+	Body      node
+}
+
+type effect bool
+
+const (
+	effectPermit effect = true
+	effectForbid effect = false
+)
 
 type Policy struct {
 	effect      effect
-	annotations []nodeTypeAnnotation
+	annotations []annotationType
 	principal   isScopeNode
 	action      isScopeNode
 	resource    isScopeNode
-	conditions  []nodeTypeCondition
+	conditions  []conditionType
 }
 
-func newPolicy(effect effect, annotations []nodeTypeAnnotation) *Policy {
+func newPolicy(effect effect, annotations []annotationType) *Policy {
 	return &Policy{
 		effect:      effect,
 		annotations: annotations,
@@ -30,18 +55,11 @@ func Forbid() *Policy {
 }
 
 func (p *Policy) When(node Node) *Policy {
-	p.conditions = append(p.conditions, nodeTypeCondition{Condition: conditionWhen, Body: node.v})
+	p.conditions = append(p.conditions, conditionType{Condition: conditionWhen, Body: node.v})
 	return p
 }
 
 func (p *Policy) Unless(node Node) *Policy {
-	p.conditions = append(p.conditions, nodeTypeCondition{Condition: conditionUnless, Body: node.v})
+	p.conditions = append(p.conditions, conditionType{Condition: conditionUnless, Body: node.v})
 	return p
 }
-
-type effect bool
-
-const (
-	effectPermit effect = true
-	effectForbid effect = false
-)
