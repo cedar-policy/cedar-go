@@ -142,6 +142,12 @@ func TestParsePolicy(t *testing.T) {
 			ast.Permit().When(ast.Not(ast.Boolean(true))),
 		},
 		{
+			"multiple not operators",
+			`permit (principal, action, resource)
+			when { !!true };`,
+			ast.Permit().When(ast.Not(ast.Not(ast.Boolean(true)))),
+		},
+		{
 			"negate operator",
 			`permit (principal, action, resource)
 			when { -1 };`,
@@ -190,16 +196,40 @@ func TestParsePolicy(t *testing.T) {
 			ast.Permit().When(ast.Long(42).Times(ast.Long(2))),
 		},
 		{
+			"multiple multiplication",
+			`permit (principal, action, resource)
+			when { 42 * 2 * 1};`,
+			ast.Permit().When(ast.Long(42).Times(ast.Long(2)).Times(ast.Long(1))),
+		},
+		{
 			"addition",
 			`permit (principal, action, resource)
 			when { 42 + 2 };`,
 			ast.Permit().When(ast.Long(42).Plus(ast.Long(2))),
 		},
 		{
+			"multiple addition",
+			`permit (principal, action, resource)
+			when { 42 + 2 + 1 };`,
+			ast.Permit().When(ast.Long(42).Plus(ast.Long(2)).Plus(ast.Long(1))),
+		},
+		{
 			"subtraction",
 			`permit (principal, action, resource)
 			when { 42 - 2 };`,
 			ast.Permit().When(ast.Long(42).Minus(ast.Long(2))),
+		},
+		{
+			"multiple subtraction",
+			`permit (principal, action, resource)
+			when { 42 - 2 - 1 };`,
+			ast.Permit().When(ast.Long(42).Minus(ast.Long(2)).Minus(ast.Long(1))),
+		},
+		{
+			"mixed addition and subtraction",
+			`permit (principal, action, resource)
+			when { 42 - 2 + 1 };`,
+			ast.Permit().When(ast.Long(42).Minus(ast.Long(2)).Plus(ast.Long(1))),
 		},
 		{
 			"less than",
@@ -299,10 +329,22 @@ func TestParsePolicy(t *testing.T) {
 			ast.Permit().When(ast.True().And(ast.False())),
 		},
 		{
+			"multiple and",
+			`permit (principal, action, resource)
+			when { true && false && true };`,
+			ast.Permit().When(ast.True().And(ast.False()).And(ast.True())),
+		},
+		{
 			"or",
 			`permit (principal, action, resource)
 			when { true || false };`,
 			ast.Permit().When(ast.True().Or(ast.False())),
+		},
+		{
+			"multiple or",
+			`permit (principal, action, resource)
+			when { true || false || true };`,
+			ast.Permit().When(ast.True().Or(ast.False()).Or(ast.True())),
 		},
 		{
 			"if then else",
@@ -357,6 +399,12 @@ func TestParsePolicy(t *testing.T) {
 			`permit (principal, action, resource)
 			when { -(2 + 3) == -5 };`,
 			ast.Permit().When(ast.Negate(ast.Long(2).Plus(ast.Long(3))).Equals(ast.Negate(ast.Long(5)))),
+		},
+		{
+			"multiple parenthesized operations",
+			`permit ( principal, action, resource )
+when { (2 + 3 + 4) * 5 == 18 };`,
+			ast.Permit().When(ast.Long(2).Plus(ast.Long(3)).Plus(ast.Long(4)).Times(ast.Long(5)).Equals(ast.Long(18))),
 		},
 	}
 

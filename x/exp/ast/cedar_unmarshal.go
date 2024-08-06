@@ -449,17 +449,16 @@ func (p *parser) or() (Node, error) {
 		return Node{}, err
 	}
 
-	t := p.peek()
-	if t.Text != "||" {
-		return lhs, nil
+	for p.peek().Text == "||" {
+		p.advance()
+		rhs, err := p.and()
+		if err != nil {
+			return Node{}, err
+		}
+		lhs = lhs.Or(rhs)
 	}
 
-	p.advance()
-	rhs, err := p.and()
-	if err != nil {
-		return Node{}, err
-	}
-	return lhs.Or(rhs), nil
+	return lhs, nil
 }
 
 func (p *parser) and() (Node, error) {
@@ -468,17 +467,16 @@ func (p *parser) and() (Node, error) {
 		return Node{}, err
 	}
 
-	t := p.peek()
-	if t.Text != "&&" {
-		return lhs, nil
+	for p.peek().Text == "&&" {
+		p.advance()
+		rhs, err := p.relation()
+		if err != nil {
+			return Node{}, err
+		}
+		lhs = lhs.And(rhs)
 	}
 
-	p.advance()
-	rhs, err := p.relation()
-	if err != nil {
-		return Node{}, err
-	}
-	return lhs.And(rhs), nil
+	return lhs, nil
 }
 
 func (p *parser) relation() (Node, error) {
@@ -581,23 +579,28 @@ func (p *parser) add() (Node, error) {
 		return Node{}, err
 	}
 
-	t := p.peek()
-	var operator func(Node, Node) Node
-	switch t.Text {
-	case "+":
-		operator = Node.Plus
-	case "-":
-		operator = Node.Minus
-	default:
-		return lhs, nil
+NotAdd:
+	for {
+		t := p.peek()
+		var operator func(Node, Node) Node
+		switch t.Text {
+		case "+":
+			operator = Node.Plus
+		case "-":
+			operator = Node.Minus
+		default:
+			break NotAdd
+		}
+
+		p.advance()
+		rhs, err := p.mult()
+		if err != nil {
+			return Node{}, err
+		}
+		lhs = operator(lhs, rhs)
 	}
 
-	p.advance()
-	rhs, err := p.mult()
-	if err != nil {
-		return Node{}, err
-	}
-	return operator(lhs, rhs), nil
+	return lhs, nil
 }
 
 func (p *parser) mult() (Node, error) {
@@ -606,16 +609,16 @@ func (p *parser) mult() (Node, error) {
 		return Node{}, err
 	}
 
-	if p.peek().Text != "*" {
-		return lhs, nil
+	for p.peek().Text == "*" {
+		p.advance()
+		rhs, err := p.unary()
+		if err != nil {
+			return Node{}, err
+		}
+		lhs = lhs.Times(rhs)
 	}
 
-	p.advance()
-	rhs, err := p.unary()
-	if err != nil {
-		return Node{}, err
-	}
-	return lhs.Times(rhs), nil
+	return lhs, nil
 }
 
 func (p *parser) unary() (Node, error) {
