@@ -33,11 +33,10 @@ type nodeTypeIsIn struct {
 	Entity node
 }
 
-type nodeTypeExtMethodCall struct {
+type nodeTypeExtensionCall struct {
 	node
-	Left   node
-	Method types.String // TODO: review type
-	Args   []node
+	Name types.String // TODO: review type
+	Args []node
 }
 
 func stripNodes(args []Node) []node {
@@ -48,11 +47,22 @@ func stripNodes(args []Node) []node {
 	return res
 }
 
-func newExtMethodCallNode(left Node, method types.String, args ...Node) Node {
-	return newNode(nodeTypeExtMethodCall{
-		Left:   left.v,
-		Method: method,
-		Args:   stripNodes(args),
+func newExtensionCall(method types.String, args ...Node) Node {
+	return newNode(nodeTypeExtensionCall{
+		Name: method,
+		Args: stripNodes(args),
+	})
+}
+
+func newMethodCall(lhs Node, method types.String, args ...Node) Node {
+	res := make([]node, 1+len(args))
+	res[0] = lhs.v
+	for i, v := range args {
+		res[i+1] = v.v
+	}
+	return newNode(nodeTypeExtensionCall{
+		Name: method,
+		Args: res,
 	})
 }
 

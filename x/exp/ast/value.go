@@ -96,6 +96,10 @@ func IPAddr(i types.IPAddr) Node {
 	return newValueNode(i)
 }
 
+func ExtensionCall(name types.String, args ...Node) Node {
+	return newExtensionCall(name, args...)
+}
+
 func newValueNode(v types.Value) Node {
 	return newNode(nodeValue{Value: v})
 }

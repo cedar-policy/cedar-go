@@ -115,44 +115,6 @@ func (j arrayJSON) ToNode() (Node, error) {
 	return SetNodes(nodes...), nil
 }
 
-func (j arrayJSON) ToDecimalNode() (Node, error) {
-	if len(j) != 1 {
-		return Node{}, fmt.Errorf("unexpected number of arguments for extension: %v", len(j))
-	}
-	arg, err := j[0].ToNode()
-	if err != nil {
-		return Node{}, fmt.Errorf("error in extension: %w", err)
-	}
-	s, ok := arg.v.(nodeValue)
-	if !ok {
-		return Node{}, fmt.Errorf("unexpected type for decimal")
-	}
-	v, err := types.ParseDecimal(s.Value.String()) // TODO: this maybe isn't correct
-	if err != nil {
-		return Node{}, fmt.Errorf("error parsing decimal: %w", err)
-	}
-	return Decimal(v), nil
-}
-
-func (j arrayJSON) ToIPAddrNode() (Node, error) {
-	if len(j) != 1 {
-		return Node{}, fmt.Errorf("unexpected number of arguments for extension: %v", len(j))
-	}
-	arg, err := j[0].ToNode()
-	if err != nil {
-		return Node{}, fmt.Errorf("error in extension: %w", err)
-	}
-	s, ok := arg.v.(nodeValue)
-	if !ok {
-		return Node{}, fmt.Errorf("unexpected type for ipaddr")
-	}
-	v, err := types.ParseIPAddr(s.Value.String())
-	if err != nil {
-		return Node{}, fmt.Errorf("error parsing ipaddr: %w", err)
-	}
-	return IPAddr(v), nil
-}
-
 func (j recordJSON) ToNode() (Node, error) {
 	nodes := map[types.String]Node{}
 	for k, v := range j {
@@ -165,7 +127,7 @@ func (j recordJSON) ToNode() (Node, error) {
 	return RecordNodes(nodes), nil
 }
 
-func (e extMethodCallJSON) ToNode() (Node, error) {
+func (e extensionCallJSON) ToNode() (Node, error) {
 	if len(e) != 1 {
 		return Node{}, fmt.Errorf("unexpected number of extension methods in node: %v", len(e))
 	}
@@ -181,7 +143,7 @@ func (e extMethodCallJSON) ToNode() (Node, error) {
 			}
 			argNodes = append(argNodes, node)
 		}
-		return newExtMethodCallNode(argNodes[0], types.String(k), argNodes[1:]...), nil
+		return newExtensionCall(types.String(k), argNodes...), nil
 	}
 	panic("unreachable code")
 }
@@ -277,15 +239,9 @@ func (j nodeJSON) ToNode() (Node, error) {
 	case j.Record != nil:
 		return j.Record.ToNode()
 
-	// Any other function: decimal, ip
-	case j.Decimal != nil:
-		return j.Decimal.ToDecimalNode()
-	case j.IP != nil:
-		return j.IP.ToIPAddrNode()
-
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	case j.ExtensionMethod != nil:
-		return j.ExtensionMethod.ToNode()
+	case j.ExtensionCall != nil:
+		return j.ExtensionCall.ToNode()
 	}
 
 	return Node{}, fmt.Errorf("unknown node")
@@ -307,7 +263,7 @@ func (n *nodeJSON) UnmarshalJSON(b []byte) error {
 	// > This key is treated as the name of an extension function or method. The value must
 	// > be a JSON array of values, each of which is itself an JsonExpr object. Note that for
 	// > method calls, the method receiver is the first argument.
-	return json.Unmarshal(b, &n.ExtensionMethod)
+	return json.Unmarshal(b, &n.ExtensionCall)
 }
 
 func (p *patternComponentJSON) UnmarshalJSON(b []byte) error {
