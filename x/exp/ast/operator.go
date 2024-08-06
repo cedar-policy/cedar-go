@@ -34,19 +34,19 @@ func (lhs Node) GreaterThanOrEqual(rhs Node) Node {
 }
 
 func (lhs Node) LessThanExt(rhs Node) Node {
-	return newExtMethodCallNode(lhs, "lessThan", rhs)
+	return newMethodCall(lhs, "lessThan", rhs)
 }
 
 func (lhs Node) LessThanOrEqualExt(rhs Node) Node {
-	return newExtMethodCallNode(lhs, "lessThanOrEqual", rhs)
+	return newMethodCall(lhs, "lessThanOrEqual", rhs)
 }
 
 func (lhs Node) GreaterThanExt(rhs Node) Node {
-	return newExtMethodCallNode(lhs, "greaterThan", rhs)
+	return newMethodCall(lhs, "greaterThan", rhs)
 }
 
 func (lhs Node) GreaterThanOrEqualExt(rhs Node) Node {
-	return newExtMethodCallNode(lhs, "greaterThanOrEqual", rhs)
+	return newMethodCall(lhs, "greaterThanOrEqual", rhs)
 }
 
 func (lhs Node) Like(pattern Pattern) Node {
@@ -146,21 +146,21 @@ func (lhs Node) Has(attr string) Node {
 // |___|_| /_/   \_\__,_|\__,_|_|  \___||___/___/
 
 func (lhs Node) IsIpv4() Node {
-	return newExtMethodCallNode(lhs, "isIpv4")
+	return newMethodCall(lhs, "isIpv4")
 }
 
 func (lhs Node) IsIpv6() Node {
-	return newExtMethodCallNode(lhs, "isIpv6")
+	return newMethodCall(lhs, "isIpv6")
 }
 
 func (lhs Node) IsMulticast() Node {
-	return newExtMethodCallNode(lhs, "isMulticast")
+	return newMethodCall(lhs, "isMulticast")
 }
 
 func (lhs Node) IsLoopback() Node {
-	return newExtMethodCallNode(lhs, "isLoopback")
+	return newMethodCall(lhs, "isLoopback")
 }
 
 func (lhs Node) IsInRange(rhs Node) Node {
-	return newExtMethodCallNode(lhs, "isInRange", rhs)
+	return newMethodCall(lhs, "isInRange", rhs)
 }

@@ -867,7 +867,7 @@ func (p *parser) access(lhs Node) (Node, bool, error) {
 			case "containsAny":
 				knownMethod = Node.ContainsAny
 			default:
-				return newExtMethodCallNode(lhs, types.String(methodName), exprs...), true, nil
+				return newMethodCall(lhs, types.String(methodName), exprs...), true, nil
 			}
 
 			if len(exprs) != 1 {

@@ -77,24 +77,21 @@ func arrayToJSON(dest *arrayJSON, args []node) error {
 	return nil
 }
 
-func extToJSON(dest *arrayJSON, src types.Value) error {
+func extToJSON(dest *extensionCallJSON, name string, src types.Value) error {
 	res := arrayJSON{}
 	str := src.String()               // TODO: is this the correct string?
 	b, _ := json.Marshal(string(str)) // error impossible
 	res = append(res, nodeJSON{
 		Value: (*json.RawMessage)(&b),
 	})
-	*dest = res
+	*dest = extensionCallJSON{
+		name: res,
+	}
 	return nil
 }
 
-func extMethodToJSON(dest extMethodCallJSON, src nodeTypeExtMethodCall) error {
-	objectNode := &nodeJSON{}
-	err := objectNode.FromNode(src.Left)
-	if err != nil {
-		return err
-	}
-	jsonArgs := arrayJSON{*objectNode}
+func extCallToJSON(dest extensionCallJSON, src nodeTypeExtensionCall) error {
+	jsonArgs := arrayJSON{}
 	for _, n := range src.Args {
 		argNode := &nodeJSON{}
 		err := argNode.FromNode(n)
@@ -103,7 +100,7 @@ func extMethodToJSON(dest extMethodCallJSON, src nodeTypeExtMethodCall) error {
 		}
 		jsonArgs = append(jsonArgs, *argNode)
 	}
-	dest[string(src.Method)] = jsonArgs
+	dest[string(src.Name)] = jsonArgs
 	return nil
 }
 
@@ -196,9 +193,9 @@ func (j *nodeJSON) FromNode(src node) error {
 		// IP      arrayJSON `json:"ip"`
 		switch tt := t.Value.(type) {
 		case types.Decimal:
-			return extToJSON(&j.Decimal, tt)
+			return extToJSON(&j.ExtensionCall, "decimal", tt)
 		case types.IPAddr:
-			return extToJSON(&j.IP, tt)
+			return extToJSON(&j.ExtensionCall, "ip", tt)
 		}
 		b, err := t.Value.ExplicitMarshalJSON()
 		j.Value = (*json.RawMessage)(&b)
@@ -284,11 +281,11 @@ func (j *nodeJSON) FromNode(src node) error {
 	case nodeTypeRecord:
 		return recordToJSON(&j.Record, t)
 
-	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
+	// Any other method: ip, decimal, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
 	// ExtensionMethod map[string]arrayJSON `json:"-"`
-	case nodeTypeExtMethodCall:
-		j.ExtensionMethod = extMethodCallJSON{}
-		return extMethodToJSON(j.ExtensionMethod, t)
+	case nodeTypeExtensionCall:
+		j.ExtensionCall = extensionCallJSON{}
+		return extCallToJSON(j.ExtensionCall, t)
 	}
 	// case nodeTypeRecordEntry:
 	// case nodeTypeEntityType:
@@ -299,8 +296,8 @@ func (j *nodeJSON) FromNode(src node) error {
 }
 
 func (j *nodeJSON) MarshalJSON() ([]byte, error) {
-	if len(j.ExtensionMethod) > 0 {
-		return json.Marshal(j.ExtensionMethod)
+	if len(j.ExtensionCall) > 0 {
+		return json.Marshal(j.ExtensionCall)
 	}
 
 	type nodeJSONAlias nodeJSON

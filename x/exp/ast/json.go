@@ -76,7 +76,7 @@ type arrayJSON []nodeJSON
 
 type recordJSON map[string]nodeJSON
 
-type extMethodCallJSON map[string]arrayJSON
+type extensionCallJSON map[string]arrayJSON
 
 type nodeJSON struct {
 	// Value
@@ -128,10 +128,6 @@ type nodeJSON struct {
 	// Record
 	Record recordJSON `json:"Record,omitempty"`
 
-	// Any other function: decimal, ip
-	Decimal arrayJSON `json:"decimal,omitempty"`
-	IP      arrayJSON `json:"ip,omitempty"`
-
-	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	ExtensionMethod extMethodCallJSON `json:"-"`
+	// Any other method: decimal, ip, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
+	ExtensionCall extensionCallJSON `json:"-"`
 }
