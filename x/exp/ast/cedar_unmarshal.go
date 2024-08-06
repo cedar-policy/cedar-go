@@ -3,7 +3,6 @@ package ast
 import (
 	"fmt"
 	"net/netip"
-	"strconv"
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/types"
@@ -747,17 +746,21 @@ func (p *parser) entityOrExtFun(ident string) (Node, error) {
 		}
 
 		if ident == "ip" {
-			ipaddr, err := netip.ParsePrefix(str)
+			prefix, err := netip.ParsePrefix(str)
 			if err != nil {
-				return res, err
+				ipaddr, err := netip.ParseAddr(str)
+				if err != nil {
+					return Node{}, err
+				}
+				prefix = netip.PrefixFrom(ipaddr, 32)
 			}
-			res = IPAddr(types.IPAddr(ipaddr))
+			res = IPAddr(types.IPAddr(prefix))
 		} else {
-			dec, err := strconv.ParseFloat(str, 64)
+			dec, err := types.ParseDecimal(str)
 			if err != nil {
 				return res, err
 			}
-			res = Decimal(types.Decimal(dec))
+			res = Decimal(dec)
 		}
 	default:
 		entity, err := p.entityFirstPathPreread(ident)

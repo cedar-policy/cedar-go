@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/cedar-policy/cedar-go/types"
+import (
+	"bytes"
+
+	"github.com/cedar-policy/cedar-go/types"
+)
 
 type scope nodeTypeVariable
 
@@ -85,6 +89,7 @@ func (p *Policy) ResourceIsIn(entityType types.String, entity types.EntityUID) *
 
 type isScopeNode interface {
 	isScope()
+	MarshalCedar(*bytes.Buffer)
 }
 
 type scopeNode struct {

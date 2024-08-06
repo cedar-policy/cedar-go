@@ -1,5 +1,11 @@
 package ast
 
+import (
+	"bytes"
+	"strconv"
+	"strings"
+)
+
 type PatternComponent struct {
 	Star  bool
 	Chunk string
@@ -29,6 +35,21 @@ func PatternFromCedar(cedar string) (Pattern, error) {
 	return Pattern{
 		Comps: comps,
 	}, nil
+}
+
+func (p Pattern) MarshalCedar(buf *bytes.Buffer) {
+	buf.WriteRune('"')
+	for _, comp := range p.Comps {
+		if comp.Star {
+			buf.WriteRune('*')
+		}
+		// TODO: This is wrong. It needs to escape unicode the Rustic way.
+		quotedString := strconv.Quote(comp.Chunk)
+		quotedString = quotedString[1 : len(quotedString)-1]
+		quotedString = strings.Replace(quotedString, "*", "\\*", -1)
+		buf.WriteString(quotedString)
+	}
+	buf.WriteRune('"')
 }
 
 func (p *Pattern) AddWildcard() *Pattern {

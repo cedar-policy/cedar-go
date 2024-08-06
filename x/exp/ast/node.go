@@ -1,6 +1,18 @@
 package ast
 
-import "github.com/cedar-policy/cedar-go/types"
+import (
+	"bytes"
+
+	"github.com/cedar-policy/cedar-go/types"
+)
+
+type Node struct {
+	v node // NOTE: not an embed because a `Node` is not a `node`
+}
+
+func newNode(v node) Node {
+	return Node{v: v}
+}
 
 type strOpNode struct {
 	node
@@ -8,8 +20,87 @@ type strOpNode struct {
 	Value types.String
 }
 
-type nodeTypeAccess struct{ strOpNode }
-type nodeTypeHas struct{ strOpNode }
+type binaryNode struct {
+	node
+	Left, Right node
+}
+
+type nodePrecedenceLevel uint8
+
+const (
+	ifPrecedence       nodePrecedenceLevel = 0
+	orPrecedence       nodePrecedenceLevel = 1
+	andPrecedence      nodePrecedenceLevel = 2
+	relationPrecedence nodePrecedenceLevel = 3
+	addPrecedence      nodePrecedenceLevel = 4
+	multPrecedence     nodePrecedenceLevel = 5
+	unaryPrecedence    nodePrecedenceLevel = 6
+	accessPrecedence   nodePrecedenceLevel = 7
+	primaryPrecedence  nodePrecedenceLevel = 8
+)
+
+type nodeTypeIf struct {
+	node
+	If, Then, Else node
+}
+
+func (n nodeTypeIf) precedenceLevel() nodePrecedenceLevel {
+	return ifPrecedence
+}
+
+type nodeTypeOr struct{ binaryNode }
+
+func (n nodeTypeOr) precedenceLevel() nodePrecedenceLevel {
+	return orPrecedence
+}
+
+type nodeTypeAnd struct {
+	binaryNode
+}
+
+func (n nodeTypeAnd) precedenceLevel() nodePrecedenceLevel {
+	return andPrecedence
+}
+
+type relationNode struct{}
+
+func (n relationNode) precedenceLevel() nodePrecedenceLevel {
+	return relationPrecedence
+}
+
+type nodeTypeLessThan struct {
+	binaryNode
+	relationNode
+}
+type nodeTypeLessThanOrEqual struct {
+	binaryNode
+	relationNode
+}
+type nodeTypeGreaterThan struct {
+	binaryNode
+	relationNode
+}
+type nodeTypeGreaterThanOrEqual struct {
+	binaryNode
+	relationNode
+}
+type nodeTypeNotEquals struct {
+	binaryNode
+	relationNode
+}
+type nodeTypeEquals struct {
+	binaryNode
+	relationNode
+}
+type nodeTypeIn struct {
+	binaryNode
+	relationNode
+}
+
+type nodeTypeHas struct {
+	strOpNode
+	relationNode
+}
 
 type nodeTypeLike struct {
 	node
@@ -17,9 +108,8 @@ type nodeTypeLike struct {
 	Value Pattern
 }
 
-type nodeTypeIf struct {
-	node
-	If, Then, Else node
+func (n nodeTypeLike) precedenceLevel() nodePrecedenceLevel {
+	return relationPrecedence
 }
 
 type nodeTypeIs struct {
@@ -28,15 +118,67 @@ type nodeTypeIs struct {
 	EntityType types.String // TODO: review type
 }
 
+func (n nodeTypeIs) precedenceLevel() nodePrecedenceLevel {
+	return relationPrecedence
+}
+
 type nodeTypeIsIn struct {
 	nodeTypeIs
 	Entity node
+}
+
+func (n nodeTypeIsIn) precedenceLevel() nodePrecedenceLevel {
+	return relationPrecedence
+}
+
+type addNode struct{}
+
+func (n addNode) precedenceLevel() nodePrecedenceLevel {
+	return addPrecedence
+}
+
+type nodeTypeSub struct {
+	binaryNode
+	addNode
+}
+
+type nodeTypeAdd struct {
+	binaryNode
+	addNode
+}
+
+type nodeTypeMult struct{ binaryNode }
+
+func (n nodeTypeMult) precedenceLevel() nodePrecedenceLevel {
+	return multPrecedence
+}
+
+type unaryNode struct {
+	node
+	Arg node
+}
+
+func (n unaryNode) precedenceLevel() nodePrecedenceLevel {
+	return unaryPrecedence
+}
+
+type nodeTypeNegate struct{ unaryNode }
+type nodeTypeNot struct{ unaryNode }
+
+type nodeTypeAccess struct{ strOpNode }
+
+func (n nodeTypeAccess) precedenceLevel() nodePrecedenceLevel {
+	return accessPrecedence
 }
 
 type nodeTypeExtensionCall struct {
 	node
 	Name types.String // TODO: review type
 	Args []node
+}
+
+func (n nodeTypeExtensionCall) precedenceLevel() nodePrecedenceLevel {
+	return accessPrecedence
 }
 
 func stripNodes(args []Node) []node {
@@ -66,8 +208,33 @@ func newMethodCall(lhs Node, method types.String, args ...Node) Node {
 	})
 }
 
+type containsNode struct{}
+
+func (n containsNode) precedenceLevel() nodePrecedenceLevel {
+	return accessPrecedence
+}
+
+type nodeTypeContains struct {
+	binaryNode
+	containsNode
+}
+type nodeTypeContainsAll struct {
+	binaryNode
+	containsNode
+}
+type nodeTypeContainsAny struct {
+	binaryNode
+	containsNode
+}
+
+type primaryNode struct{ node }
+
+func (n primaryNode) precedenceLevel() nodePrecedenceLevel {
+	return primaryPrecedence
+}
+
 type nodeValue struct {
-	node
+	primaryNode
 	Value types.Value
 }
 
@@ -75,58 +242,24 @@ type recordElement struct {
 	Key   types.String
 	Value node
 }
+
 type nodeTypeRecord struct {
-	node
+	primaryNode
 	Elements []recordElement
 }
 
 type nodeTypeSet struct {
-	node
+	primaryNode
 	Elements []node
 }
 
-type unaryNode struct {
-	node
-	Arg node
-}
-
-type nodeTypeNegate struct{ unaryNode }
-type nodeTypeNot struct{ unaryNode }
-
 type nodeTypeVariable struct {
-	node
+	primaryNode
 	Name types.String // TODO: Review type
 }
 
-type binaryNode struct {
-	node
-	Left, Right node
-}
-
-type nodeTypeIn struct{ binaryNode }
-type nodeTypeAnd struct{ binaryNode }
-type nodeTypeEquals struct{ binaryNode }
-type nodeTypeGreaterThan struct{ binaryNode }
-type nodeTypeGreaterThanOrEqual struct{ binaryNode }
-type nodeTypeLessThan struct{ binaryNode }
-type nodeTypeLessThanOrEqual struct{ binaryNode }
-type nodeTypeSub struct{ binaryNode }
-type nodeTypeAdd struct{ binaryNode }
-type nodeTypeContains struct{ binaryNode }
-type nodeTypeContainsAll struct{ binaryNode }
-type nodeTypeContainsAny struct{ binaryNode }
-type nodeTypeMult struct{ binaryNode }
-type nodeTypeNotEquals struct{ binaryNode }
-type nodeTypeOr struct{ binaryNode }
-
 type node interface {
 	isNode()
-}
-
-type Node struct {
-	v node // NOTE: not an embed because a `Node` is not a `node`
-}
-
-func newNode(v node) Node {
-	return Node{v: v}
+	marshalCedar(*bytes.Buffer)
+	precedenceLevel() nodePrecedenceLevel
 }
