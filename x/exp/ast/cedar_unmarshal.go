@@ -579,7 +579,6 @@ func (p *parser) add() (Node, error) {
 		return Node{}, err
 	}
 
-NotAdd:
 	for {
 		t := p.peek()
 		var operator func(Node, Node) Node
@@ -588,8 +587,10 @@ NotAdd:
 			operator = Node.Plus
 		case "-":
 			operator = Node.Minus
-		default:
-			break NotAdd
+		}
+
+		if operator == nil {
+			break
 		}
 
 		p.advance()
