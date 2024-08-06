@@ -6,7 +6,6 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"unicode"
 	"unicode/utf8"
 )
 
@@ -394,8 +393,16 @@ func (s *scanner) error(msg string) {
 	s.err = fmt.Errorf("%v: %v", s.position, msg)
 }
 
+func isASCIILetter(ch rune) bool {
+	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')
+}
+
+func isASCIINumber(ch rune) bool {
+	return ch >= '0' && ch <= '9'
+}
+
 func isIdentRune(ch rune, first bool) bool {
-	return ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && !first
+	return ch == '_' || isASCIILetter(ch) || isASCIINumber(ch) && !first
 }
 
 func (s *scanner) scanIdentifier() rune {

@@ -27,7 +27,7 @@ These are some identifiers
 multiline comment
 // embedded comment does nothing
 */
-'/%|&=`
+'/%|&=ë٩`
 	want := []Token{
 		{Type: TokenIdent, Text: "These", Pos: Position{Offset: 1, Line: 2, Column: 1}},
 		{Type: TokenIdent, Text: "are", Pos: Position{Offset: 7, Line: 2, Column: 7}},
@@ -87,8 +87,10 @@ multiline comment
 		{Type: TokenUnknown, Text: "|", Pos: Position{Offset: 268, Line: 16, Column: 4}},
 		{Type: TokenUnknown, Text: "&", Pos: Position{Offset: 269, Line: 16, Column: 5}},
 		{Type: TokenUnknown, Text: "=", Pos: Position{Offset: 270, Line: 16, Column: 6}},
+		{Type: TokenUnknown, Text: "ë", Pos: Position{Offset: 271, Line: 16, Column: 7}},
+		{Type: TokenUnknown, Text: "٩", Pos: Position{Offset: 273, Line: 16, Column: 8}},
 
-		{Type: TokenEOF, Text: "", Pos: Position{Offset: 271, Line: 16, Column: 7}},
+		{Type: TokenEOF, Text: "", Pos: Position{Offset: 275, Line: 16, Column: 9}},
 	}
 	got, err := Tokenize([]byte(input))
 	testutil.OK(t, err)
