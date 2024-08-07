@@ -2,7 +2,6 @@ package ast_test
 
 import (
 	"bytes"
-	"net/netip"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/testutil"
@@ -343,8 +342,8 @@ when { if true then true else false };`,
 			`permit ( principal, action, resource )
 when { ip("1.2.3.4") == ip("2.3.4.5") };`,
 			ast.Permit().When(
-				ast.IPAddr(types.IPAddr(netip.MustParsePrefix("1.2.3.4/32"))).Equals(
-					ast.IPAddr(types.IPAddr(netip.MustParsePrefix("2.3.4.5/32"))),
+				ast.ExtensionCall("ip", ast.String("1.2.3.4")).Equals(
+					ast.ExtensionCall("ip", ast.String("2.3.4.5")),
 				),
 			),
 		},
@@ -353,7 +352,7 @@ when { ip("1.2.3.4") == ip("2.3.4.5") };`,
 			`permit ( principal, action, resource )
 when { decimal("12.34") == decimal("23.45") };`,
 			ast.Permit().When(
-				ast.Decimal(types.Decimal(123400)).Equals(ast.Decimal(types.Decimal(234500))),
+				ast.ExtensionCall("decimal", ast.String("12.34")).Equals(ast.ExtensionCall("decimal", ast.String("23.45"))),
 			),
 		},
 		{

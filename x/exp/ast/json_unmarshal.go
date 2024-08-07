@@ -26,9 +26,9 @@ func (s *scopeJSON) ToNode(variable scope) (isScopeNode, error) {
 		return variable.InSet(s.Entities), nil
 	case "is":
 		if s.In == nil {
-			return variable.Is(types.String(s.EntityType)), nil
+			return variable.Is(types.Path(s.EntityType)), nil
 		}
-		return variable.IsIn(types.String(s.EntityType), s.In.Entity), nil
+		return variable.IsIn(types.Path(s.EntityType), s.In.Entity), nil
 	}
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }
@@ -84,9 +84,9 @@ func (j isJSON) ToNode() (Node, error) {
 		if err != nil {
 			return Node{}, fmt.Errorf("error in entity: %w", err)
 		}
-		return left.IsIn(types.String(j.EntityType), right), nil
+		return left.IsIn(types.Path(j.EntityType), right), nil
 	}
-	return left.Is(types.String(j.EntityType)), nil
+	return left.Is(types.Path(j.EntityType)), nil
 }
 func (j ifThenElseJSON) ToNode() (Node, error) {
 	if_, err := j.If.ToNode()

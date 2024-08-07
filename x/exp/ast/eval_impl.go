@@ -1,11 +1,9 @@
-package cedar
+package ast
 
 import (
 	"fmt"
 
 	"github.com/cedar-policy/cedar-go/types"
-	"github.com/cedar-policy/cedar-go/x/exp/ast"
-	"github.com/cedar-policy/cedar-go/x/exp/parser"
 )
 
 var errOverflow = fmt.Errorf("integer overflow")
@@ -16,21 +14,18 @@ var errAttributeAccess = fmt.Errorf("does not have the attribute")
 var errEntityNotExist = fmt.Errorf("does not exist")
 var errUnspecifiedEntity = fmt.Errorf("unspecified entity")
 
-// type evalContext struct {
-// 	Entities                    Entities
-// 	Principal, Action, Resource types.Value
-// 	Context                     types.Value
-// }
+// TODO: make private again
+type EvalContext struct {
+	Entities                    Entities
+	Principal, Action, Resource types.Value
+	Context                     types.Value
+}
 
-type evalContext = ast.EvalContext
+type Evaler interface {
+	Eval(*EvalContext) (types.Value, error)
+}
 
-// type evaler interface {
-// 	Eval(*evalContext) (types.Value, error)
-// }
-
-type evaler = ast.Evaler
-
-func evalBool(n evaler, ctx *evalContext) (types.Boolean, error) {
+func evalBool(n Evaler, ctx *EvalContext) (types.Boolean, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
 		return false, err
@@ -42,7 +37,7 @@ func evalBool(n evaler, ctx *evalContext) (types.Boolean, error) {
 	return b, nil
 }
 
-func evalLong(n evaler, ctx *evalContext) (types.Long, error) {
+func evalLong(n Evaler, ctx *EvalContext) (types.Long, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
 		return 0, err
@@ -54,7 +49,7 @@ func evalLong(n evaler, ctx *evalContext) (types.Long, error) {
 	return l, nil
 }
 
-func evalString(n evaler, ctx *evalContext) (types.String, error) {
+func evalString(n Evaler, ctx *EvalContext) (types.String, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
 		return "", err
@@ -66,7 +61,7 @@ func evalString(n evaler, ctx *evalContext) (types.String, error) {
 	return s, nil
 }
 
-func evalSet(n evaler, ctx *evalContext) (types.Set, error) {
+func evalSet(n Evaler, ctx *EvalContext) (types.Set, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
 		return nil, err
@@ -78,7 +73,7 @@ func evalSet(n evaler, ctx *evalContext) (types.Set, error) {
 	return s, nil
 }
 
-func evalEntity(n evaler, ctx *evalContext) (types.EntityUID, error) {
+func evalEntity(n Evaler, ctx *EvalContext) (types.EntityUID, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
 		return types.EntityUID{}, err
@@ -90,7 +85,7 @@ func evalEntity(n evaler, ctx *evalContext) (types.EntityUID, error) {
 	return e, nil
 }
 
-func evalPath(n evaler, ctx *evalContext) (types.Path, error) {
+func evalPath(n Evaler, ctx *EvalContext) (types.Path, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
 		return "", err
@@ -102,7 +97,7 @@ func evalPath(n evaler, ctx *evalContext) (types.Path, error) {
 	return e, nil
 }
 
-func evalDecimal(n evaler, ctx *evalContext) (types.Decimal, error) {
+func evalDecimal(n Evaler, ctx *EvalContext) (types.Decimal, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
 		return types.Decimal(0), err
@@ -114,7 +109,7 @@ func evalDecimal(n evaler, ctx *evalContext) (types.Decimal, error) {
 	return d, nil
 }
 
-func evalIP(n evaler, ctx *evalContext) (types.IPAddr, error) {
+func evalIP(n Evaler, ctx *EvalContext) (types.IPAddr, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
 		return types.IPAddr{}, err
@@ -137,7 +132,7 @@ func newErrorEval(err error) *errorEval {
 	}
 }
 
-func (n *errorEval) Eval(_ *evalContext) (types.Value, error) {
+func (n *errorEval) Eval(_ *EvalContext) (types.Value, error) {
 	return types.ZeroValue(), n.err
 }
 
@@ -150,24 +145,24 @@ func newLiteralEval(value types.Value) *literalEval {
 	return &literalEval{value: value}
 }
 
-func (n *literalEval) Eval(_ *evalContext) (types.Value, error) {
+func (n *literalEval) Eval(_ *EvalContext) (types.Value, error) {
 	return n.value, nil
 }
 
 // orEval
 type orEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newOrNode(lhs evaler, rhs evaler) *orEval {
+func newOrNode(lhs Evaler, rhs Evaler) *orEval {
 	return &orEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *orEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *orEval) Eval(ctx *EvalContext) (types.Value, error) {
 	v, err := n.lhs.Eval(ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -192,18 +187,18 @@ func (n *orEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // andEval
 type andEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newAndEval(lhs evaler, rhs evaler) *andEval {
+func newAndEval(lhs Evaler, rhs Evaler) *andEval {
 	return &andEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *andEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *andEval) Eval(ctx *EvalContext) (types.Value, error) {
 	v, err := n.lhs.Eval(ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -228,16 +223,16 @@ func (n *andEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // notEval
 type notEval struct {
-	inner evaler
+	inner Evaler
 }
 
-func newNotEval(inner evaler) *notEval {
+func newNotEval(inner Evaler) *notEval {
 	return &notEval{
 		inner: inner,
 	}
 }
 
-func (n *notEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *notEval) Eval(ctx *EvalContext) (types.Value, error) {
 	v, err := n.inner.Eval(ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -295,18 +290,18 @@ func checkedNegI64(a types.Long) (types.Long, bool) {
 
 // addEval
 type addEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newAddEval(lhs evaler, rhs evaler) *addEval {
+func newAddEval(lhs Evaler, rhs Evaler) *addEval {
 	return &addEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *addEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *addEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -324,18 +319,18 @@ func (n *addEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // subtractEval
 type subtractEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newSubtractEval(lhs evaler, rhs evaler) *subtractEval {
+func newSubtractEval(lhs Evaler, rhs Evaler) *subtractEval {
 	return &subtractEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *subtractEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *subtractEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -353,18 +348,18 @@ func (n *subtractEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // multiplyEval
 type multiplyEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newMultiplyEval(lhs evaler, rhs evaler) *multiplyEval {
+func newMultiplyEval(lhs Evaler, rhs Evaler) *multiplyEval {
 	return &multiplyEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *multiplyEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *multiplyEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -382,16 +377,16 @@ func (n *multiplyEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // negateEval
 type negateEval struct {
-	inner evaler
+	inner Evaler
 }
 
-func newNegateEval(inner evaler) *negateEval {
+func newNegateEval(inner Evaler) *negateEval {
 	return &negateEval{
 		inner: inner,
 	}
 }
 
-func (n *negateEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *negateEval) Eval(ctx *EvalContext) (types.Value, error) {
 	inner, err := evalLong(n.inner, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -405,18 +400,18 @@ func (n *negateEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // longLessThanEval
 type longLessThanEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newLongLessThanEval(lhs evaler, rhs evaler) *longLessThanEval {
+func newLongLessThanEval(lhs Evaler, rhs Evaler) *longLessThanEval {
 	return &longLessThanEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *longLessThanEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *longLessThanEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -430,18 +425,18 @@ func (n *longLessThanEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // longLessThanOrEqualEval
 type longLessThanOrEqualEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newLongLessThanOrEqualEval(lhs evaler, rhs evaler) *longLessThanOrEqualEval {
+func newLongLessThanOrEqualEval(lhs Evaler, rhs Evaler) *longLessThanOrEqualEval {
 	return &longLessThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *longLessThanOrEqualEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *longLessThanOrEqualEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -455,18 +450,18 @@ func (n *longLessThanOrEqualEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // longGreaterThanEval
 type longGreaterThanEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newLongGreaterThanEval(lhs evaler, rhs evaler) *longGreaterThanEval {
+func newLongGreaterThanEval(lhs Evaler, rhs Evaler) *longGreaterThanEval {
 	return &longGreaterThanEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *longGreaterThanEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *longGreaterThanEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -480,18 +475,18 @@ func (n *longGreaterThanEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // longGreaterThanOrEqualEval
 type longGreaterThanOrEqualEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newLongGreaterThanOrEqualEval(lhs evaler, rhs evaler) *longGreaterThanOrEqualEval {
+func newLongGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *longGreaterThanOrEqualEval {
 	return &longGreaterThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *longGreaterThanOrEqualEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *longGreaterThanOrEqualEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -505,18 +500,18 @@ func (n *longGreaterThanOrEqualEval) Eval(ctx *evalContext) (types.Value, error)
 
 // decimalLessThanEval
 type decimalLessThanEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newDecimalLessThanEval(lhs evaler, rhs evaler) *decimalLessThanEval {
+func newDecimalLessThanEval(lhs Evaler, rhs Evaler) *decimalLessThanEval {
 	return &decimalLessThanEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *decimalLessThanEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *decimalLessThanEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalDecimal(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -530,18 +525,18 @@ func (n *decimalLessThanEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // decimalLessThanOrEqualEval
 type decimalLessThanOrEqualEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newDecimalLessThanOrEqualEval(lhs evaler, rhs evaler) *decimalLessThanOrEqualEval {
+func newDecimalLessThanOrEqualEval(lhs Evaler, rhs Evaler) *decimalLessThanOrEqualEval {
 	return &decimalLessThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *decimalLessThanOrEqualEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *decimalLessThanOrEqualEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalDecimal(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -555,18 +550,18 @@ func (n *decimalLessThanOrEqualEval) Eval(ctx *evalContext) (types.Value, error)
 
 // decimalGreaterThanEval
 type decimalGreaterThanEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newDecimalGreaterThanEval(lhs evaler, rhs evaler) *decimalGreaterThanEval {
+func newDecimalGreaterThanEval(lhs Evaler, rhs Evaler) *decimalGreaterThanEval {
 	return &decimalGreaterThanEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *decimalGreaterThanEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *decimalGreaterThanEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalDecimal(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -580,18 +575,18 @@ func (n *decimalGreaterThanEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // decimalGreaterThanOrEqualEval
 type decimalGreaterThanOrEqualEval struct {
-	lhs evaler
-	rhs evaler
+	lhs Evaler
+	rhs Evaler
 }
 
-func newDecimalGreaterThanOrEqualEval(lhs evaler, rhs evaler) *decimalGreaterThanOrEqualEval {
+func newDecimalGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *decimalGreaterThanOrEqualEval {
 	return &decimalGreaterThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *decimalGreaterThanOrEqualEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *decimalGreaterThanOrEqualEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalDecimal(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -605,12 +600,12 @@ func (n *decimalGreaterThanOrEqualEval) Eval(ctx *evalContext) (types.Value, err
 
 // ifThenElseEval
 type ifThenElseEval struct {
-	if_   evaler
-	then  evaler
-	else_ evaler
+	if_   Evaler
+	then  Evaler
+	else_ Evaler
 }
 
-func newIfThenElseEval(if_, then, else_ evaler) *ifThenElseEval {
+func newIfThenElseEval(if_, then, else_ Evaler) *ifThenElseEval {
 	return &ifThenElseEval{
 		if_:   if_,
 		then:  then,
@@ -618,7 +613,7 @@ func newIfThenElseEval(if_, then, else_ evaler) *ifThenElseEval {
 	}
 }
 
-func (n *ifThenElseEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *ifThenElseEval) Eval(ctx *EvalContext) (types.Value, error) {
 	cond, err := evalBool(n.if_, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -631,17 +626,17 @@ func (n *ifThenElseEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // notEqualNode
 type equalEval struct {
-	lhs, rhs evaler
+	lhs, rhs Evaler
 }
 
-func newEqualEval(lhs, rhs evaler) *equalEval {
+func newEqualEval(lhs, rhs Evaler) *equalEval {
 	return &equalEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *equalEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *equalEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lv, err := n.lhs.Eval(ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -655,17 +650,17 @@ func (n *equalEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // notEqualEval
 type notEqualEval struct {
-	lhs, rhs evaler
+	lhs, rhs Evaler
 }
 
-func newNotEqualEval(lhs, rhs evaler) *notEqualEval {
+func newNotEqualEval(lhs, rhs Evaler) *notEqualEval {
 	return &notEqualEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *notEqualEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *notEqualEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lv, err := n.lhs.Eval(ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -679,14 +674,14 @@ func (n *notEqualEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // setLiteralEval
 type setLiteralEval struct {
-	elements []evaler
+	elements []Evaler
 }
 
-func newSetLiteralEval(elements []evaler) *setLiteralEval {
+func newSetLiteralEval(elements []Evaler) *setLiteralEval {
 	return &setLiteralEval{elements: elements}
 }
 
-func (n *setLiteralEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *setLiteralEval) Eval(ctx *EvalContext) (types.Value, error) {
 	var vals types.Set
 	for _, e := range n.elements {
 		v, err := e.Eval(ctx)
@@ -700,17 +695,17 @@ func (n *setLiteralEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // containsEval
 type containsEval struct {
-	lhs, rhs evaler
+	lhs, rhs Evaler
 }
 
-func newContainsEval(lhs, rhs evaler) *containsEval {
+func newContainsEval(lhs, rhs Evaler) *containsEval {
 	return &containsEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *containsEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *containsEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalSet(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -724,17 +719,17 @@ func (n *containsEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // containsAllEval
 type containsAllEval struct {
-	lhs, rhs evaler
+	lhs, rhs Evaler
 }
 
-func newContainsAllEval(lhs, rhs evaler) *containsAllEval {
+func newContainsAllEval(lhs, rhs Evaler) *containsAllEval {
 	return &containsAllEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *containsAllEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *containsAllEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalSet(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -755,17 +750,17 @@ func (n *containsAllEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // containsAnyEval
 type containsAnyEval struct {
-	lhs, rhs evaler
+	lhs, rhs Evaler
 }
 
-func newContainsAnyEval(lhs, rhs evaler) *containsAnyEval {
+func newContainsAnyEval(lhs, rhs Evaler) *containsAnyEval {
 	return &containsAnyEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *containsAnyEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *containsAnyEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalSet(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -786,14 +781,14 @@ func (n *containsAnyEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // recordLiteralEval
 type recordLiteralEval struct {
-	elements map[string]evaler
+	elements map[string]Evaler
 }
 
-func newRecordLiteralEval(elements map[string]evaler) *recordLiteralEval {
+func newRecordLiteralEval(elements map[string]Evaler) *recordLiteralEval {
 	return &recordLiteralEval{elements: elements}
 }
 
-func (n *recordLiteralEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *recordLiteralEval) Eval(ctx *EvalContext) (types.Value, error) {
 	vals := types.Record{}
 	for k, en := range n.elements {
 		v, err := en.Eval(ctx)
@@ -807,15 +802,15 @@ func (n *recordLiteralEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // attributeAccessEval
 type attributeAccessEval struct {
-	object    evaler
+	object    Evaler
 	attribute string
 }
 
-func newAttributeAccessEval(record evaler, attribute string) *attributeAccessEval {
+func newAttributeAccessEval(record Evaler, attribute string) *attributeAccessEval {
 	return &attributeAccessEval{object: record, attribute: attribute}
 }
 
-func (n *attributeAccessEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *attributeAccessEval) Eval(ctx *EvalContext) (types.Value, error) {
 	v, err := n.object.Eval(ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -849,15 +844,15 @@ func (n *attributeAccessEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // hasEval
 type hasEval struct {
-	object    evaler
+	object    Evaler
 	attribute string
 }
 
-func newHasEval(record evaler, attribute string) *hasEval {
+func newHasEval(record Evaler, attribute string) *hasEval {
 	return &hasEval{object: record, attribute: attribute}
 }
 
-func (n *hasEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *hasEval) Eval(ctx *EvalContext) (types.Value, error) {
 	v, err := n.object.Eval(ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -882,15 +877,15 @@ func (n *hasEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // likeEval
 type likeEval struct {
-	lhs     evaler
-	pattern parser.Pattern
+	lhs     Evaler
+	pattern Pattern
 }
 
-func newLikeEval(lhs evaler, pattern parser.Pattern) *likeEval {
+func newLikeEval(lhs Evaler, pattern Pattern) *likeEval {
 	return &likeEval{lhs: lhs, pattern: pattern}
 }
 
-func (l *likeEval) Eval(ctx *evalContext) (types.Value, error) {
+func (l *likeEval) Eval(ctx *EvalContext) (types.Value, error) {
 	v, err := evalString(l.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -898,12 +893,12 @@ func (l *likeEval) Eval(ctx *evalContext) (types.Value, error) {
 	return types.Boolean(match(l.pattern, string(v))), nil
 }
 
-type variableName func(ctx *evalContext) types.Value
+type variableName func(ctx *EvalContext) types.Value
 
-func variableNamePrincipal(ctx *evalContext) types.Value { return ctx.Principal }
-func variableNameAction(ctx *evalContext) types.Value    { return ctx.Action }
-func variableNameResource(ctx *evalContext) types.Value  { return ctx.Resource }
-func variableNameContext(ctx *evalContext) types.Value   { return ctx.Context }
+func variableNamePrincipal(ctx *EvalContext) types.Value { return ctx.Principal }
+func variableNameAction(ctx *EvalContext) types.Value    { return ctx.Action }
+func variableNameResource(ctx *EvalContext) types.Value  { return ctx.Resource }
+func variableNameContext(ctx *EvalContext) types.Value   { return ctx.Context }
 
 // variableEval
 type variableEval struct {
@@ -914,16 +909,16 @@ func newVariableEval(variableName variableName) *variableEval {
 	return &variableEval{variableName: variableName}
 }
 
-func (n *variableEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *variableEval) Eval(ctx *EvalContext) (types.Value, error) {
 	return n.variableName(ctx), nil
 }
 
 // inEval
 type inEval struct {
-	lhs, rhs evaler
+	lhs, rhs Evaler
 }
 
-func newInEval(lhs, rhs evaler) *inEval {
+func newInEval(lhs, rhs Evaler) *inEval {
 	return &inEval{lhs: lhs, rhs: rhs}
 }
 
@@ -945,7 +940,7 @@ func entityIn(entity types.EntityUID, query map[types.EntityUID]struct{}, entiti
 	return false
 }
 
-func (n *inEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *inEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalEntity(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -977,14 +972,14 @@ func (n *inEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // isEval
 type isEval struct {
-	lhs, rhs evaler
+	lhs, rhs Evaler
 }
 
-func newIsEval(lhs, rhs evaler) *isEval {
+func newIsEval(lhs, rhs Evaler) *isEval {
 	return &isEval{lhs: lhs, rhs: rhs}
 }
 
-func (n *isEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *isEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalEntity(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -1000,14 +995,14 @@ func (n *isEval) Eval(ctx *evalContext) (types.Value, error) {
 
 // decimalLiteralEval
 type decimalLiteralEval struct {
-	literal evaler
+	literal Evaler
 }
 
-func newDecimalLiteralEval(literal evaler) *decimalLiteralEval {
+func newDecimalLiteralEval(literal Evaler) *decimalLiteralEval {
 	return &decimalLiteralEval{literal: literal}
 }
 
-func (n *decimalLiteralEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *decimalLiteralEval) Eval(ctx *EvalContext) (types.Value, error) {
 	literal, err := evalString(n.literal, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -1022,14 +1017,14 @@ func (n *decimalLiteralEval) Eval(ctx *evalContext) (types.Value, error) {
 }
 
 type ipLiteralEval struct {
-	literal evaler
+	literal Evaler
 }
 
-func newIPLiteralEval(literal evaler) *ipLiteralEval {
+func newIPLiteralEval(literal Evaler) *ipLiteralEval {
 	return &ipLiteralEval{literal: literal}
 }
 
-func (n *ipLiteralEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *ipLiteralEval) Eval(ctx *EvalContext) (types.Value, error) {
 	literal, err := evalString(n.literal, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -1052,15 +1047,15 @@ func ipTestMulticast(v types.IPAddr) bool { return v.IsMulticast() }
 
 // ipTestEval
 type ipTestEval struct {
-	object evaler
+	object Evaler
 	test   ipTestType
 }
 
-func newIPTestEval(object evaler, test ipTestType) *ipTestEval {
+func newIPTestEval(object Evaler, test ipTestType) *ipTestEval {
 	return &ipTestEval{object: object, test: test}
 }
 
-func (n *ipTestEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *ipTestEval) Eval(ctx *EvalContext) (types.Value, error) {
 	i, err := evalIP(n.object, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
@@ -1071,14 +1066,14 @@ func (n *ipTestEval) Eval(ctx *evalContext) (types.Value, error) {
 // ipIsInRangeEval
 
 type ipIsInRangeEval struct {
-	lhs, rhs evaler
+	lhs, rhs Evaler
 }
 
-func newIPIsInRangeEval(lhs, rhs evaler) *ipIsInRangeEval {
+func newIPIsInRangeEval(lhs, rhs Evaler) *ipIsInRangeEval {
 	return &ipIsInRangeEval{lhs: lhs, rhs: rhs}
 }
 
-func (n *ipIsInRangeEval) Eval(ctx *evalContext) (types.Value, error) {
+func (n *ipIsInRangeEval) Eval(ctx *EvalContext) (types.Value, error) {
 	lhs, err := evalIP(n.lhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err

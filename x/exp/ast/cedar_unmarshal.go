@@ -2,7 +2,6 @@ package ast
 
 import (
 	"fmt"
-	"net/netip"
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/types"
@@ -252,13 +251,8 @@ func (p *parser) entityFirstPathPreread(firstPath string) (types.EntityUID, erro
 	}
 }
 
-func (p *parser) path() (types.String, error) {
-	var res types.String
-	t := p.advance()
-	if !t.isIdent() {
-		return res, p.errorf("expected ident")
-	}
-	res = types.String(t.Text)
+func (p *parser) pathFirstPathPreread(firstPath string) (types.Path, error) {
+	res := types.Path(firstPath)
 	for {
 		if p.peek().Text != "::" {
 			return res, nil
@@ -267,11 +261,19 @@ func (p *parser) path() (types.String, error) {
 		t := p.advance()
 		switch {
 		case t.isIdent():
-			res = types.String(fmt.Sprintf("%v::%v", res, t.Text))
+			res = types.Path(fmt.Sprintf("%v::%v", res, t.Text))
 		default:
 			return res, p.errorf("unexpected token")
 		}
 	}
+}
+
+func (p *parser) path() (types.Path, error) {
+	t := p.advance()
+	if !t.isIdent() {
+		return "", p.errorf("expected ident")
+	}
+	return p.pathFirstPathPreread(t.Text)
 }
 
 func (p *parser) action(policy *Policy) error {
@@ -722,55 +724,45 @@ func (p *parser) primary() (Node, error) {
 }
 
 func (p *parser) entityOrExtFun(ident string) (Node, error) {
-	// Technically, according to the grammar, both entities and extension functions
-	// can have path prefixes and so parsing here is not trivial. In practice, there
-	// are only two extension functions: `ip()` and `decimal()`, neither of which
-	// have a path prefix. We'll just handle those two cases specially and treat
-	// everything else as an entity.
-	var res Node
-	switch ident {
-	case "ip", "decimal":
-		if err := p.exact("("); err != nil {
-			return res, err
-		}
+	var res types.EntityUID
+	var err error
+	res.Type = ident
+	for {
 		t := p.advance()
-		if !t.isString() {
-			return res, p.errorf("expected string")
-		}
-		str, err := t.stringValue()
-		if err != nil {
-			return res, err
-		}
-		if err := p.exact(")"); err != nil {
-			return res, err
-		}
-
-		if ident == "ip" {
-			prefix, err := netip.ParsePrefix(str)
-			if err != nil {
-				ipaddr, err := netip.ParseAddr(str)
+		switch t.Text {
+		case "::":
+			t := p.advance()
+			switch {
+			case t.isIdent():
+				res.Type = fmt.Sprintf("%v::%v", res.Type, t.Text)
+			case t.isString():
+				res.ID, err = t.stringValue()
 				if err != nil {
 					return Node{}, err
 				}
-				prefix = netip.PrefixFrom(ipaddr, 32)
+				return EntityUID(res), nil
+			default:
+				return Node{}, p.errorf("unexpected token")
 			}
-			res = IPAddr(types.IPAddr(prefix))
-		} else {
-			dec, err := types.ParseDecimal(str)
+		case "(":
+			args, err := p.expressions(")")
 			if err != nil {
-				return res, err
+				return Node{}, err
 			}
-			res = Decimal(dec)
-		}
-	default:
-		entity, err := p.entityFirstPathPreread(ident)
-		if err != nil {
-			return res, err
-		}
-		res = EntityUID(entity)
-	}
+			p.advance()
 
-	return res, nil
+			i, ok := extMap[types.String(res.Type)]
+			if !ok {
+				return Node{}, p.errorf("`%v` is not a function", res.Type)
+			}
+			if i.IsMethod {
+				return Node{}, p.errorf("`%v` is a method, not a function", res.Type)
+			}
+			return ExtensionCall(types.String(res.Type), args...), nil
+		default:
+			return Node{}, p.errorf("unexpected token")
+		}
+	}
 }
 
 func (p *parser) expressions(endOfListMarker string) ([]Node, error) {
@@ -870,6 +862,13 @@ func (p *parser) access(lhs Node) (Node, bool, error) {
 			case "containsAny":
 				knownMethod = Node.ContainsAny
 			default:
+				i, ok := extMap[types.String(methodName)]
+				if !ok {
+					return Node{}, false, p.errorf("not a valid method name: `%v`", methodName)
+				}
+				if !i.IsMethod {
+					return Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
+				}
 				return newMethodCall(lhs, types.String(methodName), exprs...), true, nil
 			}
 
