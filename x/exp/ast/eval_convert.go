@@ -24,10 +24,10 @@ func toEval(n node) Evaler {
 	case nodeTypeExtensionCall:
 		i, ok := extMap[v.Name]
 		if !ok {
-			return newErrorEval(fmt.Errorf("%w: %s", errUnknownMethod, v.Name))
+			return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, v.Name))
 		}
 		if i.Args != len(v.Args) {
-			return newErrorEval(fmt.Errorf("%w: %s takes 1 parameter", errArity, v.Name))
+			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s)", errArity, v.Name, i.Args))
 		}
 		switch {
 		case v.Name == "ip":
