@@ -50,6 +50,7 @@ func TestNewPolicySet(t *testing.T) {
 	})
 }
 
+//nolint:revive // due to table test function-length
 func TestIsAuthorized(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
