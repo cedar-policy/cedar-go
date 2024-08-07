@@ -60,6 +60,7 @@ func TestIsAuthorized(t *testing.T) {
 		Context                     types.Record
 		Want                        Decision
 		DiagErr                     int
+		ParseErr                    bool
 	}{
 		{
 			Name:      "simple-permit",
@@ -448,7 +449,8 @@ func TestIsAuthorized(t *testing.T) {
 			Resource:  types.NewEntityUID("table", "whatever"),
 			Context:   types.Record{},
 			Want:      false,
-			DiagErr:   1,
+			DiagErr:   0,
+			ParseErr:  true,
 		},
 		{
 			Name:      "permit-when-set-containsAll-ok",
@@ -470,7 +472,8 @@ func TestIsAuthorized(t *testing.T) {
 			Resource:  types.NewEntityUID("table", "whatever"),
 			Context:   types.Record{},
 			Want:      false,
-			DiagErr:   1,
+			DiagErr:   0,
+			ParseErr:  true,
 		},
 		{
 			Name:      "permit-when-set-containsAny-ok",
@@ -492,7 +495,8 @@ func TestIsAuthorized(t *testing.T) {
 			Resource:  types.NewEntityUID("table", "whatever"),
 			Context:   types.Record{},
 			Want:      false,
-			DiagErr:   1,
+			DiagErr:   0,
+			ParseErr:  true,
 		},
 		{
 			Name:      "permit-when-record-attr",
@@ -514,7 +518,8 @@ func TestIsAuthorized(t *testing.T) {
 			Resource:  types.NewEntityUID("table", "whatever"),
 			Context:   types.Record{},
 			Want:      false,
-			DiagErr:   1,
+			DiagErr:   0,
+			ParseErr:  true,
 		},
 		{
 			Name:      "permit-when-like",
@@ -536,7 +541,8 @@ func TestIsAuthorized(t *testing.T) {
 			Resource:  types.NewEntityUID("table", "whatever"),
 			Context:   types.Record{},
 			Want:      false,
-			DiagErr:   1,
+			DiagErr:   0,
+			ParseErr:  true,
 		},
 		{
 			Name: "permit-when-decimal",
@@ -742,15 +748,15 @@ func TestIsAuthorized(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 			ps, err := NewPolicySet("policy.cedar", []byte(tt.Policy))
-			testutil.OK(t, err)
+			testutil.Equals(t, (err != nil), tt.ParseErr)
 			ok, diag := ps.IsAuthorized(tt.Entities, Request{
 				Principal: tt.Principal,
 				Action:    tt.Action,
 				Resource:  tt.Resource,
 				Context:   tt.Context,
 			})
-			testutil.Equals(t, ok, tt.Want)
 			testutil.Equals(t, len(diag.Errors), tt.DiagErr)
+			testutil.Equals(t, ok, tt.Want)
 		})
 	}
 }
@@ -774,7 +780,7 @@ func TestEntities(t *testing.T) {
 			},
 		}
 		entities := entitiesFromSlice(s)
-		s2 := entities.toSlice()
+		s2 := entitiesToSlice(entities)
 		testutil.Equals(t, s2, s)
 	})
 	t.Run("Clone", func(t *testing.T) {

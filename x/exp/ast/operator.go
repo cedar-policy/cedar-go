@@ -109,11 +109,11 @@ func (lhs Node) In(rhs Node) Node {
 	return newNode(nodeTypeIn{binaryNode: binaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
-func (lhs Node) Is(entityType types.String) Node {
+func (lhs Node) Is(entityType types.Path) Node {
 	return newNode(nodeTypeIs{Left: lhs.v, EntityType: entityType})
 }
 
-func (lhs Node) IsIn(entityType types.String, rhs Node) Node {
+func (lhs Node) IsIn(entityType types.Path, rhs Node) Node {
 	return newNode(nodeTypeIsIn{nodeTypeIs: nodeTypeIs{Left: lhs.v, EntityType: entityType}, Entity: rhs.v})
 }
 

@@ -2,14 +2,13 @@
 package cedar
 
 import (
-	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/types"
-	"github.com/cedar-policy/cedar-go/x/exp/parser"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // A PolicySet is a slice of policies.
@@ -63,20 +62,13 @@ func (a *Effect) UnmarshalJSON(b []byte) error {
 // given file name used in Position data.  If there is an error parsing the
 // document, it will be returned.
 func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
-	var policies PolicySet
-	tokens, err := parser.Tokenize(document)
-	if err != nil {
-		return nil, fmt.Errorf("tokenize error: %w", err)
-	}
-	res, err := parser.Parse(tokens)
-	if err != nil {
+	var res ast.PolicySet
+	if err := res.UnmarshalCedar(document); err != nil {
 		return nil, fmt.Errorf("parser error: %w", err)
 	}
+	var policies PolicySet
 	for _, p := range res {
-		ann := Annotations{}
-		for _, a := range p.Annotations {
-			ann[a.Key] = a.Value
-		}
+		ann := Annotations(p.TmpGetAnnotations())
 		policies = append(policies, Policy{
 			Position: Position{
 				Filename: fileName,
@@ -85,38 +77,15 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 				Column:   p.Position.Column,
 			},
 			Annotations: ann,
-			Effect:      Effect(p.Effect == parser.EffectPermit),
-			eval:        toEval(p),
+			Effect:      Effect(p.TmpGetEffect()),
+			eval:        ast.Compile(p.Policy),
 		})
 	}
 	return policies, nil
 }
 
-// An Entities is a collection of all the Entities that are needed to evaluate
-// authorization requests.  The key is an EntityUID which uniquely identifies
-// the Entity (it must be the same as the UID within the Entity itself.)
-type Entities map[types.EntityUID]Entity
-
-// An Entity defines the parents and attributes for an EntityUID.
-type Entity struct {
-	UID        types.EntityUID   `json:"uid"`
-	Parents    []types.EntityUID `json:"parents,omitempty"`
-	Attributes types.Record      `json:"attrs"`
-}
-
-func (e Entities) MarshalJSON() ([]byte, error) {
-	s := e.toSlice()
-	return json.Marshal(s)
-}
-
-func (e *Entities) UnmarshalJSON(b []byte) error {
-	var s []Entity
-	if err := json.Unmarshal(b, &s); err != nil {
-		return err
-	}
-	*e = entitiesFromSlice(s)
-	return nil
-}
+type Entities = ast.Entities
+type Entity = ast.Entity
 
 func entitiesFromSlice(s []Entity) Entities {
 	var res = Entities{}
@@ -126,16 +95,12 @@ func entitiesFromSlice(s []Entity) Entities {
 	return res
 }
 
-func (e Entities) toSlice() []Entity {
+func entitiesToSlice(e Entities) []Entity {
 	s := maps.Values(e)
 	slices.SortFunc(s, func(a, b Entity) int {
 		return strings.Compare(a.UID.String(), b.UID.String())
 	})
 	return s
-}
-
-func (e Entities) Clone() Entities {
-	return maps.Clone(e)
 }
 
 // A Decision is the result of the authorization.

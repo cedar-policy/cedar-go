@@ -24,11 +24,11 @@ func (s scope) InSet(entities []types.EntityUID) isScopeNode {
 	return scopeTypeInSet{scopeNode: scopeNode{Variable: nodeTypeVariable(s)}, Entities: entities}
 }
 
-func (s scope) Is(entityType types.String) isScopeNode {
+func (s scope) Is(entityType types.Path) isScopeNode {
 	return scopeTypeIs{scopeNode: scopeNode{Variable: nodeTypeVariable(s)}, Type: entityType}
 }
 
-func (s scope) IsIn(entityType types.String, entity types.EntityUID) isScopeNode {
+func (s scope) IsIn(entityType types.Path, entity types.EntityUID) isScopeNode {
 	return scopeTypeIsIn{scopeNode: scopeNode{Variable: nodeTypeVariable(s)}, Type: entityType, Entity: entity}
 }
 
@@ -42,12 +42,12 @@ func (p *Policy) PrincipalIn(entity types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) PrincipalIs(entityType types.String) *Policy {
+func (p *Policy) PrincipalIs(entityType types.Path) *Policy {
 	p.principal = scope(rawPrincipalNode()).Is(entityType)
 	return p
 }
 
-func (p *Policy) PrincipalIsIn(entityType types.String, entity types.EntityUID) *Policy {
+func (p *Policy) PrincipalIsIn(entityType types.Path, entity types.EntityUID) *Policy {
 	p.principal = scope(rawPrincipalNode()).IsIn(entityType, entity)
 	return p
 }
@@ -77,12 +77,12 @@ func (p *Policy) ResourceIn(entity types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) ResourceIs(entityType types.String) *Policy {
+func (p *Policy) ResourceIs(entityType types.Path) *Policy {
 	p.resource = scope(rawResourceNode()).Is(entityType)
 	return p
 }
 
-func (p *Policy) ResourceIsIn(entityType types.String, entity types.EntityUID) *Policy {
+func (p *Policy) ResourceIsIn(entityType types.Path, entity types.EntityUID) *Policy {
 	p.resource = scope(rawResourceNode()).IsIn(entityType, entity)
 	return p
 }
@@ -90,6 +90,7 @@ func (p *Policy) ResourceIsIn(entityType types.String, entity types.EntityUID) *
 type isScopeNode interface {
 	isScope()
 	MarshalCedar(*bytes.Buffer)
+	toNode() Node
 }
 
 type scopeNode struct {
@@ -101,9 +102,17 @@ type scopeTypeAll struct {
 	scopeNode
 }
 
+func (n scopeTypeAll) toNode() Node {
+	return newNode(True().v)
+}
+
 type scopeTypeEq struct {
 	scopeNode
 	Entity types.EntityUID
+}
+
+func (n scopeTypeEq) toNode() Node {
+	return newNode(newNode(n.Variable).Equals(EntityUID(n.Entity)).v)
 }
 
 type scopeTypeIn struct {
@@ -111,18 +120,38 @@ type scopeTypeIn struct {
 	Entity types.EntityUID
 }
 
+func (n scopeTypeIn) toNode() Node {
+	return newNode(newNode(n.Variable).In(EntityUID(n.Entity)).v)
+}
+
 type scopeTypeInSet struct {
 	scopeNode
 	Entities []types.EntityUID
 }
 
+func (n scopeTypeInSet) toNode() Node {
+	set := make([]types.Value, len(n.Entities))
+	for i, e := range n.Entities {
+		set[i] = e
+	}
+	return newNode(newNode(n.Variable).In(Set(set)).v)
+}
+
 type scopeTypeIs struct {
 	scopeNode
-	Type types.String
+	Type types.Path
+}
+
+func (n scopeTypeIs) toNode() Node {
+	return newNode(newNode(n.Variable).Is(n.Type).v)
 }
 
 type scopeTypeIsIn struct {
 	scopeNode
-	Type   types.String
+	Type   types.Path
 	Entity types.EntityUID
+}
+
+func (n scopeTypeIsIn) toNode() Node {
+	return newNode(newNode(n.Variable).IsIn(n.Type, EntityUID(n.Entity)).v)
 }

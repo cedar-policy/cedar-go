@@ -15,15 +15,17 @@ func newNode(v node) Node {
 }
 
 type strOpNode struct {
-	node
 	Arg   node
 	Value types.String
 }
 
+func (n strOpNode) isNode() {}
+
 type binaryNode struct {
-	node
 	Left, Right node
 }
+
+func (n binaryNode) isNode() {}
 
 type nodePrecedenceLevel uint8
 
@@ -40,13 +42,14 @@ const (
 )
 
 type nodeTypeIf struct {
-	node
 	If, Then, Else node
 }
 
 func (n nodeTypeIf) precedenceLevel() nodePrecedenceLevel {
 	return ifPrecedence
 }
+
+func (n nodeTypeIf) isNode() {}
 
 type nodeTypeOr struct{ binaryNode }
 
@@ -103,7 +106,6 @@ type nodeTypeHas struct {
 }
 
 type nodeTypeLike struct {
-	node
 	Arg   node
 	Value Pattern
 }
@@ -111,16 +113,17 @@ type nodeTypeLike struct {
 func (n nodeTypeLike) precedenceLevel() nodePrecedenceLevel {
 	return relationPrecedence
 }
+func (n nodeTypeLike) isNode() {}
 
 type nodeTypeIs struct {
-	node
 	Left       node
-	EntityType types.String // TODO: review type
+	EntityType types.Path
 }
 
 func (n nodeTypeIs) precedenceLevel() nodePrecedenceLevel {
 	return relationPrecedence
 }
+func (n nodeTypeIs) isNode() {}
 
 type nodeTypeIsIn struct {
 	nodeTypeIs
@@ -154,13 +157,14 @@ func (n nodeTypeMult) precedenceLevel() nodePrecedenceLevel {
 }
 
 type unaryNode struct {
-	node
 	Arg node
 }
 
 func (n unaryNode) precedenceLevel() nodePrecedenceLevel {
 	return unaryPrecedence
 }
+
+func (n unaryNode) isNode() {}
 
 type nodeTypeNegate struct{ unaryNode }
 type nodeTypeNot struct{ unaryNode }
@@ -172,7 +176,6 @@ func (n nodeTypeAccess) precedenceLevel() nodePrecedenceLevel {
 }
 
 type nodeTypeExtensionCall struct {
-	node
 	Name types.String // TODO: review type
 	Args []node
 }
@@ -180,6 +183,7 @@ type nodeTypeExtensionCall struct {
 func (n nodeTypeExtensionCall) precedenceLevel() nodePrecedenceLevel {
 	return accessPrecedence
 }
+func (n nodeTypeExtensionCall) isNode() {}
 
 func stripNodes(args []Node) []node {
 	res := make([]node, len(args))
@@ -238,6 +242,8 @@ type nodeValue struct {
 	Value types.Value
 }
 
+func (n nodeValue) isNode() {}
+
 type recordElement struct {
 	Key   types.String
 	Value node
@@ -247,6 +253,8 @@ type nodeTypeRecord struct {
 	primaryNode
 	Elements []recordElement
 }
+
+func (n nodeTypeRecord) isNode() {}
 
 type nodeTypeSet struct {
 	primaryNode
