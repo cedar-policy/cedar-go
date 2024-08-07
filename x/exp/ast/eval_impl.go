@@ -7,7 +7,6 @@ import (
 )
 
 var errOverflow = fmt.Errorf("integer overflow")
-var errUnknownMethod = fmt.Errorf("unknown method")
 var errUnknownExtensionFunction = fmt.Errorf("function does not exist")
 var errArity = fmt.Errorf("wrong number of arguments provided to extension function")
 var errAttributeAccess = fmt.Errorf("does not have the attribute")

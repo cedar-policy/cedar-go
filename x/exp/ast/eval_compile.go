@@ -4,7 +4,6 @@ type CompiledPolicySet map[string]CompiledPolicy
 
 type CompiledPolicy struct {
 	PolicySetEntry
-	eval Evaler
 }
 
 func (p PolicySetEntry) TmpGetAnnotations() map[string]string {
