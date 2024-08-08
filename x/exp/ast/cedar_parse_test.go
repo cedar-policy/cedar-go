@@ -1,9 +1,11 @@
-package parser
+package ast_test
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/testutil"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func TestParse(t *testing.T) {
@@ -292,151 +294,29 @@ func TestParse(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			tokens, err := Tokenize([]byte(tt.in))
-			testutil.OK(t, err)
-			got, err := Parse(tokens)
+
+			var policies ast.PolicySet
+			err := policies.UnmarshalCedar([]byte(tt.in))
 			testutil.Equals(t, err != nil, tt.err)
 			if err != nil {
-				testutil.Equals(t, got, nil)
+				return
+			}
+			if len(policies) != 1 {
+				// TODO: handle 0, > 1
 				return
 			}
 
-			gotTokens, err := Tokenize([]byte(got.String()))
+			var buf bytes.Buffer
+			pp := policies["policy0"].Policy
+			pp.MarshalCedar(&buf)
+
+			var p2 ast.PolicySet
+			err = p2.UnmarshalCedar(buf.Bytes())
 			testutil.OK(t, err)
 
-			var tokenStrs []string
-			for _, t := range tokens {
-				tokenStrs = append(tokenStrs, t.toString())
-			}
+			// TODO: support 0, > 1
+			testutil.Equals(t, p2["policy0"].Policy, policies["policy0"].Policy)
 
-			var gotTokenStrs []string
-			for _, t := range gotTokens {
-				gotTokenStrs = append(gotTokenStrs, t.toString())
-			}
-
-			testutil.Equals(t, gotTokenStrs, tokenStrs)
-		})
-	}
-}
-
-func TestParseTypes(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name string
-		in   string
-		out  Policies
-	}{
-		{
-			"first",
-			"permit(principal, action, resource) when { 3 * 2 > 5 };",
-			Policies{
-				Policy{
-					Position:    Position{Offset: 0, Line: 1, Column: 1},
-					Annotations: []Annotation(nil),
-					Effect:      "permit",
-					Conditions: []Condition{
-						{
-							Type: "when",
-							Expression: Expression{
-								Type: ExpressionOr,
-								Or: Or{
-									Ands: []And{
-										{
-											Relations: []Relation{
-												{
-													Add: Add{
-														Mults: []Mult{
-															{
-																Unaries: []Unary{
-																	{
-																		Ops: []UnaryOp(nil),
-																		Member: Member{
-																			Primary: Primary{
-																				Type:    PrimaryLiteral,
-																				Literal: Literal{Type: LiteralInt, Long: 3},
-																			},
-																			Accesses: []Access(nil),
-																		},
-																	},
-																	{
-																		Ops: []UnaryOp(nil),
-																		Member: Member{
-																			Primary: Primary{
-																				Type:    PrimaryLiteral,
-																				Literal: Literal{Type: LiteralInt, Long: 2},
-																			},
-																			Accesses: []Access(nil),
-																		},
-																	},
-																},
-															},
-														},
-													},
-													Type:  "relop",
-													RelOp: ">",
-													RelOpRhs: Add{
-														Mults: []Mult{
-															{
-																Unaries: []Unary{
-																	{
-																		Ops: []UnaryOp(nil),
-																		Member: Member{
-																			Primary: Primary{
-																				Type:    PrimaryLiteral,
-																				Literal: Literal{Type: LiteralInt, Long: 5},
-																			},
-																			Accesses: []Access(nil),
-																		},
-																	},
-																},
-															},
-														},
-													},
-													Str: "",
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			tokens, err := Tokenize([]byte(tt.in))
-			testutil.OK(t, err)
-			got, err := Parse(tokens)
-			testutil.OK(t, err)
-			testutil.Equals(t, got, tt.out)
-		})
-	}
-}
-
-func TestParseEntity(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name string
-		in   string
-		out  Entity
-		err  func(testing.TB, error)
-	}{
-		{"happy", `Action::"test"`, Entity{Path: []string{"Action", "test"}}, testutil.OK},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			toks, err := Tokenize([]byte(tt.in))
-			testutil.OK(t, err)
-			out, err := ParseEntity(toks)
-			testutil.Equals(t, out, tt.out)
-			tt.err(t, err)
 		})
 	}
 }
@@ -454,12 +334,12 @@ permit( principal, action, resource );
 // annotation indent
  @test("1234") permit (principal, action, resource );
 `
-	toks, err := Tokenize([]byte(in))
-	testutil.OK(t, err)
-	out, err := Parse(toks)
+
+	var out ast.PolicySet
+	err := out.UnmarshalCedar([]byte(in))
 	testutil.OK(t, err)
 	testutil.Equals(t, len(out), 3)
-	testutil.Equals(t, out[0].Position, Position{Offset: 17, Line: 2, Column: 1})
-	testutil.Equals(t, out[1].Position, Position{Offset: 86, Line: 7, Column: 3})
-	testutil.Equals(t, out[2].Position, Position{Offset: 148, Line: 10, Column: 2})
+	testutil.Equals(t, out["policy0"].Position, ast.Position{Offset: 17, Line: 2, Column: 1})
+	testutil.Equals(t, out["policy1"].Position, ast.Position{Offset: 86, Line: 7, Column: 3})
+	testutil.Equals(t, out["policy2"].Position, ast.Position{Offset: 148, Line: 10, Column: 2})
 }

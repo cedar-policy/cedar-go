@@ -163,14 +163,14 @@ func (n nodeTypeAccess) marshalCedar(buf *bytes.Buffer) {
 
 func (n nodeTypeExtensionCall) marshalCedar(buf *bytes.Buffer) {
 	var args []node
-	if n.Name != "ip" && n.Name != "decimal" {
+	info := extMap[n.Name]
+	if info.IsMethod {
 		marshalChildNode(n.precedenceLevel(), n.Args[0], buf)
 		buf.WriteRune('.')
 		args = n.Args[1:]
 	} else {
 		args = n.Args
 	}
-
 	buf.WriteString(string(n.Name))
 	buf.WriteRune('(')
 	for i := range args {
@@ -212,6 +212,19 @@ func (n nodeTypeSet) marshalCedar(buf *bytes.Buffer) {
 		}
 	}
 	buf.WriteRune(']')
+}
+
+func (n nodeTypeRecord) marshalCedar(buf *bytes.Buffer) {
+	buf.WriteRune('{')
+	for i := range n.Elements {
+		buf.WriteString(n.Elements[i].Key.Cedar())
+		buf.WriteString(":")
+		marshalChildNode(n.precedenceLevel(), n.Elements[i].Value, buf)
+		if i != len(n.Elements)-1 {
+			buf.WriteString(", ")
+		}
+	}
+	buf.WriteRune('}')
 }
 
 func marshalInfixBinaryOp(n binaryNode, precedence nodePrecedenceLevel, op string, buf *bytes.Buffer) {

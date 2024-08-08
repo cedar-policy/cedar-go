@@ -136,13 +136,19 @@ when { !!true };`,
 			"negate operator",
 			`permit ( principal, action, resource )
 when { -1 };`,
-			ast.Permit().When(ast.Negate(ast.Long(1))),
+			ast.Permit().When(ast.Long(-1)),
+		},
+		{
+			"negate operator context",
+			`permit ( principal, action, resource )
+when { -context };`,
+			ast.Permit().When(ast.Negate(ast.Context())),
 		},
 		{
 			"mutliple negate operators",
 			`permit ( principal, action, resource )
 when { !--1 };`,
-			ast.Permit().When(ast.Not(ast.Negate(ast.Negate(ast.Long(1))))),
+			ast.Permit().When(ast.Not(ast.Negate(ast.Long(-1)))),
 		},
 		{
 			"variable member",
@@ -389,7 +395,7 @@ when { 2 + 3 * 4 == 14 };`,
 			"unary over mult precedence",
 			`permit ( principal, action, resource )
 when { -2 * 3 == -6 };`,
-			ast.Permit().When(ast.Negate(ast.Long(2)).Times(ast.Long(3)).Equals(ast.Negate(ast.Long(6)))),
+			ast.Permit().When(ast.Long(-2).Times(ast.Long(3)).Equals(ast.Long(-6))),
 		},
 		{
 			"member over unary precedence",
@@ -401,7 +407,7 @@ when { -context.num };`,
 			"parens over unary precedence",
 			`permit ( principal, action, resource )
 when { -(2 + 3) == -5 };`,
-			ast.Permit().When(ast.Negate(ast.Long(2).Plus(ast.Long(3))).Equals(ast.Negate(ast.Long(5)))),
+			ast.Permit().When(ast.Negate(ast.Long(2).Plus(ast.Long(3))).Equals(ast.Long(-5))),
 		},
 		{
 			"multiple parenthesized operations",

@@ -94,9 +94,10 @@ type isScopeNode interface {
 }
 
 type scopeNode struct {
-	isScopeNode
 	Variable nodeTypeVariable
 }
+
+func (n scopeNode) isScope() {}
 
 type scopeTypeAll struct {
 	scopeNode

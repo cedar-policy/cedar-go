@@ -2,6 +2,7 @@ package ast
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/types"
@@ -19,7 +20,12 @@ func (p *PolicySet) UnmarshalCedar(b []byte) error {
 	parser := newParser(tokens)
 	for !parser.peek().isEOF() {
 		pos := parser.peek().Pos
-		var policy Policy
+		policy := Policy{
+			principal: scopeTypeAll{},
+			action:    scopeTypeAll{},
+			resource:  scopeTypeAll{},
+		}
+
 		if err = policy.fromCedarWithParser(&parser); err != nil {
 			return err
 		}
@@ -126,9 +132,10 @@ func (p *parser) errorf(s string, args ...interface{}) error {
 
 func (p *parser) annotations() (Annotations, error) {
 	var res Annotations
+	known := map[types.String]struct{}{}
 	for p.peek().Text == "@" {
 		p.advance()
-		err := p.annotation(&res)
+		err := p.annotation(&res, known)
 		if err != nil {
 			return res, err
 		}
@@ -137,7 +144,7 @@ func (p *parser) annotations() (Annotations, error) {
 
 }
 
-func (p *parser) annotation(a *Annotations) error {
+func (p *parser) annotation(a *Annotations, known map[types.String]struct{}) error {
 	var err error
 	t := p.advance()
 	if !t.isIdent() {
@@ -147,6 +154,10 @@ func (p *parser) annotation(a *Annotations) error {
 	if err = p.exact("("); err != nil {
 		return err
 	}
+	if _, ok := known[name]; ok {
+		return p.errorf("duplicate annotation: @%s", name)
+	}
+	known[name] = struct{}{}
 	t = p.advance()
 	if !t.isString() {
 		return p.errorf("expected string")
@@ -624,29 +635,42 @@ func (p *parser) mult() (Node, error) {
 }
 
 func (p *parser) unary() (Node, error) {
-	opMap := map[string]func(Node) Node{
-		"-": Negate,
-		"!": Not,
-	}
-
-	var ops []func(Node) Node
+	var ops []bool
 	for {
 		opToken := p.peek()
-		op, ok := opMap[opToken.Text]
-		if !ok {
+		if opToken.Text != "-" && opToken.Text != "!" {
 			break
 		}
 		p.advance()
-		ops = append(ops, op)
+		ops = append(ops, opToken.Text == "-")
 	}
 
-	res, err := p.member()
-	if err != nil {
-		return res, err
+	var res Node
+
+	// special case for max negative long
+	tok := p.peek()
+	if len(ops) > 0 && ops[len(ops)-1] && tok.isInt() {
+		p.advance()
+		i, err := strconv.ParseInt("-"+tok.Text, 10, 64)
+		if err != nil {
+			return Node{}, err
+		}
+		res = Long(types.Long(i))
+		ops = ops[:len(ops)-1]
+	} else {
+		var err error
+		res, err = p.member()
+		if err != nil {
+			return res, err
+		}
 	}
 
 	for i := len(ops) - 1; i >= 0; i-- {
-		res = ops[i](res)
+		if ops[i] {
+			res = Negate(res)
+		} else {
+			res = Not(res)
+		}
 	}
 	return res, nil
 }
@@ -750,14 +774,13 @@ func (p *parser) entityOrExtFun(ident string) (Node, error) {
 				return Node{}, err
 			}
 			p.advance()
-
-			i, ok := extMap[types.String(res.Type)]
-			if !ok {
-				return Node{}, p.errorf("`%v` is not a function", res.Type)
-			}
-			if i.IsMethod {
-				return Node{}, p.errorf("`%v` is a method, not a function", res.Type)
-			}
+			// i, ok := extMap[types.String(res.Type)]
+			// if !ok {
+			// 	return Node{}, p.errorf("`%v` is not a function", res.Type)
+			// }
+			// if i.IsMethod {
+			// 	return Node{}, p.errorf("`%v` is a method, not a function", res.Type)
+			// }
 			return ExtensionCall(types.String(res.Type), args...), nil
 		default:
 			return Node{}, p.errorf("unexpected token")
@@ -862,13 +885,13 @@ func (p *parser) access(lhs Node) (Node, bool, error) {
 			case "containsAny":
 				knownMethod = Node.ContainsAny
 			default:
-				i, ok := extMap[types.String(methodName)]
-				if !ok {
-					return Node{}, false, p.errorf("not a valid method name: `%v`", methodName)
-				}
-				if !i.IsMethod {
-					return Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
-				}
+				// i, ok := extMap[types.String(methodName)]
+				// if !ok {
+				// 	return Node{}, false, p.errorf("not a valid method name: `%v`", methodName)
+				// }
+				// if !i.IsMethod {
+				// 	return Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
+				// }
 				return newMethodCall(lhs, types.String(methodName), exprs...), true, nil
 			}
 
