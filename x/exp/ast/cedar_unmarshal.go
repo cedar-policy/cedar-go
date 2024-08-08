@@ -807,14 +807,15 @@ func (p *parser) expressions(endOfListMarker string) ([]Node, error) {
 
 func (p *parser) record() (Node, error) {
 	var res Node
-	entries := map[types.String]Node{}
+	var elements []RecordElement
+	known := map[types.String]struct{}{}
 	for {
 		t := p.peek()
 		if t.Text == "}" {
 			p.advance()
-			return RecordNodes(entries), nil
+			return RecordElements(elements...), nil
 		}
-		if len(entries) > 0 {
+		if len(elements) > 0 {
 			if err := p.exact(","); err != nil {
 				return res, err
 			}
@@ -824,10 +825,11 @@ func (p *parser) record() (Node, error) {
 			return res, err
 		}
 
-		if _, ok := entries[k]; ok {
+		if _, ok := known[k]; ok {
 			return res, p.errorf("duplicate key: %v", k)
 		}
-		entries[k] = v
+		known[k] = struct{}{}
+		elements = append(elements, RecordElement{Key: k, Value: v})
 	}
 }
 

@@ -81,6 +81,19 @@ func RecordNodes(entries map[types.String]Node) Node {
 	return newNode(res)
 }
 
+type RecordElement struct {
+	Key   types.String
+	Value Node
+}
+
+func RecordElements(elements ...RecordElement) Node {
+	var res nodeTypeRecord
+	for _, e := range elements {
+		res.Elements = append(res.Elements, recordElement{Key: e.Key, Value: e.Value.v})
+	}
+	return newNode(res)
+}
+
 func EntityType(e types.String) Node {
 	return newValueNode(e)
 }
