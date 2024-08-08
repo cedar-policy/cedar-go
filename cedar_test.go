@@ -519,8 +519,8 @@ func TestIsAuthorized(t *testing.T) {
 			Resource:  types.NewEntityUID("table", "whatever"),
 			Context:   types.Record{},
 			Want:      false,
-			DiagErr:   0,
-			ParseErr:  true,
+			DiagErr:   1,
+			ParseErr:  false,
 		},
 		{
 			Name:      "permit-when-like",
@@ -542,8 +542,8 @@ func TestIsAuthorized(t *testing.T) {
 			Resource:  types.NewEntityUID("table", "whatever"),
 			Context:   types.Record{},
 			Want:      false,
-			DiagErr:   0,
-			ParseErr:  true,
+			DiagErr:   1,
+			ParseErr:  false,
 		},
 		{
 			Name: "permit-when-decimal",
