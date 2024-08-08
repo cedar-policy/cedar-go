@@ -3,8 +3,10 @@ package types
 import (
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/testutil"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
+
+// TODO: this file should not be public, it should be moved into the eval code
 
 func AssertValue(t *testing.T, got, want Value) {
 	t.Helper()
