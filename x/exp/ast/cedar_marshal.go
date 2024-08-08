@@ -4,7 +4,7 @@ import (
 	"bytes"
 )
 
-// TODO: Add errors to all of this!
+// TODO: Add errors to all of this! TODO: review this ask, I'm not sure any real errors are possible.  All buf errors are panics.
 func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
 	for _, a := range p.annotations {
 		a.MarshalCedar(buf)
