@@ -107,7 +107,7 @@ type nodeTypeHas struct {
 
 type nodeTypeLike struct {
 	Arg   node
-	Value Pattern
+	Value types.Pattern
 }
 
 func (n nodeTypeLike) precedenceLevel() nodePrecedenceLevel {

@@ -119,12 +119,12 @@ func patternToJSON(dest **patternJSON, src nodeTypeLike) error {
 	if err := res.Left.FromNode(src.Arg); err != nil {
 		return fmt.Errorf("error in left: %w", err)
 	}
-	for _, comp := range src.Value.Comps {
-		if comp.Star {
+	for _, comp := range src.Value.Components {
+		if comp.Wildcard {
 			res.Pattern = append(res.Pattern, patternComponentJSON{Wildcard: true})
 		}
-		if comp.Chunk != "" {
-			res.Pattern = append(res.Pattern, patternComponentJSON{Literal: patternComponentLiteralJSON{Literal: comp.Chunk}})
+		if comp.Literal != "" {
+			res.Pattern = append(res.Pattern, patternComponentJSON{Literal: patternComponentLiteralJSON{Literal: comp.Literal}})
 		}
 	}
 	*dest = res

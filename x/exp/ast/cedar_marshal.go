@@ -297,7 +297,7 @@ func (n nodeTypeIsIn) marshalCedar(buf *bytes.Buffer) {
 func (n nodeTypeLike) marshalCedar(buf *bytes.Buffer) {
 	marshalChildNode(n.precedenceLevel(), n.Arg, buf)
 	buf.WriteString(" like ")
-	n.Value.MarshalCedar(buf)
+	buf.WriteString(n.Value.Cedar())
 }
 
 func (n nodeTypeIf) marshalCedar(buf *bytes.Buffer) {
