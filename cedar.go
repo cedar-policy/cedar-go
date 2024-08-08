@@ -6,8 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/types"
-	"github.com/cedar-policy/cedar-go/x/exp/ast"
 	"golang.org/x/exp/maps"
 )
 

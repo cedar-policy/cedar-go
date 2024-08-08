@@ -3,8 +3,8 @@ package ast_test
 import (
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/types"
-	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 // These tests mostly verify that policy ASTs compile
