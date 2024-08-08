@@ -55,6 +55,7 @@ func SetNodes(nodes ...Node) Node {
 // Record is a convenience function that wraps concrete instances of a Cedar Record type
 // types in AST value nodes and passes them along to RecordNodes.
 func Record(r types.Record) Node {
+	// TODO: this results in a double allocation, fix that
 	recordNodes := map[types.String]Node{}
 	for k, v := range r {
 		recordNodes[types.String(k)] = valueToNode(v)

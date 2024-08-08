@@ -1714,8 +1714,8 @@ func TestInNode(t *testing.T) {
 					Parents: ps,
 				}
 			}
-			EvalContext := EvalContext{Entities: entities}
-			v, err := n.Eval(&EvalContext)
+			ec := EvalContext{Entities: entities}
+			v, err := n.Eval(&ec)
 			testutil.AssertError(t, err, tt.err)
 			types.AssertValue(t, v, tt.result)
 		})
