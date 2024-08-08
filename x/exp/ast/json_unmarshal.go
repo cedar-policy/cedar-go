@@ -58,12 +58,12 @@ func (j strJSON) ToNode(f func(a Node, k string) Node) (Node, error) {
 	}
 	return f(left, j.Attr), nil
 }
-func (j patternJSON) ToNode(f func(a Node, k Pattern) Node) (Node, error) {
+func (j patternJSON) ToNode(f func(a Node, k types.Pattern) Node) (Node, error) {
 	left, err := j.Left.ToNode()
 	if err != nil {
 		return Node{}, fmt.Errorf("error in left: %w", err)
 	}
-	pattern := &Pattern{}
+	pattern := &types.Pattern{}
 	for _, compJSON := range j.Pattern {
 		if compJSON.Wildcard {
 			pattern = pattern.AddWildcard()

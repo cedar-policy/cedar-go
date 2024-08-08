@@ -877,10 +877,10 @@ func (n *hasEval) Eval(ctx *EvalContext) (types.Value, error) {
 // likeEval
 type likeEval struct {
 	lhs     Evaler
-	pattern Pattern
+	pattern types.Pattern
 }
 
-func newLikeEval(lhs Evaler, pattern Pattern) *likeEval {
+func newLikeEval(lhs Evaler, pattern types.Pattern) *likeEval {
 	return &likeEval{lhs: lhs, pattern: pattern}
 }
 
@@ -889,7 +889,7 @@ func (l *likeEval) Eval(ctx *EvalContext) (types.Value, error) {
 	if err != nil {
 		return types.ZeroValue(), err
 	}
-	return types.Boolean(match(l.pattern, string(v))), nil
+	return types.Boolean(l.pattern.Match(string(v))), nil
 }
 
 type variableName func(ctx *EvalContext) types.Value
