@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/testutil"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestPatternFromBuilder(t *testing.T) {

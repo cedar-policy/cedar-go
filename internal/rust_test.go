@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal"
-	"github.com/cedar-policy/cedar-go/testutil"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestParseUnicodeEscape(t *testing.T) {

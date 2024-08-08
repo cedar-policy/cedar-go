@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/testutil"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func mustDecimalValue(v string) Decimal {
