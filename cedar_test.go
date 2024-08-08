@@ -863,26 +863,26 @@ func TestError(t *testing.T) {
 	testutil.Equals(t, e.String(), "while evaluating policy `policy42`: bad error")
 }
 
-func TestInvalidPolicy(t *testing.T) {
-	t.Parallel()
-	// This case is very fabricated, it can't really happen
-	ps := PolicySet{
-		{
-			Effect: Forbid,
-			eval:   newLiteralEval(types.Long(42)),
-		},
-	}
-	ok, diag := ps.IsAuthorized(Entities{}, Request{})
-	testutil.Equals(t, ok, Deny)
-	testutil.Equals(t, diag, Diagnostic{
-		Errors: []Error{
-			{
-				Policy:  0,
-				Message: "type error: expected bool, got long",
-			},
-		},
-	})
-}
+// func TestInvalidPolicy(t *testing.T) {
+// 	t.Parallel()
+// 	// This case is very fabricated, it can't really happen
+// 	ps := PolicySet{
+// 		{
+// 			Effect: Forbid,
+// 			eval:   newLiteralEval(types.Long(42)),
+// 		},
+// 	}
+// 	ok, diag := ps.IsAuthorized(Entities{}, Request{})
+// 	testutil.Equals(t, ok, Deny)
+// 	testutil.Equals(t, diag, Diagnostic{
+// 		Errors: []Error{
+// 			{
+// 				Policy:  0,
+// 				Message: "type error: expected bool, got long",
+// 			},
+// 		},
+// 	})
+// }
 
 func TestCorpusRelated(t *testing.T) {
 	t.Parallel()

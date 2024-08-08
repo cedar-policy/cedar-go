@@ -160,6 +160,10 @@ type Request struct {
 	Context   types.Record    `json:"context"`
 }
 
+type evalContext = ast.EvalContext
+
+type evaler = ast.Evaler
+
 // IsAuthorized uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
 func (p PolicySet) IsAuthorized(entities Entities, req Request) (Decision, Diagnostic) {
