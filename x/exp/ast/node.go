@@ -231,7 +231,9 @@ type nodeTypeContainsAny struct {
 	containsNode
 }
 
-type primaryNode struct{ node }
+type primaryNode struct{}
+
+func (n primaryNode) isNode() {}
 
 func (n primaryNode) precedenceLevel() nodePrecedenceLevel {
 	return primaryPrecedence
