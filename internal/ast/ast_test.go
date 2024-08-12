@@ -3,7 +3,7 @@ package ast_test
 import (
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/ast"
+	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
