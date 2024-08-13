@@ -14,6 +14,10 @@ func newNode(v node) Node {
 	return Node{v: v}
 }
 
+func NewNode(v node) Node {
+	return Node{v: v}
+}
+
 type strOpNode struct {
 	Arg   node
 	Value types.String
