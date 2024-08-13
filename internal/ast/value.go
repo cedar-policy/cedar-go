@@ -1,8 +1,6 @@
 package ast
 
 import (
-	"fmt"
-
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -31,7 +29,7 @@ func Long(l types.Long) Node {
 func Set(s types.Set) Node {
 	var nodes []IsNode
 	for _, v := range s {
-		nodes = append(nodes, valueToNode(v).v)
+		nodes = append(nodes, NewValueNode(v).v)
 	}
 	return NewNode(NodeTypeSet{Elements: nodes})
 }
@@ -58,7 +56,7 @@ func Record(r types.Record) Node {
 	// TODO: this results in a double allocation, fix that
 	recordNodes := map[types.String]Node{}
 	for k, v := range r {
-		recordNodes[types.String(k)] = valueToNode(v)
+		recordNodes[types.String(k)] = NewValueNode(v)
 	}
 	return RecordNodes(recordNodes)
 }
@@ -112,27 +110,4 @@ func ExtensionCall(name types.String, args ...Node) Node {
 
 func NewValueNode(v types.Value) Node {
 	return NewNode(NodeValue{Value: v})
-}
-
-func valueToNode(v types.Value) Node {
-	switch x := v.(type) {
-	case types.Boolean:
-		return Boolean(x)
-	case types.String:
-		return String(x)
-	case types.Long:
-		return Long(x)
-	case types.Set:
-		return Set(x)
-	case types.Record:
-		return Record(x)
-	case types.EntityUID:
-		return EntityUID(x)
-	case types.Decimal:
-		return Decimal(x)
-	case types.IPAddr:
-		return IPAddr(x)
-	default:
-		panic(fmt.Sprintf("unexpected value type: %T(%v)", v, v))
-	}
 }
