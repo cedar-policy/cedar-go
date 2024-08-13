@@ -1,10 +1,11 @@
-package ast_test
+package parser_test
 
 import (
 	"bytes"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -433,9 +434,9 @@ when { (if true then 2 else 3) * 4 == 8 };`,
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 
-			var policy ast.Policy
+			var policy parser.Policy
 			testutil.OK(t, policy.UnmarshalCedar([]byte(tt.Text)))
-			testutil.Equals(t, policy, *tt.ExpectedPolicy)
+			testutil.Equals(t, policy, parser.Policy{*tt.ExpectedPolicy})
 
 			var buf bytes.Buffer
 			policy.MarshalCedar(&buf)
@@ -449,7 +450,7 @@ func TestParsePolicySet(t *testing.T) {
 	parseTests := []struct {
 		Name             string
 		Text             string
-		ExpectedPolicies ast.PolicySet
+		ExpectedPolicies parser.PolicySet
 	}{
 		{
 			"single policy",
@@ -458,10 +459,10 @@ func TestParsePolicySet(t *testing.T) {
 			action,
 			resource
 		);`,
-			ast.PolicySet{
-				"policy0": ast.PolicySetEntry{
-					*ast.Permit(),
-					ast.Position{Offset: 0, Line: 1, Column: 1},
+			parser.PolicySet{
+				"policy0": parser.PolicySetEntry{
+					parser.Policy{*ast.Permit()},
+					parser.Position{Offset: 0, Line: 1, Column: 1},
 				},
 			},
 		},
@@ -477,14 +478,14 @@ func TestParsePolicySet(t *testing.T) {
 			action,
 			resource
 		);`,
-			ast.PolicySet{
-				"policy0": ast.PolicySetEntry{
-					*ast.Permit(),
-					ast.Position{Offset: 0, Line: 1, Column: 1},
+			parser.PolicySet{
+				"policy0": parser.PolicySetEntry{
+					parser.Policy{*ast.Permit()},
+					parser.Position{Offset: 0, Line: 1, Column: 1},
 				},
-				"policy1": ast.PolicySetEntry{
-					*ast.Forbid(),
-					ast.Position{Offset: 53, Line: 6, Column: 3},
+				"policy1": parser.PolicySetEntry{
+					parser.Policy{*ast.Forbid()},
+					parser.Position{Offset: 53, Line: 6, Column: 3},
 				},
 			},
 		},
@@ -493,7 +494,7 @@ func TestParsePolicySet(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 
-			var policies ast.PolicySet
+			var policies parser.PolicySet
 			testutil.OK(t, policies.UnmarshalCedar([]byte(tt.Text)))
 			testutil.Equals(t, policies, tt.ExpectedPolicies)
 		})

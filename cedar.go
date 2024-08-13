@@ -4,9 +4,9 @@ package cedar
 import (
 	"fmt"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/entities"
 	"github.com/cedar-policy/cedar-go/internal/eval"
+	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -61,7 +61,7 @@ func (a *Effect) UnmarshalJSON(b []byte) error {
 // given file name used in Position data.  If there is an error parsing the
 // document, it will be returned.
 func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
-	var res ast.PolicySet
+	var res parser.PolicySet
 	if err := res.UnmarshalCedar(document); err != nil {
 		return nil, fmt.Errorf("parser error: %w", err)
 	}
@@ -77,7 +77,7 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 			},
 			Annotations: ann,
 			Effect:      Effect(p.TmpGetEffect()),
-			eval:        eval.Compile(p.Policy),
+			eval:        eval.Compile(p.Policy.Policy),
 		})
 	}
 	return policies, nil

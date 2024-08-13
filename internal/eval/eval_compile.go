@@ -1,12 +1,8 @@
 package eval
 
-import "github.com/cedar-policy/cedar-go/internal/ast"
-
-type CompiledPolicySet map[string]CompiledPolicy
-
-type CompiledPolicy struct {
-	ast.PolicySetEntry
-}
+import (
+	"github.com/cedar-policy/cedar-go/internal/ast"
+)
 
 func Compile(p ast.Policy) Evaler {
 	node := policyToNode(p).AsIsNode()
