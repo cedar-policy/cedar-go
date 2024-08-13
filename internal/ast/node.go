@@ -10,10 +10,6 @@ type Node struct {
 	v IsNode // NOTE: not an embed because a `Node` is not a `node`
 }
 
-func newNode(v IsNode) Node {
-	return Node{v: v}
-}
-
 func NewNode(v IsNode) Node {
 	return Node{v: v}
 }
@@ -198,7 +194,7 @@ func stripNodes(args []Node) []IsNode {
 }
 
 func newExtensionCall(method types.String, args ...Node) Node {
-	return newNode(NodeTypeExtensionCall{
+	return NewNode(NodeTypeExtensionCall{
 		Name: method,
 		Args: stripNodes(args),
 	})
@@ -210,7 +206,7 @@ func newMethodCall(lhs Node, method types.String, args ...Node) Node {
 	for i, v := range args {
 		res[i+1] = v.v
 	}
-	return newNode(NodeTypeExtensionCall{
+	return NewNode(NodeTypeExtensionCall{
 		Name: method,
 		Args: res,
 	})
