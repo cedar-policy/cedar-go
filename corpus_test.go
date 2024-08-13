@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	entities2 "github.com/cedar-policy/cedar-go/internal/entities"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -138,7 +139,7 @@ func TestCorpus(t *testing.T) {
 				t.Fatal("error reading entities content", err)
 			}
 
-			var entities Entities
+			var entities entities2.Entities
 			if err := json.Unmarshal(entitiesContent, &entities); err != nil {
 				t.Fatal("error unmarshalling test", err)
 			}

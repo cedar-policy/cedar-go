@@ -3,6 +3,7 @@ package ast
 import (
 	"fmt"
 
+	"github.com/cedar-policy/cedar-go/internal/entities"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -15,7 +16,7 @@ var errUnspecifiedEntity = fmt.Errorf("unspecified entity")
 
 // TODO: make private again
 type EvalContext struct {
-	Entities                    Entities
+	Entities                    entities.Entities
 	Principal, Action, Resource types.Value
 	Context                     types.Value
 }
@@ -921,7 +922,7 @@ func newInEval(lhs, rhs Evaler) *inEval {
 	return &inEval{lhs: lhs, rhs: rhs}
 }
 
-func entityIn(entity types.EntityUID, query map[types.EntityUID]struct{}, entities Entities) bool {
+func entityIn(entity types.EntityUID, query map[types.EntityUID]struct{}, entityMap entities.Entities) bool {
 	checked := map[types.EntityUID]struct{}{}
 	toCheck := []types.EntityUID{entity}
 	for len(toCheck) > 0 {
@@ -933,7 +934,7 @@ func entityIn(entity types.EntityUID, query map[types.EntityUID]struct{}, entiti
 		if _, ok := query[candidate]; ok {
 			return true
 		}
-		toCheck = append(toCheck, entities[candidate].Parents...)
+		toCheck = append(toCheck, entityMap[candidate].Parents...)
 		checked[candidate] = struct{}{}
 	}
 	return false

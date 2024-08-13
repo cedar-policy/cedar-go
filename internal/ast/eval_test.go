@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/internal/entities"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -1283,13 +1284,14 @@ func TestAttributeAccessNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newAttributeAccessEval(tt.object, tt.attribute)
+			entity := entities.Entity{
+				UID:        types.NewEntityUID("knownType", "knownID"),
+				Attributes: types.Record{"knownAttr": types.Long(42)},
+			}
 			v, err := n.Eval(&EvalContext{
-				Entities: entitiesFromSlice([]Entity{
-					{
-						UID:        types.NewEntityUID("knownType", "knownID"),
-						Attributes: types.Record{"knownAttr": types.Long(42)},
-					},
-				}),
+				Entities: entities.Entities{
+					entity.UID: entity,
+				},
 			})
 			testutil.AssertError(t, err, tt.err)
 			types.AssertValue(t, v, tt.result)
@@ -1339,13 +1341,14 @@ func TestHasNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newHasEval(tt.record, tt.attribute)
+			entity := entities.Entity{
+				UID:        types.NewEntityUID("knownType", "knownID"),
+				Attributes: types.Record{"knownAttr": types.Long(42)},
+			}
 			v, err := n.Eval(&EvalContext{
-				Entities: entitiesFromSlice([]Entity{
-					{
-						UID:        types.NewEntityUID("knownType", "knownID"),
-						Attributes: types.Record{"knownAttr": types.Long(42)},
-					},
-				}),
+				Entities: entities.Entities{
+					entity.UID: entity,
+				},
 			})
 			testutil.AssertError(t, err, tt.err)
 			types.AssertValue(t, v, tt.result)
@@ -1535,19 +1538,19 @@ func TestEntityIn(t *testing.T) {
 			for _, v := range tt.rhs {
 				rhs[strEnt(v)] = struct{}{}
 			}
-			entities := Entities{}
+			entityMap := entities.Entities{}
 			for k, p := range tt.parents {
 				var ps []types.EntityUID
 				for _, pp := range p {
 					ps = append(ps, strEnt(pp))
 				}
 				uid := strEnt(k)
-				entities[uid] = Entity{
+				entityMap[uid] = entities.Entity{
 					UID:     uid,
 					Parents: ps,
 				}
 			}
-			res := entityIn(strEnt(tt.lhs), rhs, entities)
+			res := entityIn(strEnt(tt.lhs), rhs, entityMap)
 			testutil.Equals(t, res, tt.result)
 		})
 	}
@@ -1556,25 +1559,25 @@ func TestEntityIn(t *testing.T) {
 		// This test will run for a very long time (O(2^100)) if there isn't caching.
 		)
 
-		entities := Entities{}
+		entityMap := entities.Entities{}
 		for i := 0; i < 100; i++ {
 			p := []types.EntityUID{
 				types.NewEntityUID(fmt.Sprint(i+1), "1"),
 				types.NewEntityUID(fmt.Sprint(i+1), "2"),
 			}
 			uid1 := types.NewEntityUID(fmt.Sprint(i), "1")
-			entities[uid1] = Entity{
+			entityMap[uid1] = entities.Entity{
 				UID:     uid1,
 				Parents: p,
 			}
 			uid2 := types.NewEntityUID(fmt.Sprint(i), "2")
-			entities[uid2] = Entity{
+			entityMap[uid2] = entities.Entity{
 				UID:     uid2,
 				Parents: p,
 			}
 
 		}
-		res := entityIn(types.NewEntityUID("0", "1"), map[types.EntityUID]struct{}{types.NewEntityUID("0", "3"): {}}, entities)
+		res := entityIn(types.NewEntityUID("0", "1"), map[types.EntityUID]struct{}{types.NewEntityUID("0", "3"): {}}, entityMap)
 		testutil.Equals(t, res, false)
 	})
 }
@@ -1702,19 +1705,19 @@ func TestInNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newInEval(tt.lhs, tt.rhs)
-			entities := Entities{}
+			entityMap := entities.Entities{}
 			for k, p := range tt.parents {
 				var ps []types.EntityUID
 				for _, pp := range p {
 					ps = append(ps, strEnt(pp))
 				}
 				uid := strEnt(k)
-				entities[uid] = Entity{
+				entityMap[uid] = entities.Entity{
 					UID:     uid,
 					Parents: ps,
 				}
 			}
-			ec := EvalContext{Entities: entities}
+			ec := EvalContext{Entities: entityMap}
 			v, err := n.Eval(&ec)
 			testutil.AssertError(t, err, tt.err)
 			types.AssertValue(t, v, tt.result)

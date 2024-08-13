@@ -3,12 +3,10 @@ package cedar
 
 import (
 	"fmt"
-	"slices"
-	"strings"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/entities"
 	"github.com/cedar-policy/cedar-go/types"
-	"golang.org/x/exp/maps"
 )
 
 // A PolicySet is a slice of policies.
@@ -84,25 +82,6 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 	return policies, nil
 }
 
-type Entities = ast.Entities
-type Entity = ast.Entity
-
-func entitiesFromSlice(s []Entity) Entities {
-	var res = Entities{}
-	for _, e := range s {
-		res[e.UID] = e
-	}
-	return res
-}
-
-func entitiesToSlice(e Entities) []Entity {
-	s := maps.Values(e)
-	slices.SortFunc(s, func(a, b Entity) int {
-		return strings.Compare(a.UID.String(), b.UID.String())
-	})
-	return s
-}
-
 // A Decision is the result of the authorization.
 type Decision bool
 
@@ -166,9 +145,9 @@ type evaler = ast.Evaler
 
 // IsAuthorized uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
-func (p PolicySet) IsAuthorized(entities Entities, req Request) (Decision, Diagnostic) {
+func (p PolicySet) IsAuthorized(entityMap entities.Entities, req Request) (Decision, Diagnostic) {
 	c := &evalContext{
-		Entities:  entities,
+		Entities:  entityMap,
 		Principal: req.Principal,
 		Action:    req.Action,
 		Resource:  req.Resource,
