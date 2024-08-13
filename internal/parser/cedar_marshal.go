@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -162,7 +163,7 @@ func (n NodeTypeAccess) marshalCedar(buf *bytes.Buffer) {
 
 func (n NodeTypeExtensionCall) marshalCedar(buf *bytes.Buffer) {
 	var args []ast.IsNode
-	info := ast.ExtMap[n.NodeTypeExtensionCall.Name]
+	info := extensions.ExtMap[n.NodeTypeExtensionCall.Name]
 	if info.IsMethod {
 		marshalChildNode(n.precedenceLevel(), n.NodeTypeExtensionCall.Args[0], buf)
 		buf.WriteRune('.')

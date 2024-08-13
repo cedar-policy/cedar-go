@@ -1,4 +1,4 @@
-package ast
+package extensions
 
 import "github.com/cedar-policy/cedar-go/types"
 

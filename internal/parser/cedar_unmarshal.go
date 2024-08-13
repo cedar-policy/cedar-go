@@ -777,7 +777,7 @@ func (p *parser) entityOrExtFun(ident string) (ast.Node, error) {
 				return ast.Node{}, err
 			}
 			p.advance()
-			// i, ok := extMap[types.String(res.Type)]
+			// i, ok := extensions.ExtMap[types.String(res.Type)]
 			// if !ok {
 			// 	return Node{}, p.errorf("`%v` is not a function", res.Type)
 			// }
@@ -890,7 +890,7 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 			case "containsAny":
 				knownMethod = ast.Node.ContainsAny
 			default:
-				// i, ok := extMap[types.String(methodName)]
+				// i, ok := extensions.ExtMap[types.String(methodName)]
 				// if !ok {
 				// 	return Node{}, false, p.errorf("not a valid method name: `%v`", methodName)
 				// }

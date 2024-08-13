@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -25,7 +26,7 @@ func toEval(n ast.IsNode) Evaler {
 		rhs := newInEval(obj, toEval(v.Entity))
 		return newAndEval(lhs, rhs)
 	case ast.NodeTypeExtensionCall:
-		i, ok := ast.ExtMap[v.Name]
+		i, ok := extensions.ExtMap[v.Name]
 		if !ok {
 			return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, v.Name))
 		}
