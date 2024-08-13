@@ -1,10 +1,11 @@
-package ast
+package parser
 
 import (
 	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -21,9 +22,11 @@ func (p *PolicySet) UnmarshalCedar(b []byte) error {
 	for !parser.peek().isEOF() {
 		pos := parser.peek().Pos
 		policy := Policy{
-			Principal: ScopeTypeAll{},
-			Action:    ScopeTypeAll{},
-			Resource:  ScopeTypeAll{},
+			ast.Policy{
+				Principal: ast.ScopeTypeAll{},
+				Action:    ast.ScopeTypeAll{},
+				Resource:  ast.ScopeTypeAll{},
+			},
 		}
 
 		if err = policy.fromCedarWithParser(&parser); err != nil {
@@ -88,7 +91,7 @@ func (p *Policy) fromCedarWithParser(parser *parser) error {
 		return err
 	}
 
-	*p = *newPolicy
+	*p = Policy{*newPolicy}
 	return nil
 }
 
@@ -130,8 +133,8 @@ func (p *parser) errorf(s string, args ...interface{}) error {
 	return fmt.Errorf("parse error at %v %q: %w", t.Pos, t.Text, err)
 }
 
-func (p *parser) annotations() (Annotations, error) {
-	var res Annotations
+func (p *parser) annotations() (ast.Annotations, error) {
+	var res ast.Annotations
 	known := map[types.String]struct{}{}
 	for p.peek().Text == "@" {
 		p.advance()
@@ -144,7 +147,7 @@ func (p *parser) annotations() (Annotations, error) {
 
 }
 
-func (p *parser) annotation(a *Annotations, known map[types.String]struct{}) error {
+func (p *parser) annotation(a *ast.Annotations, known map[types.String]struct{}) error {
 	var err error
 	t := p.advance()
 	if !t.isIdent() {
@@ -174,7 +177,7 @@ func (p *parser) annotation(a *Annotations, known map[types.String]struct{}) err
 	return nil
 }
 
-func (p *parser) effect(a *Annotations) (*Policy, error) {
+func (p *parser) effect(a *ast.Annotations) (*ast.Policy, error) {
 	next := p.advance()
 	if next.Text == "permit" {
 		return a.Permit(), nil
@@ -185,7 +188,7 @@ func (p *parser) effect(a *Annotations) (*Policy, error) {
 	return nil, p.errorf("unexpected effect: %v", next.Text)
 }
 
-func (p *parser) principal(policy *Policy) error {
+func (p *parser) principal(policy *ast.Policy) error {
 	if err := p.exact("principal"); err != nil {
 		return err
 	}
@@ -287,7 +290,7 @@ func (p *parser) path() (types.Path, error) {
 	return p.pathFirstPathPreread(t.Text)
 }
 
-func (p *parser) action(policy *Policy) error {
+func (p *parser) action(policy *ast.Policy) error {
 	if err := p.exact("action"); err != nil {
 		return err
 	}
@@ -341,7 +344,7 @@ func (p *parser) entlist() ([]types.EntityUID, error) {
 	return res, nil
 }
 
-func (p *parser) resource(policy *Policy) error {
+func (p *parser) resource(policy *ast.Policy) error {
 	if err := p.exact("resource"); err != nil {
 		return err
 	}
@@ -385,7 +388,7 @@ func (p *parser) resource(policy *Policy) error {
 	return nil
 }
 
-func (p *parser) conditions(policy *Policy) error {
+func (p *parser) conditions(policy *ast.Policy) error {
 	for {
 		switch p.peek().Text {
 		case "when":
@@ -408,8 +411,8 @@ func (p *parser) conditions(policy *Policy) error {
 	}
 }
 
-func (p *parser) condition() (Node, error) {
-	var res Node
+func (p *parser) condition() (ast.Node, error) {
+	var res ast.Node
 	var err error
 	if err := p.exact("{"); err != nil {
 		return res, err
@@ -423,49 +426,49 @@ func (p *parser) condition() (Node, error) {
 	return res, nil
 }
 
-func (p *parser) expression() (Node, error) {
+func (p *parser) expression() (ast.Node, error) {
 	t := p.peek()
 	if t.Text == "if" {
 		p.advance()
 
 		condition, err := p.expression()
 		if err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 
 		if err = p.exact("then"); err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 		ifTrue, err := p.expression()
 		if err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 
 		if err = p.exact("else"); err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 		ifFalse, err := p.expression()
 		if err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 
-		return If(condition, ifTrue, ifFalse), nil
+		return ast.If(condition, ifTrue, ifFalse), nil
 	}
 
 	return p.or()
 }
 
-func (p *parser) or() (Node, error) {
+func (p *parser) or() (ast.Node, error) {
 	lhs, err := p.and()
 	if err != nil {
-		return Node{}, err
+		return ast.Node{}, err
 	}
 
 	for p.peek().Text == "||" {
 		p.advance()
 		rhs, err := p.and()
 		if err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 		lhs = lhs.Or(rhs)
 	}
@@ -473,17 +476,17 @@ func (p *parser) or() (Node, error) {
 	return lhs, nil
 }
 
-func (p *parser) and() (Node, error) {
+func (p *parser) and() (ast.Node, error) {
 	lhs, err := p.relation()
 	if err != nil {
-		return Node{}, err
+		return ast.Node{}, err
 	}
 
 	for p.peek().Text == "&&" {
 		p.advance()
 		rhs, err := p.relation()
 		if err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 		lhs = lhs.And(rhs)
 	}
@@ -491,10 +494,10 @@ func (p *parser) and() (Node, error) {
 	return lhs, nil
 }
 
-func (p *parser) relation() (Node, error) {
+func (p *parser) relation() (ast.Node, error) {
 	lhs, err := p.add()
 	if err != nil {
-		return Node{}, err
+		return ast.Node{}, err
 	}
 
 	t := p.peek()
@@ -511,22 +514,22 @@ func (p *parser) relation() (Node, error) {
 	}
 
 	// RELOP
-	var operator func(Node, Node) Node
+	var operator func(ast.Node, ast.Node) ast.Node
 	switch t.Text {
 	case "<":
-		operator = Node.LessThan
+		operator = ast.Node.LessThan
 	case "<=":
-		operator = Node.LessThanOrEqual
+		operator = ast.Node.LessThanOrEqual
 	case ">":
-		operator = Node.GreaterThan
+		operator = ast.Node.GreaterThan
 	case ">=":
-		operator = Node.GreaterThanOrEqual
+		operator = ast.Node.GreaterThanOrEqual
 	case "!=":
-		operator = Node.NotEquals
+		operator = ast.Node.NotEquals
 	case "==":
-		operator = Node.Equals
+		operator = ast.Node.Equals
 	case "in":
-		operator = Node.In
+		operator = ast.Node.In
 	default:
 		return lhs, nil
 
@@ -535,70 +538,70 @@ func (p *parser) relation() (Node, error) {
 	p.advance()
 	rhs, err := p.add()
 	if err != nil {
-		return Node{}, err
+		return ast.Node{}, err
 	}
 	return operator(lhs, rhs), nil
 }
 
-func (p *parser) has(lhs Node) (Node, error) {
+func (p *parser) has(lhs ast.Node) (ast.Node, error) {
 	t := p.advance()
 	if t.isIdent() {
 		return lhs.Has(t.Text), nil
 	} else if t.isString() {
 		str, err := t.stringValue()
 		if err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 		return lhs.Has(str), nil
 	}
-	return Node{}, p.errorf("expected ident or string")
+	return ast.Node{}, p.errorf("expected ident or string")
 }
 
-func (p *parser) like(lhs Node) (Node, error) {
+func (p *parser) like(lhs ast.Node) (ast.Node, error) {
 	t := p.advance()
 	if !t.isString() {
-		return Node{}, p.errorf("expected string literal")
+		return ast.Node{}, p.errorf("expected string literal")
 	}
 	patternRaw := t.Text
 	patternRaw = strings.TrimPrefix(patternRaw, "\"")
 	patternRaw = strings.TrimSuffix(patternRaw, "\"")
 	pattern, err := types.ParsePattern(patternRaw)
 	if err != nil {
-		return Node{}, err
+		return ast.Node{}, err
 	}
 	return lhs.Like(pattern), nil
 }
 
-func (p *parser) is(lhs Node) (Node, error) {
+func (p *parser) is(lhs ast.Node) (ast.Node, error) {
 	entityType, err := p.path()
 	if err != nil {
-		return Node{}, err
+		return ast.Node{}, err
 	}
 	if p.peek().Text == "in" {
 		p.advance()
 		inEntity, err := p.add()
 		if err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 		return lhs.IsIn(entityType, inEntity), nil
 	}
 	return lhs.Is(entityType), nil
 }
 
-func (p *parser) add() (Node, error) {
+func (p *parser) add() (ast.Node, error) {
 	lhs, err := p.mult()
 	if err != nil {
-		return Node{}, err
+		return ast.Node{}, err
 	}
 
 	for {
 		t := p.peek()
-		var operator func(Node, Node) Node
+		var operator func(ast.Node, ast.Node) ast.Node
 		switch t.Text {
 		case "+":
-			operator = Node.Plus
+			operator = ast.Node.Plus
 		case "-":
-			operator = Node.Minus
+			operator = ast.Node.Minus
 		}
 
 		if operator == nil {
@@ -608,7 +611,7 @@ func (p *parser) add() (Node, error) {
 		p.advance()
 		rhs, err := p.mult()
 		if err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 		lhs = operator(lhs, rhs)
 	}
@@ -616,17 +619,17 @@ func (p *parser) add() (Node, error) {
 	return lhs, nil
 }
 
-func (p *parser) mult() (Node, error) {
+func (p *parser) mult() (ast.Node, error) {
 	lhs, err := p.unary()
 	if err != nil {
-		return Node{}, err
+		return ast.Node{}, err
 	}
 
 	for p.peek().Text == "*" {
 		p.advance()
 		rhs, err := p.unary()
 		if err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
 		lhs = lhs.Times(rhs)
 	}
@@ -634,7 +637,7 @@ func (p *parser) mult() (Node, error) {
 	return lhs, nil
 }
 
-func (p *parser) unary() (Node, error) {
+func (p *parser) unary() (ast.Node, error) {
 	var ops []bool
 	for {
 		opToken := p.peek()
@@ -645,7 +648,7 @@ func (p *parser) unary() (Node, error) {
 		ops = append(ops, opToken.Text == "-")
 	}
 
-	var res Node
+	var res ast.Node
 
 	// special case for max negative long
 	tok := p.peek()
@@ -653,9 +656,9 @@ func (p *parser) unary() (Node, error) {
 		p.advance()
 		i, err := strconv.ParseInt("-"+tok.Text, 10, 64)
 		if err != nil {
-			return Node{}, err
+			return ast.Node{}, err
 		}
-		res = Long(types.Long(i))
+		res = ast.Long(types.Long(i))
 		ops = ops[:len(ops)-1]
 	} else {
 		var err error
@@ -667,15 +670,15 @@ func (p *parser) unary() (Node, error) {
 
 	for i := len(ops) - 1; i >= 0; i-- {
 		if ops[i] {
-			res = Negate(res)
+			res = ast.Negate(res)
 		} else {
-			res = Not(res)
+			res = ast.Not(res)
 		}
 	}
 	return res, nil
 }
 
-func (p *parser) member() (Node, error) {
+func (p *parser) member() (ast.Node, error) {
 	res, err := p.primary()
 	if err != nil {
 		return res, err
@@ -689,8 +692,8 @@ func (p *parser) member() (Node, error) {
 	}
 }
 
-func (p *parser) primary() (Node, error) {
-	var res Node
+func (p *parser) primary() (ast.Node, error) {
+	var res ast.Node
 	t := p.advance()
 	switch {
 	case t.isInt():
@@ -698,25 +701,25 @@ func (p *parser) primary() (Node, error) {
 		if err != nil {
 			return res, err
 		}
-		res = Long(types.Long(i))
+		res = ast.Long(types.Long(i))
 	case t.isString():
 		str, err := t.stringValue()
 		if err != nil {
 			return res, err
 		}
-		res = String(types.String(str))
+		res = ast.String(types.String(str))
 	case t.Text == "true":
-		res = True()
+		res = ast.True()
 	case t.Text == "false":
-		res = False()
+		res = ast.False()
 	case t.Text == "principal":
-		res = Principal()
+		res = ast.Principal()
 	case t.Text == "action":
-		res = Action()
+		res = ast.Action()
 	case t.Text == "resource":
-		res = Resource()
+		res = ast.Resource()
 	case t.Text == "context":
-		res = Context()
+		res = ast.Context()
 	case t.isIdent():
 		return p.entityOrExtFun(t.Text)
 	case t.Text == "(":
@@ -734,7 +737,7 @@ func (p *parser) primary() (Node, error) {
 			return res, err
 		}
 		p.advance() // expressions guarantees "]"
-		res = SetNodes(set...)
+		res = ast.SetNodes(set...)
 	case t.Text == "{":
 		record, err := p.record()
 		if err != nil {
@@ -747,7 +750,7 @@ func (p *parser) primary() (Node, error) {
 	return res, nil
 }
 
-func (p *parser) entityOrExtFun(ident string) (Node, error) {
+func (p *parser) entityOrExtFun(ident string) (ast.Node, error) {
 	var res types.EntityUID
 	var err error
 	res.Type = ident
@@ -762,16 +765,16 @@ func (p *parser) entityOrExtFun(ident string) (Node, error) {
 			case t.isString():
 				res.ID, err = t.stringValue()
 				if err != nil {
-					return Node{}, err
+					return ast.Node{}, err
 				}
-				return EntityUID(res), nil
+				return ast.EntityUID(res), nil
 			default:
-				return Node{}, p.errorf("unexpected token")
+				return ast.Node{}, p.errorf("unexpected token")
 			}
 		case "(":
 			args, err := p.expressions(")")
 			if err != nil {
-				return Node{}, err
+				return ast.Node{}, err
 			}
 			p.advance()
 			// i, ok := extMap[types.String(res.Type)]
@@ -781,15 +784,15 @@ func (p *parser) entityOrExtFun(ident string) (Node, error) {
 			// if i.IsMethod {
 			// 	return Node{}, p.errorf("`%v` is a method, not a function", res.Type)
 			// }
-			return ExtensionCall(types.String(res.Type), args...), nil
+			return ast.ExtensionCall(types.String(res.Type), args...), nil
 		default:
-			return Node{}, p.errorf("unexpected token")
+			return ast.Node{}, p.errorf("unexpected token")
 		}
 	}
 }
 
-func (p *parser) expressions(endOfListMarker string) ([]Node, error) {
-	var res []Node
+func (p *parser) expressions(endOfListMarker string) ([]ast.Node, error) {
+	var res []ast.Node
 	for p.peek().Text != endOfListMarker {
 		if len(res) > 0 {
 			if err := p.exact(","); err != nil {
@@ -805,15 +808,15 @@ func (p *parser) expressions(endOfListMarker string) ([]Node, error) {
 	return res, nil
 }
 
-func (p *parser) record() (Node, error) {
-	var res Node
-	var elements []RecordElement
+func (p *parser) record() (ast.Node, error) {
+	var res ast.Node
+	var elements []ast.RecordElement
 	known := map[types.String]struct{}{}
 	for {
 		t := p.peek()
 		if t.Text == "}" {
 			p.advance()
-			return RecordElements(elements...), nil
+			return ast.RecordElements(elements...), nil
 		}
 		if len(elements) > 0 {
 			if err := p.exact(","); err != nil {
@@ -829,13 +832,13 @@ func (p *parser) record() (Node, error) {
 			return res, p.errorf("duplicate key: %v", k)
 		}
 		known[k] = struct{}{}
-		elements = append(elements, RecordElement{Key: k, Value: v})
+		elements = append(elements, ast.RecordElement{Key: k, Value: v})
 	}
 }
 
-func (p *parser) recordEntry() (types.String, Node, error) {
+func (p *parser) recordEntry() (types.String, ast.Node, error) {
 	var key types.String
-	var value Node
+	var value ast.Node
 	var err error
 	t := p.advance()
 	switch {
@@ -860,32 +863,32 @@ func (p *parser) recordEntry() (types.String, Node, error) {
 	return key, value, nil
 }
 
-func (p *parser) access(lhs Node) (Node, bool, error) {
+func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 	t := p.peek()
 	switch t.Text {
 	case ".":
 		p.advance()
 		t := p.advance()
 		if !t.isIdent() {
-			return Node{}, false, p.errorf("unexpected token")
+			return ast.Node{}, false, p.errorf("unexpected token")
 		}
 		if p.peek().Text == "(" {
 			methodName := t.Text
 			p.advance()
 			exprs, err := p.expressions(")")
 			if err != nil {
-				return Node{}, false, err
+				return ast.Node{}, false, err
 			}
 			p.advance() // expressions guarantees ")"
 
-			var knownMethod func(Node, Node) Node
+			var knownMethod func(ast.Node, ast.Node) ast.Node
 			switch methodName {
 			case "contains":
-				knownMethod = Node.Contains
+				knownMethod = ast.Node.Contains
 			case "containsAll":
-				knownMethod = Node.ContainsAll
+				knownMethod = ast.Node.ContainsAll
 			case "containsAny":
-				knownMethod = Node.ContainsAny
+				knownMethod = ast.Node.ContainsAny
 			default:
 				// i, ok := extMap[types.String(methodName)]
 				// if !ok {
@@ -894,11 +897,11 @@ func (p *parser) access(lhs Node) (Node, bool, error) {
 				// if !i.IsMethod {
 				// 	return Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
 				// }
-				return newMethodCall(lhs, types.String(methodName), exprs...), true, nil
+				return ast.NewMethodCall(lhs, types.String(methodName), exprs...), true, nil
 			}
 
 			if len(exprs) != 1 {
-				return Node{}, false, p.errorf("%v expects one argument", methodName)
+				return ast.Node{}, false, p.errorf("%v expects one argument", methodName)
 			}
 			return knownMethod(lhs, exprs[0]), true, nil
 		} else {
@@ -908,14 +911,14 @@ func (p *parser) access(lhs Node) (Node, bool, error) {
 		p.advance()
 		t := p.advance()
 		if !t.isString() {
-			return Node{}, false, p.errorf("unexpected token")
+			return ast.Node{}, false, p.errorf("unexpected token")
 		}
 		name, err := t.stringValue()
 		if err != nil {
-			return Node{}, false, err
+			return ast.Node{}, false, err
 		}
 		if err := p.exact("]"); err != nil {
-			return Node{}, false, err
+			return ast.Node{}, false, err
 		}
 		return lhs.Access(name), true, nil
 	default:

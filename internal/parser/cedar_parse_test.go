@@ -1,10 +1,10 @@
-package ast_test
+package parser_test
 
 import (
 	"bytes"
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
@@ -295,7 +295,7 @@ func TestParse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			var policies ast.PolicySet
+			var policies parser.PolicySet
 			err := policies.UnmarshalCedar([]byte(tt.in))
 			testutil.Equals(t, err != nil, tt.err)
 			if err != nil {
@@ -310,7 +310,7 @@ func TestParse(t *testing.T) {
 			pp := policies["policy0"].Policy
 			pp.MarshalCedar(&buf)
 
-			var p2 ast.PolicySet
+			var p2 parser.PolicySet
 			err = p2.UnmarshalCedar(buf.Bytes())
 			testutil.OK(t, err)
 
@@ -335,11 +335,11 @@ permit( principal, action, resource );
  @test("1234") permit (principal, action, resource );
 `
 
-	var out ast.PolicySet
+	var out parser.PolicySet
 	err := out.UnmarshalCedar([]byte(in))
 	testutil.OK(t, err)
 	testutil.Equals(t, len(out), 3)
-	testutil.Equals(t, out["policy0"].Position, ast.Position{Offset: 17, Line: 2, Column: 1})
-	testutil.Equals(t, out["policy1"].Position, ast.Position{Offset: 86, Line: 7, Column: 3})
-	testutil.Equals(t, out["policy2"].Position, ast.Position{Offset: 148, Line: 10, Column: 2})
+	testutil.Equals(t, out["policy0"].Position, parser.Position{Offset: 17, Line: 2, Column: 1})
+	testutil.Equals(t, out["policy1"].Position, parser.Position{Offset: 86, Line: 7, Column: 3})
+	testutil.Equals(t, out["policy2"].Position, parser.Position{Offset: 148, Line: 10, Column: 2})
 }
