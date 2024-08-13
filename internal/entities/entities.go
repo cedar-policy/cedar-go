@@ -1,7 +1,4 @@
-package ast
-
-// TODO: this is a partial cut-and-paste from the main cedar package
-// and will need completion / review
+package entities
 
 import (
 	"encoding/json"
