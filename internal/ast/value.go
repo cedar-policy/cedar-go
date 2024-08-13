@@ -7,7 +7,7 @@ import (
 )
 
 func Boolean(b types.Boolean) Node {
-	return newValueNode(b)
+	return NewValueNode(b)
 }
 
 func True() Node {
@@ -19,11 +19,11 @@ func False() Node {
 }
 
 func String(s types.String) Node {
-	return newValueNode(s)
+	return NewValueNode(s)
 }
 
 func Long(l types.Long) Node {
-	return newValueNode(l)
+	return NewValueNode(l)
 }
 
 // Set is a convenience function that wraps concrete instances of a Cedar Set type
@@ -95,22 +95,22 @@ func RecordElements(elements ...RecordElement) Node {
 }
 
 func EntityUID(e types.EntityUID) Node {
-	return newValueNode(e)
+	return NewValueNode(e)
 }
 
 func Decimal(d types.Decimal) Node {
-	return newValueNode(d)
+	return NewValueNode(d)
 }
 
 func IPAddr(i types.IPAddr) Node {
-	return newValueNode(i)
+	return NewValueNode(i)
 }
 
 func ExtensionCall(name types.String, args ...Node) Node {
-	return newExtensionCall(name, args...)
+	return NewExtensionCall(name, args...)
 }
 
-func newValueNode(v types.Value) Node {
+func NewValueNode(v types.Value) Node {
 	return NewNode(NodeValue{Value: v})
 }
 

@@ -1,36 +1,37 @@
-package ast
+package json
 
 import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func (s *scopeJSON) FromNode(src IsScopeNode) error {
+func (s *scopeJSON) FromNode(src ast.IsScopeNode) error {
 	switch t := src.(type) {
-	case ScopeTypeAll:
+	case ast.ScopeTypeAll:
 		s.Op = "All"
 		return nil
-	case ScopeTypeEq:
+	case ast.ScopeTypeEq:
 		s.Op = "=="
 		e := t.Entity
 		s.Entity = &e
 		return nil
-	case ScopeTypeIn:
+	case ast.ScopeTypeIn:
 		s.Op = "in"
 		e := t.Entity
 		s.Entity = &e
 		return nil
-	case ScopeTypeInSet:
+	case ast.ScopeTypeInSet:
 		s.Op = "in"
 		s.Entities = t.Entities
 		return nil
-	case ScopeTypeIs:
+	case ast.ScopeTypeIs:
 		s.Op = "is"
 		s.EntityType = string(t.Type)
 		return nil
-	case ScopeTypeIsIn:
+	case ast.ScopeTypeIsIn:
 		s.Op = "is"
 		s.EntityType = string(t.Type)
 		s.In = &scopeInJSON{
@@ -41,8 +42,8 @@ func (s *scopeJSON) FromNode(src IsScopeNode) error {
 	return fmt.Errorf("unexpected scope node: %T", src)
 }
 
-func unaryToJSON(dest **unaryJSON, src UnaryNode) error {
-	n := UnaryNode(src)
+func unaryToJSON(dest **unaryJSON, src ast.UnaryNode) error {
+	n := ast.UnaryNode(src)
 	res := &unaryJSON{}
 	if err := res.Arg.FromNode(n.Arg); err != nil {
 		return fmt.Errorf("error in arg: %w", err)
@@ -51,8 +52,8 @@ func unaryToJSON(dest **unaryJSON, src UnaryNode) error {
 	return nil
 }
 
-func binaryToJSON(dest **binaryJSON, src BinaryNode) error {
-	n := BinaryNode(src)
+func binaryToJSON(dest **binaryJSON, src ast.BinaryNode) error {
+	n := ast.BinaryNode(src)
 	res := &binaryJSON{}
 	if err := res.Left.FromNode(n.Left); err != nil {
 		return fmt.Errorf("error in left: %w", err)
@@ -64,7 +65,7 @@ func binaryToJSON(dest **binaryJSON, src BinaryNode) error {
 	return nil
 }
 
-func arrayToJSON(dest *arrayJSON, args []IsNode) error {
+func arrayToJSON(dest *arrayJSON, args []ast.IsNode) error {
 	res := arrayJSON{}
 	for _, n := range args {
 		var nn nodeJSON
@@ -90,7 +91,7 @@ func extToJSON(dest *extensionCallJSON, name string, src types.Value) error {
 	return nil
 }
 
-func extCallToJSON(dest extensionCallJSON, src NodeTypeExtensionCall) error {
+func extCallToJSON(dest extensionCallJSON, src ast.NodeTypeExtensionCall) error {
 	jsonArgs := arrayJSON{}
 	for _, n := range src.Args {
 		argNode := &nodeJSON{}
@@ -104,7 +105,7 @@ func extCallToJSON(dest extensionCallJSON, src NodeTypeExtensionCall) error {
 	return nil
 }
 
-func strToJSON(dest **strJSON, src StrOpNode) error {
+func strToJSON(dest **strJSON, src ast.StrOpNode) error {
 	res := &strJSON{}
 	if err := res.Left.FromNode(src.Arg); err != nil {
 		return fmt.Errorf("error in left: %w", err)
@@ -114,7 +115,7 @@ func strToJSON(dest **strJSON, src StrOpNode) error {
 	return nil
 }
 
-func patternToJSON(dest **patternJSON, src NodeTypeLike) error {
+func patternToJSON(dest **patternJSON, src ast.NodeTypeLike) error {
 	res := &patternJSON{}
 	if err := res.Left.FromNode(src.Arg); err != nil {
 		return fmt.Errorf("error in left: %w", err)
@@ -131,7 +132,7 @@ func patternToJSON(dest **patternJSON, src NodeTypeLike) error {
 	return nil
 }
 
-func recordToJSON(dest *recordJSON, src NodeTypeRecord) error {
+func recordToJSON(dest *recordJSON, src ast.NodeTypeRecord) error {
 	res := recordJSON{}
 	for _, kv := range src.Elements {
 		var nn nodeJSON
@@ -144,7 +145,7 @@ func recordToJSON(dest *recordJSON, src NodeTypeRecord) error {
 	return nil
 }
 
-func ifToJSON(dest **ifThenElseJSON, src NodeTypeIf) error {
+func ifToJSON(dest **ifThenElseJSON, src ast.NodeTypeIf) error {
 	res := &ifThenElseJSON{}
 	if err := res.If.FromNode(src.If); err != nil {
 		return fmt.Errorf("error in if: %w", err)
@@ -159,7 +160,7 @@ func ifToJSON(dest **ifThenElseJSON, src NodeTypeIf) error {
 	return nil
 }
 
-func isToJSON(dest **isJSON, src NodeTypeIs) error {
+func isToJSON(dest **isJSON, src ast.NodeTypeIs) error {
 	res := &isJSON{}
 	if err := res.Left.FromNode(src.Left); err != nil {
 		return fmt.Errorf("error in left: %w", err)
@@ -169,7 +170,7 @@ func isToJSON(dest **isJSON, src NodeTypeIs) error {
 	return nil
 }
 
-func isInToJSON(dest **isJSON, src NodeTypeIsIn) error {
+func isInToJSON(dest **isJSON, src ast.NodeTypeIsIn) error {
 	res := &isJSON{}
 	if err := res.Left.FromNode(src.Left); err != nil {
 		return fmt.Errorf("error in left: %w", err)
@@ -183,11 +184,11 @@ func isInToJSON(dest **isJSON, src NodeTypeIsIn) error {
 	return nil
 }
 
-func (j *nodeJSON) FromNode(src IsNode) error {
+func (j *nodeJSON) FromNode(src ast.IsNode) error {
 	switch t := src.(type) {
 	// Value
 	// Value *json.RawMessage `json:"Value"` // could be any
-	case NodeValue:
+	case ast.NodeValue:
 		// Any other function: decimal, ip
 		// Decimal arrayJSON `json:"decimal"`
 		// IP      arrayJSON `json:"ip"`
@@ -203,7 +204,7 @@ func (j *nodeJSON) FromNode(src IsNode) error {
 
 	// Var
 	// Var *string `json:"Var"`
-	case NodeTypeVariable:
+	case ast.NodeTypeVariable:
 		val := string(t.Name)
 		j.Var = &val
 		return nil
@@ -211,87 +212,87 @@ func (j *nodeJSON) FromNode(src IsNode) error {
 	// ! or neg operators
 	// Not    *unaryJSON `json:"!"`
 	// Negate *unaryJSON `json:"neg"`
-	case NodeTypeNot:
+	case ast.NodeTypeNot:
 		return unaryToJSON(&j.Not, t.UnaryNode)
-	case NodeTypeNegate:
+	case ast.NodeTypeNegate:
 		return unaryToJSON(&j.Negate, t.UnaryNode)
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
-	case NodeTypeAdd:
+	case ast.NodeTypeAdd:
 		return binaryToJSON(&j.Plus, t.BinaryNode)
-	case NodeTypeAnd:
+	case ast.NodeTypeAnd:
 		return binaryToJSON(&j.And, t.BinaryNode)
-	case NodeTypeContains:
+	case ast.NodeTypeContains:
 		return binaryToJSON(&j.Contains, t.BinaryNode)
-	case NodeTypeContainsAll:
+	case ast.NodeTypeContainsAll:
 		return binaryToJSON(&j.ContainsAll, t.BinaryNode)
-	case NodeTypeContainsAny:
+	case ast.NodeTypeContainsAny:
 		return binaryToJSON(&j.ContainsAny, t.BinaryNode)
-	case NodeTypeEquals:
+	case ast.NodeTypeEquals:
 		return binaryToJSON(&j.Equals, t.BinaryNode)
-	case NodeTypeGreaterThan:
+	case ast.NodeTypeGreaterThan:
 		return binaryToJSON(&j.GreaterThan, t.BinaryNode)
-	case NodeTypeGreaterThanOrEqual:
+	case ast.NodeTypeGreaterThanOrEqual:
 		return binaryToJSON(&j.GreaterThanOrEqual, t.BinaryNode)
-	case NodeTypeIn:
+	case ast.NodeTypeIn:
 		return binaryToJSON(&j.In, t.BinaryNode)
-	case NodeTypeLessThan:
+	case ast.NodeTypeLessThan:
 		return binaryToJSON(&j.LessThan, t.BinaryNode)
-	case NodeTypeLessThanOrEqual:
+	case ast.NodeTypeLessThanOrEqual:
 		return binaryToJSON(&j.LessThanOrEqual, t.BinaryNode)
-	case NodeTypeMult:
+	case ast.NodeTypeMult:
 		return binaryToJSON(&j.Times, t.BinaryNode)
-	case NodeTypeNotEquals:
+	case ast.NodeTypeNotEquals:
 		return binaryToJSON(&j.NotEquals, t.BinaryNode)
-	case NodeTypeOr:
+	case ast.NodeTypeOr:
 		return binaryToJSON(&j.Or, t.BinaryNode)
-	case NodeTypeSub:
+	case ast.NodeTypeSub:
 		return binaryToJSON(&j.Minus, t.BinaryNode)
 
 	// ., has
 	// Access *strJSON `json:"."`
 	// Has    *strJSON `json:"has"`
-	case NodeTypeAccess:
+	case ast.NodeTypeAccess:
 		return strToJSON(&j.Access, t.StrOpNode)
-	case NodeTypeHas:
+	case ast.NodeTypeHas:
 		return strToJSON(&j.Has, t.StrOpNode)
 	// is
-	case NodeTypeIs:
+	case ast.NodeTypeIs:
 		return isToJSON(&j.Is, t)
-	case NodeTypeIsIn:
+	case ast.NodeTypeIsIn:
 		return isInToJSON(&j.Is, t)
 
 	// like
 	// Like *strJSON `json:"like"`
-	case NodeTypeLike:
+	case ast.NodeTypeLike:
 		return patternToJSON(&j.Like, t)
 
 	// if-then-else
 	// IfThenElse *ifThenElseJSON `json:"if-then-else"`
-	case NodeTypeIf:
+	case ast.NodeTypeIf:
 		return ifToJSON(&j.IfThenElse, t)
 
 	// Set
 	// Set arrayJSON `json:"Set"`
-	case NodeTypeSet:
+	case ast.NodeTypeSet:
 		return arrayToJSON(&j.Set, t.Elements)
 
 	// Record
 	// Record recordJSON `json:"Record"`
-	case NodeTypeRecord:
+	case ast.NodeTypeRecord:
 		return recordToJSON(&j.Record, t)
 
 	// Any other method: ip, decimal, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
 	// ExtensionMethod map[string]arrayJSON `json:"-"`
-	case NodeTypeExtensionCall:
+	case ast.NodeTypeExtensionCall:
 		j.ExtensionCall = extensionCallJSON{}
 		return extCallToJSON(j.ExtensionCall, t)
 	}
-	// case nodeTypeRecordEntry:
-	// case nodeTypeEntityType:
-	// case nodeTypeAnnotation:
-	// case nodeTypeWhen:
-	// case nodeTypeUnless:
+	// case ast.nodeTypeRecordEntry:
+	// case ast.nodeTypeEntityType:
+	// case ast.nodeTypeAnnotation:
+	// case ast.nodeTypeWhen:
+	// case ast.nodeTypeUnless:
 	return fmt.Errorf("unknown node type: %T", src)
 }
 
@@ -309,6 +310,10 @@ func (p *patternComponentJSON) MarshalJSON() ([]byte, error) {
 		return json.Marshal("Wildcard")
 	}
 	return json.Marshal(p.Literal)
+}
+
+type Policy struct {
+	ast.Policy
 }
 
 func (p *Policy) MarshalJSON() ([]byte, error) {
@@ -335,7 +340,7 @@ func (p *Policy) MarshalJSON() ([]byte, error) {
 	for _, c := range p.Conditions {
 		var cond conditionJSON
 		cond.Kind = "when"
-		if c.Condition == ConditionUnless {
+		if c.Condition == ast.ConditionUnless {
 			cond.Kind = "unless"
 		}
 		if err := cond.Body.FromNode(c.Body); err != nil {

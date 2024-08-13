@@ -3,33 +3,33 @@ package ast
 import "github.com/cedar-policy/cedar-go/types"
 
 func Principal() Node {
-	return NewNode(newPrincipalNode())
+	return NewNode(NewPrincipalNode())
 }
 
 func Action() Node {
-	return NewNode(newActionNode())
+	return NewNode(NewActionNode())
 }
 
 func Resource() Node {
-	return NewNode(newResourceNode())
+	return NewNode(NewResourceNode())
 }
 
 func Context() Node {
-	return NewNode(newContextNode())
+	return NewNode(NewContextNode())
 }
 
-func newPrincipalNode() NodeTypeVariable {
+func NewPrincipalNode() NodeTypeVariable {
 	return NodeTypeVariable{Name: types.String("principal")}
 }
 
-func newActionNode() NodeTypeVariable {
+func NewActionNode() NodeTypeVariable {
 	return NodeTypeVariable{Name: types.String("action")}
 }
 
-func newResourceNode() NodeTypeVariable {
+func NewResourceNode() NodeTypeVariable {
 	return NodeTypeVariable{Name: types.String("resource")}
 }
 
-func newContextNode() NodeTypeVariable {
+func NewContextNode() NodeTypeVariable {
 	return NodeTypeVariable{Name: types.String("context")}
 }

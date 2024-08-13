@@ -1,4 +1,4 @@
-package ast
+package json
 
 import (
 	"bytes"
@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func (s *scopeJSON) ToNode(variable Scope) (IsScopeNode, error) {
+func (s *scopeJSON) ToNode(variable ast.Scope) (ast.IsScopeNode, error) {
 	// TODO: should we be careful to be more strict about what is allowed here?
 	switch s.Op {
 	case "All":
@@ -33,35 +34,35 @@ func (s *scopeJSON) ToNode(variable Scope) (IsScopeNode, error) {
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }
 
-func (j binaryJSON) ToNode(f func(a, b Node) Node) (Node, error) {
+func (j binaryJSON) ToNode(f func(a, b ast.Node) ast.Node) (ast.Node, error) {
 	left, err := j.Left.ToNode()
 	if err != nil {
-		return Node{}, fmt.Errorf("error in left: %w", err)
+		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
 	right, err := j.Right.ToNode()
 	if err != nil {
-		return Node{}, fmt.Errorf("error in right: %w", err)
+		return ast.Node{}, fmt.Errorf("error in right: %w", err)
 	}
 	return f(left, right), nil
 }
-func (j unaryJSON) ToNode(f func(a Node) Node) (Node, error) {
+func (j unaryJSON) ToNode(f func(a ast.Node) ast.Node) (ast.Node, error) {
 	arg, err := j.Arg.ToNode()
 	if err != nil {
-		return Node{}, fmt.Errorf("error in arg: %w", err)
+		return ast.Node{}, fmt.Errorf("error in arg: %w", err)
 	}
 	return f(arg), nil
 }
-func (j strJSON) ToNode(f func(a Node, k string) Node) (Node, error) {
+func (j strJSON) ToNode(f func(a ast.Node, k string) ast.Node) (ast.Node, error) {
 	left, err := j.Left.ToNode()
 	if err != nil {
-		return Node{}, fmt.Errorf("error in left: %w", err)
+		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
 	return f(left, j.Attr), nil
 }
-func (j patternJSON) ToNode(f func(a Node, k types.Pattern) Node) (Node, error) {
+func (j patternJSON) ToNode(f func(a ast.Node, k types.Pattern) ast.Node) (ast.Node, error) {
 	left, err := j.Left.ToNode()
 	if err != nil {
-		return Node{}, fmt.Errorf("error in left: %w", err)
+		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
 	pattern := &types.Pattern{}
 	for _, compJSON := range j.Pattern {
@@ -74,150 +75,150 @@ func (j patternJSON) ToNode(f func(a Node, k types.Pattern) Node) (Node, error) 
 
 	return f(left, *pattern), nil
 }
-func (j isJSON) ToNode() (Node, error) {
+func (j isJSON) ToNode() (ast.Node, error) {
 	left, err := j.Left.ToNode()
 	if err != nil {
-		return Node{}, fmt.Errorf("error in left: %w", err)
+		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
 	if j.In != nil {
 		right, err := j.In.ToNode()
 		if err != nil {
-			return Node{}, fmt.Errorf("error in entity: %w", err)
+			return ast.Node{}, fmt.Errorf("error in entity: %w", err)
 		}
 		return left.IsIn(types.Path(j.EntityType), right), nil
 	}
 	return left.Is(types.Path(j.EntityType)), nil
 }
-func (j ifThenElseJSON) ToNode() (Node, error) {
+func (j ifThenElseJSON) ToNode() (ast.Node, error) {
 	if_, err := j.If.ToNode()
 	if err != nil {
-		return Node{}, fmt.Errorf("error in if: %w", err)
+		return ast.Node{}, fmt.Errorf("error in if: %w", err)
 	}
 	then, err := j.Then.ToNode()
 	if err != nil {
-		return Node{}, fmt.Errorf("error in then: %w", err)
+		return ast.Node{}, fmt.Errorf("error in then: %w", err)
 	}
 	else_, err := j.Else.ToNode()
 	if err != nil {
-		return Node{}, fmt.Errorf("error in else: %w", err)
+		return ast.Node{}, fmt.Errorf("error in else: %w", err)
 	}
-	return If(if_, then, else_), nil
+	return ast.If(if_, then, else_), nil
 }
-func (j arrayJSON) ToNode() (Node, error) {
-	var nodes []Node
+func (j arrayJSON) ToNode() (ast.Node, error) {
+	var nodes []ast.Node
 	for _, jj := range j {
 		n, err := jj.ToNode()
 		if err != nil {
-			return Node{}, fmt.Errorf("error in set: %w", err)
+			return ast.Node{}, fmt.Errorf("error in set: %w", err)
 		}
 		nodes = append(nodes, n)
 	}
-	return SetNodes(nodes...), nil
+	return ast.SetNodes(nodes...), nil
 }
 
-func (j recordJSON) ToNode() (Node, error) {
-	nodes := map[types.String]Node{}
+func (j recordJSON) ToNode() (ast.Node, error) {
+	nodes := map[types.String]ast.Node{}
 	for k, v := range j {
 		n, err := v.ToNode()
 		if err != nil {
-			return Node{}, fmt.Errorf("error in record: %w", err)
+			return ast.Node{}, fmt.Errorf("error in record: %w", err)
 		}
 		nodes[types.String(k)] = n
 	}
-	return RecordNodes(nodes), nil
+	return ast.RecordNodes(nodes), nil
 }
 
-func (e extensionCallJSON) ToNode() (Node, error) {
+func (e extensionCallJSON) ToNode() (ast.Node, error) {
 	if len(e) != 1 {
-		return Node{}, fmt.Errorf("unexpected number of extension methods in node: %v", len(e))
+		return ast.Node{}, fmt.Errorf("unexpected number of extension methods in node: %v", len(e))
 	}
 	for k, v := range e {
 		if len(v) == 0 {
-			return Node{}, fmt.Errorf("extension method '%v' must have at least one argument", k)
+			return ast.Node{}, fmt.Errorf("extension method '%v' must have at least one argument", k)
 		}
-		var argNodes []Node
+		var argNodes []ast.Node
 		for _, n := range v {
 			node, err := n.ToNode()
 			if err != nil {
-				return Node{}, fmt.Errorf("error in extension method argument: %w", err)
+				return ast.Node{}, fmt.Errorf("error in extension method argument: %w", err)
 			}
 			argNodes = append(argNodes, node)
 		}
-		return newExtensionCall(types.String(k), argNodes...), nil
+		return ast.NewExtensionCall(types.String(k), argNodes...), nil
 	}
 	panic("unreachable code")
 }
 
-func (j nodeJSON) ToNode() (Node, error) {
+func (j nodeJSON) ToNode() (ast.Node, error) {
 	switch {
 	// Value
 	case j.Value != nil:
 		var v types.Value
 		if err := types.UnmarshalJSON(*j.Value, &v); err != nil {
-			return Node{}, fmt.Errorf("error unmarshalling value: %w", err)
+			return ast.Node{}, fmt.Errorf("error unmarshalling value: %w", err)
 		}
-		return valueToNode(v), nil
+		return ast.NewValueNode(v), nil
 
 	// Var
 	case j.Var != nil:
 		switch *j.Var {
 		case "principal":
-			return Principal(), nil
+			return ast.Principal(), nil
 		case "action":
-			return Action(), nil
+			return ast.Action(), nil
 		case "resource":
-			return Resource(), nil
+			return ast.Resource(), nil
 		case "context":
-			return Context(), nil
+			return ast.Context(), nil
 		}
-		return Node{}, fmt.Errorf("unknown var: %v", j.Var)
+		return ast.Node{}, fmt.Errorf("unknown var: %v", j.Var)
 
 	// Slot
 	// Unknown
 
 	// ! or neg operators
 	case j.Not != nil:
-		return j.Not.ToNode(Not)
+		return j.Not.ToNode(ast.Not)
 	case j.Negate != nil:
-		return j.Negate.ToNode(Negate)
+		return j.Negate.ToNode(ast.Negate)
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
 	case j.Equals != nil:
-		return j.Equals.ToNode(Node.Equals)
+		return j.Equals.ToNode(ast.Node.Equals)
 	case j.NotEquals != nil:
-		return j.NotEquals.ToNode(Node.NotEquals)
+		return j.NotEquals.ToNode(ast.Node.NotEquals)
 	case j.In != nil:
-		return j.In.ToNode(Node.In)
+		return j.In.ToNode(ast.Node.In)
 	case j.LessThan != nil:
-		return j.LessThan.ToNode(Node.LessThan)
+		return j.LessThan.ToNode(ast.Node.LessThan)
 	case j.LessThanOrEqual != nil:
-		return j.LessThanOrEqual.ToNode(Node.LessThanOrEqual)
+		return j.LessThanOrEqual.ToNode(ast.Node.LessThanOrEqual)
 	case j.GreaterThan != nil:
-		return j.GreaterThan.ToNode(Node.GreaterThan)
+		return j.GreaterThan.ToNode(ast.Node.GreaterThan)
 	case j.GreaterThanOrEqual != nil:
-		return j.GreaterThanOrEqual.ToNode(Node.GreaterThanOrEqual)
+		return j.GreaterThanOrEqual.ToNode(ast.Node.GreaterThanOrEqual)
 	case j.And != nil:
-		return j.And.ToNode(Node.And)
+		return j.And.ToNode(ast.Node.And)
 	case j.Or != nil:
-		return j.Or.ToNode(Node.Or)
+		return j.Or.ToNode(ast.Node.Or)
 	case j.Plus != nil:
-		return j.Plus.ToNode(Node.Plus)
+		return j.Plus.ToNode(ast.Node.Plus)
 	case j.Minus != nil:
-		return j.Minus.ToNode(Node.Minus)
+		return j.Minus.ToNode(ast.Node.Minus)
 	case j.Times != nil:
-		return j.Times.ToNode(Node.Times)
+		return j.Times.ToNode(ast.Node.Times)
 	case j.Contains != nil:
-		return j.Contains.ToNode(Node.Contains)
+		return j.Contains.ToNode(ast.Node.Contains)
 	case j.ContainsAll != nil:
-		return j.ContainsAll.ToNode(Node.ContainsAll)
+		return j.ContainsAll.ToNode(ast.Node.ContainsAll)
 	case j.ContainsAny != nil:
-		return j.ContainsAny.ToNode(Node.ContainsAny)
+		return j.ContainsAny.ToNode(ast.Node.ContainsAny)
 
 	// ., has
 	case j.Access != nil:
-		return j.Access.ToNode(Node.Access)
+		return j.Access.ToNode(ast.Node.Access)
 	case j.Has != nil:
-		return j.Has.ToNode(Node.Has)
+		return j.Has.ToNode(ast.Node.Has)
 
 	// is
 	case j.Is != nil:
@@ -225,7 +226,7 @@ func (j nodeJSON) ToNode() (Node, error) {
 
 	// like
 	case j.Like != nil:
-		return j.Like.ToNode(Node.Like)
+		return j.Like.ToNode(ast.Node.Like)
 
 	// if-then-else
 	case j.IfThenElse != nil:
@@ -244,7 +245,7 @@ func (j nodeJSON) ToNode() (Node, error) {
 		return j.ExtensionCall.ToNode()
 	}
 
-	return Node{}, fmt.Errorf("unknown node")
+	return ast.Node{}, fmt.Errorf("unknown node")
 }
 
 func (n *nodeJSON) UnmarshalJSON(b []byte) error {
@@ -287,9 +288,9 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 	}
 	switch j.Effect {
 	case "permit":
-		*p = *Permit()
+		p.Policy = *ast.Permit()
 	case "forbid":
-		*p = *Forbid()
+		p.Policy = *ast.Forbid()
 	default:
 		return fmt.Errorf("unknown effect: %v", j.Effect)
 	}
@@ -297,15 +298,15 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		p.Annotate(types.String(k), types.String(v))
 	}
 	var err error
-	p.Principal, err = j.Principal.ToNode(Scope(newPrincipalNode()))
+	p.Principal, err = j.Principal.ToNode(ast.Scope(ast.NewPrincipalNode()))
 	if err != nil {
 		return fmt.Errorf("error in principal: %w", err)
 	}
-	p.Action, err = j.Action.ToNode(Scope(newActionNode()))
+	p.Action, err = j.Action.ToNode(ast.Scope(ast.NewActionNode()))
 	if err != nil {
 		return fmt.Errorf("error in action: %w", err)
 	}
-	p.Resource, err = j.Resource.ToNode(Scope(newResourceNode()))
+	p.Resource, err = j.Resource.ToNode(ast.Scope(ast.NewResourceNode()))
 	if err != nil {
 		return fmt.Errorf("error in resource: %w", err)
 	}
