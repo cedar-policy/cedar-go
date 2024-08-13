@@ -9,6 +9,10 @@ type Annotations struct {
 	*ast.Annotations
 }
 
+func newAnnotations(a *ast.Annotations) *Annotations {
+	return &Annotations{a}
+}
+
 // Annotation allows AST constructors to make policy in a similar shape to textual Cedar with
 // annotations appearing before the actual policy scope:
 //
@@ -17,21 +21,21 @@ type Annotations struct {
 //		Permit().
 //		PrincipalEq(superUser)
 func Annotation(name, value types.String) *Annotations {
-	return &Annotations{ast.Annotation(name, value)}
+	return newAnnotations(ast.Annotation(name, value))
 }
 
 func (a *Annotations) Annotation(name, value types.String) *Annotations {
-	return &Annotations{a.Annotations.Annotation(name, value)}
+	return newAnnotations(a.Annotations.Annotation(name, value))
 }
 
 func (a *Annotations) Permit() *Policy {
-	return &Policy{a.Annotations.Permit()}
+	return newPolicy(a.Annotations.Permit())
 }
 
 func (a *Annotations) Forbid() *Policy {
-	return &Policy{a.Annotations.Forbid()}
+	return newPolicy(a.Annotations.Forbid())
 }
 
 func (p *Policy) Annotate(name, value types.String) *Policy {
-	return &Policy{p.Policy.Annotate(name, value)}
+	return newPolicy(p.Policy.Annotate(name, value))
 }
