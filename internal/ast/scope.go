@@ -6,131 +6,131 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-type scope nodeTypeVariable
+type Scope NodeTypeVariable
 
-func (s scope) All() isScopeNode {
-	return scopeTypeAll{scopeNode: scopeNode{Variable: nodeTypeVariable(s)}}
+func (s Scope) All() IsScopeNode {
+	return ScopeTypeAll{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}}
 }
 
-func (s scope) Eq(entity types.EntityUID) isScopeNode {
-	return scopeTypeEq{scopeNode: scopeNode{Variable: nodeTypeVariable(s)}, Entity: entity}
+func (s Scope) Eq(entity types.EntityUID) IsScopeNode {
+	return ScopeTypeEq{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}, Entity: entity}
 }
 
-func (s scope) In(entity types.EntityUID) isScopeNode {
-	return scopeTypeIn{scopeNode: scopeNode{Variable: nodeTypeVariable(s)}, Entity: entity}
+func (s Scope) In(entity types.EntityUID) IsScopeNode {
+	return ScopeTypeIn{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}, Entity: entity}
 }
 
-func (s scope) InSet(entities []types.EntityUID) isScopeNode {
-	return scopeTypeInSet{scopeNode: scopeNode{Variable: nodeTypeVariable(s)}, Entities: entities}
+func (s Scope) InSet(entities []types.EntityUID) IsScopeNode {
+	return ScopeTypeInSet{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}, Entities: entities}
 }
 
-func (s scope) Is(entityType types.Path) isScopeNode {
-	return scopeTypeIs{scopeNode: scopeNode{Variable: nodeTypeVariable(s)}, Type: entityType}
+func (s Scope) Is(entityType types.Path) IsScopeNode {
+	return ScopeTypeIs{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}, Type: entityType}
 }
 
-func (s scope) IsIn(entityType types.Path, entity types.EntityUID) isScopeNode {
-	return scopeTypeIsIn{scopeNode: scopeNode{Variable: nodeTypeVariable(s)}, Type: entityType, Entity: entity}
+func (s Scope) IsIn(entityType types.Path, entity types.EntityUID) IsScopeNode {
+	return ScopeTypeIsIn{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}, Type: entityType, Entity: entity}
 }
 
 func (p *Policy) PrincipalEq(entity types.EntityUID) *Policy {
-	p.principal = scope(rawPrincipalNode()).Eq(entity)
+	p.Principal = Scope(newPrincipalNode()).Eq(entity)
 	return p
 }
 
 func (p *Policy) PrincipalIn(entity types.EntityUID) *Policy {
-	p.principal = scope(rawPrincipalNode()).In(entity)
+	p.Principal = Scope(newPrincipalNode()).In(entity)
 	return p
 }
 
 func (p *Policy) PrincipalIs(entityType types.Path) *Policy {
-	p.principal = scope(rawPrincipalNode()).Is(entityType)
+	p.Principal = Scope(newPrincipalNode()).Is(entityType)
 	return p
 }
 
 func (p *Policy) PrincipalIsIn(entityType types.Path, entity types.EntityUID) *Policy {
-	p.principal = scope(rawPrincipalNode()).IsIn(entityType, entity)
+	p.Principal = Scope(newPrincipalNode()).IsIn(entityType, entity)
 	return p
 }
 
 func (p *Policy) ActionEq(entity types.EntityUID) *Policy {
-	p.action = scope(rawActionNode()).Eq(entity)
+	p.Action = Scope(newActionNode()).Eq(entity)
 	return p
 }
 
 func (p *Policy) ActionIn(entity types.EntityUID) *Policy {
-	p.action = scope(rawActionNode()).In(entity)
+	p.Action = Scope(newActionNode()).In(entity)
 	return p
 }
 
 func (p *Policy) ActionInSet(entities ...types.EntityUID) *Policy {
-	p.action = scope(rawActionNode()).InSet(entities)
+	p.Action = Scope(newActionNode()).InSet(entities)
 	return p
 }
 
 func (p *Policy) ResourceEq(entity types.EntityUID) *Policy {
-	p.resource = scope(rawResourceNode()).Eq(entity)
+	p.Resource = Scope(newResourceNode()).Eq(entity)
 	return p
 }
 
 func (p *Policy) ResourceIn(entity types.EntityUID) *Policy {
-	p.resource = scope(rawResourceNode()).In(entity)
+	p.Resource = Scope(newResourceNode()).In(entity)
 	return p
 }
 
 func (p *Policy) ResourceIs(entityType types.Path) *Policy {
-	p.resource = scope(rawResourceNode()).Is(entityType)
+	p.Resource = Scope(newResourceNode()).Is(entityType)
 	return p
 }
 
 func (p *Policy) ResourceIsIn(entityType types.Path, entity types.EntityUID) *Policy {
-	p.resource = scope(rawResourceNode()).IsIn(entityType, entity)
+	p.Resource = Scope(newResourceNode()).IsIn(entityType, entity)
 	return p
 }
 
-type isScopeNode interface {
+type IsScopeNode interface {
 	isScope()
 	MarshalCedar(*bytes.Buffer)
 	toNode() Node
 }
 
-type scopeNode struct {
-	Variable nodeTypeVariable
+type ScopeNode struct {
+	Variable NodeTypeVariable
 }
 
-func (n scopeNode) isScope() {}
+func (n ScopeNode) isScope() {}
 
-type scopeTypeAll struct {
-	scopeNode
+type ScopeTypeAll struct {
+	ScopeNode
 }
 
-func (n scopeTypeAll) toNode() Node {
+func (n ScopeTypeAll) toNode() Node {
 	return newNode(True().v)
 }
 
-type scopeTypeEq struct {
-	scopeNode
+type ScopeTypeEq struct {
+	ScopeNode
 	Entity types.EntityUID
 }
 
-func (n scopeTypeEq) toNode() Node {
+func (n ScopeTypeEq) toNode() Node {
 	return newNode(newNode(n.Variable).Equals(EntityUID(n.Entity)).v)
 }
 
-type scopeTypeIn struct {
-	scopeNode
+type ScopeTypeIn struct {
+	ScopeNode
 	Entity types.EntityUID
 }
 
-func (n scopeTypeIn) toNode() Node {
+func (n ScopeTypeIn) toNode() Node {
 	return newNode(newNode(n.Variable).In(EntityUID(n.Entity)).v)
 }
 
-type scopeTypeInSet struct {
-	scopeNode
+type ScopeTypeInSet struct {
+	ScopeNode
 	Entities []types.EntityUID
 }
 
-func (n scopeTypeInSet) toNode() Node {
+func (n ScopeTypeInSet) toNode() Node {
 	set := make([]types.Value, len(n.Entities))
 	for i, e := range n.Entities {
 		set[i] = e
@@ -138,21 +138,21 @@ func (n scopeTypeInSet) toNode() Node {
 	return newNode(newNode(n.Variable).In(Set(set)).v)
 }
 
-type scopeTypeIs struct {
-	scopeNode
+type ScopeTypeIs struct {
+	ScopeNode
 	Type types.Path
 }
 
-func (n scopeTypeIs) toNode() Node {
+func (n ScopeTypeIs) toNode() Node {
 	return newNode(newNode(n.Variable).Is(n.Type).v)
 }
 
-type scopeTypeIsIn struct {
-	scopeNode
+type ScopeTypeIsIn struct {
+	ScopeNode
 	Type   types.Path
 	Entity types.EntityUID
 }
 
-func (n scopeTypeIsIn) toNode() Node {
+func (n ScopeTypeIsIn) toNode() Node {
 	return newNode(newNode(n.Variable).IsIn(n.Type, EntityUID(n.Entity)).v)
 }

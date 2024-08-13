@@ -21,9 +21,9 @@ func (p *PolicySet) UnmarshalCedar(b []byte) error {
 	for !parser.peek().isEOF() {
 		pos := parser.peek().Pos
 		policy := Policy{
-			principal: scopeTypeAll{},
-			action:    scopeTypeAll{},
-			resource:  scopeTypeAll{},
+			Principal: ScopeTypeAll{},
+			Action:    ScopeTypeAll{},
+			Resource:  ScopeTypeAll{},
 		}
 
 		if err = policy.fromCedarWithParser(&parser); err != nil {

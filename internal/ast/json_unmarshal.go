@@ -9,7 +9,7 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func (s *scopeJSON) ToNode(variable scope) (isScopeNode, error) {
+func (s *scopeJSON) ToNode(variable Scope) (IsScopeNode, error) {
 	// TODO: should we be careful to be more strict about what is allowed here?
 	switch s.Op {
 	case "All":
@@ -297,15 +297,15 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		p.Annotate(types.String(k), types.String(v))
 	}
 	var err error
-	p.principal, err = j.Principal.ToNode(scope(rawPrincipalNode()))
+	p.Principal, err = j.Principal.ToNode(Scope(newPrincipalNode()))
 	if err != nil {
 		return fmt.Errorf("error in principal: %w", err)
 	}
-	p.action, err = j.Action.ToNode(scope(rawActionNode()))
+	p.Action, err = j.Action.ToNode(Scope(newActionNode()))
 	if err != nil {
 		return fmt.Errorf("error in action: %w", err)
 	}
-	p.resource, err = j.Resource.ToNode(scope(rawResourceNode()))
+	p.Resource, err = j.Resource.ToNode(Scope(newResourceNode()))
 	if err != nil {
 		return fmt.Errorf("error in resource: %w", err)
 	}

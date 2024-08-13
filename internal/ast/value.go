@@ -29,11 +29,11 @@ func Long(l types.Long) Node {
 // Set is a convenience function that wraps concrete instances of a Cedar Set type
 // types in AST value nodes and passes them along to SetNodes.
 func Set(s types.Set) Node {
-	var nodes []node
+	var nodes []IsNode
 	for _, v := range s {
 		nodes = append(nodes, valueToNode(v).v)
 	}
-	return newNode(nodeTypeSet{Elements: nodes})
+	return newNode(NodeTypeSet{Elements: nodes})
 }
 
 // SetNodes allows for a complex set definition with values potentially
@@ -49,7 +49,7 @@ func Set(s types.Set) Node {
 //	    ast.Context().Access("fooCount"),
 //	)
 func SetNodes(nodes ...Node) Node {
-	return newNode(nodeTypeSet{Elements: stripNodes(nodes)})
+	return newNode(NodeTypeSet{Elements: stripNodes(nodes)})
 }
 
 // Record is a convenience function that wraps concrete instances of a Cedar Record type
@@ -74,9 +74,9 @@ func Record(r types.Record) Node {
 //	    "x": ast.Long(1).Plus(ast.Context().Access("fooCount"))},
 //	})
 func RecordNodes(entries map[types.String]Node) Node {
-	var res nodeTypeRecord
+	var res NodeTypeRecord
 	for k, v := range entries {
-		res.Elements = append(res.Elements, recordElement{Key: k, Value: v.v})
+		res.Elements = append(res.Elements, RecordElementNode{Key: k, Value: v.v})
 	}
 	return newNode(res)
 }
@@ -87,9 +87,9 @@ type RecordElement struct {
 }
 
 func RecordElements(elements ...RecordElement) Node {
-	var res nodeTypeRecord
+	var res NodeTypeRecord
 	for _, e := range elements {
-		res.Elements = append(res.Elements, recordElement{Key: e.Key, Value: e.Value.v})
+		res.Elements = append(res.Elements, RecordElementNode{Key: e.Key, Value: e.Value.v})
 	}
 	return newNode(res)
 }
@@ -111,7 +111,7 @@ func ExtensionCall(name types.String, args ...Node) Node {
 }
 
 func newValueNode(v types.Value) Node {
-	return newNode(nodeValue{Value: v})
+	return newNode(NodeValue{Value: v})
 }
 
 func valueToNode(v types.Value) Node {

@@ -4,24 +4,24 @@ import (
 	"fmt"
 )
 
-func toEval(n node) Evaler {
+func toEval(n IsNode) Evaler {
 	switch v := n.(type) {
-	case nodeTypeAccess:
+	case NodeTypeAccess:
 		return newAttributeAccessEval(toEval(v.Arg), string(v.Value))
-	case nodeTypeHas:
+	case NodeTypeHas:
 		return newHasEval(toEval(v.Arg), string(v.Value))
-	case nodeTypeLike:
+	case NodeTypeLike:
 		return newLikeEval(toEval(v.Arg), v.Value)
-	case nodeTypeIf:
+	case NodeTypeIf:
 		return newIfThenElseEval(toEval(v.If), toEval(v.Then), toEval(v.Else))
-	case nodeTypeIs:
+	case NodeTypeIs:
 		return newIsEval(toEval(v.Left), newLiteralEval(v.EntityType))
-	case nodeTypeIsIn:
+	case NodeTypeIsIn:
 		obj := toEval(v.Left)
 		lhs := newIsEval(obj, newLiteralEval(v.EntityType))
 		rhs := newInEval(obj, toEval(v.Entity))
 		return newAndEval(lhs, rhs)
-	case nodeTypeExtensionCall:
+	case NodeTypeExtensionCall:
 		i, ok := extMap[v.Name]
 		if !ok {
 			return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, v.Name))
@@ -57,25 +57,25 @@ func toEval(n node) Evaler {
 		default:
 			panic(fmt.Errorf("unknown extension: %v", v.Name))
 		}
-	case nodeValue:
+	case NodeValue:
 		return newLiteralEval(v.Value)
-	case nodeTypeRecord:
+	case NodeTypeRecord:
 		m := make(map[string]Evaler, len(v.Elements))
 		for _, e := range v.Elements {
 			m[string(e.Key)] = toEval(e.Value)
 		}
 		return newRecordLiteralEval(m)
-	case nodeTypeSet:
+	case NodeTypeSet:
 		s := make([]Evaler, len(v.Elements))
 		for i, e := range v.Elements {
 			s[i] = toEval(e)
 		}
 		return newSetLiteralEval(s)
-	case nodeTypeNegate:
+	case NodeTypeNegate:
 		return newNegateEval(toEval(v.Arg))
-	case nodeTypeNot:
+	case NodeTypeNot:
 		return newNotEval(toEval(v.Arg))
-	case nodeTypeVariable:
+	case NodeTypeVariable:
 		switch v.Name {
 		case "principal":
 			return newVariableEval(variableNamePrincipal)
@@ -88,35 +88,35 @@ func toEval(n node) Evaler {
 		default:
 			panic(fmt.Errorf("unknown variable: %v", v.Name))
 		}
-	case nodeTypeIn:
+	case NodeTypeIn:
 		return newInEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeAnd:
+	case NodeTypeAnd:
 		return newAndEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeEquals:
+	case NodeTypeEquals:
 		return newEqualEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeGreaterThan:
+	case NodeTypeGreaterThan:
 		return newLongGreaterThanEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeGreaterThanOrEqual:
+	case NodeTypeGreaterThanOrEqual:
 		return newLongGreaterThanOrEqualEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeLessThan:
+	case NodeTypeLessThan:
 		return newLongLessThanEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeLessThanOrEqual:
+	case NodeTypeLessThanOrEqual:
 		return newLongLessThanOrEqualEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeSub:
+	case NodeTypeSub:
 		return newSubtractEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeAdd:
+	case NodeTypeAdd:
 		return newAddEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeContains:
+	case NodeTypeContains:
 		return newContainsEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeContainsAll:
+	case NodeTypeContainsAll:
 		return newContainsAllEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeContainsAny:
+	case NodeTypeContainsAny:
 		return newContainsAnyEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeMult:
+	case NodeTypeMult:
 		return newMultiplyEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeNotEquals:
+	case NodeTypeNotEquals:
 		return newNotEqualEval(toEval(v.Left), toEval(v.Right))
-	case nodeTypeOr:
+	case NodeTypeOr:
 		return newOrNode(toEval(v.Left), toEval(v.Right))
 	default:
 		panic(fmt.Sprintf("unknown node type %T", v))
