@@ -6,6 +6,6 @@ type Node struct {
 	ast.Node
 }
 
-func newNode(n ast.Node) Node {
+func wrapNode(n ast.Node) Node {
 	return Node{n}
 }

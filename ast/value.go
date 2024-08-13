@@ -6,7 +6,7 @@ import (
 )
 
 func Boolean(b types.Boolean) Node {
-	return newNode(ast.Boolean(b))
+	return wrapNode(ast.Boolean(b))
 }
 
 func True() Node {
@@ -18,17 +18,17 @@ func False() Node {
 }
 
 func String(s types.String) Node {
-	return newNode(ast.String(s))
+	return wrapNode(ast.String(s))
 }
 
 func Long(l types.Long) Node {
-	return newNode(ast.Long(l))
+	return wrapNode(ast.Long(l))
 }
 
 // Set is a convenience function that wraps concrete instances of a Cedar Set type
 // types in AST value nodes and passes them along to SetNodes.
 func Set(s types.Set) Node {
-	return newNode(ast.Set(s))
+	return wrapNode(ast.Set(s))
 }
 
 // SetNodes allows for a complex set definition with values potentially
@@ -48,13 +48,13 @@ func SetNodes(nodes ...Node) Node {
 	for _, n := range nodes {
 		astNodes = append(astNodes, n.Node)
 	}
-	return newNode(ast.SetNodes(astNodes...))
+	return wrapNode(ast.SetNodes(astNodes...))
 }
 
 // Record is a convenience function that wraps concrete instances of a Cedar Record type
 // types in AST value nodes and passes them along to RecordNodes.
 func Record(r types.Record) Node {
-	return newNode(ast.Record(r))
+	return wrapNode(ast.Record(r))
 }
 
 // RecordNodes allows for a complex record definition with values potentially
@@ -72,7 +72,7 @@ func RecordNodes(entries map[types.String]Node) Node {
 	for k, v := range entries {
 		astNodes[k] = v.Node
 	}
-	return newNode(ast.RecordNodes(astNodes))
+	return wrapNode(ast.RecordNodes(astNodes))
 }
 
 type RecordElement struct {
@@ -85,19 +85,19 @@ func RecordElements(elements ...RecordElement) Node {
 	for _, v := range elements {
 		astNodes = append(astNodes, ast.RecordElement{Key: v.Key, Value: v.Value.Node})
 	}
-	return newNode(ast.RecordElements(astNodes...))
+	return wrapNode(ast.RecordElements(astNodes...))
 }
 
 func EntityUID(e types.EntityUID) Node {
-	return newNode(ast.EntityUID(e))
+	return wrapNode(ast.EntityUID(e))
 }
 
 func Decimal(d types.Decimal) Node {
-	return newNode(ast.Decimal(d))
+	return wrapNode(ast.Decimal(d))
 }
 
 func IPAddr(i types.IPAddr) Node {
-	return newNode(ast.IPAddr(i))
+	return wrapNode(ast.IPAddr(i))
 }
 
 func ExtensionCall(name types.String, args ...Node) Node {
@@ -105,5 +105,5 @@ func ExtensionCall(name types.String, args ...Node) Node {
 	for _, v := range args {
 		astNodes = append(astNodes, v.Node)
 	}
-	return newNode(ast.ExtensionCall(name, astNodes...))
+	return wrapNode(ast.ExtensionCall(name, astNodes...))
 }

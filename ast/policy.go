@@ -2,26 +2,28 @@ package ast
 
 import "github.com/cedar-policy/cedar-go/internal/ast"
 
-type Policy struct {
-	*ast.Policy
+type Policy ast.Policy
+
+func wrapPolicy(p *ast.Policy) *Policy {
+	return (*Policy)(p)
 }
 
-func newPolicy(p *ast.Policy) *Policy {
-	return &Policy{p}
+func (p *Policy) unwrap() *ast.Policy {
+	return (*ast.Policy)(p)
 }
 
 func Permit() *Policy {
-	return newPolicy(ast.Permit())
+	return wrapPolicy(ast.Permit())
 }
 
 func Forbid() *Policy {
-	return newPolicy(ast.Forbid())
+	return wrapPolicy(ast.Forbid())
 }
 
 func (p *Policy) When(node Node) *Policy {
-	return newPolicy(p.Policy.When(node.Node))
+	return wrapPolicy(p.unwrap().When(node.Node))
 }
 
 func (p *Policy) Unless(node Node) *Policy {
-	return newPolicy(p.Policy.Unless(node.Node))
+	return wrapPolicy(p.unwrap().Unless(node.Node))
 }
