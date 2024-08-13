@@ -1,4 +1,4 @@
-package ast_test
+package json
 
 import (
 	"encoding/json"
@@ -479,13 +479,13 @@ func TestUnmarshalJSON(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			var p ast.Policy
+			var p Policy
 			err := json.Unmarshal([]byte(tt.input), &p)
 			tt.errFunc(t, err)
 			if err != nil {
 				return
 			}
-			testutil.Equals(t, p, *tt.want)
+			testutil.Equals(t, p.Policy, *tt.want)
 			b, err := json.Marshal(&p)
 			testutil.OK(t, err)
 			normInput := testNormalizeJSON(t, tt.input)
@@ -535,7 +535,8 @@ func TestMarshalJSON(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			b, err := json.Marshal(tt.input)
+			pp := &Policy{Policy: *tt.input}
+			b, err := json.Marshal(pp)
 			tt.errFunc(t, err)
 			if err != nil {
 				return

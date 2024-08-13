@@ -197,7 +197,7 @@ func stripNodes(args []Node) []IsNode {
 	return res
 }
 
-func newExtensionCall(method types.String, args ...Node) Node {
+func NewExtensionCall(method types.String, args ...Node) Node {
 	return NewNode(NodeTypeExtensionCall{
 		Name: method,
 		Args: stripNodes(args),

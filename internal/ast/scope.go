@@ -33,57 +33,57 @@ func (s Scope) IsIn(entityType types.Path, entity types.EntityUID) IsScopeNode {
 }
 
 func (p *Policy) PrincipalEq(entity types.EntityUID) *Policy {
-	p.Principal = Scope(newPrincipalNode()).Eq(entity)
+	p.Principal = Scope(NewPrincipalNode()).Eq(entity)
 	return p
 }
 
 func (p *Policy) PrincipalIn(entity types.EntityUID) *Policy {
-	p.Principal = Scope(newPrincipalNode()).In(entity)
+	p.Principal = Scope(NewPrincipalNode()).In(entity)
 	return p
 }
 
 func (p *Policy) PrincipalIs(entityType types.Path) *Policy {
-	p.Principal = Scope(newPrincipalNode()).Is(entityType)
+	p.Principal = Scope(NewPrincipalNode()).Is(entityType)
 	return p
 }
 
 func (p *Policy) PrincipalIsIn(entityType types.Path, entity types.EntityUID) *Policy {
-	p.Principal = Scope(newPrincipalNode()).IsIn(entityType, entity)
+	p.Principal = Scope(NewPrincipalNode()).IsIn(entityType, entity)
 	return p
 }
 
 func (p *Policy) ActionEq(entity types.EntityUID) *Policy {
-	p.Action = Scope(newActionNode()).Eq(entity)
+	p.Action = Scope(NewActionNode()).Eq(entity)
 	return p
 }
 
 func (p *Policy) ActionIn(entity types.EntityUID) *Policy {
-	p.Action = Scope(newActionNode()).In(entity)
+	p.Action = Scope(NewActionNode()).In(entity)
 	return p
 }
 
 func (p *Policy) ActionInSet(entities ...types.EntityUID) *Policy {
-	p.Action = Scope(newActionNode()).InSet(entities)
+	p.Action = Scope(NewActionNode()).InSet(entities)
 	return p
 }
 
 func (p *Policy) ResourceEq(entity types.EntityUID) *Policy {
-	p.Resource = Scope(newResourceNode()).Eq(entity)
+	p.Resource = Scope(NewResourceNode()).Eq(entity)
 	return p
 }
 
 func (p *Policy) ResourceIn(entity types.EntityUID) *Policy {
-	p.Resource = Scope(newResourceNode()).In(entity)
+	p.Resource = Scope(NewResourceNode()).In(entity)
 	return p
 }
 
 func (p *Policy) ResourceIs(entityType types.Path) *Policy {
-	p.Resource = Scope(newResourceNode()).Is(entityType)
+	p.Resource = Scope(NewResourceNode()).Is(entityType)
 	return p
 }
 
 func (p *Policy) ResourceIsIn(entityType types.Path, entity types.EntityUID) *Policy {
-	p.Resource = Scope(newResourceNode()).IsIn(entityType, entity)
+	p.Resource = Scope(NewResourceNode()).IsIn(entityType, entity)
 	return p
 }
 
