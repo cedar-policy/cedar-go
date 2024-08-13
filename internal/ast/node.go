@@ -14,6 +14,10 @@ func NewNode(v IsNode) Node {
 	return Node{v: v}
 }
 
+func (n Node) AsIsNode() IsNode {
+	return n.v
+}
+
 type StrOpNode struct {
 	Arg   IsNode
 	Value types.String

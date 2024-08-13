@@ -6,6 +6,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/entities"
+	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -76,7 +77,7 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 			},
 			Annotations: ann,
 			Effect:      Effect(p.TmpGetEffect()),
-			eval:        ast.Compile(p.Policy),
+			eval:        eval.Compile(p.Policy),
 		})
 	}
 	return policies, nil
@@ -139,9 +140,9 @@ type Request struct {
 	Context   types.Record    `json:"context"`
 }
 
-type evalContext = ast.EvalContext
+type evalContext = eval.Context
 
-type evaler = ast.Evaler
+type evaler = eval.Evaler
 
 // IsAuthorized uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
