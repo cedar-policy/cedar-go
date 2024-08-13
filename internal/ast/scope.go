@@ -90,7 +90,6 @@ func (p *Policy) ResourceIsIn(entityType types.Path, entity types.EntityUID) *Po
 type IsScopeNode interface {
 	isScope()
 	MarshalCedar(*bytes.Buffer)
-	ToNode() Node
 }
 
 type ScopeNode struct {
@@ -103,17 +102,9 @@ type ScopeTypeAll struct {
 	ScopeNode
 }
 
-func (n ScopeTypeAll) ToNode() Node {
-	return NewNode(True().v)
-}
-
 type ScopeTypeEq struct {
 	ScopeNode
 	Entity types.EntityUID
-}
-
-func (n ScopeTypeEq) ToNode() Node {
-	return NewNode(NewNode(n.Variable).Equals(EntityUID(n.Entity)).v)
 }
 
 type ScopeTypeIn struct {
@@ -121,21 +112,9 @@ type ScopeTypeIn struct {
 	Entity types.EntityUID
 }
 
-func (n ScopeTypeIn) ToNode() Node {
-	return NewNode(NewNode(n.Variable).In(EntityUID(n.Entity)).v)
-}
-
 type ScopeTypeInSet struct {
 	ScopeNode
 	Entities []types.EntityUID
-}
-
-func (n ScopeTypeInSet) ToNode() Node {
-	set := make([]types.Value, len(n.Entities))
-	for i, e := range n.Entities {
-		set[i] = e
-	}
-	return NewNode(NewNode(n.Variable).In(Set(set)).v)
 }
 
 type ScopeTypeIs struct {
@@ -143,16 +122,8 @@ type ScopeTypeIs struct {
 	Type types.Path
 }
 
-func (n ScopeTypeIs) ToNode() Node {
-	return NewNode(NewNode(n.Variable).Is(n.Type).v)
-}
-
 type ScopeTypeIsIn struct {
 	ScopeNode
 	Type   types.Path
 	Entity types.EntityUID
-}
-
-func (n ScopeTypeIsIn) ToNode() Node {
-	return NewNode(NewNode(n.Variable).IsIn(n.Type, EntityUID(n.Entity)).v)
 }

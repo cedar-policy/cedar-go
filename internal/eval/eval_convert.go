@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 func toEval(n ast.IsNode) Evaler {
@@ -122,5 +123,29 @@ func toEval(n ast.IsNode) Evaler {
 		return newOrNode(toEval(v.Left), toEval(v.Right))
 	default:
 		panic(fmt.Sprintf("unknown node type %T", v))
+	}
+}
+
+func scopeToNode(in ast.IsScopeNode) ast.Node {
+	switch t := in.(type) {
+	case ast.ScopeTypeAll:
+		return ast.True()
+	case ast.ScopeTypeEq:
+		return ast.NewNode(t.Variable).Equals(ast.EntityUID(t.Entity))
+	case ast.ScopeTypeIn:
+		return ast.NewNode(t.Variable).In(ast.EntityUID(t.Entity))
+	case ast.ScopeTypeInSet:
+		set := make([]types.Value, len(t.Entities))
+		for i, e := range t.Entities {
+			set[i] = e
+		}
+		return ast.NewNode(t.Variable).In(ast.Set(set))
+	case ast.ScopeTypeIs:
+		return ast.NewNode(t.Variable).Is(t.Type)
+
+	case ast.ScopeTypeIsIn:
+		return ast.NewNode(t.Variable).IsIn(t.Type, ast.EntityUID(t.Entity))
+	default:
+		panic(fmt.Sprintf("unknown scope type %T", t))
 	}
 }
