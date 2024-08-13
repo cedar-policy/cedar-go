@@ -3,19 +3,19 @@ package ast
 import "github.com/cedar-policy/cedar-go/types"
 
 func Principal() Node {
-	return newNode(newPrincipalNode())
+	return NewNode(newPrincipalNode())
 }
 
 func Action() Node {
-	return newNode(newActionNode())
+	return NewNode(newActionNode())
 }
 
 func Resource() Node {
-	return newNode(newResourceNode())
+	return NewNode(newResourceNode())
 }
 
 func Context() Node {
-	return newNode(newContextNode())
+	return NewNode(newContextNode())
 }
 
 func newPrincipalNode() NodeTypeVariable {

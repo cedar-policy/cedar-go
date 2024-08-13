@@ -29,10 +29,10 @@ func policyToNode(p Policy) Node {
 	nodes[2] = p.Resource.toNode()
 	for i, c := range p.Conditions {
 		if c.Condition == ConditionUnless {
-			nodes[i+3] = Not(newNode(c.Body))
+			nodes[i+3] = Not(NewNode(c.Body))
 			continue
 		}
-		nodes[i+3] = newNode(c.Body)
+		nodes[i+3] = NewNode(c.Body)
 	}
 	res := nodes[len(nodes)-1]
 	for i := len(nodes) - 2; i >= 0; i-- {

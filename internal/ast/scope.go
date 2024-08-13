@@ -104,7 +104,7 @@ type ScopeTypeAll struct {
 }
 
 func (n ScopeTypeAll) toNode() Node {
-	return newNode(True().v)
+	return NewNode(True().v)
 }
 
 type ScopeTypeEq struct {
@@ -113,7 +113,7 @@ type ScopeTypeEq struct {
 }
 
 func (n ScopeTypeEq) toNode() Node {
-	return newNode(newNode(n.Variable).Equals(EntityUID(n.Entity)).v)
+	return NewNode(NewNode(n.Variable).Equals(EntityUID(n.Entity)).v)
 }
 
 type ScopeTypeIn struct {
@@ -122,7 +122,7 @@ type ScopeTypeIn struct {
 }
 
 func (n ScopeTypeIn) toNode() Node {
-	return newNode(newNode(n.Variable).In(EntityUID(n.Entity)).v)
+	return NewNode(NewNode(n.Variable).In(EntityUID(n.Entity)).v)
 }
 
 type ScopeTypeInSet struct {
@@ -135,7 +135,7 @@ func (n ScopeTypeInSet) toNode() Node {
 	for i, e := range n.Entities {
 		set[i] = e
 	}
-	return newNode(newNode(n.Variable).In(Set(set)).v)
+	return NewNode(NewNode(n.Variable).In(Set(set)).v)
 }
 
 type ScopeTypeIs struct {
@@ -144,7 +144,7 @@ type ScopeTypeIs struct {
 }
 
 func (n ScopeTypeIs) toNode() Node {
-	return newNode(newNode(n.Variable).Is(n.Type).v)
+	return NewNode(NewNode(n.Variable).Is(n.Type).v)
 }
 
 type ScopeTypeIsIn struct {
@@ -154,5 +154,5 @@ type ScopeTypeIsIn struct {
 }
 
 func (n ScopeTypeIsIn) toNode() Node {
-	return newNode(newNode(n.Variable).IsIn(n.Type, EntityUID(n.Entity)).v)
+	return NewNode(NewNode(n.Variable).IsIn(n.Type, EntityUID(n.Entity)).v)
 }
