@@ -10,8 +10,9 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-// These tests mostly verify that policy ASTs compile
-func TestAst(t *testing.T) {
+// These tests serve mostly as examples of how to translate from Cedar text into programmatic AST construction. They
+// don't verify anything.
+func TestAstExamples(t *testing.T) {
 	t.Parallel()
 
 	johnny := types.NewEntityUID("User", "johnny")
@@ -50,7 +51,7 @@ func TestAst(t *testing.T) {
 	// forbid (principal, action, resource)
 	// when { {x: "value"}.x == "value" }
 	// when { {x: 1 + context.fooCount}.x == 3 }
-	// when { [1, 2 + 3, context.fooCount].contains(1) };
+	// when { [1, (2 + 3) * 4, context.fooCount].contains(1) };
 	simpleRecord := types.Record{
 		"x": types.String("value"),
 	}
@@ -66,7 +67,7 @@ func TestAst(t *testing.T) {
 		When(
 			ast.SetNodes(
 				ast.Long(1),
-				ast.Long(2).Plus(ast.Long(3)),
+				ast.Long(2).Plus(ast.Long(3)).Times(ast.Long(4)),
 				ast.Context().Access("fooCount"),
 			).Contains(ast.Long(1)),
 		)
