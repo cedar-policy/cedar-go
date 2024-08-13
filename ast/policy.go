@@ -6,18 +6,22 @@ type Policy struct {
 	*ast.Policy
 }
 
+func newPolicy(p *ast.Policy) *Policy {
+	return &Policy{p}
+}
+
 func Permit() *Policy {
-	return &Policy{ast.Permit()}
+	return newPolicy(ast.Permit())
 }
 
 func Forbid() *Policy {
-	return &Policy{ast.Forbid()}
+	return newPolicy(ast.Forbid())
 }
 
 func (p *Policy) When(node Node) *Policy {
-	return &Policy{p.Policy.When(node.Node)}
+	return newPolicy(p.Policy.When(node.Node))
 }
 
 func (p *Policy) Unless(node Node) *Policy {
-	return &Policy{p.Policy.Unless(node.Node)}
+	return newPolicy(p.Policy.Unless(node.Node))
 }
