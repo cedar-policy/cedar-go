@@ -1,13 +1,12 @@
 package ast
 
 import (
-	"fmt"
-
+	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
 func Boolean(b types.Boolean) Node {
-	return newValueNode(b)
+	return Node{ast.Boolean(b)}
 }
 
 func True() Node {
@@ -19,21 +18,17 @@ func False() Node {
 }
 
 func String(s types.String) Node {
-	return newValueNode(s)
+	return Node{ast.String(s)}
 }
 
 func Long(l types.Long) Node {
-	return newValueNode(l)
+	return Node{ast.Long(l)}
 }
 
 // Set is a convenience function that wraps concrete instances of a Cedar Set type
 // types in AST value nodes and passes them along to SetNodes.
 func Set(s types.Set) Node {
-	var nodes []node
-	for _, v := range s {
-		nodes = append(nodes, valueToNode(v).v)
-	}
-	return newNode(nodeTypeSet{Elements: nodes})
+	return Node{ast.Set(s)}
 }
 
 // SetNodes allows for a complex set definition with values potentially
@@ -49,18 +44,17 @@ func Set(s types.Set) Node {
 //	    ast.Context().Access("fooCount"),
 //	)
 func SetNodes(nodes ...Node) Node {
-	return newNode(nodeTypeSet{Elements: stripNodes(nodes)})
+	var astNodes []ast.Node
+	for _, n := range nodes {
+		astNodes = append(astNodes, n.Node)
+	}
+	return Node{ast.SetNodes(astNodes...)}
 }
 
 // Record is a convenience function that wraps concrete instances of a Cedar Record type
 // types in AST value nodes and passes them along to RecordNodes.
 func Record(r types.Record) Node {
-	// TODO: this results in a double allocation, fix that
-	recordNodes := map[types.String]Node{}
-	for k, v := range r {
-		recordNodes[types.String(k)] = valueToNode(v)
-	}
-	return RecordNodes(recordNodes)
+	return Node{ast.Record(r)}
 }
 
 // RecordNodes allows for a complex record definition with values potentially
@@ -74,11 +68,11 @@ func Record(r types.Record) Node {
 //	    "x": ast.Long(1).Plus(ast.Context().Access("fooCount"))},
 //	})
 func RecordNodes(entries map[types.String]Node) Node {
-	var res nodeTypeRecord
+	astNodes := map[types.String]ast.Node{}
 	for k, v := range entries {
-		res.Elements = append(res.Elements, recordElement{Key: k, Value: v.v})
+		astNodes[k] = v.Node
 	}
-	return newNode(res)
+	return Node{ast.RecordNodes(astNodes)}
 }
 
 type RecordElement struct {
@@ -87,52 +81,29 @@ type RecordElement struct {
 }
 
 func RecordElements(elements ...RecordElement) Node {
-	var res nodeTypeRecord
-	for _, e := range elements {
-		res.Elements = append(res.Elements, recordElement{Key: e.Key, Value: e.Value.v})
+	var astNodes []ast.RecordElement
+	for _, v := range elements {
+		astNodes = append(astNodes, ast.RecordElement{Key: v.Key, Value: v.Value.Node})
 	}
-	return newNode(res)
+	return Node{ast.RecordElements(astNodes...)}
 }
 
 func EntityUID(e types.EntityUID) Node {
-	return newValueNode(e)
+	return Node{ast.EntityUID(e)}
 }
 
 func Decimal(d types.Decimal) Node {
-	return newValueNode(d)
+	return Node{ast.Decimal(d)}
 }
 
 func IPAddr(i types.IPAddr) Node {
-	return newValueNode(i)
+	return Node{ast.IPAddr(i)}
 }
 
 func ExtensionCall(name types.String, args ...Node) Node {
-	return newExtensionCall(name, args...)
-}
-
-func newValueNode(v types.Value) Node {
-	return newNode(nodeValue{Value: v})
-}
-
-func valueToNode(v types.Value) Node {
-	switch x := v.(type) {
-	case types.Boolean:
-		return Boolean(x)
-	case types.String:
-		return String(x)
-	case types.Long:
-		return Long(x)
-	case types.Set:
-		return Set(x)
-	case types.Record:
-		return Record(x)
-	case types.EntityUID:
-		return EntityUID(x)
-	case types.Decimal:
-		return Decimal(x)
-	case types.IPAddr:
-		return IPAddr(x)
-	default:
-		panic(fmt.Sprintf("unexpected value type: %T(%v)", v, v))
+	var astNodes []ast.Node
+	for _, v := range args {
+		astNodes = append(astNodes, v.Node)
 	}
+	return Node{ast.ExtensionCall(name, astNodes...)}
 }
