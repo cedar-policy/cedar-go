@@ -163,7 +163,7 @@ func (n NodeTypeAccess) marshalCedar(buf *bytes.Buffer) {
 
 func (n NodeTypeExtensionCall) marshalCedar(buf *bytes.Buffer) {
 	var args []IsNode
-	info := extMap[n.Name]
+	info := ExtMap[n.Name]
 	if info.IsMethod {
 		marshalChildNode(n.precedenceLevel(), n.Args[0], buf)
 		buf.WriteRune('.')

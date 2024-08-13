@@ -1,28 +1,30 @@
-package ast
+package eval
 
 import (
 	"fmt"
+
+	"github.com/cedar-policy/cedar-go/internal/ast"
 )
 
-func toEval(n IsNode) Evaler {
+func toEval(n ast.IsNode) Evaler {
 	switch v := n.(type) {
-	case NodeTypeAccess:
+	case ast.NodeTypeAccess:
 		return newAttributeAccessEval(toEval(v.Arg), string(v.Value))
-	case NodeTypeHas:
+	case ast.NodeTypeHas:
 		return newHasEval(toEval(v.Arg), string(v.Value))
-	case NodeTypeLike:
+	case ast.NodeTypeLike:
 		return newLikeEval(toEval(v.Arg), v.Value)
-	case NodeTypeIf:
+	case ast.NodeTypeIf:
 		return newIfThenElseEval(toEval(v.If), toEval(v.Then), toEval(v.Else))
-	case NodeTypeIs:
+	case ast.NodeTypeIs:
 		return newIsEval(toEval(v.Left), newLiteralEval(v.EntityType))
-	case NodeTypeIsIn:
+	case ast.NodeTypeIsIn:
 		obj := toEval(v.Left)
 		lhs := newIsEval(obj, newLiteralEval(v.EntityType))
 		rhs := newInEval(obj, toEval(v.Entity))
 		return newAndEval(lhs, rhs)
-	case NodeTypeExtensionCall:
-		i, ok := extMap[v.Name]
+	case ast.NodeTypeExtensionCall:
+		i, ok := ast.ExtMap[v.Name]
 		if !ok {
 			return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, v.Name))
 		}
@@ -57,25 +59,25 @@ func toEval(n IsNode) Evaler {
 		default:
 			panic(fmt.Errorf("unknown extension: %v", v.Name))
 		}
-	case NodeValue:
+	case ast.NodeValue:
 		return newLiteralEval(v.Value)
-	case NodeTypeRecord:
+	case ast.NodeTypeRecord:
 		m := make(map[string]Evaler, len(v.Elements))
 		for _, e := range v.Elements {
 			m[string(e.Key)] = toEval(e.Value)
 		}
 		return newRecordLiteralEval(m)
-	case NodeTypeSet:
+	case ast.NodeTypeSet:
 		s := make([]Evaler, len(v.Elements))
 		for i, e := range v.Elements {
 			s[i] = toEval(e)
 		}
 		return newSetLiteralEval(s)
-	case NodeTypeNegate:
+	case ast.NodeTypeNegate:
 		return newNegateEval(toEval(v.Arg))
-	case NodeTypeNot:
+	case ast.NodeTypeNot:
 		return newNotEval(toEval(v.Arg))
-	case NodeTypeVariable:
+	case ast.NodeTypeVariable:
 		switch v.Name {
 		case "principal":
 			return newVariableEval(variableNamePrincipal)
@@ -88,35 +90,35 @@ func toEval(n IsNode) Evaler {
 		default:
 			panic(fmt.Errorf("unknown variable: %v", v.Name))
 		}
-	case NodeTypeIn:
+	case ast.NodeTypeIn:
 		return newInEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeAnd:
+	case ast.NodeTypeAnd:
 		return newAndEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeEquals:
+	case ast.NodeTypeEquals:
 		return newEqualEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeGreaterThan:
+	case ast.NodeTypeGreaterThan:
 		return newLongGreaterThanEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeGreaterThanOrEqual:
+	case ast.NodeTypeGreaterThanOrEqual:
 		return newLongGreaterThanOrEqualEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeLessThan:
+	case ast.NodeTypeLessThan:
 		return newLongLessThanEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeLessThanOrEqual:
+	case ast.NodeTypeLessThanOrEqual:
 		return newLongLessThanOrEqualEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeSub:
+	case ast.NodeTypeSub:
 		return newSubtractEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeAdd:
+	case ast.NodeTypeAdd:
 		return newAddEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeContains:
+	case ast.NodeTypeContains:
 		return newContainsEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeContainsAll:
+	case ast.NodeTypeContainsAll:
 		return newContainsAllEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeContainsAny:
+	case ast.NodeTypeContainsAny:
 		return newContainsAnyEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeMult:
+	case ast.NodeTypeMult:
 		return newMultiplyEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeNotEquals:
+	case ast.NodeTypeNotEquals:
 		return newNotEqualEval(toEval(v.Left), toEval(v.Right))
-	case NodeTypeOr:
+	case ast.NodeTypeOr:
 		return newOrNode(toEval(v.Left), toEval(v.Right))
 	default:
 		panic(fmt.Sprintf("unknown node type %T", v))
