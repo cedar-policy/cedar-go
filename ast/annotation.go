@@ -5,12 +5,14 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-type Annotations struct {
-	*ast.Annotations
+type Annotations ast.Annotations
+
+func (a *Annotations) unwrap() *ast.Annotations {
+	return (*ast.Annotations)(a)
 }
 
-func newAnnotations(a *ast.Annotations) *Annotations {
-	return &Annotations{a}
+func wrapAnnotations(a *ast.Annotations) *Annotations {
+	return (*Annotations)(a)
 }
 
 // Annotation allows AST constructors to make policy in a similar shape to textual Cedar with
@@ -21,21 +23,21 @@ func newAnnotations(a *ast.Annotations) *Annotations {
 //		Permit().
 //		PrincipalEq(superUser)
 func Annotation(name, value types.String) *Annotations {
-	return newAnnotations(ast.Annotation(name, value))
+	return wrapAnnotations(ast.Annotation(name, value))
 }
 
 func (a *Annotations) Annotation(name, value types.String) *Annotations {
-	return newAnnotations(a.Annotations.Annotation(name, value))
+	return wrapAnnotations(a.unwrap().Annotation(name, value))
 }
 
 func (a *Annotations) Permit() *Policy {
-	return newPolicy(a.Annotations.Permit())
+	return wrapPolicy(a.unwrap().Permit())
 }
 
 func (a *Annotations) Forbid() *Policy {
-	return newPolicy(a.Annotations.Forbid())
+	return wrapPolicy(a.unwrap().Forbid())
 }
 
 func (p *Policy) Annotate(name, value types.String) *Policy {
-	return newPolicy(p.Policy.Annotate(name, value))
+	return wrapPolicy(p.unwrap().Annotate(name, value))
 }

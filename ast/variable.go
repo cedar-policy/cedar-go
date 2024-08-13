@@ -3,17 +3,17 @@ package ast
 import "github.com/cedar-policy/cedar-go/internal/ast"
 
 func Principal() Node {
-	return newNode(ast.Principal())
+	return wrapNode(ast.Principal())
 }
 
 func Action() Node {
-	return newNode(ast.Action())
+	return wrapNode(ast.Action())
 }
 
 func Resource() Node {
-	return newNode(ast.Resource())
+	return wrapNode(ast.Resource())
 }
 
 func Context() Node {
-	return newNode(ast.Context())
+	return wrapNode(ast.Context())
 }
