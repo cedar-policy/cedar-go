@@ -7,29 +7,29 @@ import (
 )
 
 type Node struct {
-	v node // NOTE: not an embed because a `Node` is not a `node`
+	v IsNode // NOTE: not an embed because a `Node` is not a `node`
 }
 
-func newNode(v node) Node {
+func newNode(v IsNode) Node {
 	return Node{v: v}
 }
 
-func NewNode(v node) Node {
+func NewNode(v IsNode) Node {
 	return Node{v: v}
 }
 
-type strOpNode struct {
-	Arg   node
+type StrOpNode struct {
+	Arg   IsNode
 	Value types.String
 }
 
-func (n strOpNode) isNode() {}
+func (n StrOpNode) isNode() {}
 
-type binaryNode struct {
-	Left, Right node
+type BinaryNode struct {
+	Left, Right IsNode
 }
 
-func (n binaryNode) isNode() {}
+func (n BinaryNode) isNode() {}
 
 type nodePrecedenceLevel uint8
 
@@ -45,152 +45,152 @@ const (
 	primaryPrecedence  nodePrecedenceLevel = 8
 )
 
-type nodeTypeIf struct {
-	If, Then, Else node
+type NodeTypeIf struct {
+	If, Then, Else IsNode
 }
 
-func (n nodeTypeIf) precedenceLevel() nodePrecedenceLevel {
+func (n NodeTypeIf) precedenceLevel() nodePrecedenceLevel {
 	return ifPrecedence
 }
 
-func (n nodeTypeIf) isNode() {}
+func (n NodeTypeIf) isNode() {}
 
-type nodeTypeOr struct{ binaryNode }
+type NodeTypeOr struct{ BinaryNode }
 
-func (n nodeTypeOr) precedenceLevel() nodePrecedenceLevel {
+func (n NodeTypeOr) precedenceLevel() nodePrecedenceLevel {
 	return orPrecedence
 }
 
-type nodeTypeAnd struct {
-	binaryNode
+type NodeTypeAnd struct {
+	BinaryNode
 }
 
-func (n nodeTypeAnd) precedenceLevel() nodePrecedenceLevel {
+func (n NodeTypeAnd) precedenceLevel() nodePrecedenceLevel {
 	return andPrecedence
 }
 
-type relationNode struct{}
+type RelationNode struct{}
 
-func (n relationNode) precedenceLevel() nodePrecedenceLevel {
+func (n RelationNode) precedenceLevel() nodePrecedenceLevel {
 	return relationPrecedence
 }
 
-type nodeTypeLessThan struct {
-	binaryNode
-	relationNode
+type NodeTypeLessThan struct {
+	BinaryNode
+	RelationNode
 }
-type nodeTypeLessThanOrEqual struct {
-	binaryNode
-	relationNode
+type NodeTypeLessThanOrEqual struct {
+	BinaryNode
+	RelationNode
 }
-type nodeTypeGreaterThan struct {
-	binaryNode
-	relationNode
+type NodeTypeGreaterThan struct {
+	BinaryNode
+	RelationNode
 }
-type nodeTypeGreaterThanOrEqual struct {
-	binaryNode
-	relationNode
+type NodeTypeGreaterThanOrEqual struct {
+	BinaryNode
+	RelationNode
 }
-type nodeTypeNotEquals struct {
-	binaryNode
-	relationNode
+type NodeTypeNotEquals struct {
+	BinaryNode
+	RelationNode
 }
-type nodeTypeEquals struct {
-	binaryNode
-	relationNode
+type NodeTypeEquals struct {
+	BinaryNode
+	RelationNode
 }
-type nodeTypeIn struct {
-	binaryNode
-	relationNode
-}
-
-type nodeTypeHas struct {
-	strOpNode
-	relationNode
+type NodeTypeIn struct {
+	BinaryNode
+	RelationNode
 }
 
-type nodeTypeLike struct {
-	Arg   node
+type NodeTypeHas struct {
+	StrOpNode
+	RelationNode
+}
+
+type NodeTypeLike struct {
+	Arg   IsNode
 	Value types.Pattern
 }
 
-func (n nodeTypeLike) precedenceLevel() nodePrecedenceLevel {
+func (n NodeTypeLike) precedenceLevel() nodePrecedenceLevel {
 	return relationPrecedence
 }
-func (n nodeTypeLike) isNode() {}
+func (n NodeTypeLike) isNode() {}
 
-type nodeTypeIs struct {
-	Left       node
+type NodeTypeIs struct {
+	Left       IsNode
 	EntityType types.Path
 }
 
-func (n nodeTypeIs) precedenceLevel() nodePrecedenceLevel {
+func (n NodeTypeIs) precedenceLevel() nodePrecedenceLevel {
 	return relationPrecedence
 }
-func (n nodeTypeIs) isNode() {}
+func (n NodeTypeIs) isNode() {}
 
-type nodeTypeIsIn struct {
-	nodeTypeIs
-	Entity node
+type NodeTypeIsIn struct {
+	NodeTypeIs
+	Entity IsNode
 }
 
-func (n nodeTypeIsIn) precedenceLevel() nodePrecedenceLevel {
+func (n NodeTypeIsIn) precedenceLevel() nodePrecedenceLevel {
 	return relationPrecedence
 }
 
-type addNode struct{}
+type AddNode struct{}
 
-func (n addNode) precedenceLevel() nodePrecedenceLevel {
+func (n AddNode) precedenceLevel() nodePrecedenceLevel {
 	return addPrecedence
 }
 
-type nodeTypeSub struct {
-	binaryNode
-	addNode
+type NodeTypeSub struct {
+	BinaryNode
+	AddNode
 }
 
-type nodeTypeAdd struct {
-	binaryNode
-	addNode
+type NodeTypeAdd struct {
+	BinaryNode
+	AddNode
 }
 
-type nodeTypeMult struct{ binaryNode }
+type NodeTypeMult struct{ BinaryNode }
 
-func (n nodeTypeMult) precedenceLevel() nodePrecedenceLevel {
+func (n NodeTypeMult) precedenceLevel() nodePrecedenceLevel {
 	return multPrecedence
 }
 
-type unaryNode struct {
-	Arg node
+type UnaryNode struct {
+	Arg IsNode
 }
 
-func (n unaryNode) precedenceLevel() nodePrecedenceLevel {
+func (n UnaryNode) precedenceLevel() nodePrecedenceLevel {
 	return unaryPrecedence
 }
 
-func (n unaryNode) isNode() {}
+func (n UnaryNode) isNode() {}
 
-type nodeTypeNegate struct{ unaryNode }
-type nodeTypeNot struct{ unaryNode }
+type NodeTypeNegate struct{ UnaryNode }
+type NodeTypeNot struct{ UnaryNode }
 
-type nodeTypeAccess struct{ strOpNode }
+type NodeTypeAccess struct{ StrOpNode }
 
-func (n nodeTypeAccess) precedenceLevel() nodePrecedenceLevel {
+func (n NodeTypeAccess) precedenceLevel() nodePrecedenceLevel {
 	return accessPrecedence
 }
 
-type nodeTypeExtensionCall struct {
+type NodeTypeExtensionCall struct {
 	Name types.String // TODO: review type
-	Args []node
+	Args []IsNode
 }
 
-func (n nodeTypeExtensionCall) precedenceLevel() nodePrecedenceLevel {
+func (n NodeTypeExtensionCall) precedenceLevel() nodePrecedenceLevel {
 	return accessPrecedence
 }
-func (n nodeTypeExtensionCall) isNode() {}
+func (n NodeTypeExtensionCall) isNode() {}
 
-func stripNodes(args []Node) []node {
-	res := make([]node, len(args))
+func stripNodes(args []Node) []IsNode {
+	res := make([]IsNode, len(args))
 	for i, v := range args {
 		res[i] = v.v
 	}
@@ -198,81 +198,81 @@ func stripNodes(args []Node) []node {
 }
 
 func newExtensionCall(method types.String, args ...Node) Node {
-	return newNode(nodeTypeExtensionCall{
+	return newNode(NodeTypeExtensionCall{
 		Name: method,
 		Args: stripNodes(args),
 	})
 }
 
 func newMethodCall(lhs Node, method types.String, args ...Node) Node {
-	res := make([]node, 1+len(args))
+	res := make([]IsNode, 1+len(args))
 	res[0] = lhs.v
 	for i, v := range args {
 		res[i+1] = v.v
 	}
-	return newNode(nodeTypeExtensionCall{
+	return newNode(NodeTypeExtensionCall{
 		Name: method,
 		Args: res,
 	})
 }
 
-type containsNode struct{}
+type ContainsNode struct{}
 
-func (n containsNode) precedenceLevel() nodePrecedenceLevel {
+func (n ContainsNode) precedenceLevel() nodePrecedenceLevel {
 	return accessPrecedence
 }
 
-type nodeTypeContains struct {
-	binaryNode
-	containsNode
+type NodeTypeContains struct {
+	BinaryNode
+	ContainsNode
 }
-type nodeTypeContainsAll struct {
-	binaryNode
-	containsNode
+type NodeTypeContainsAll struct {
+	BinaryNode
+	ContainsNode
 }
-type nodeTypeContainsAny struct {
-	binaryNode
-	containsNode
+type NodeTypeContainsAny struct {
+	BinaryNode
+	ContainsNode
 }
 
-type primaryNode struct{}
+type PrimaryNode struct{}
 
-func (n primaryNode) isNode() {}
+func (n PrimaryNode) isNode() {}
 
-func (n primaryNode) precedenceLevel() nodePrecedenceLevel {
+func (n PrimaryNode) precedenceLevel() nodePrecedenceLevel {
 	return primaryPrecedence
 }
 
-type nodeValue struct {
-	primaryNode
+type NodeValue struct {
+	PrimaryNode
 	Value types.Value
 }
 
-func (n nodeValue) isNode() {}
+func (n NodeValue) isNode() {}
 
-type recordElement struct {
+type RecordElementNode struct {
 	Key   types.String
-	Value node
+	Value IsNode
 }
 
-type nodeTypeRecord struct {
-	primaryNode
-	Elements []recordElement
+type NodeTypeRecord struct {
+	PrimaryNode
+	Elements []RecordElementNode
 }
 
-func (n nodeTypeRecord) isNode() {}
+func (n NodeTypeRecord) isNode() {}
 
-type nodeTypeSet struct {
-	primaryNode
-	Elements []node
+type NodeTypeSet struct {
+	PrimaryNode
+	Elements []IsNode
 }
 
-type nodeTypeVariable struct {
-	primaryNode
+type NodeTypeVariable struct {
+	PrimaryNode
 	Name types.String // TODO: Review type
 }
 
-type node interface {
+type IsNode interface {
 	isNode()
 	marshalCedar(*bytes.Buffer)
 	precedenceLevel() nodePrecedenceLevel

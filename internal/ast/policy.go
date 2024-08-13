@@ -9,62 +9,62 @@ type PolicySetEntry struct {
 	Position Position
 }
 
-type annotationType struct {
+type AnnotationType struct {
 	Key   types.String // TODO: review type
 	Value types.String
 }
-type condition bool
+type Condition bool
 
 const (
-	conditionWhen   = true
-	conditionUnless = false
+	ConditionWhen   = true
+	ConditionUnless = false
 )
 
-type conditionType struct {
-	Condition condition
-	Body      node
+type ConditionType struct {
+	Condition Condition
+	Body      IsNode
 }
 
-type effect bool
+type Effect bool
 
 const (
-	effectPermit effect = true
-	effectForbid effect = false
+	EffectPermit Effect = true
+	EffectForbid Effect = false
 )
 
 type Policy struct {
-	effect      effect
-	annotations []annotationType
-	principal   isScopeNode
-	action      isScopeNode
-	resource    isScopeNode
-	conditions  []conditionType
+	Effect      Effect
+	Annotations []AnnotationType
+	Principal   IsScopeNode
+	Action      IsScopeNode
+	Resource    IsScopeNode
+	Conditions  []ConditionType
 }
 
-func newPolicy(effect effect, annotations []annotationType) *Policy {
+func newPolicy(effect Effect, annotations []AnnotationType) *Policy {
 	return &Policy{
-		effect:      effect,
-		annotations: annotations,
-		principal:   scope(rawPrincipalNode()).All(),
-		action:      scope(rawActionNode()).All(),
-		resource:    scope(rawResourceNode()).All(),
+		Effect:      effect,
+		Annotations: annotations,
+		Principal:   Scope(newPrincipalNode()).All(),
+		Action:      Scope(newActionNode()).All(),
+		Resource:    Scope(newResourceNode()).All(),
 	}
 }
 
 func Permit() *Policy {
-	return newPolicy(effectPermit, nil)
+	return newPolicy(EffectPermit, nil)
 }
 
 func Forbid() *Policy {
-	return newPolicy(effectForbid, nil)
+	return newPolicy(EffectForbid, nil)
 }
 
 func (p *Policy) When(node Node) *Policy {
-	p.conditions = append(p.conditions, conditionType{Condition: conditionWhen, Body: node.v})
+	p.Conditions = append(p.Conditions, ConditionType{Condition: ConditionWhen, Body: node.v})
 	return p
 }
 
 func (p *Policy) Unless(node Node) *Policy {
-	p.conditions = append(p.conditions, conditionType{Condition: conditionUnless, Body: node.v})
+	p.Conditions = append(p.Conditions, ConditionType{Condition: ConditionUnless, Body: node.v})
 	return p
 }

@@ -3,49 +3,33 @@ package ast
 import "github.com/cedar-policy/cedar-go/types"
 
 func Principal() Node {
-	return newPrincipalNode()
+	return newNode(newPrincipalNode())
 }
 
 func Action() Node {
-	return newActionNode()
+	return newNode(newActionNode())
 }
 
 func Resource() Node {
-	return newResourceNode()
+	return newNode(newResourceNode())
 }
 
 func Context() Node {
-	return newContextNode()
+	return newNode(newContextNode())
 }
 
-func newPrincipalNode() Node {
-	return newNode(rawPrincipalNode())
+func newPrincipalNode() NodeTypeVariable {
+	return NodeTypeVariable{Name: types.String("principal")}
 }
 
-func newActionNode() Node {
-	return newNode(rawActionNode())
+func newActionNode() NodeTypeVariable {
+	return NodeTypeVariable{Name: types.String("action")}
 }
 
-func newResourceNode() Node {
-	return newNode(rawResourceNode())
+func newResourceNode() NodeTypeVariable {
+	return NodeTypeVariable{Name: types.String("resource")}
 }
 
-func newContextNode() Node {
-	return newNode(rawContextNode())
-}
-
-func rawPrincipalNode() nodeTypeVariable {
-	return nodeTypeVariable{Name: types.String("principal")}
-}
-
-func rawActionNode() nodeTypeVariable {
-	return nodeTypeVariable{Name: types.String("action")}
-}
-
-func rawResourceNode() nodeTypeVariable {
-	return nodeTypeVariable{Name: types.String("resource")}
-}
-
-func rawContextNode() nodeTypeVariable {
-	return nodeTypeVariable{Name: types.String("context")}
+func newContextNode() NodeTypeVariable {
+	return NodeTypeVariable{Name: types.String("context")}
 }

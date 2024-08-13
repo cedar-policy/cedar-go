@@ -3,7 +3,7 @@ package ast
 import "github.com/cedar-policy/cedar-go/types"
 
 type Annotations struct {
-	nodes []annotationType
+	nodes []AnnotationType
 }
 
 // Annotation allows AST constructors to make policy in a similar shape to textual Cedar with
@@ -14,7 +14,7 @@ type Annotations struct {
 //		Permit().
 //		PrincipalEq(superUser)
 func Annotation(name, value types.String) *Annotations {
-	return &Annotations{nodes: []annotationType{newAnnotation(name, value)}}
+	return &Annotations{nodes: []AnnotationType{newAnnotation(name, value)}}
 }
 
 func (a *Annotations) Annotation(name, value types.String) *Annotations {
@@ -23,18 +23,18 @@ func (a *Annotations) Annotation(name, value types.String) *Annotations {
 }
 
 func (a *Annotations) Permit() *Policy {
-	return newPolicy(effectPermit, a.nodes)
+	return newPolicy(EffectPermit, a.nodes)
 }
 
 func (a *Annotations) Forbid() *Policy {
-	return newPolicy(effectForbid, a.nodes)
+	return newPolicy(EffectForbid, a.nodes)
 }
 
 func (p *Policy) Annotate(name, value types.String) *Policy {
-	p.annotations = append(p.annotations, annotationType{Key: name, Value: value})
+	p.Annotations = append(p.Annotations, AnnotationType{Key: name, Value: value})
 	return p
 }
 
-func newAnnotation(name, value types.String) annotationType {
-	return annotationType{Key: name, Value: value}
+func newAnnotation(name, value types.String) AnnotationType {
+	return AnnotationType{Key: name, Value: value}
 }

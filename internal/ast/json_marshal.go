@@ -7,30 +7,30 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func (s *scopeJSON) FromNode(src isScopeNode) error {
+func (s *scopeJSON) FromNode(src IsScopeNode) error {
 	switch t := src.(type) {
-	case scopeTypeAll:
+	case ScopeTypeAll:
 		s.Op = "All"
 		return nil
-	case scopeTypeEq:
+	case ScopeTypeEq:
 		s.Op = "=="
 		e := t.Entity
 		s.Entity = &e
 		return nil
-	case scopeTypeIn:
+	case ScopeTypeIn:
 		s.Op = "in"
 		e := t.Entity
 		s.Entity = &e
 		return nil
-	case scopeTypeInSet:
+	case ScopeTypeInSet:
 		s.Op = "in"
 		s.Entities = t.Entities
 		return nil
-	case scopeTypeIs:
+	case ScopeTypeIs:
 		s.Op = "is"
 		s.EntityType = string(t.Type)
 		return nil
-	case scopeTypeIsIn:
+	case ScopeTypeIsIn:
 		s.Op = "is"
 		s.EntityType = string(t.Type)
 		s.In = &scopeInJSON{
@@ -41,8 +41,8 @@ func (s *scopeJSON) FromNode(src isScopeNode) error {
 	return fmt.Errorf("unexpected scope node: %T", src)
 }
 
-func unaryToJSON(dest **unaryJSON, src unaryNode) error {
-	n := unaryNode(src)
+func unaryToJSON(dest **unaryJSON, src UnaryNode) error {
+	n := UnaryNode(src)
 	res := &unaryJSON{}
 	if err := res.Arg.FromNode(n.Arg); err != nil {
 		return fmt.Errorf("error in arg: %w", err)
@@ -51,8 +51,8 @@ func unaryToJSON(dest **unaryJSON, src unaryNode) error {
 	return nil
 }
 
-func binaryToJSON(dest **binaryJSON, src binaryNode) error {
-	n := binaryNode(src)
+func binaryToJSON(dest **binaryJSON, src BinaryNode) error {
+	n := BinaryNode(src)
 	res := &binaryJSON{}
 	if err := res.Left.FromNode(n.Left); err != nil {
 		return fmt.Errorf("error in left: %w", err)
@@ -64,7 +64,7 @@ func binaryToJSON(dest **binaryJSON, src binaryNode) error {
 	return nil
 }
 
-func arrayToJSON(dest *arrayJSON, args []node) error {
+func arrayToJSON(dest *arrayJSON, args []IsNode) error {
 	res := arrayJSON{}
 	for _, n := range args {
 		var nn nodeJSON
@@ -90,7 +90,7 @@ func extToJSON(dest *extensionCallJSON, name string, src types.Value) error {
 	return nil
 }
 
-func extCallToJSON(dest extensionCallJSON, src nodeTypeExtensionCall) error {
+func extCallToJSON(dest extensionCallJSON, src NodeTypeExtensionCall) error {
 	jsonArgs := arrayJSON{}
 	for _, n := range src.Args {
 		argNode := &nodeJSON{}
@@ -104,7 +104,7 @@ func extCallToJSON(dest extensionCallJSON, src nodeTypeExtensionCall) error {
 	return nil
 }
 
-func strToJSON(dest **strJSON, src strOpNode) error {
+func strToJSON(dest **strJSON, src StrOpNode) error {
 	res := &strJSON{}
 	if err := res.Left.FromNode(src.Arg); err != nil {
 		return fmt.Errorf("error in left: %w", err)
@@ -114,7 +114,7 @@ func strToJSON(dest **strJSON, src strOpNode) error {
 	return nil
 }
 
-func patternToJSON(dest **patternJSON, src nodeTypeLike) error {
+func patternToJSON(dest **patternJSON, src NodeTypeLike) error {
 	res := &patternJSON{}
 	if err := res.Left.FromNode(src.Arg); err != nil {
 		return fmt.Errorf("error in left: %w", err)
@@ -131,7 +131,7 @@ func patternToJSON(dest **patternJSON, src nodeTypeLike) error {
 	return nil
 }
 
-func recordToJSON(dest *recordJSON, src nodeTypeRecord) error {
+func recordToJSON(dest *recordJSON, src NodeTypeRecord) error {
 	res := recordJSON{}
 	for _, kv := range src.Elements {
 		var nn nodeJSON
@@ -144,7 +144,7 @@ func recordToJSON(dest *recordJSON, src nodeTypeRecord) error {
 	return nil
 }
 
-func ifToJSON(dest **ifThenElseJSON, src nodeTypeIf) error {
+func ifToJSON(dest **ifThenElseJSON, src NodeTypeIf) error {
 	res := &ifThenElseJSON{}
 	if err := res.If.FromNode(src.If); err != nil {
 		return fmt.Errorf("error in if: %w", err)
@@ -159,7 +159,7 @@ func ifToJSON(dest **ifThenElseJSON, src nodeTypeIf) error {
 	return nil
 }
 
-func isToJSON(dest **isJSON, src nodeTypeIs) error {
+func isToJSON(dest **isJSON, src NodeTypeIs) error {
 	res := &isJSON{}
 	if err := res.Left.FromNode(src.Left); err != nil {
 		return fmt.Errorf("error in left: %w", err)
@@ -169,7 +169,7 @@ func isToJSON(dest **isJSON, src nodeTypeIs) error {
 	return nil
 }
 
-func isInToJSON(dest **isJSON, src nodeTypeIsIn) error {
+func isInToJSON(dest **isJSON, src NodeTypeIsIn) error {
 	res := &isJSON{}
 	if err := res.Left.FromNode(src.Left); err != nil {
 		return fmt.Errorf("error in left: %w", err)
@@ -183,11 +183,11 @@ func isInToJSON(dest **isJSON, src nodeTypeIsIn) error {
 	return nil
 }
 
-func (j *nodeJSON) FromNode(src node) error {
+func (j *nodeJSON) FromNode(src IsNode) error {
 	switch t := src.(type) {
 	// Value
 	// Value *json.RawMessage `json:"Value"` // could be any
-	case nodeValue:
+	case NodeValue:
 		// Any other function: decimal, ip
 		// Decimal arrayJSON `json:"decimal"`
 		// IP      arrayJSON `json:"ip"`
@@ -203,7 +203,7 @@ func (j *nodeJSON) FromNode(src node) error {
 
 	// Var
 	// Var *string `json:"Var"`
-	case nodeTypeVariable:
+	case NodeTypeVariable:
 		val := string(t.Name)
 		j.Var = &val
 		return nil
@@ -211,79 +211,79 @@ func (j *nodeJSON) FromNode(src node) error {
 	// ! or neg operators
 	// Not    *unaryJSON `json:"!"`
 	// Negate *unaryJSON `json:"neg"`
-	case nodeTypeNot:
-		return unaryToJSON(&j.Not, t.unaryNode)
-	case nodeTypeNegate:
-		return unaryToJSON(&j.Negate, t.unaryNode)
+	case NodeTypeNot:
+		return unaryToJSON(&j.Not, t.UnaryNode)
+	case NodeTypeNegate:
+		return unaryToJSON(&j.Negate, t.UnaryNode)
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
-	case nodeTypeAdd:
-		return binaryToJSON(&j.Plus, t.binaryNode)
-	case nodeTypeAnd:
-		return binaryToJSON(&j.And, t.binaryNode)
-	case nodeTypeContains:
-		return binaryToJSON(&j.Contains, t.binaryNode)
-	case nodeTypeContainsAll:
-		return binaryToJSON(&j.ContainsAll, t.binaryNode)
-	case nodeTypeContainsAny:
-		return binaryToJSON(&j.ContainsAny, t.binaryNode)
-	case nodeTypeEquals:
-		return binaryToJSON(&j.Equals, t.binaryNode)
-	case nodeTypeGreaterThan:
-		return binaryToJSON(&j.GreaterThan, t.binaryNode)
-	case nodeTypeGreaterThanOrEqual:
-		return binaryToJSON(&j.GreaterThanOrEqual, t.binaryNode)
-	case nodeTypeIn:
-		return binaryToJSON(&j.In, t.binaryNode)
-	case nodeTypeLessThan:
-		return binaryToJSON(&j.LessThan, t.binaryNode)
-	case nodeTypeLessThanOrEqual:
-		return binaryToJSON(&j.LessThanOrEqual, t.binaryNode)
-	case nodeTypeMult:
-		return binaryToJSON(&j.Times, t.binaryNode)
-	case nodeTypeNotEquals:
-		return binaryToJSON(&j.NotEquals, t.binaryNode)
-	case nodeTypeOr:
-		return binaryToJSON(&j.Or, t.binaryNode)
-	case nodeTypeSub:
-		return binaryToJSON(&j.Minus, t.binaryNode)
+	case NodeTypeAdd:
+		return binaryToJSON(&j.Plus, t.BinaryNode)
+	case NodeTypeAnd:
+		return binaryToJSON(&j.And, t.BinaryNode)
+	case NodeTypeContains:
+		return binaryToJSON(&j.Contains, t.BinaryNode)
+	case NodeTypeContainsAll:
+		return binaryToJSON(&j.ContainsAll, t.BinaryNode)
+	case NodeTypeContainsAny:
+		return binaryToJSON(&j.ContainsAny, t.BinaryNode)
+	case NodeTypeEquals:
+		return binaryToJSON(&j.Equals, t.BinaryNode)
+	case NodeTypeGreaterThan:
+		return binaryToJSON(&j.GreaterThan, t.BinaryNode)
+	case NodeTypeGreaterThanOrEqual:
+		return binaryToJSON(&j.GreaterThanOrEqual, t.BinaryNode)
+	case NodeTypeIn:
+		return binaryToJSON(&j.In, t.BinaryNode)
+	case NodeTypeLessThan:
+		return binaryToJSON(&j.LessThan, t.BinaryNode)
+	case NodeTypeLessThanOrEqual:
+		return binaryToJSON(&j.LessThanOrEqual, t.BinaryNode)
+	case NodeTypeMult:
+		return binaryToJSON(&j.Times, t.BinaryNode)
+	case NodeTypeNotEquals:
+		return binaryToJSON(&j.NotEquals, t.BinaryNode)
+	case NodeTypeOr:
+		return binaryToJSON(&j.Or, t.BinaryNode)
+	case NodeTypeSub:
+		return binaryToJSON(&j.Minus, t.BinaryNode)
 
 	// ., has
 	// Access *strJSON `json:"."`
 	// Has    *strJSON `json:"has"`
-	case nodeTypeAccess:
-		return strToJSON(&j.Access, t.strOpNode)
-	case nodeTypeHas:
-		return strToJSON(&j.Has, t.strOpNode)
+	case NodeTypeAccess:
+		return strToJSON(&j.Access, t.StrOpNode)
+	case NodeTypeHas:
+		return strToJSON(&j.Has, t.StrOpNode)
 	// is
-	case nodeTypeIs:
+	case NodeTypeIs:
 		return isToJSON(&j.Is, t)
-	case nodeTypeIsIn:
+	case NodeTypeIsIn:
 		return isInToJSON(&j.Is, t)
 
 	// like
 	// Like *strJSON `json:"like"`
-	case nodeTypeLike:
+	case NodeTypeLike:
 		return patternToJSON(&j.Like, t)
 
 	// if-then-else
 	// IfThenElse *ifThenElseJSON `json:"if-then-else"`
-	case nodeTypeIf:
+	case NodeTypeIf:
 		return ifToJSON(&j.IfThenElse, t)
 
 	// Set
 	// Set arrayJSON `json:"Set"`
-	case nodeTypeSet:
+	case NodeTypeSet:
 		return arrayToJSON(&j.Set, t.Elements)
 
 	// Record
 	// Record recordJSON `json:"Record"`
-	case nodeTypeRecord:
+	case NodeTypeRecord:
 		return recordToJSON(&j.Record, t)
 
 	// Any other method: ip, decimal, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
 	// ExtensionMethod map[string]arrayJSON `json:"-"`
-	case nodeTypeExtensionCall:
+	case NodeTypeExtensionCall:
 		j.ExtensionCall = extensionCallJSON{}
 		return extCallToJSON(j.ExtensionCall, t)
 	}
@@ -314,28 +314,28 @@ func (p *patternComponentJSON) MarshalJSON() ([]byte, error) {
 func (p *Policy) MarshalJSON() ([]byte, error) {
 	var j policyJSON
 	j.Effect = "forbid"
-	if p.effect {
+	if p.Effect {
 		j.Effect = "permit"
 	}
-	if len(p.annotations) > 0 {
+	if len(p.Annotations) > 0 {
 		j.Annotations = map[string]string{}
 	}
-	for _, a := range p.annotations {
+	for _, a := range p.Annotations {
 		j.Annotations[string(a.Key)] = string(a.Value)
 	}
-	if err := j.Principal.FromNode(p.principal); err != nil {
+	if err := j.Principal.FromNode(p.Principal); err != nil {
 		return nil, fmt.Errorf("error in principal: %w", err)
 	}
-	if err := j.Action.FromNode(p.action); err != nil {
+	if err := j.Action.FromNode(p.Action); err != nil {
 		return nil, fmt.Errorf("error in action: %w", err)
 	}
-	if err := j.Resource.FromNode(p.resource); err != nil {
+	if err := j.Resource.FromNode(p.Resource); err != nil {
 		return nil, fmt.Errorf("error in resource: %w", err)
 	}
-	for _, c := range p.conditions {
+	for _, c := range p.Conditions {
 		var cond conditionJSON
 		cond.Kind = "when"
-		if c.Condition == conditionUnless {
+		if c.Condition == ConditionUnless {
 			cond.Kind = "unless"
 		}
 		if err := cond.Body.FromNode(c.Body); err != nil {
