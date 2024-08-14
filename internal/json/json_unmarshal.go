@@ -135,6 +135,7 @@ func (e extensionCallJSON) ToNode() (ast.Node, error) {
 	var k string
 	var v arrayJSON
 	for k, v = range e {
+		_, _ = k, v
 	}
 	if len(v) == 0 {
 		return ast.Node{}, fmt.Errorf("extension '%v' must have at least one argument", k)
