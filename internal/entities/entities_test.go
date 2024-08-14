@@ -63,3 +63,24 @@ func TestEntitiesJSON(t *testing.T) {
 		testutil.Error(t, err)
 	})
 }
+
+func TestEntityIsZero(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		uid  types.EntityUID
+		want bool
+	}{
+		{"empty", types.EntityUID{}, true},
+		{"empty-type", types.NewEntityUID("one", ""), false},
+		{"empty-id", types.NewEntityUID("", "one"), false},
+		{"not-empty", types.NewEntityUID("one", "two"), false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			testutil.Equals(t, tt.uid.IsZero(), tt.want)
+		})
+	}
+}
