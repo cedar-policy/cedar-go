@@ -485,7 +485,7 @@ func TestUnmarshalJSON(t *testing.T) {
 			if err != nil {
 				return
 			}
-			testutil.Equals(t, p.Policy, *tt.want)
+			testutil.Equals(t, p.unwrap(), tt.want)
 			b, err := json.Marshal(&p)
 			testutil.OK(t, err)
 			normInput := testNormalizeJSON(t, tt.input)
@@ -535,7 +535,7 @@ func TestMarshalJSON(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			pp := &Policy{Policy: *tt.input}
+			pp := wrapPolicy(tt.input)
 			b, err := json.Marshal(pp)
 			tt.errFunc(t, err)
 			if err != nil {
