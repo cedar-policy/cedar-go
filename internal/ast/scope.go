@@ -7,27 +7,27 @@ import (
 type Scope NodeTypeVariable
 
 func (s Scope) All() IsScopeNode {
-	return ScopeTypeAll{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}}
+	return ScopeTypeAll{}
 }
 
 func (s Scope) Eq(entity types.EntityUID) IsScopeNode {
-	return ScopeTypeEq{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}, Entity: entity}
+	return ScopeTypeEq{Entity: entity}
 }
 
 func (s Scope) In(entity types.EntityUID) IsScopeNode {
-	return ScopeTypeIn{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}, Entity: entity}
+	return ScopeTypeIn{Entity: entity}
 }
 
 func (s Scope) InSet(entities []types.EntityUID) IsScopeNode {
-	return ScopeTypeInSet{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}, Entities: entities}
+	return ScopeTypeInSet{Entities: entities}
 }
 
 func (s Scope) Is(entityType types.Path) IsScopeNode {
-	return ScopeTypeIs{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}, Type: entityType}
+	return ScopeTypeIs{Type: entityType}
 }
 
 func (s Scope) IsIn(entityType types.Path, entity types.EntityUID) IsScopeNode {
-	return ScopeTypeIsIn{ScopeNode: ScopeNode{Variable: NodeTypeVariable(s)}, Type: entityType, Entity: entity}
+	return ScopeTypeIsIn{Type: entityType, Entity: entity}
 }
 
 func (p *Policy) PrincipalEq(entity types.EntityUID) *Policy {
@@ -90,7 +90,6 @@ type IsScopeNode interface {
 }
 
 type ScopeNode struct {
-	Variable NodeTypeVariable
 }
 
 func (n ScopeNode) isScope() {}

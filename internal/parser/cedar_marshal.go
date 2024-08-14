@@ -28,25 +28,25 @@ func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
 
 // scopeToNode is copied in from eval, with the expectation that
 // eval will not be using it in the future.
-func scopeToNode(in ast.IsScopeNode) ast.Node {
+func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 	switch t := in.(type) {
 	case ast.ScopeTypeAll:
 		return ast.True()
 	case ast.ScopeTypeEq:
-		return ast.NewNode(t.Variable).Equals(ast.EntityUID(t.Entity))
+		return ast.NewNode(varNode).Equals(ast.EntityUID(t.Entity))
 	case ast.ScopeTypeIn:
-		return ast.NewNode(t.Variable).In(ast.EntityUID(t.Entity))
+		return ast.NewNode(varNode).In(ast.EntityUID(t.Entity))
 	case ast.ScopeTypeInSet:
 		set := make([]types.Value, len(t.Entities))
 		for i, e := range t.Entities {
 			set[i] = e
 		}
-		return ast.NewNode(t.Variable).In(ast.Set(set))
+		return ast.NewNode(varNode).In(ast.Set(set))
 	case ast.ScopeTypeIs:
-		return ast.NewNode(t.Variable).Is(t.Type)
+		return ast.NewNode(varNode).Is(t.Type)
 
 	case ast.ScopeTypeIsIn:
-		return ast.NewNode(t.Variable).IsIn(t.Type, ast.EntityUID(t.Entity))
+		return ast.NewNode(varNode).IsIn(t.Type, ast.EntityUID(t.Entity))
 	default:
 		panic(fmt.Sprintf("unknown scope type %T", t))
 	}
@@ -65,19 +65,19 @@ func (p *Policy) marshalScope(buf *bytes.Buffer) {
 	if principalAll {
 		buf.WriteString("principal")
 	} else {
-		astNodeToMarshalNode(scopeToNode(p.Policy.Principal).AsIsNode()).marshalCedar(buf)
+		astNodeToMarshalNode(scopeToNode(ast.NewPrincipalNode(), p.Policy.Principal).AsIsNode()).marshalCedar(buf)
 	}
 	buf.WriteString(",\n    ")
 	if actionAll {
 		buf.WriteString("action")
 	} else {
-		astNodeToMarshalNode(scopeToNode(p.Policy.Action).AsIsNode()).marshalCedar(buf)
+		astNodeToMarshalNode(scopeToNode(ast.NewActionNode(), p.Policy.Action).AsIsNode()).marshalCedar(buf)
 	}
 	buf.WriteString(",\n    ")
 	if resourceAll {
 		buf.WriteString("resource")
 	} else {
-		astNodeToMarshalNode(scopeToNode(p.Policy.Resource).AsIsNode()).marshalCedar(buf)
+		astNodeToMarshalNode(scopeToNode(ast.NewResourceNode(), p.Policy.Resource).AsIsNode()).marshalCedar(buf)
 	}
 	buf.WriteString("\n)")
 }
