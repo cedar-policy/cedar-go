@@ -3,7 +3,8 @@ package cedar
 import (
 	"bytes"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/ast"
+	internalast "github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/json"
 	"github.com/cedar-policy/cedar-go/internal/parser"
@@ -15,7 +16,7 @@ type Policy struct {
 	Annotations Annotations // annotations found for this policy
 	Effect      Effect      // the effect of this policy
 	eval        evaler      // determines if a policy matches a request.
-	ast         ast.Policy
+	ast         *internalast.Policy
 }
 
 // A Position describes an arbitrary source position including the file, line, and column location.
@@ -31,7 +32,7 @@ type Position struct {
 type Annotations map[string]string
 
 // TODO: Is this where we should deal with duplicate keys?
-func newAnnotationsFromSlice(annotations []ast.AnnotationType) Annotations {
+func newAnnotationsFromSlice(annotations []internalast.AnnotationType) Annotations {
 	res := make(map[string]string, len(annotations))
 	for _, e := range annotations {
 		res[string(e.Key)] = string(e.Value)
@@ -41,7 +42,7 @@ func newAnnotationsFromSlice(annotations []ast.AnnotationType) Annotations {
 
 // An Effect specifies the intent of the policy, to either permit or forbid any
 // request that matches the scope and conditions specified in the policy.
-type Effect ast.Effect
+type Effect internalast.Effect
 
 // Each Policy has a Permit or Forbid effect that is determined during parsing.
 const (
@@ -53,7 +54,7 @@ const (
 //
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
 func (p *Policy) MarshalJSON() ([]byte, error) {
-	jsonPolicy := &json.Policy{Policy: p.ast}
+	jsonPolicy := &json.Policy{Policy: *p.ast}
 	return jsonPolicy.MarshalJSON()
 }
 
@@ -70,13 +71,13 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		Annotations: newAnnotationsFromSlice(jsonPolicy.Annotations),
 		Effect:      Effect(jsonPolicy.Effect),
 		eval:        eval.Compile(jsonPolicy.Policy),
-		ast:         jsonPolicy.Policy,
+		ast:         &jsonPolicy.Policy,
 	}
 	return nil
 }
 
 func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
-	cedarPolicy := &parser.Policy{Policy: p.ast}
+	cedarPolicy := &parser.Policy{Policy: *p.ast}
 	cedarPolicy.MarshalCedar(buf)
 }
 
@@ -91,7 +92,18 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 		Annotations: newAnnotationsFromSlice(cedarPolicy.Annotations),
 		Effect:      Effect(cedarPolicy.Effect),
 		eval:        eval.Compile(cedarPolicy.Policy),
-		ast:         cedarPolicy.Policy,
+		ast:         &cedarPolicy.Policy,
 	}
 	return nil
+}
+
+func NewPolicyFromAST(astIn *ast.Policy) *Policy {
+	pp := (*internalast.Policy)(astIn)
+	return &Policy{
+		Position:    Position{},
+		Annotations: newAnnotationsFromSlice(astIn.Annotations),
+		Effect:      Effect(astIn.Effect),
+		eval:        eval.Compile(*pp),
+		ast:         pp,
+	}
 }
