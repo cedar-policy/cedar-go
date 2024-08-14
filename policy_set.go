@@ -31,7 +31,7 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 			Annotations: newAnnotationsFromSlice(p.Policy.Annotations),
 			Effect:      Effect(p.Policy.Effect),
 			eval:        eval.Compile(p.Policy.Policy),
-			ast:         p.Policy.Policy,
+			ast:         &p.Policy.Policy,
 		})
 	}
 	return policies, nil

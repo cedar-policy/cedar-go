@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 func prettifyJson(in []byte) []byte {
@@ -83,4 +85,14 @@ when { resource.owner == principal };`
 	policy.MarshalCedar(&buf)
 
 	testutil.Equals(t, buf.String(), policyStr)
+}
+
+func TestPolicyAST(t *testing.T) {
+	t.Parallel()
+
+	astExample := ast.Permit().
+		ActionEq(types.NewEntityUID("Action", "editPhoto")).
+		When(ast.Resource().Access("owner").Equals(ast.Principal()))
+
+	_ = NewPolicyFromAST(astExample)
 }
