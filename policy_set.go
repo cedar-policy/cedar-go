@@ -8,7 +8,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/parser"
 )
 
-type PolicyID parser.PolicyID
+type PolicyID string
 
 // A PolicySet is a slice of policies.
 type PolicySet struct {
@@ -24,8 +24,9 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 		return PolicySet{}, fmt.Errorf("parser error: %w", err)
 	}
 	policyMap := make(map[PolicyID]*Policy, len(res))
-	for name, p := range res {
-		policyMap[PolicyID(name)] = &Policy{
+	for i, p := range res {
+		policyID := PolicyID(fmt.Sprintf("policy%d", i))
+		policyMap[policyID] = &Policy{
 			Position: Position{
 				Filename: fileName,
 				Offset:   p.Position.Offset,

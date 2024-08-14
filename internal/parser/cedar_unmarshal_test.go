@@ -460,7 +460,7 @@ func TestParsePolicySet(t *testing.T) {
 			resource
 		);`,
 			parser.PolicySet{
-				"policy0": parser.PolicySetEntry{
+				parser.PolicySetEntry{
 					parser.Policy{*ast.Permit()},
 					parser.Position{Offset: 0, Line: 1, Column: 1},
 				},
@@ -479,11 +479,11 @@ func TestParsePolicySet(t *testing.T) {
 			resource
 		);`,
 			parser.PolicySet{
-				"policy0": parser.PolicySetEntry{
+				parser.PolicySetEntry{
 					parser.Policy{*ast.Permit()},
 					parser.Position{Offset: 0, Line: 1, Column: 1},
 				},
-				"policy1": parser.PolicySetEntry{
+				parser.PolicySetEntry{
 					parser.Policy{*ast.Forbid()},
 					parser.Position{Offset: 53, Line: 6, Column: 3},
 				},
