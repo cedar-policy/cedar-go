@@ -74,7 +74,7 @@ type arrayJSON []nodeJSON
 
 type recordJSON map[string]nodeJSON
 
-type extensionCallJSON map[string]arrayJSON
+type extensionJSON map[string]arrayJSON
 
 type valueJSON struct {
 	v types.Value
@@ -138,5 +138,5 @@ type nodeJSON struct {
 	Record recordJSON `json:"Record,omitempty"`
 
 	// Any other method: decimal, ip, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	ExtensionCall extensionCallJSON `json:"-"`
+	ExtensionCall extensionJSON `json:"-"`
 }

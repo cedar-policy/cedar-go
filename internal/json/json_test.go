@@ -585,3 +585,156 @@ func TestMarshalPanics(t *testing.T) {
 		})
 	})
 }
+
+func TestUnmarshalErrors(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		input   string
+		errFunc func(testing.TB, error)
+	}{
+		{
+			"effect",
+			`{"effect":"unknown","principal":{"op":"=="},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			testutil.Error,
+		},
+		{
+			"scopeEqMissingEntity",
+			`{"effect":"permit","principal":{"op":"=="},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			testutil.Error,
+		},
+		{
+			"scopeUnknownOp",
+			`{"effect":"permit","principal":{"op":"???"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			testutil.Error,
+		},
+		{
+			"actionUnknownOp",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"???"},"resource":{"op":"All"}}`,
+			testutil.Error,
+		},
+		{
+			"resourceUnknownOp",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"???"}}`,
+			testutil.Error,
+		},
+		{
+			"conditionUnknown",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"unknown","body":{"Value":24}}]}`,
+			testutil.Error,
+		},
+		{
+			"binaryLeft",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"&&":{"left":null,"right":{"Value":24}}}}]}`,
+			testutil.Error,
+		},
+		{
+			"binaryRight",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"&&":{"left":{"Value":24},"right":null}}}]}`,
+			testutil.Error,
+		},
+		{
+			"unaryArg",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"!":{"arg":null}}}]}`,
+			testutil.Error,
+		},
+		{
+			"accessLeft",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{".":{"left":null,"attr":"key"}}}]}`,
+			testutil.Error,
+		},
+		{
+			"patternLeft",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"like":{"left":null,"pattern":["Wildcard"]}}}]}`,
+			testutil.Error,
+		},
+		{
+			"patternWildcard",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"like":{"left":{"Value":"text"},"pattern":["invalid"]}}}]}`,
+			testutil.Error,
+		},
+		{
+			"isLeft",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"is":{"left":null,"entity_type":"T"}}}]}`,
+			testutil.Error,
+		},
+		{
+			"isIn",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"resource"},"entity_type":"T","in":{"Value":null}}}}]}`,
+			testutil.Error,
+		},
+		{
+			"ifErrThenElse",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":null},"then":{"Value":42},"else":{"Value":24}}}}]}`,
+			testutil.Error,
+		},
+		{
+			"ifThenErrElse",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Value":null},"else":{"Value":24}}}}]}`,
+			testutil.Error,
+		},
+		{
+			"ifThenElseErr",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Value":42},"else":{"Value":null}}}}]}`,
+			testutil.Error,
+		},
+		{
+			"setErr",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Set":[{"Value":null},{"Value":"bananas"}]}}]}`,
+			testutil.Error,
+		},
+		{
+			"recordErr",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Record":{"key":{"Value":null}}}}]}`,
+			testutil.Error,
+		},
+		{
+			"extensionTooMany",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"ip":[{"Value":"10.0.0.42/8"}],"pi":[{"Value":"3.14"}]}}]}`,
+			testutil.Error,
+		},
+		{
+			"extensionArg",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"ip":[{"Value":null}]}}]}`,
+			testutil.Error,
+		},
+		{
+			"var",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Var":"unknown"}}]}`,
+			testutil.Error,
+		},
+		{
+			"otherJSONerror",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":42}]}`,
+			testutil.Error,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var p Policy
+			err := json.Unmarshal([]byte(tt.input), &p)
+			tt.errFunc(t, err)
+		})
+	}
+}

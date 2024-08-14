@@ -128,7 +128,7 @@ func (j recordJSON) ToNode() (ast.Node, error) {
 	return ast.RecordNodes(nodes), nil
 }
 
-func (e extensionCallJSON) ToNode() (ast.Node, error) {
+func (e extensionJSON) ToNode() (ast.Node, error) {
 	if len(e) != 1 {
 		return ast.Node{}, fmt.Errorf("unexpected number of extensions in node: %v", len(e))
 	}
@@ -136,9 +136,6 @@ func (e extensionCallJSON) ToNode() (ast.Node, error) {
 	var v arrayJSON
 	for k, v = range e {
 		_, _ = k, v
-	}
-	if len(v) == 0 {
-		return ast.Node{}, fmt.Errorf("extension '%v' must have at least one argument", k)
 	}
 	var argNodes []ast.Node
 	for _, n := range v {
