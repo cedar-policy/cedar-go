@@ -50,22 +50,6 @@ func TestNewPolicySet(t *testing.T) {
 	})
 }
 
-func TestEntities(t *testing.T) {
-	t.Parallel()
-	t.Run("Clone", func(t *testing.T) {
-		t.Parallel()
-		e := entities.Entities{
-			types.EntityUID{Type: "A", ID: "A"}: {},
-			types.EntityUID{Type: "A", ID: "B"}: {},
-			types.EntityUID{Type: "B", ID: "A"}: {},
-			types.EntityUID{Type: "B", ID: "B"}: {},
-		}
-		clone := e.Clone()
-		testutil.Equals(t, clone, e)
-	})
-
-}
-
 func TestError(t *testing.T) {
 	t.Parallel()
 	e := Error{Policy: 42, Message: "bad error"}
