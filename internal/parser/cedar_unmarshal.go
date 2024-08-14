@@ -18,20 +18,12 @@ func (p *PolicySet) UnmarshalCedar(b []byte) error {
 	var policySet PolicySet
 	parser := newParser(tokens)
 	for !parser.peek().isEOF() {
-		pos := parser.peek().Pos
-		policy := Policy{
-			ast.Policy{
-				Principal: ast.ScopeTypeAll{},
-				Action:    ast.ScopeTypeAll{},
-				Resource:  ast.ScopeTypeAll{},
-			},
-		}
-
-		if err = policy.fromCedarWithParser(&parser); err != nil {
+		var policy Policy
+		if err = policy.fromCedar(&parser); err != nil {
 			return err
 		}
 
-		policySet = append(policySet, PolicySetEntry{Policy: policy, Position: pos})
+		policySet = append(policySet, policy)
 	}
 
 	*p = policySet
@@ -45,10 +37,11 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 	}
 
 	parser := newParser(tokens)
-	return p.fromCedarWithParser(&parser)
+	return p.fromCedar(&parser)
 }
 
-func (p *Policy) fromCedarWithParser(parser *parser) error {
+func (p *Policy) fromCedar(parser *parser) error {
+	pos := parser.peek().Pos
 	annotations, err := parser.annotations()
 	if err != nil {
 		return err
@@ -58,6 +51,7 @@ func (p *Policy) fromCedarWithParser(parser *parser) error {
 	if err != nil {
 		return err
 	}
+	newPolicy.Position = (ast.Position)(pos)
 
 	if err = parser.exact("("); err != nil {
 		return err

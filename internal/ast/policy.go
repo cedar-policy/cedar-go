@@ -27,6 +27,14 @@ const (
 	EffectForbid Effect = false
 )
 
+// Position is a value that represents a source Position.
+// A Position is valid if Line > 0.
+type Position struct {
+	Offset int // byte offset, starting at 0
+	Line   int // line number, starting at 1
+	Column int // column number, starting at 1 (character count per line)
+}
+
 type Policy struct {
 	Effect      Effect
 	Annotations []AnnotationType
@@ -34,6 +42,7 @@ type Policy struct {
 	Action      IsScopeNode
 	Resource    IsScopeNode
 	Conditions  []ConditionType
+	Position    Position
 }
 
 func newPolicy(effect Effect, annotations []AnnotationType) *Policy {

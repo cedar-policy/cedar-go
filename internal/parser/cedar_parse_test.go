@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
@@ -306,8 +307,12 @@ func TestParse(t *testing.T) {
 				return
 			}
 
+			// N.B. Until we support the re-rendering of comments, we have to ignore the position for the purposes of
+			// these tests (see test "ex1")
+			policies[0].Position = ast.Position{Offset: 0, Line: 1, Column: 1}
+
 			var buf bytes.Buffer
-			pp := policies[0].Policy
+			pp := policies[0]
 			pp.MarshalCedar(&buf)
 
 			var p2 parser.PolicySet
@@ -339,7 +344,7 @@ permit( principal, action, resource );
 	err := out.UnmarshalCedar([]byte(in))
 	testutil.OK(t, err)
 	testutil.Equals(t, len(out), 3)
-	testutil.Equals(t, out[0].Position, parser.Position{Offset: 17, Line: 2, Column: 1})
-	testutil.Equals(t, out[1].Position, parser.Position{Offset: 86, Line: 7, Column: 3})
-	testutil.Equals(t, out[2].Position, parser.Position{Offset: 148, Line: 10, Column: 2})
+	testutil.Equals(t, out[0].Position, ast.Position{Offset: 17, Line: 2, Column: 1})
+	testutil.Equals(t, out[1].Position, ast.Position{Offset: 86, Line: 7, Column: 3})
+	testutil.Equals(t, out[2].Position, ast.Position{Offset: 148, Line: 10, Column: 2})
 }

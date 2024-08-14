@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/rust"
 )
 
@@ -76,13 +77,7 @@ func Tokenize(src []byte) ([]Token, error) {
 	return res, nil
 }
 
-// Position is a value that represents a source Position.
-// A Position is valid if Line > 0.
-type Position struct {
-	Offset int // byte offset, starting at 0
-	Line   int // line number, starting at 1
-	Column int // column number, starting at 1 (character count per line)
-}
+type Position ast.Position
 
 func (pos Position) String() string {
 	return fmt.Sprintf("<input>:%d:%d", pos.Line, pos.Column)
