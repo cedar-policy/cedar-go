@@ -11,9 +11,9 @@ func Compile(p ast.Policy) Evaler {
 
 func policyToNode(p ast.Policy) ast.Node {
 	nodes := make([]ast.Node, 3+len(p.Conditions))
-	nodes[0] = scopeToNode(p.Principal)
-	nodes[1] = scopeToNode(p.Action)
-	nodes[2] = scopeToNode(p.Resource)
+	nodes[0] = scopeToNode(ast.NewPrincipalNode(), p.Principal)
+	nodes[1] = scopeToNode(ast.NewActionNode(), p.Action)
+	nodes[2] = scopeToNode(ast.NewResourceNode(), p.Resource)
 	for i, c := range p.Conditions {
 		if c.Condition == ast.ConditionUnless {
 			nodes[i+3] = ast.Not(ast.NewNode(c.Body))
