@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/internal/entities"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
@@ -875,22 +874,6 @@ func TestPath(t *testing.T) {
 		t.Parallel()
 		a := PathFromSlice([]string{"X", "Y"})
 		testutil.Equals(t, a, Path("X::Y"))
-	})
-
-}
-
-func TestEntities(t *testing.T) {
-	t.Parallel()
-	t.Run("Clone", func(t *testing.T) {
-		t.Parallel()
-		e := entities.Entities{
-			EntityUID{Type: "A", ID: "A"}: {},
-			EntityUID{Type: "A", ID: "B"}: {},
-			EntityUID{Type: "B", ID: "A"}: {},
-			EntityUID{Type: "B", ID: "B"}: {},
-		}
-		clone := e.Clone()
-		testutil.Equals(t, clone, e)
 	})
 
 }
