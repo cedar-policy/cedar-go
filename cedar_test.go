@@ -2,7 +2,6 @@ package cedar
 
 import (
 	"encoding/json"
-	"net/netip"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/entities"
@@ -65,56 +64,6 @@ func TestEntities(t *testing.T) {
 		testutil.Equals(t, clone, e)
 	})
 
-}
-
-func TestValueFrom(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name    string
-		in      types.Value
-		outJSON string
-	}{
-		{
-			name:    "string",
-			in:      types.String("hello"),
-			outJSON: `"hello"`,
-		},
-		{
-			name:    "bool",
-			in:      types.Boolean(true),
-			outJSON: `true`,
-		},
-		{
-			name:    "int64",
-			in:      types.Long(42),
-			outJSON: `42`,
-		},
-		{
-			name:    "int64",
-			in:      types.EntityUID{Type: "T", ID: "0"},
-			outJSON: `{"__entity":{"type":"T","id":"0"}}`,
-		},
-		{
-			name:    "record",
-			in:      types.Record{"K": types.Boolean(true)},
-			outJSON: `{"K":true}`,
-		},
-		{
-			name:    "netipPrefix",
-			in:      types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")),
-			outJSON: `{"__extn":{"fn":"ip","arg":"192.168.0.42"}}`,
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			out, err := tt.in.ExplicitMarshalJSON()
-			testutil.OK(t, err)
-			testutil.Equals(t, string(out), tt.outJSON)
-		})
-	}
 }
 
 func TestError(t *testing.T) {
