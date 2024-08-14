@@ -4,12 +4,12 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/ast"
 )
 
-func Compile(p ast.Policy) Evaler {
+func Compile(p *ast.Policy) Evaler {
 	node := policyToNode(p).AsIsNode()
 	return toEval(node)
 }
 
-func policyToNode(p ast.Policy) ast.Node {
+func policyToNode(p *ast.Policy) ast.Node {
 	nodes := make([]ast.Node, 3+len(p.Conditions))
 	nodes[0] = scopeToNode(ast.NewPrincipalNode(), p.Principal)
 	nodes[1] = scopeToNode(ast.NewActionNode(), p.Action)
