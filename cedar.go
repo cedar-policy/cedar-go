@@ -4,22 +4,21 @@ package cedar
 import (
 	"fmt"
 
+	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/entities"
 	"github.com/cedar-policy/cedar-go/internal/eval"
+	"github.com/cedar-policy/cedar-go/internal/json"
 	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-// A PolicySet is a slice of policies.
-type PolicySet []Policy
-
-// A Policy is the parsed form of a single Cedar language policy statement. It
-// includes the following elements, a Position, Annotations, and an Effect.
+// A Policy is the parsed form of a single Cedar language policy statement.
 type Policy struct {
 	Position    Position    // location within the policy text document
 	Annotations Annotations // annotations found for this policy
 	Effect      Effect      // the effect of this policy
 	eval        evaler      // determines if a policy matches a request.
+	ast         ast.Policy
 }
 
 // A Position describes an arbitrary source position including the file, line, and column location.
@@ -34,9 +33,18 @@ type Position struct {
 // have no impact on policy evaluation.
 type Annotations map[string]string
 
+// TODO: Is this where we should deal with duplicate keys?
+func newAnnotationsFromSlice(annotations []ast.AnnotationType) Annotations {
+	res := make(map[string]string, len(annotations))
+	for _, e := range annotations {
+		res[string(e.Key)] = string(e.Value)
+	}
+	return res
+}
+
 // An Effect specifies the intent of the policy, to either permit or forbid any
 // request that matches the scope and conditions specified in the policy.
-type Effect bool
+type Effect ast.Effect
 
 // Each Policy has a Permit or Forbid effect that is determined during parsing.
 const (
@@ -44,18 +52,34 @@ const (
 	Forbid = Effect(false)
 )
 
-func (a Effect) String() string {
-	if a {
-		return "permit"
-	}
-	return "forbid"
+// MarshalJSON encodes a single Policy statement in the JSON format specified by the [Cedar documentation].
+//
+// [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
+func (p *Policy) MarshalJSON() ([]byte, error) {
+	jsonPolicy := &json.Policy{Policy: p.ast}
+	return jsonPolicy.MarshalJSON()
 }
-func (a Effect) MarshalJSON() ([]byte, error) { return []byte(`"` + a.String() + `"`), nil }
 
-func (a *Effect) UnmarshalJSON(b []byte) error {
-	*a = string(b) == `"permit"`
+// UnmarshalJSON parses and compiles a single Policy statement in the JSON format specified by the [Cedar documentation].
+//
+// [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
+func (p *Policy) UnmarshalJSON(b []byte) error {
+	var jsonPolicy json.Policy
+	if err := jsonPolicy.UnmarshalJSON(b); err != nil {
+		return err
+	}
+	*p = Policy{
+		Position:    Position{},
+		Annotations: newAnnotationsFromSlice(jsonPolicy.Annotations),
+		Effect:      Effect(jsonPolicy.Effect),
+		eval:        eval.Compile(jsonPolicy.Policy),
+		ast:         jsonPolicy.Policy,
+	}
 	return nil
 }
+
+// A PolicySet is a slice of policies.
+type PolicySet []Policy
 
 // NewPolicySet will create a PolicySet from the given text document with the
 // given file name used in Position data.  If there is an error parsing the
@@ -67,7 +91,6 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 	}
 	var policies PolicySet
 	for _, p := range res {
-		ann := Annotations(p.TmpGetAnnotations())
 		policies = append(policies, Policy{
 			Position: Position{
 				Filename: fileName,
@@ -75,9 +98,10 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 				Line:     p.Position.Line,
 				Column:   p.Position.Column,
 			},
-			Annotations: ann,
-			Effect:      Effect(p.TmpGetEffect()),
+			Annotations: newAnnotationsFromSlice(p.Policy.Annotations),
+			Effect:      Effect(p.Policy.Effect),
 			eval:        eval.Compile(p.Policy.Policy),
+			ast:         p.Policy.Policy,
 		})
 	}
 	return policies, nil
