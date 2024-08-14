@@ -1,9 +1,8 @@
-package internal_test
+package rust
 
 import (
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
@@ -24,7 +23,7 @@ func TestParseUnicodeEscape(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, n, err := internal.ParseUnicodeEscape(tt.in, 0)
+			out, n, err := parseUnicodeEscape(tt.in, 0)
 			testutil.Equals(t, out, tt.out)
 			testutil.Equals(t, n, tt.outN)
 			tt.err(t, err)
@@ -46,7 +45,7 @@ func TestUnquote(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, err := internal.Unquote(tt.in)
+			out, err := unquote(tt.in)
 			testutil.Equals(t, out, tt.out)
 			tt.err(t, err)
 		})
@@ -108,7 +107,7 @@ func TestRustUnquote(t *testing.T) {
 			tt := tt
 			t.Run(tt.input, func(t *testing.T) {
 				t.Parallel()
-				got, rem, err := internal.RustUnquote([]byte(tt.input), false)
+				got, rem, err := RustUnquote([]byte(tt.input), false)
 				if err != nil {
 					testutil.Equals(t, tt.wantOk, false)
 					testutil.Equals(t, err.Error(), tt.wantErr)
@@ -179,7 +178,7 @@ func TestRustUnquote(t *testing.T) {
 			tt := tt
 			t.Run(tt.input, func(t *testing.T) {
 				t.Parallel()
-				got, rem, err := internal.RustUnquote([]byte(tt.input), true)
+				got, rem, err := RustUnquote([]byte(tt.input), true)
 				if err != nil {
 					testutil.Equals(t, tt.wantOk, false)
 					testutil.Equals(t, err.Error(), tt.wantErr)
@@ -209,7 +208,7 @@ func TestDigitVal(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out := internal.DigitVal(tt.in)
+			out := digitVal(tt.in)
 			testutil.Equals(t, out, tt.out)
 		})
 	}
