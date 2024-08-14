@@ -54,7 +54,7 @@ const (
 //
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
 func (p *Policy) MarshalJSON() ([]byte, error) {
-	jsonPolicy := &json.Policy{Policy: *p.ast}
+	jsonPolicy := (*json.Policy)(p.ast)
 	return jsonPolicy.MarshalJSON()
 }
 
@@ -70,8 +70,8 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		Position:    Position{},
 		Annotations: newAnnotationsFromSlice(jsonPolicy.Annotations),
 		Effect:      Effect(jsonPolicy.Effect),
-		eval:        eval.Compile(jsonPolicy.Policy),
-		ast:         &jsonPolicy.Policy,
+		eval:        eval.Compile((internalast.Policy)(jsonPolicy)),
+		ast:         (*internalast.Policy)(&jsonPolicy),
 	}
 	return nil
 }
