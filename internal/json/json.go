@@ -1,8 +1,6 @@
 package json
 
 import (
-	"encoding/json"
-
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -78,9 +76,20 @@ type recordJSON map[string]nodeJSON
 
 type extensionCallJSON map[string]arrayJSON
 
+type valueJSON struct {
+	v types.Value
+}
+
+func (e *valueJSON) MarshalJSON() ([]byte, error) {
+	return e.v.ExplicitMarshalJSON()
+}
+func (e *valueJSON) UnmarshalJSON(b []byte) error {
+	return types.UnmarshalJSON(b, &e.v)
+}
+
 type nodeJSON struct {
 	// Value
-	Value *json.RawMessage `json:"Value,omitempty"` // could be any
+	Value *valueJSON `json:"Value,omitempty"` // could be any
 
 	// Var
 	Var *string `json:"Var,omitempty"`

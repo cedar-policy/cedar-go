@@ -154,11 +154,7 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 	switch {
 	// Value
 	case j.Value != nil:
-		var v types.Value
-		if err := types.UnmarshalJSON(*j.Value, &v); err != nil {
-			return ast.Node{}, fmt.Errorf("error unmarshalling value: %w", err)
-		}
-		return ast.NewValueNode(v), nil
+		return ast.NewValueNode(j.Value.v), nil
 
 	// Var
 	case j.Var != nil:
