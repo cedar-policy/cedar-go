@@ -54,7 +54,7 @@ func (t Token) stringValue() (string, error) {
 	s = strings.TrimPrefix(s, "\"")
 	s = strings.TrimSuffix(s, "\"")
 	b := []byte(s)
-	res, _, err := rust.RustUnquote(b, false)
+	res, _, err := rust.Unquote(b, false)
 	return res, err
 }
 
