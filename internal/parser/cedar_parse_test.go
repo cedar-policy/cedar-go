@@ -307,7 +307,7 @@ func TestParse(t *testing.T) {
 			}
 
 			var buf bytes.Buffer
-			pp := policies["policy0"].Policy
+			pp := policies[0].Policy
 			pp.MarshalCedar(&buf)
 
 			var p2 parser.PolicySet
@@ -315,7 +315,7 @@ func TestParse(t *testing.T) {
 			testutil.OK(t, err)
 
 			// TODO: support 0, > 1
-			testutil.Equals(t, p2["policy0"].Policy, policies["policy0"].Policy)
+			testutil.Equals(t, p2[0].Policy, policies[0].Policy)
 
 		})
 	}
@@ -339,7 +339,7 @@ permit( principal, action, resource );
 	err := out.UnmarshalCedar([]byte(in))
 	testutil.OK(t, err)
 	testutil.Equals(t, len(out), 3)
-	testutil.Equals(t, out["policy0"].Position, parser.Position{Offset: 17, Line: 2, Column: 1})
-	testutil.Equals(t, out["policy1"].Position, parser.Position{Offset: 86, Line: 7, Column: 3})
-	testutil.Equals(t, out["policy2"].Position, parser.Position{Offset: 148, Line: 10, Column: 2})
+	testutil.Equals(t, out[0].Position, parser.Position{Offset: 17, Line: 2, Column: 1})
+	testutil.Equals(t, out[1].Position, parser.Position{Offset: 86, Line: 7, Column: 3})
+	testutil.Equals(t, out[2].Position, parser.Position{Offset: 148, Line: 10, Column: 2})
 }
