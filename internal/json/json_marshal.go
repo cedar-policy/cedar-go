@@ -69,19 +69,19 @@ func arrayToJSON(dest *arrayJSON, args []ast.IsNode) {
 	*dest = res
 }
 
-func extToJSON(dest *extensionCallJSON, name string, src types.Value) {
+func extToJSON(dest *extensionJSON, name string, src types.Value) {
 	res := arrayJSON{}
 	str := src.String() // TODO: is this the correct string?
 	val := valueJSON{v: types.String(str)}
 	res = append(res, nodeJSON{
 		Value: &val,
 	})
-	*dest = extensionCallJSON{
+	*dest = extensionJSON{
 		name: res,
 	}
 }
 
-func extCallToJSON(dest extensionCallJSON, src ast.NodeTypeExtensionCall) {
+func extCallToJSON(dest extensionJSON, src ast.NodeTypeExtensionCall) {
 	jsonArgs := arrayJSON{}
 	arrayToJSON(&jsonArgs, src.Args)
 	dest[string(src.Name)] = jsonArgs
@@ -270,7 +270,7 @@ func (j *nodeJSON) FromNode(src ast.IsNode) {
 	// Any other method: ip, decimal, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
 	// ExtensionMethod map[string]arrayJSON `json:"-"`
 	case ast.NodeTypeExtensionCall:
-		j.ExtensionCall = extensionCallJSON{}
+		j.ExtensionCall = extensionJSON{}
 		extCallToJSON(j.ExtensionCall, t)
 		return
 	default:
