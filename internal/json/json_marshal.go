@@ -93,13 +93,8 @@ func extToJSON(dest *extensionCallJSON, name string, src types.Value) error {
 
 func extCallToJSON(dest extensionCallJSON, src ast.NodeTypeExtensionCall) error {
 	jsonArgs := arrayJSON{}
-	for _, n := range src.Args {
-		argNode := &nodeJSON{}
-		err := argNode.FromNode(n)
-		if err != nil {
-			return err
-		}
-		jsonArgs = append(jsonArgs, *argNode)
+	if err := arrayToJSON(&jsonArgs, src.Args); err != nil {
+		return err
 	}
 	dest[string(src.Name)] = jsonArgs
 	return nil
@@ -312,8 +307,14 @@ func (p *patternComponentJSON) MarshalJSON() ([]byte, error) {
 	return json.Marshal(p.Literal)
 }
 
-type Policy struct {
-	ast.Policy
+type Policy ast.Policy
+
+func wrapPolicy(p *ast.Policy) *Policy {
+	return (*Policy)(p)
+}
+
+func (p *Policy) unwrap() *ast.Policy {
+	return (*ast.Policy)(p)
 }
 
 func (p *Policy) MarshalJSON() ([]byte, error) {

@@ -130,23 +130,24 @@ func (j recordJSON) ToNode() (ast.Node, error) {
 
 func (e extensionCallJSON) ToNode() (ast.Node, error) {
 	if len(e) != 1 {
-		return ast.Node{}, fmt.Errorf("unexpected number of extension methods in node: %v", len(e))
+		return ast.Node{}, fmt.Errorf("unexpected number of extensions in node: %v", len(e))
 	}
-	for k, v := range e {
-		if len(v) == 0 {
-			return ast.Node{}, fmt.Errorf("extension method '%v' must have at least one argument", k)
-		}
-		var argNodes []ast.Node
-		for _, n := range v {
-			node, err := n.ToNode()
-			if err != nil {
-				return ast.Node{}, fmt.Errorf("error in extension method argument: %w", err)
-			}
-			argNodes = append(argNodes, node)
-		}
-		return ast.NewExtensionCall(types.String(k), argNodes...), nil
+	var k string
+	var v arrayJSON
+	for k, v = range e {
 	}
-	panic("unreachable code")
+	if len(v) == 0 {
+		return ast.Node{}, fmt.Errorf("extension '%v' must have at least one argument", k)
+	}
+	var argNodes []ast.Node
+	for _, n := range v {
+		node, err := n.ToNode()
+		if err != nil {
+			return ast.Node{}, fmt.Errorf("error in extension arg: %w", err)
+		}
+		argNodes = append(argNodes, node)
+	}
+	return ast.NewExtensionCall(types.String(k), argNodes...), nil
 }
 
 func (j nodeJSON) ToNode() (ast.Node, error) {
@@ -171,7 +172,7 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 		case "context":
 			return ast.Context(), nil
 		}
-		return ast.Node{}, fmt.Errorf("unknown var: %v", j.Var)
+		return ast.Node{}, fmt.Errorf("unknown variable: %v", j.Var)
 
 	// Slot
 	// Unknown
@@ -241,11 +242,9 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 		return j.Record.ToNode()
 
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	case j.ExtensionCall != nil:
+	default:
 		return j.ExtensionCall.ToNode()
 	}
-
-	return ast.Node{}, fmt.Errorf("unknown node")
 }
 
 func (n *nodeJSON) UnmarshalJSON(b []byte) error {
@@ -288,14 +287,14 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 	}
 	switch j.Effect {
 	case "permit":
-		p.Policy = *ast.Permit()
+		*(p.unwrap()) = *ast.Permit()
 	case "forbid":
-		p.Policy = *ast.Forbid()
+		*(p.unwrap()) = *ast.Forbid()
 	default:
 		return fmt.Errorf("unknown effect: %v", j.Effect)
 	}
 	for k, v := range j.Annotations {
-		p.Annotate(types.String(k), types.String(v))
+		p.unwrap().Annotate(types.String(k), types.String(v))
 	}
 	var err error
 	p.Principal, err = j.Principal.ToNode(ast.Scope(ast.NewPrincipalNode()))
@@ -317,9 +316,9 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		}
 		switch c.Kind {
 		case "when":
-			p.When(n)
+			p.unwrap().When(n)
 		case "unless":
-			p.Unless(n)
+			p.unwrap().Unless(n)
 		default:
 			return fmt.Errorf("unknown condition kind: %v", c.Kind)
 		}
