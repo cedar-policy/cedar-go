@@ -64,3 +64,23 @@ func TestPolicyJSON(t *testing.T) {
 
 	testutil.Equals(t, string(prettifyJson(output)), string(jsonEncodedPolicy))
 }
+
+func TestPolicyCedar(t *testing.T) {
+	t.Parallel()
+
+	// Taken from https://docs.cedarpolicy.com/policies/syntax-policy.html
+	policyStr := `permit (
+    principal,
+    action == Action::"editPhoto",
+    resource
+)
+when { resource.owner == principal };`
+
+	var policy Policy
+	testutil.OK(t, policy.UnmarshalCedar([]byte(policyStr)))
+
+	var buf bytes.Buffer
+	policy.MarshalCedar(&buf)
+
+	testutil.Equals(t, buf.String(), policyStr)
+}

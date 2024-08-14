@@ -1,9 +1,12 @@
 package cedar
 
 import (
+	"bytes"
+
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/json"
+	"github.com/cedar-policy/cedar-go/internal/parser"
 )
 
 // A Policy is the parsed form of a single Cedar language policy statement.
@@ -68,6 +71,27 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		Effect:      Effect(jsonPolicy.Effect),
 		eval:        eval.Compile(jsonPolicy.Policy),
 		ast:         jsonPolicy.Policy,
+	}
+	return nil
+}
+
+func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
+	cedarPolicy := &parser.Policy{Policy: p.ast}
+	cedarPolicy.MarshalCedar(buf)
+}
+
+func (p *Policy) UnmarshalCedar(b []byte) error {
+	var cedarPolicy parser.Policy
+	if err := cedarPolicy.UnmarshalCedar(b); err != nil {
+		return err
+	}
+
+	*p = Policy{
+		Position:    Position{},
+		Annotations: newAnnotationsFromSlice(cedarPolicy.Annotations),
+		Effect:      Effect(cedarPolicy.Effect),
+		eval:        eval.Compile(cedarPolicy.Policy),
+		ast:         cedarPolicy.Policy,
 	}
 	return nil
 }
