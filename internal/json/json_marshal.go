@@ -94,7 +94,7 @@ func strToJSON(dest **strJSON, src ast.StrOpNode) {
 	*dest = res
 }
 
-func patternToJSON(dest **patternJSON, src ast.NodeTypeLike){
+func patternToJSON(dest **patternJSON, src ast.NodeTypeLike) {
 	res := &patternJSON{}
 	res.Left.FromNode(src.Arg)
 	for _, comp := range src.Value.Components {
@@ -108,7 +108,7 @@ func patternToJSON(dest **patternJSON, src ast.NodeTypeLike){
 	*dest = res
 }
 
-func recordToJSON(dest *recordJSON, src ast.NodeTypeRecord)  {
+func recordToJSON(dest *recordJSON, src ast.NodeTypeRecord) {
 	res := recordJSON{}
 	for _, kv := range src.Elements {
 		var nn nodeJSON
@@ -118,7 +118,7 @@ func recordToJSON(dest *recordJSON, src ast.NodeTypeRecord)  {
 	*dest = res
 }
 
-func ifToJSON(dest **ifThenElseJSON, src ast.NodeTypeIf)  {
+func ifToJSON(dest **ifThenElseJSON, src ast.NodeTypeIf) {
 	res := &ifThenElseJSON{}
 	res.If.FromNode(src.If)
 	res.Then.FromNode(src.Then)
@@ -126,14 +126,14 @@ func ifToJSON(dest **ifThenElseJSON, src ast.NodeTypeIf)  {
 	*dest = res
 }
 
-func isToJSON(dest **isJSON, src ast.NodeTypeIs)  {
+func isToJSON(dest **isJSON, src ast.NodeTypeIs) {
 	res := &isJSON{}
 	res.Left.FromNode(src.Left)
 	res.EntityType = string(src.EntityType)
 	*dest = res
 }
 
-func isInToJSON(dest **isJSON, src ast.NodeTypeIsIn)  {
+func isInToJSON(dest **isJSON, src ast.NodeTypeIsIn) {
 	res := &isJSON{}
 	res.Left.FromNode(src.Left)
 	res.EntityType = string(src.EntityType)
