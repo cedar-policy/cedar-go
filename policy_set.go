@@ -41,6 +41,26 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 	return PolicySet{policies: policyMap}, nil
 }
 
+// NewPolicySetFromPolicies will create a PolicySet from a slice of existing Policys. This constructor can be used to
+// support the creation of a PolicySet from JSON-encoded policies or policies created via the ast package, like so:
+//
+//	policy0 := NewPolicyFromAST(ast.Forbid())
+//
+//	var policy1 Policy
+//	_ = policy1.UnmarshalJSON(
+//		[]byte(`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`),
+//	))
+//
+//	ps := NewPolicySetFromPolicies([]*Policy{policy0, &policy1})
+func NewPolicySetFromPolicies(policies []*Policy) PolicySet {
+	policyMap := make(map[PolicyID]*Policy, len(policies))
+	for i, p := range policies {
+		policyID := PolicyID(fmt.Sprintf("policy%d", i))
+		policyMap[policyID] = p
+	}
+	return PolicySet{policies: policyMap}
+}
+
 // GetPolicy returns a pointer to the Policy with the given ID. If a policy with the given ID does not exist, nil is
 // returned.
 func (p PolicySet) GetPolicy(policyID PolicyID) *Policy {
