@@ -436,6 +436,7 @@ when { (if true then 2 else 3) * 4 == 8 };`,
 
 			var policy parser.Policy
 			testutil.OK(t, policy.UnmarshalCedar([]byte(tt.Text)))
+			policy.Position = ast.Position{}
 			testutil.Equals(t, policy, parser.Policy{*tt.ExpectedPolicy})
 
 			var buf bytes.Buffer
@@ -447,28 +448,22 @@ when { (if true then 2 else 3) * 4 == 8 };`,
 
 func TestParsePolicySet(t *testing.T) {
 	t.Parallel()
-	parseTests := []struct {
-		Name             string
-		Text             string
-		ExpectedPolicies parser.PolicySet
-	}{
-		{
-			"single policy",
-			`permit (
+	t.Run("single policy", func(t *testing.T) {
+		policyStr := []byte(`permit (
 			principal,
 			action,
 			resource
-		);`,
-			parser.PolicySet{
-				parser.PolicySetEntry{
-					parser.Policy{*ast.Permit()},
-					parser.Position{Offset: 0, Line: 1, Column: 1},
-				},
-			},
-		},
-		{
-			"two policies",
-			`permit (
+		);`)
+
+		var policies parser.PolicySet
+		testutil.OK(t, policies.UnmarshalCedar(policyStr))
+
+		expectedPolicy := ast.Permit()
+		expectedPolicy.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
+		testutil.Equals(t, &policies[0].Policy, expectedPolicy)
+	})
+	t.Run("two policies", func(t *testing.T) {
+		policyStr := []byte(`permit (
 			principal,
 			action,
 			resource
@@ -477,26 +472,16 @@ func TestParsePolicySet(t *testing.T) {
 			principal,
 			action,
 			resource
-		);`,
-			parser.PolicySet{
-				parser.PolicySetEntry{
-					parser.Policy{*ast.Permit()},
-					parser.Position{Offset: 0, Line: 1, Column: 1},
-				},
-				parser.PolicySetEntry{
-					parser.Policy{*ast.Forbid()},
-					parser.Position{Offset: 53, Line: 6, Column: 3},
-				},
-			},
-		},
-	}
-	for _, tt := range parseTests {
-		t.Run(tt.Name, func(t *testing.T) {
-			t.Parallel()
+		);`)
+		var policies parser.PolicySet
+		testutil.OK(t, policies.UnmarshalCedar(policyStr))
 
-			var policies parser.PolicySet
-			testutil.OK(t, policies.UnmarshalCedar([]byte(tt.Text)))
-			testutil.Equals(t, policies, tt.ExpectedPolicies)
-		})
-	}
+		expectedPolicy0 := ast.Permit()
+		expectedPolicy0.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
+		testutil.Equals(t, &policies[0].Policy, expectedPolicy0)
+
+		expectedPolicy1 := ast.Forbid()
+		expectedPolicy1.Position = ast.Position{Offset: 53, Line: 6, Column: 3}
+		testutil.Equals(t, &policies[1].Policy, expectedPolicy1)
+	})
 }
