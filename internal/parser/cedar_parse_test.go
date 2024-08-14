@@ -320,7 +320,7 @@ func TestParse(t *testing.T) {
 			testutil.OK(t, err)
 
 			// TODO: support 0, > 1
-			testutil.Equals(t, p2[0].Policy, policies[0].Policy)
+			testutil.Equals(t, p2[0], policies[0])
 
 		})
 	}

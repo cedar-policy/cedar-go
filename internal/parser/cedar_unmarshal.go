@@ -23,7 +23,7 @@ func (p *PolicySet) UnmarshalCedar(b []byte) error {
 			return err
 		}
 
-		policySet = append(policySet, policy)
+		policySet = append(policySet, &policy)
 	}
 
 	*p = policySet
@@ -81,7 +81,7 @@ func (p *Policy) fromCedar(parser *parser) error {
 		return err
 	}
 
-	*p = Policy{*newPolicy}
+	*p = *(*Policy)(newPolicy)
 	return nil
 }
 

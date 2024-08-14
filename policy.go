@@ -77,7 +77,7 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 }
 
 func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
-	cedarPolicy := &parser.Policy{Policy: *p.ast}
+	cedarPolicy := (*parser.Policy)(p.ast)
 	cedarPolicy.MarshalCedar(buf)
 }
 
@@ -91,8 +91,8 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 		Position:    Position{},
 		Annotations: newAnnotationsFromSlice(cedarPolicy.Annotations),
 		Effect:      Effect(cedarPolicy.Effect),
-		eval:        eval.Compile(cedarPolicy.Policy),
-		ast:         &cedarPolicy.Policy,
+		eval:        eval.Compile((internalast.Policy)(cedarPolicy)),
+		ast:         (*internalast.Policy)(&cedarPolicy),
 	}
 	return nil
 }
