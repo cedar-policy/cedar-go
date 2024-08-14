@@ -8,113 +8,95 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func (s *scopeJSON) FromNode(src ast.IsScopeNode) error {
+func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 	switch t := src.(type) {
 	case ast.ScopeTypeAll:
 		s.Op = "All"
-		return nil
+		return
 	case ast.ScopeTypeEq:
 		s.Op = "=="
 		e := t.Entity
 		s.Entity = &e
-		return nil
+		return
 	case ast.ScopeTypeIn:
 		s.Op = "in"
 		e := t.Entity
 		s.Entity = &e
-		return nil
+		return
 	case ast.ScopeTypeInSet:
 		s.Op = "in"
 		s.Entities = t.Entities
-		return nil
+		return
 	case ast.ScopeTypeIs:
 		s.Op = "is"
 		s.EntityType = string(t.Type)
-		return nil
+		return
 	case ast.ScopeTypeIsIn:
 		s.Op = "is"
 		s.EntityType = string(t.Type)
 		s.In = &scopeInJSON{
 			Entity: t.Entity,
 		}
-		return nil
+		return
+	default:
+		panic(fmt.Sprintf("unknown scope type %T", t))
 	}
-	return fmt.Errorf("unexpected scope node: %T", src)
 }
 
 func unaryToJSON(dest **unaryJSON, src ast.UnaryNode) error {
 	n := ast.UnaryNode(src)
 	res := &unaryJSON{}
-	if err := res.Arg.FromNode(n.Arg); err != nil {
-		return fmt.Errorf("error in arg: %w", err)
-	}
+	res.Arg.FromNode(n.Arg)
 	*dest = res
 	return nil
 }
 
-func binaryToJSON(dest **binaryJSON, src ast.BinaryNode) error {
+func binaryToJSON(dest **binaryJSON, src ast.BinaryNode) {
 	n := ast.BinaryNode(src)
 	res := &binaryJSON{}
-	if err := res.Left.FromNode(n.Left); err != nil {
-		return fmt.Errorf("error in left: %w", err)
-	}
-	if err := res.Right.FromNode(n.Right); err != nil {
-		return fmt.Errorf("error in right: %w", err)
-	}
+	res.Left.FromNode(n.Left)
+	res.Right.FromNode(n.Right)
 	*dest = res
-	return nil
 }
 
-func arrayToJSON(dest *arrayJSON, args []ast.IsNode) error {
+func arrayToJSON(dest *arrayJSON, args []ast.IsNode) {
 	res := arrayJSON{}
 	for _, n := range args {
 		var nn nodeJSON
-		if err := nn.FromNode(n); err != nil {
-			return fmt.Errorf("error in array: %w", err)
-		}
+		nn.FromNode(n)
 		res = append(res, nn)
 	}
 	*dest = res
-	return nil
 }
 
-func extToJSON(dest *extensionCallJSON, name string, src types.Value) error {
+func extToJSON(dest *extensionCallJSON, name string, src types.Value) {
 	res := arrayJSON{}
-	str := src.String()               // TODO: is this the correct string?
-	b, _ := json.Marshal(string(str)) // error impossible
+	str := src.String() // TODO: is this the correct string?
+	val := valueJSON{v: types.String(str)}
 	res = append(res, nodeJSON{
-		Value: (*json.RawMessage)(&b),
+		Value: &val,
 	})
 	*dest = extensionCallJSON{
 		name: res,
 	}
-	return nil
 }
 
-func extCallToJSON(dest extensionCallJSON, src ast.NodeTypeExtensionCall) error {
+func extCallToJSON(dest extensionCallJSON, src ast.NodeTypeExtensionCall) {
 	jsonArgs := arrayJSON{}
-	if err := arrayToJSON(&jsonArgs, src.Args); err != nil {
-		return err
-	}
+	arrayToJSON(&jsonArgs, src.Args)
 	dest[string(src.Name)] = jsonArgs
-	return nil
 }
 
-func strToJSON(dest **strJSON, src ast.StrOpNode) error {
+func strToJSON(dest **strJSON, src ast.StrOpNode) {
 	res := &strJSON{}
-	if err := res.Left.FromNode(src.Arg); err != nil {
-		return fmt.Errorf("error in left: %w", err)
-	}
+	res.Left.FromNode(src.Arg)
 	res.Attr = string(src.Value)
 	*dest = res
-	return nil
 }
 
-func patternToJSON(dest **patternJSON, src ast.NodeTypeLike) error {
+func patternToJSON(dest **patternJSON, src ast.NodeTypeLike){
 	res := &patternJSON{}
-	if err := res.Left.FromNode(src.Arg); err != nil {
-		return fmt.Errorf("error in left: %w", err)
-	}
+	res.Left.FromNode(src.Arg)
 	for _, comp := range src.Value.Components {
 		if comp.Wildcard {
 			res.Pattern = append(res.Pattern, patternComponentJSON{Wildcard: true})
@@ -124,62 +106,43 @@ func patternToJSON(dest **patternJSON, src ast.NodeTypeLike) error {
 		}
 	}
 	*dest = res
-	return nil
 }
 
-func recordToJSON(dest *recordJSON, src ast.NodeTypeRecord) error {
+func recordToJSON(dest *recordJSON, src ast.NodeTypeRecord)  {
 	res := recordJSON{}
 	for _, kv := range src.Elements {
 		var nn nodeJSON
-		if err := nn.FromNode(kv.Value); err != nil {
-			return err
-		}
+		nn.FromNode(kv.Value)
 		res[string(kv.Key)] = nn
 	}
 	*dest = res
-	return nil
 }
 
-func ifToJSON(dest **ifThenElseJSON, src ast.NodeTypeIf) error {
+func ifToJSON(dest **ifThenElseJSON, src ast.NodeTypeIf)  {
 	res := &ifThenElseJSON{}
-	if err := res.If.FromNode(src.If); err != nil {
-		return fmt.Errorf("error in if: %w", err)
-	}
-	if err := res.Then.FromNode(src.Then); err != nil {
-		return fmt.Errorf("error in then: %w", err)
-	}
-	if err := res.Else.FromNode(src.Else); err != nil {
-		return fmt.Errorf("error in else: %w", err)
-	}
+	res.If.FromNode(src.If)
+	res.Then.FromNode(src.Then)
+	res.Else.FromNode(src.Else)
 	*dest = res
-	return nil
 }
 
-func isToJSON(dest **isJSON, src ast.NodeTypeIs) error {
+func isToJSON(dest **isJSON, src ast.NodeTypeIs)  {
 	res := &isJSON{}
-	if err := res.Left.FromNode(src.Left); err != nil {
-		return fmt.Errorf("error in left: %w", err)
-	}
+	res.Left.FromNode(src.Left)
 	res.EntityType = string(src.EntityType)
 	*dest = res
-	return nil
 }
 
-func isInToJSON(dest **isJSON, src ast.NodeTypeIsIn) error {
+func isInToJSON(dest **isJSON, src ast.NodeTypeIsIn)  {
 	res := &isJSON{}
-	if err := res.Left.FromNode(src.Left); err != nil {
-		return fmt.Errorf("error in left: %w", err)
-	}
+	res.Left.FromNode(src.Left)
 	res.EntityType = string(src.EntityType)
 	res.In = &nodeJSON{}
-	if err := res.In.FromNode(src.Entity); err != nil {
-		return fmt.Errorf("error in entity: %w", err)
-	}
+	res.In.FromNode(src.Entity)
 	*dest = res
-	return nil
 }
 
-func (j *nodeJSON) FromNode(src ast.IsNode) error {
+func (j *nodeJSON) FromNode(src ast.IsNode) {
 	switch t := src.(type) {
 	// Value
 	// Value *json.RawMessage `json:"Value"` // could be any
@@ -189,106 +152,132 @@ func (j *nodeJSON) FromNode(src ast.IsNode) error {
 		// IP      arrayJSON `json:"ip"`
 		switch tt := t.Value.(type) {
 		case types.Decimal:
-			return extToJSON(&j.ExtensionCall, "decimal", tt)
+			extToJSON(&j.ExtensionCall, "decimal", tt)
+			return
 		case types.IPAddr:
-			return extToJSON(&j.ExtensionCall, "ip", tt)
+			extToJSON(&j.ExtensionCall, "ip", tt)
+			return
 		}
-		b, err := t.Value.ExplicitMarshalJSON()
-		j.Value = (*json.RawMessage)(&b)
-		return err
+		val := valueJSON{v: t.Value}
+		j.Value = &val
+		return
 
 	// Var
 	// Var *string `json:"Var"`
 	case ast.NodeTypeVariable:
 		val := string(t.Name)
 		j.Var = &val
-		return nil
+		return
 
 	// ! or neg operators
 	// Not    *unaryJSON `json:"!"`
 	// Negate *unaryJSON `json:"neg"`
 	case ast.NodeTypeNot:
-		return unaryToJSON(&j.Not, t.UnaryNode)
+		unaryToJSON(&j.Not, t.UnaryNode)
+		return
 	case ast.NodeTypeNegate:
-		return unaryToJSON(&j.Negate, t.UnaryNode)
+		unaryToJSON(&j.Negate, t.UnaryNode)
+		return
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
 	case ast.NodeTypeAdd:
-		return binaryToJSON(&j.Plus, t.BinaryNode)
+		binaryToJSON(&j.Plus, t.BinaryNode)
+		return
 	case ast.NodeTypeAnd:
-		return binaryToJSON(&j.And, t.BinaryNode)
+		binaryToJSON(&j.And, t.BinaryNode)
+		return
 	case ast.NodeTypeContains:
-		return binaryToJSON(&j.Contains, t.BinaryNode)
+		binaryToJSON(&j.Contains, t.BinaryNode)
+		return
 	case ast.NodeTypeContainsAll:
-		return binaryToJSON(&j.ContainsAll, t.BinaryNode)
+		binaryToJSON(&j.ContainsAll, t.BinaryNode)
+		return
 	case ast.NodeTypeContainsAny:
-		return binaryToJSON(&j.ContainsAny, t.BinaryNode)
+		binaryToJSON(&j.ContainsAny, t.BinaryNode)
+		return
 	case ast.NodeTypeEquals:
-		return binaryToJSON(&j.Equals, t.BinaryNode)
+		binaryToJSON(&j.Equals, t.BinaryNode)
+		return
 	case ast.NodeTypeGreaterThan:
-		return binaryToJSON(&j.GreaterThan, t.BinaryNode)
+		binaryToJSON(&j.GreaterThan, t.BinaryNode)
+		return
 	case ast.NodeTypeGreaterThanOrEqual:
-		return binaryToJSON(&j.GreaterThanOrEqual, t.BinaryNode)
+		binaryToJSON(&j.GreaterThanOrEqual, t.BinaryNode)
+		return
 	case ast.NodeTypeIn:
-		return binaryToJSON(&j.In, t.BinaryNode)
+		binaryToJSON(&j.In, t.BinaryNode)
+		return
 	case ast.NodeTypeLessThan:
-		return binaryToJSON(&j.LessThan, t.BinaryNode)
+		binaryToJSON(&j.LessThan, t.BinaryNode)
+		return
 	case ast.NodeTypeLessThanOrEqual:
-		return binaryToJSON(&j.LessThanOrEqual, t.BinaryNode)
+		binaryToJSON(&j.LessThanOrEqual, t.BinaryNode)
+		return
 	case ast.NodeTypeMult:
-		return binaryToJSON(&j.Times, t.BinaryNode)
+		binaryToJSON(&j.Times, t.BinaryNode)
+		return
 	case ast.NodeTypeNotEquals:
-		return binaryToJSON(&j.NotEquals, t.BinaryNode)
+		binaryToJSON(&j.NotEquals, t.BinaryNode)
+		return
 	case ast.NodeTypeOr:
-		return binaryToJSON(&j.Or, t.BinaryNode)
+		binaryToJSON(&j.Or, t.BinaryNode)
+		return
 	case ast.NodeTypeSub:
-		return binaryToJSON(&j.Minus, t.BinaryNode)
+		binaryToJSON(&j.Minus, t.BinaryNode)
+		return
 
 	// ., has
 	// Access *strJSON `json:"."`
 	// Has    *strJSON `json:"has"`
 	case ast.NodeTypeAccess:
-		return strToJSON(&j.Access, t.StrOpNode)
+		strToJSON(&j.Access, t.StrOpNode)
+		return
 	case ast.NodeTypeHas:
-		return strToJSON(&j.Has, t.StrOpNode)
+		strToJSON(&j.Has, t.StrOpNode)
+		return
 	// is
 	case ast.NodeTypeIs:
-		return isToJSON(&j.Is, t)
+		isToJSON(&j.Is, t)
+		return
 	case ast.NodeTypeIsIn:
-		return isInToJSON(&j.Is, t)
+		isInToJSON(&j.Is, t)
+		return
 
 	// like
 	// Like *strJSON `json:"like"`
 	case ast.NodeTypeLike:
-		return patternToJSON(&j.Like, t)
+		patternToJSON(&j.Like, t)
+		return
 
 	// if-then-else
 	// IfThenElse *ifThenElseJSON `json:"if-then-else"`
 	case ast.NodeTypeIf:
-		return ifToJSON(&j.IfThenElse, t)
+		ifToJSON(&j.IfThenElse, t)
+		return
 
 	// Set
 	// Set arrayJSON `json:"Set"`
 	case ast.NodeTypeSet:
-		return arrayToJSON(&j.Set, t.Elements)
+		arrayToJSON(&j.Set, t.Elements)
+		return
 
 	// Record
 	// Record recordJSON `json:"Record"`
 	case ast.NodeTypeRecord:
-		return recordToJSON(&j.Record, t)
+		recordToJSON(&j.Record, t)
+		return
 
 	// Any other method: ip, decimal, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
 	// ExtensionMethod map[string]arrayJSON `json:"-"`
 	case ast.NodeTypeExtensionCall:
 		j.ExtensionCall = extensionCallJSON{}
-		return extCallToJSON(j.ExtensionCall, t)
+		extCallToJSON(j.ExtensionCall, t)
+		return
+	default:
+		panic(fmt.Sprintf("unknown node type %T", t))
+
 	}
-	// case ast.nodeTypeRecordEntry:
-	// case ast.nodeTypeEntityType:
-	// case ast.nodeTypeAnnotation:
-	// case ast.nodeTypeWhen:
-	// case ast.nodeTypeUnless:
-	return fmt.Errorf("unknown node type: %T", src)
+
 }
 
 func (j *nodeJSON) MarshalJSON() ([]byte, error) {
@@ -329,24 +318,16 @@ func (p *Policy) MarshalJSON() ([]byte, error) {
 	for _, a := range p.Annotations {
 		j.Annotations[string(a.Key)] = string(a.Value)
 	}
-	if err := j.Principal.FromNode(p.Principal); err != nil {
-		return nil, fmt.Errorf("error in principal: %w", err)
-	}
-	if err := j.Action.FromNode(p.Action); err != nil {
-		return nil, fmt.Errorf("error in action: %w", err)
-	}
-	if err := j.Resource.FromNode(p.Resource); err != nil {
-		return nil, fmt.Errorf("error in resource: %w", err)
-	}
+	j.Principal.FromNode(p.Principal)
+	j.Action.FromNode(p.Action)
+	j.Resource.FromNode(p.Resource)
 	for _, c := range p.Conditions {
 		var cond conditionJSON
 		cond.Kind = "when"
 		if c.Condition == ast.ConditionUnless {
 			cond.Kind = "unless"
 		}
-		if err := cond.Body.FromNode(c.Body); err != nil {
-			return nil, fmt.Errorf("error in condition: %w", err)
-		}
+		cond.Body.FromNode(c.Body)
 		j.Conditions = append(j.Conditions, cond)
 	}
 	return json.Marshal(j)
