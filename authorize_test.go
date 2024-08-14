@@ -721,3 +721,9 @@ func TestIsAuthorized(t *testing.T) {
 		})
 	}
 }
+
+func TestError(t *testing.T) {
+	t.Parallel()
+	e := Error{Policy: 42, Message: "bad error"}
+	testutil.Equals(t, e.String(), "while evaluating policy `policy42`: bad error")
+}
