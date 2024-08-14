@@ -437,7 +437,7 @@ when { (if true then 2 else 3) * 4 == 8 };`,
 			var policy parser.Policy
 			testutil.OK(t, policy.UnmarshalCedar([]byte(tt.Text)))
 			policy.Position = ast.Position{}
-			testutil.Equals(t, policy, parser.Policy{*tt.ExpectedPolicy})
+			testutil.Equals(t, &policy, (*parser.Policy)(tt.ExpectedPolicy))
 
 			var buf bytes.Buffer
 			policy.MarshalCedar(&buf)
@@ -460,7 +460,7 @@ func TestParsePolicySet(t *testing.T) {
 
 		expectedPolicy := ast.Permit()
 		expectedPolicy.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
-		testutil.Equals(t, &policies[0].Policy, expectedPolicy)
+		testutil.Equals(t, policies[0], (*parser.Policy)(expectedPolicy))
 	})
 	t.Run("two policies", func(t *testing.T) {
 		policyStr := []byte(`permit (
@@ -478,10 +478,10 @@ func TestParsePolicySet(t *testing.T) {
 
 		expectedPolicy0 := ast.Permit()
 		expectedPolicy0.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
-		testutil.Equals(t, &policies[0].Policy, expectedPolicy0)
+		testutil.Equals(t, policies[0], (*parser.Policy)(expectedPolicy0))
 
 		expectedPolicy1 := ast.Forbid()
 		expectedPolicy1.Position = ast.Position{Offset: 53, Line: 6, Column: 3}
-		testutil.Equals(t, &policies[1].Policy, expectedPolicy1)
+		testutil.Equals(t, policies[1], (*parser.Policy)(expectedPolicy1))
 	})
 }

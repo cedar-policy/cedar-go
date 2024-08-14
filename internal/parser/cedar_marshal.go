@@ -10,15 +10,15 @@ import (
 )
 
 func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
-	for _, a := range p.Policy.Annotations {
+	for _, a := range p.Annotations {
 		marshalAnnotation(a, buf)
 		buf.WriteRune('\n')
 	}
-	marshalEffect(p.Policy.Effect, buf)
+	marshalEffect(p.Effect, buf)
 	buf.WriteRune(' ')
 	p.marshalScope(buf)
 
-	for _, c := range p.Policy.Conditions {
+	for _, c := range p.Conditions {
 		buf.WriteRune('\n')
 		marshalCondition(c, buf)
 	}
@@ -53,9 +53,9 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 }
 
 func (p *Policy) marshalScope(buf *bytes.Buffer) {
-	_, principalAll := p.Policy.Principal.(ast.ScopeTypeAll)
-	_, actionAll := p.Policy.Action.(ast.ScopeTypeAll)
-	_, resourceAll := p.Policy.Resource.(ast.ScopeTypeAll)
+	_, principalAll := p.Principal.(ast.ScopeTypeAll)
+	_, actionAll := p.Action.(ast.ScopeTypeAll)
+	_, resourceAll := p.Resource.(ast.ScopeTypeAll)
 	if principalAll && actionAll && resourceAll {
 		buf.WriteString("( principal, action, resource )")
 		return
@@ -65,19 +65,19 @@ func (p *Policy) marshalScope(buf *bytes.Buffer) {
 	if principalAll {
 		buf.WriteString("principal")
 	} else {
-		astNodeToMarshalNode(scopeToNode(ast.NewPrincipalNode(), p.Policy.Principal).AsIsNode()).marshalCedar(buf)
+		astNodeToMarshalNode(scopeToNode(ast.NewPrincipalNode(), p.Principal).AsIsNode()).marshalCedar(buf)
 	}
 	buf.WriteString(",\n    ")
 	if actionAll {
 		buf.WriteString("action")
 	} else {
-		astNodeToMarshalNode(scopeToNode(ast.NewActionNode(), p.Policy.Action).AsIsNode()).marshalCedar(buf)
+		astNodeToMarshalNode(scopeToNode(ast.NewActionNode(), p.Action).AsIsNode()).marshalCedar(buf)
 	}
 	buf.WriteString(",\n    ")
 	if resourceAll {
 		buf.WriteString("resource")
 	} else {
-		astNodeToMarshalNode(scopeToNode(ast.NewResourceNode(), p.Policy.Resource).AsIsNode()).marshalCedar(buf)
+		astNodeToMarshalNode(scopeToNode(ast.NewResourceNode(), p.Resource).AsIsNode()).marshalCedar(buf)
 	}
 	buf.WriteString("\n)")
 }

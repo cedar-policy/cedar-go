@@ -4,6 +4,7 @@ package cedar
 import (
 	"fmt"
 
+	internalast "github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/parser"
 )
@@ -33,10 +34,10 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 				Line:     p.Position.Line,
 				Column:   p.Position.Column,
 			},
-			Annotations: newAnnotationsFromSlice(p.Policy.Annotations),
-			Effect:      Effect(p.Policy.Effect),
-			eval:        eval.Compile(p.Policy),
-			ast:         &p.Policy,
+			Annotations: newAnnotationsFromSlice(p.Annotations),
+			Effect:      Effect(p.Effect),
+			eval:        eval.Compile((internalast.Policy)(*p)),
+			ast:         (*internalast.Policy)(p),
 		}
 	}
 	return PolicySet{policies: policyMap}, nil
