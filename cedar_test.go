@@ -89,35 +89,3 @@ func TestEntitiesJSON(t *testing.T) {
 		testutil.Error(t, err)
 	})
 }
-
-func TestJSONDecision(t *testing.T) {
-	t.Parallel()
-	t.Run("MarshalAllow", func(t *testing.T) {
-		t.Parallel()
-		d := Allow
-		b, err := d.MarshalJSON()
-		testutil.OK(t, err)
-		testutil.Equals(t, string(b), `"allow"`)
-	})
-	t.Run("MarshalDeny", func(t *testing.T) {
-		t.Parallel()
-		d := Deny
-		b, err := d.MarshalJSON()
-		testutil.OK(t, err)
-		testutil.Equals(t, string(b), `"deny"`)
-	})
-	t.Run("UnmarshalAllow", func(t *testing.T) {
-		t.Parallel()
-		var d Decision
-		err := json.Unmarshal([]byte(`"allow"`), &d)
-		testutil.OK(t, err)
-		testutil.Equals(t, d, Allow)
-	})
-	t.Run("UnmarshalDeny", func(t *testing.T) {
-		t.Parallel()
-		var d Decision
-		err := json.Unmarshal([]byte(`"deny"`), &d)
-		testutil.OK(t, err)
-		testutil.Equals(t, d, Deny)
-	})
-}
