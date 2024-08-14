@@ -53,6 +53,10 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 //	))
 //
 //	ps := NewPolicySetFromPolicies([]*Policy{policy0, &policy1})
+//
+// NewPolicySetFromPolicies assigns default PolicyIDs to the policies that are passed. If you would like to assign your
+// own PolicyIDs, call NewPolicySetFromPolicies() with an empty slice and use PolicySet.UpsertPolicy() to add the
+// policies individually with the desired PolicyID.
 func NewPolicySetFromPolicies(policies []*Policy) PolicySet {
 	policyMap := make(map[PolicyID]*Policy, len(policies))
 	for i, p := range policies {
@@ -66,4 +70,9 @@ func NewPolicySetFromPolicies(policies []*Policy) PolicySet {
 // returned.
 func (p PolicySet) GetPolicy(policyID PolicyID) *Policy {
 	return p.policies[policyID]
+}
+
+// UpsertPolicy inserts or updates a policy with the given ID.
+func (p *PolicySet) UpsertPolicy(policyID PolicyID, policy *Policy) {
+	p.policies[policyID] = policy
 }

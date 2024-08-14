@@ -32,9 +32,7 @@ func TestNewPolicySetFromPolicies(t *testing.T) {
 	t.Run("empty slice", func(t *testing.T) {
 		t.Parallel()
 
-		var policies []*Policy
-		ps := NewPolicySetFromPolicies(policies)
-
+		ps := NewPolicySetFromPolicies(nil)
 		testutil.Equals(t, ps.GetPolicy("policy0"), nil)
 	})
 	t.Run("non-empty slice", func(t *testing.T) {
@@ -52,5 +50,31 @@ func TestNewPolicySetFromPolicies(t *testing.T) {
 		testutil.Equals(t, ps.GetPolicy("policy0"), policy0)
 		testutil.Equals(t, ps.GetPolicy("policy1"), &policy1)
 		testutil.Equals(t, ps.GetPolicy("policy2"), nil)
+	})
+}
+
+func TestUpsertPolicy(t *testing.T) {
+	t.Parallel()
+	t.Run("insert", func(t *testing.T) {
+		t.Parallel()
+
+		ps := NewPolicySetFromPolicies(nil)
+		p := NewPolicyFromAST(ast.Forbid())
+		ps.UpsertPolicy("a very strict policy", p)
+
+		testutil.Equals(t, ps.GetPolicy("a very strict policy"), p)
+	})
+	t.Run("upsert", func(t *testing.T) {
+		t.Parallel()
+
+		ps := NewPolicySetFromPolicies(nil)
+
+		p1 := NewPolicyFromAST(ast.Forbid())
+		ps.UpsertPolicy("a wavering policy", p1)
+
+		p2 := NewPolicyFromAST(ast.Permit())
+		ps.UpsertPolicy("a wavering policy", p2)
+
+		testutil.Equals(t, ps.GetPolicy("a wavering policy"), p2)
 	})
 }
