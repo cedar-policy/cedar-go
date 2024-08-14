@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/cedar-policy/cedar-go/internal"
+	"github.com/cedar-policy/cedar-go/internal/rust"
 )
 
 //go:generate moq -pkg parser -fmt goimports -out tokenize_mocks_test.go . reader
@@ -54,7 +54,7 @@ func (t Token) stringValue() (string, error) {
 	s = strings.TrimPrefix(s, "\"")
 	s = strings.TrimSuffix(s, "\"")
 	b := []byte(s)
-	res, _, err := internal.RustUnquote(b, false)
+	res, _, err := rust.RustUnquote(b, false)
 	return res, err
 }
 
@@ -276,7 +276,7 @@ func (s *scanner) scanIdentifier() rune {
 }
 
 func (s *scanner) scanInteger(ch rune) rune {
-	for internal.IsDecimal(ch) {
+	for rust.IsDecimal(ch) {
 		ch = s.next()
 	}
 	return ch
@@ -284,7 +284,7 @@ func (s *scanner) scanInteger(ch rune) rune {
 
 func (s *scanner) scanHexDigits(ch rune, min, max int) rune {
 	n := 0
-	for n < max && internal.IsHexadecimal(ch) {
+	for n < max && rust.IsHexadecimal(ch) {
 		ch = s.next()
 		n++
 	}
@@ -453,7 +453,7 @@ redo:
 	case isIdentRune(ch, true):
 		ch = s.scanIdentifier()
 		tt = TokenIdent
-	case internal.IsDecimal(ch):
+	case rust.IsDecimal(ch):
 		ch = s.scanInteger(ch)
 		tt = TokenInt
 	case ch == '"':

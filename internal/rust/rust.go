@@ -1,4 +1,4 @@
-package internal
+package rust
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ func parseHexEscape(b []byte, i int) (rune, int, error) {
 	if !IsHexadecimal(ch) {
 		return 0, i, fmt.Errorf("bad hex escape sequence")
 	}
-	res := DigitVal(ch)
+	res := digitVal(ch)
 	ch, i, err = nextRune(b, i)
 	if err != nil {
 		return 0, i, err
@@ -32,14 +32,14 @@ func parseHexEscape(b []byte, i int) (rune, int, error) {
 	if !IsHexadecimal(ch) {
 		return 0, i, fmt.Errorf("bad hex escape sequence")
 	}
-	res = 16*res + DigitVal(ch)
+	res = 16*res + digitVal(ch)
 	if res > 127 {
 		return 0, i, fmt.Errorf("bad hex escape sequence")
 	}
 	return rune(res), i, nil
 }
 
-func ParseUnicodeEscape(b []byte, i int) (rune, int, error) {
+func parseUnicodeEscape(b []byte, i int) (rune, int, error) {
 	var ch rune
 	var err error
 
@@ -64,7 +64,7 @@ func ParseUnicodeEscape(b []byte, i int) (rune, int, error) {
 		if !IsHexadecimal(ch) {
 			return 0, i, fmt.Errorf("bad unicode escape sequence")
 		}
-		res = 16*res + DigitVal(ch)
+		res = 16*res + digitVal(ch)
 		digits++
 	}
 
@@ -75,7 +75,7 @@ func ParseUnicodeEscape(b []byte, i int) (rune, int, error) {
 	return rune(res), i, nil
 }
 
-func Unquote(s string) (string, error) {
+func unquote(s string) (string, error) {
 	s = strings.TrimPrefix(s, "\"")
 	s = strings.TrimSuffix(s, "\"")
 	res, _, err := RustUnquote([]byte(s), false)
@@ -126,7 +126,7 @@ func RustUnquote(b []byte, star bool) (string, []byte, error) {
 			}
 			sb.WriteRune(ch)
 		case 'u':
-			ch, i, err = ParseUnicodeEscape(b, i)
+			ch, i, err = parseUnicodeEscape(b, i)
 			if err != nil {
 				return "", nil, err
 			}
@@ -150,7 +150,7 @@ func IsHexadecimal(ch rune) bool {
 func lower(ch rune) rune     { return ('a' - 'A') | ch } // returns lower-case ch iff ch is ASCII letter
 func IsDecimal(ch rune) bool { return '0' <= ch && ch <= '9' }
 
-func DigitVal(ch rune) int {
+func digitVal(ch rune) int {
 	switch {
 	case '0' <= ch && ch <= '9':
 		return int(ch - '0')

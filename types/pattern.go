@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cedar-policy/cedar-go/internal"
+	"github.com/cedar-policy/cedar-go/internal/rust"
 )
 
 type PatternComponent struct {
@@ -138,7 +138,7 @@ func ParsePattern(s string) (Pattern, error) {
 			b = b[1:]
 			comp.Wildcard = true
 		}
-		comp.Literal, b, err = internal.RustUnquote(b, true)
+		comp.Literal, b, err = rust.RustUnquote(b, true)
 		if err != nil {
 			return Pattern{}, err
 		}
