@@ -172,14 +172,14 @@ func TestCorpus(t *testing.T) {
 					}
 					var errors []string
 					for _, n := range diag.Errors {
-						errors = append(errors, fmt.Sprintf("policy%d", n.Policy))
+						errors = append(errors, string(n.PolicyID))
 					}
 					if !slices.Equal(errors, request.Errors) {
 						t.Errorf("errors got %v want %v", errors, request.Errors)
 					}
 					var reasons []string
 					for _, n := range diag.Reasons {
-						reasons = append(reasons, fmt.Sprintf("policy%d", n.Policy))
+						reasons = append(reasons, string(n.PolicyID))
 					}
 					if !slices.Equal(reasons, request.Reasons) {
 						t.Errorf("reasons got %v want %v", reasons, request.Reasons)
@@ -198,8 +198,8 @@ func TestCorpusRelated(t *testing.T) {
 		policy   string
 		request  Request
 		decision Decision
-		reasons  []int
-		errors   []int
+		reasons  []PolicyID
+		errors   []PolicyID
 	}{
 		{
 			"0cb1ad7042508e708f1999284b634ed0f334bc00",
@@ -213,7 +213,7 @@ func TestCorpusRelated(t *testing.T) {
 			Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
 			Deny,
 			nil,
-			[]int{0},
+			[]PolicyID{"policy0"},
 		},
 
 		{
@@ -228,7 +228,7 @@ func TestCorpusRelated(t *testing.T) {
 			Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
 			Deny,
 			nil,
-			[]int{0},
+			[]PolicyID{"policy0"},
 		},
 		{
 			"0cb1ad7042508e708f1999284b634ed0f334bc00/partial2",
@@ -242,7 +242,7 @@ func TestCorpusRelated(t *testing.T) {
 			Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
 			Deny,
 			nil,
-			[]int{0},
+			[]PolicyID{"policy0"},
 		},
 
 		{
@@ -257,7 +257,7 @@ func TestCorpusRelated(t *testing.T) {
 			Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
 			Deny,
 			nil,
-			[]int{0},
+			[]PolicyID{"policy0"},
 		},
 
 		{
@@ -272,7 +272,7 @@ func TestCorpusRelated(t *testing.T) {
 			Request{},
 			Deny,
 			nil,
-			[]int{0},
+			[]PolicyID{"policy0"},
 		},
 
 		{
@@ -287,7 +287,7 @@ func TestCorpusRelated(t *testing.T) {
 			Request{},
 			Deny,
 			nil,
-			[]int{0},
+			[]PolicyID{"policy0"},
 		},
 
 		{"48d0ba6537a3efe02112ba0f5a3daabdcad27b04",
@@ -301,7 +301,7 @@ func TestCorpusRelated(t *testing.T) {
 			Request{Principal: types.NewEntityUID("a", "\u0000\b\u0011\u0000R"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\b\u0011\u0000R")},
 			Deny,
 			nil,
-			[]int{0},
+			[]PolicyID{"policy0"},
 		},
 
 		{"48d0ba6537a3efe02112ba0f5a3daabdcad27b04/simplified",
@@ -315,7 +315,7 @@ func TestCorpusRelated(t *testing.T) {
 			Request{},
 			Deny,
 			nil,
-			[]int{0},
+			[]PolicyID{"policy0"},
 		},
 
 		{name: "e91da4e6af5c73e27f5fb610d723dfa21635d10b",
@@ -329,7 +329,7 @@ func TestCorpusRelated(t *testing.T) {
 			request:  Request{Principal: types.NewEntityUID("a", "\u0000\u0000(W\u0000\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "")},
 			decision: Deny,
 			reasons:  nil,
-			errors:   []int{0},
+			errors:   []PolicyID{"policy0"},
 		},
 	}
 	for _, tt := range tests {
@@ -340,14 +340,14 @@ func TestCorpusRelated(t *testing.T) {
 			testutil.OK(t, err)
 			ok, diag := policy.IsAuthorized(entities2.Entities{}, tt.request)
 			testutil.Equals(t, ok, tt.decision)
-			var reasons []int
+			var reasons []PolicyID
 			for _, n := range diag.Reasons {
-				reasons = append(reasons, n.Policy)
+				reasons = append(reasons, n.PolicyID)
 			}
 			testutil.Equals(t, reasons, tt.reasons)
-			var errors []int
+			var errors []PolicyID
 			for _, n := range diag.Errors {
-				errors = append(errors, n.Policy)
+				errors = append(errors, n.PolicyID)
 			}
 			testutil.Equals(t, errors, tt.errors)
 		})

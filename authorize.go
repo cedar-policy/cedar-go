@@ -40,19 +40,19 @@ type Diagnostic struct {
 // An Error details the Policy index within a PolicySet, the Position within the
 // text document, and the resulting error message.
 type Error struct {
-	Policy   int      `json:"policy"`
+	PolicyID PolicyID `json:"policy"`
 	Position Position `json:"position"`
 	Message  string   `json:"message"`
 }
 
 func (e Error) String() string {
-	return fmt.Sprintf("while evaluating policy `policy%d`: %v", e.Policy, e.Message)
+	return fmt.Sprintf("while evaluating policy `%v`: %v", e.PolicyID, e.Message)
 }
 
 // A Reason details the Policy index within a PolicySet, and the Position within
 // the text document.
 type Reason struct {
-	Policy   int      `json:"policy"`
+	PolicyID PolicyID `json:"policy"`
 	Position Position `json:"position"`
 }
 
@@ -89,26 +89,26 @@ func (p PolicySet) IsAuthorized(entityMap entities.Entities, req Request) (Decis
 	// - All policy should be run to collect errors
 	// - For permit, all permits must be run to collect annotations
 	// - For forbid, forbids must be run to collect annotations
-	for n, po := range p {
+	for id, po := range p.policies {
 		v, err := po.eval.Eval(c)
 		if err != nil {
-			diag.Errors = append(diag.Errors, Error{Policy: n, Position: po.Position, Message: err.Error()})
+			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position, Message: err.Error()})
 			continue
 		}
 		vb, err := types.ValueToBool(v)
 		if err != nil {
 			// should never happen, maybe remove this case
-			diag.Errors = append(diag.Errors, Error{Policy: n, Position: po.Position, Message: err.Error()})
+			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position, Message: err.Error()})
 			continue
 		}
 		if !vb {
 			continue
 		}
 		if po.Effect == Forbid {
-			forbidReasons = append(forbidReasons, Reason{Policy: n, Position: po.Position})
+			forbidReasons = append(forbidReasons, Reason{PolicyID: id, Position: po.Position})
 			gotForbid = true
 		} else {
-			permitReasons = append(permitReasons, Reason{Policy: n, Position: po.Position})
+			permitReasons = append(permitReasons, Reason{PolicyID: id, Position: po.Position})
 			gotPermit = true
 		}
 	}

@@ -2,7 +2,9 @@ package parser
 
 import "github.com/cedar-policy/cedar-go/internal/ast"
 
-type PolicySet map[string]PolicySetEntry
+type PolicyID string
+
+type PolicySet map[PolicyID]PolicySetEntry
 
 type PolicySetEntry struct {
 	Policy   Policy

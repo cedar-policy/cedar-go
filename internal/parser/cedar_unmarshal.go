@@ -33,7 +33,7 @@ func (p *PolicySet) UnmarshalCedar(b []byte) error {
 			return err
 		}
 
-		policyName := fmt.Sprintf("policy%v", i)
+		policyName := PolicyID(fmt.Sprintf("policy%v", i))
 		policySet[policyName] = PolicySetEntry{Policy: policy, Position: pos}
 		i++
 	}
