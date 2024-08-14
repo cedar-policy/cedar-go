@@ -1,6 +1,7 @@
 package cedar
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/netip"
 	"testing"
@@ -837,27 +838,6 @@ func TestError(t *testing.T) {
 	testutil.Equals(t, e.String(), "while evaluating policy `policy42`: bad error")
 }
 
-// func TestInvalidPolicy(t *testing.T) {
-// 	t.Parallel()
-// 	// This case is very fabricated, it can't really happen
-// 	ps := PolicySet{
-// 		{
-// 			Effect: Forbid,
-// 			eval:   newLiteralEval(types.Long(42)),
-// 		},
-// 	}
-// 	ok, diag := ps.IsAuthorized(Entities{}, Request{})
-// 	testutil.Equals(t, ok, Deny)
-// 	testutil.Equals(t, diag, Diagnostic{
-// 		Errors: []Error{
-// 			{
-// 				Policy:  0,
-// 				Message: "type error: expected bool, got long",
-// 			},
-// 		},
-// 	})
-// }
-
 func TestCorpusRelated(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -1021,6 +1001,63 @@ func TestCorpusRelated(t *testing.T) {
 	}
 }
 
+func prettifyJson(in []byte) []byte {
+	var buf bytes.Buffer
+	_ = json.Indent(&buf, in, "", "    ")
+	return buf.Bytes()
+}
+
+func TestPolicyJSON(t *testing.T) {
+	t.Parallel()
+
+	// Taken from https://docs.cedarpolicy.com/policies/json-format.html
+	jsonEncodedPolicy := prettifyJson([]byte(`
+		{
+			"effect": "permit",
+			"principal": {
+				"op": "==",
+				"entity": { "type": "User", "id": "12UA45" }
+			},
+			"action": {
+				"op": "==",
+				"entity": { "type": "Action", "id": "view" }
+			},
+			"resource": {
+				"op": "in",
+				"entity": { "type": "Folder", "id": "abc" }
+			},
+			"conditions": [
+				{
+					"kind": "when",
+					"body": {
+						"==": {
+							"left": {
+								".": {
+									"left": {
+										"Var": "context"
+									},
+									"attr": "tls_version"
+								}
+							},
+							"right": {
+								"Value": "1.3"
+							}
+						}
+					}
+				}
+			]
+		}`,
+	))
+
+	var policy Policy
+	testutil.OK(t, policy.UnmarshalJSON(jsonEncodedPolicy))
+
+	output, err := policy.MarshalJSON()
+	testutil.OK(t, err)
+
+	testutil.Equals(t, string(prettifyJson(output)), string(jsonEncodedPolicy))
+}
+
 func TestEntitiesJSON(t *testing.T) {
 	t.Parallel()
 	t.Run("Marshal", func(t *testing.T) {
@@ -1058,38 +1095,6 @@ func TestEntitiesJSON(t *testing.T) {
 		var e entities.Entities
 		err := e.UnmarshalJSON([]byte(`!@#$`))
 		testutil.Error(t, err)
-	})
-}
-
-func TestJSONEffect(t *testing.T) {
-	t.Parallel()
-	t.Run("MarshalPermit", func(t *testing.T) {
-		t.Parallel()
-		e := Permit
-		b, err := e.MarshalJSON()
-		testutil.OK(t, err)
-		testutil.Equals(t, string(b), `"permit"`)
-	})
-	t.Run("MarshalForbid", func(t *testing.T) {
-		t.Parallel()
-		e := Forbid
-		b, err := e.MarshalJSON()
-		testutil.OK(t, err)
-		testutil.Equals(t, string(b), `"forbid"`)
-	})
-	t.Run("UnmarshalPermit", func(t *testing.T) {
-		t.Parallel()
-		var e Effect
-		err := json.Unmarshal([]byte(`"permit"`), &e)
-		testutil.OK(t, err)
-		testutil.Equals(t, e, Permit)
-	})
-	t.Run("UnmarshalForbid", func(t *testing.T) {
-		t.Parallel()
-		var e Effect
-		err := json.Unmarshal([]byte(`"forbid"`), &e)
-		testutil.OK(t, err)
-		testutil.Equals(t, e, Forbid)
 	})
 }
 
