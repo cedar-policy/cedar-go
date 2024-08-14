@@ -49,3 +49,12 @@ func Must[T any](obj T, err error) T {
 	}
 	return obj
 }
+
+func AssertPanic(t *testing.T, f func()) {
+	defer func() {
+		if e := recover(); e == nil {
+			t.Fatal("expected panic, got nil")
+		}
+	}()
+	f()
+}

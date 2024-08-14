@@ -565,3 +565,23 @@ func mustParseIPAddr(v string) types.IPAddr {
 	res, _ := types.ParseIPAddr(v)
 	return res
 }
+
+func TestMarshalPanics(t *testing.T) {
+	t.Parallel()
+	t.Run("nilScope", func(t *testing.T) {
+		t.Parallel()
+		testutil.AssertPanic(t, func() {
+			s := scopeJSON{}
+			var v ast.IsScopeNode
+			s.FromNode(v)
+		})
+	})
+	t.Run("nilNode", func(t *testing.T) {
+		t.Parallel()
+		testutil.AssertPanic(t, func() {
+			s := nodeJSON{}
+			var v ast.IsNode
+			s.FromNode(v)
+		})
+	})
+}
