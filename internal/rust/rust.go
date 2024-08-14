@@ -78,11 +78,11 @@ func parseUnicodeEscape(b []byte, i int) (rune, int, error) {
 func unquote(s string) (string, error) {
 	s = strings.TrimPrefix(s, "\"")
 	s = strings.TrimSuffix(s, "\"")
-	res, _, err := RustUnquote([]byte(s), false)
+	res, _, err := Unquote([]byte(s), false)
 	return res, err
 }
 
-func RustUnquote(b []byte, star bool) (string, []byte, error) {
+func Unquote(b []byte, star bool) (string, []byte, error) {
 	var sb strings.Builder
 	var ch rune
 	var err error

@@ -107,7 +107,7 @@ func TestRustUnquote(t *testing.T) {
 			tt := tt
 			t.Run(tt.input, func(t *testing.T) {
 				t.Parallel()
-				got, rem, err := RustUnquote([]byte(tt.input), false)
+				got, rem, err := Unquote([]byte(tt.input), false)
 				if err != nil {
 					testutil.Equals(t, tt.wantOk, false)
 					testutil.Equals(t, err.Error(), tt.wantErr)
@@ -178,7 +178,7 @@ func TestRustUnquote(t *testing.T) {
 			tt := tt
 			t.Run(tt.input, func(t *testing.T) {
 				t.Parallel()
-				got, rem, err := RustUnquote([]byte(tt.input), true)
+				got, rem, err := Unquote([]byte(tt.input), true)
 				if err != nil {
 					testutil.Equals(t, tt.wantOk, false)
 					testutil.Equals(t, err.Error(), tt.wantErr)

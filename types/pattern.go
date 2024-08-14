@@ -138,7 +138,7 @@ func ParsePattern(s string) (Pattern, error) {
 			b = b[1:]
 			comp.Wildcard = true
 		}
-		comp.Literal, b, err = rust.RustUnquote(b, true)
+		comp.Literal, b, err = rust.Unquote(b, true)
 		if err != nil {
 			return Pattern{}, err
 		}
