@@ -70,7 +70,7 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		Position:    Position{},
 		Annotations: newAnnotationsFromSlice(jsonPolicy.Annotations),
 		Effect:      Effect(jsonPolicy.Effect),
-		eval:        eval.Compile((internalast.Policy)(jsonPolicy)),
+		eval:        eval.Compile((*internalast.Policy)(&jsonPolicy)),
 		ast:         (*internalast.Policy)(&jsonPolicy),
 	}
 	return nil
@@ -91,7 +91,7 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 		Position:    Position{},
 		Annotations: newAnnotationsFromSlice(cedarPolicy.Annotations),
 		Effect:      Effect(cedarPolicy.Effect),
-		eval:        eval.Compile((internalast.Policy)(cedarPolicy)),
+		eval:        eval.Compile((*internalast.Policy)(&cedarPolicy)),
 		ast:         (*internalast.Policy)(&cedarPolicy),
 	}
 	return nil
@@ -103,7 +103,7 @@ func NewPolicyFromAST(astIn *ast.Policy) *Policy {
 		Position:    Position{},
 		Annotations: newAnnotationsFromSlice(astIn.Annotations),
 		Effect:      Effect(astIn.Effect),
-		eval:        eval.Compile(*pp),
+		eval:        eval.Compile(pp),
 		ast:         pp,
 	}
 }

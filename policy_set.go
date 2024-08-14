@@ -36,7 +36,7 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 			},
 			Annotations: newAnnotationsFromSlice(p.Annotations),
 			Effect:      Effect(p.Effect),
-			eval:        eval.Compile((internalast.Policy)(*p)),
+			eval:        eval.Compile((*internalast.Policy)(p)),
 			ast:         (*internalast.Policy)(p),
 		}
 	}
