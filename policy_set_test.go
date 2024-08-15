@@ -112,8 +112,8 @@ forbid (
 		ps.UpsertPolicy(PolicyID(fmt.Sprintf("policy%d", i)), p)
 	}
 
-	testutil.Equals(t, ps.GetPolicy("policy0").Effect, Permit)
-	testutil.Equals(t, ps.GetPolicy("policy1").Effect, Forbid)
+	testutil.Equals(t, ps.GetPolicy("policy0").Effect(), Permit)
+	testutil.Equals(t, ps.GetPolicy("policy1").Effect(), Forbid)
 
 	var buf bytes.Buffer
 	ps.MarshalCedar(&buf)

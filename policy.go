@@ -14,7 +14,6 @@ import (
 // A Policy is the parsed form of a single Cedar language policy statement.
 type Policy struct {
 	Position Position // location within the policy text document
-	Effect   Effect   // the effect of this policy
 	eval     evaler   // determines if a policy matches a request.
 	ast      *internalast.Policy
 }
@@ -59,7 +58,6 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 	}
 	*p = Policy{
 		Position: Position{},
-		Effect:   Effect(jsonPolicy.Effect),
 		eval:     eval.Compile((*internalast.Policy)(&jsonPolicy)),
 		ast:      (*internalast.Policy)(&jsonPolicy),
 	}
@@ -79,7 +77,6 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 
 	*p = Policy{
 		Position: Position{},
-		Effect:   Effect(cedarPolicy.Effect),
 		eval:     eval.Compile((*internalast.Policy)(&cedarPolicy)),
 		ast:      (*internalast.Policy)(&cedarPolicy),
 	}
@@ -90,7 +87,6 @@ func NewPolicyFromAST(astIn *ast.Policy) *Policy {
 	pp := (*internalast.Policy)(astIn)
 	return &Policy{
 		Position: Position{},
-		Effect:   Effect(astIn.Effect),
 		eval:     eval.Compile(pp),
 		ast:      pp,
 	}
@@ -103,6 +99,10 @@ func (p Policy) Annotations() Annotations {
 		res[string(e.Key)] = string(e.Value)
 	}
 	return res
+}
+
+func (p Policy) Effect() Effect {
+	return Effect(p.ast.Effect)
 }
 
 // PolicySlice represents a set of un-named Policy's. Cedar documents, unlike the JSON format, don't have a means of
@@ -124,9 +124,8 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
 				Line:   p.Position.Line,
 				Column: p.Position.Column,
 			},
-			Effect: Effect(p.Effect),
-			eval:   eval.Compile((*internalast.Policy)(p)),
-			ast:    (*internalast.Policy)(p),
+			eval: eval.Compile((*internalast.Policy)(p)),
+			ast:  (*internalast.Policy)(p),
 		})
 	}
 	*p = policySlice
