@@ -11,7 +11,7 @@ import (
 
 type PolicyID string
 
-// A PolicySet is a slice of policies.
+// TODO: Put a better comment here
 type PolicySet struct {
 	policies map[PolicyID]*Policy
 }

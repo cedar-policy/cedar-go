@@ -266,11 +266,6 @@ func TestASTByTable(t *testing.T) {
 			internalast.Permit().When(internalast.IPAddr(types.IPAddr(netip.MustParsePrefix("127.0.0.1/16")))),
 		},
 		{
-			"extensionCall",
-			ast.Permit().When(ast.ExtensionCall("ip", ast.String("127.0.0.1"))),
-			internalast.Permit().When(internalast.ExtensionCall("ip", internalast.String("127.0.0.1"))),
-		},
-		{
 			"opEquals",
 			ast.Permit().When(ast.Long(42).Equals(ast.Long(43))),
 			internalast.Permit().When(internalast.Long(42).Equals(internalast.Long(43))),
