@@ -95,7 +95,7 @@ func (p PolicySet) IsAuthorized(entityMap entities.Entities, req Request) (Decis
 			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position, Message: err.Error()})
 			continue
 		}
-		vb, err := types.ValueToBool(v)
+		vb, err := eval.ValueToBool(v)
 		if err != nil {
 			// should never happen, maybe remove this case
 			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position, Message: err.Error()})
