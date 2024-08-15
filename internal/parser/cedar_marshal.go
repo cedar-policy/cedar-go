@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -57,25 +58,25 @@ func (p *Policy) marshalScope(buf *bytes.Buffer) {
 	_, actionAll := p.Action.(ast.ScopeTypeAll)
 	_, resourceAll := p.Resource.(ast.ScopeTypeAll)
 	if principalAll && actionAll && resourceAll {
-		buf.WriteString("( principal, action, resource )")
+		buf.WriteString("( " + consts.Principal + ", " + consts.Action + ", " + consts.Resource + " )")
 		return
 	}
 
 	buf.WriteString("(\n    ")
 	if principalAll {
-		buf.WriteString("principal")
+		buf.WriteString(consts.Principal)
 	} else {
 		astNodeToMarshalNode(scopeToNode(ast.NewPrincipalNode(), p.Principal).AsIsNode()).marshalCedar(buf)
 	}
 	buf.WriteString(",\n    ")
 	if actionAll {
-		buf.WriteString("action")
+		buf.WriteString(consts.Action)
 	} else {
 		astNodeToMarshalNode(scopeToNode(ast.NewActionNode(), p.Action).AsIsNode()).marshalCedar(buf)
 	}
 	buf.WriteString(",\n    ")
 	if resourceAll {
-		buf.WriteString("resource")
+		buf.WriteString(consts.Resource)
 	} else {
 		astNodeToMarshalNode(scopeToNode(ast.NewResourceNode(), p.Resource).AsIsNode()).marshalCedar(buf)
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
 )
 
@@ -77,13 +78,13 @@ func toEval(n ast.IsNode) Evaler {
 		return newNotEval(toEval(v.Arg))
 	case ast.NodeTypeVariable:
 		switch v.Name {
-		case "principal":
+		case consts.Principal:
 			return newVariableEval(variableNamePrincipal)
-		case "action":
+		case consts.Action:
 			return newVariableEval(variableNameAction)
-		case "resource":
+		case consts.Resource:
 			return newVariableEval(variableNameResource)
-		case "context":
+		case consts.Context:
 			return newVariableEval(variableNameContext)
 		default:
 			panic(fmt.Errorf("unknown variable: %v", v.Name))

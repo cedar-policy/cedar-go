@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -180,7 +181,7 @@ func (p *parser) effect(a *ast.Annotations) (*ast.Policy, error) {
 }
 
 func (p *parser) principal(policy *ast.Policy) error {
-	if err := p.exact("principal"); err != nil {
+	if err := p.exact(consts.Principal); err != nil {
 		return err
 	}
 	switch p.peek().Text {
@@ -282,7 +283,7 @@ func (p *parser) path() (types.Path, error) {
 }
 
 func (p *parser) action(policy *ast.Policy) error {
-	if err := p.exact("action"); err != nil {
+	if err := p.exact(consts.Action); err != nil {
 		return err
 	}
 	switch p.peek().Text {
@@ -336,7 +337,7 @@ func (p *parser) entlist() ([]types.EntityUID, error) {
 }
 
 func (p *parser) resource(policy *ast.Policy) error {
-	if err := p.exact("resource"); err != nil {
+	if err := p.exact(consts.Resource); err != nil {
 		return err
 	}
 	switch p.peek().Text {
@@ -703,13 +704,13 @@ func (p *parser) primary() (ast.Node, error) {
 		res = ast.True()
 	case t.Text == "false":
 		res = ast.False()
-	case t.Text == "principal":
+	case t.Text == consts.Principal:
 		res = ast.Principal()
-	case t.Text == "action":
+	case t.Text == consts.Action:
 		res = ast.Action()
-	case t.Text == "resource":
+	case t.Text == consts.Resource:
 		res = ast.Resource()
-	case t.Text == "context":
+	case t.Text == consts.Context:
 		res = ast.Context()
 	case t.isIdent():
 		return p.entityOrExtFun(t.Text)
