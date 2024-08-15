@@ -104,7 +104,7 @@ func (p PolicySet) IsAuthorized(entityMap entities.Entities, req Request) (Decis
 		if !vb {
 			continue
 		}
-		if po.Effect == Forbid {
+		if po.Effect() == Forbid {
 			forbidReasons = append(forbidReasons, Reason{PolicyID: id, Position: po.Position})
 			gotForbid = true
 		} else {
