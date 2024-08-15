@@ -56,15 +56,14 @@ func TestAstExamples(t *testing.T) {
 	}
 	_ = ast.Forbid().
 		When(
-			ast.Record(simpleRecord).Access("x").Equals(ast.String("value")),
+			ast.Value(simpleRecord).Access("x").Equals(ast.String("value")),
 		).
 		When(
-			ast.RecordNodes(map[types.String]ast.Node{
-				"x": ast.Long(1).Plus(ast.Context().Access("fooCount")),
-			}).Access("x").Equals(ast.Long(3)),
+			ast.Record(ast.Pairs{{Key: "x", Value: ast.Long(1).Plus(ast.Context().Access("fooCount"))}}).
+				Access("x").Equals(ast.Long(3)),
 		).
 		When(
-			ast.SetNodes(
+			ast.Set(
 				ast.Long(1),
 				ast.Long(2).Plus(ast.Long(3)).Times(ast.Long(4)),
 				ast.Context().Access("fooCount"),
@@ -250,37 +249,23 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"valueSet",
-			ast.Permit().When(ast.Set(types.Set{types.Long(42), types.Long(43)})),
+			ast.Permit().When(ast.SetDeprecated(types.Set{types.Long(42), types.Long(43)})),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
 				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeSet{Elements: []ast.IsNode{ast.NodeValue{Value: types.Long(42)}, ast.NodeValue{Value: types.Long(43)}}}}},
 			},
 		},
 		{
 			"valueSetNodes",
-			ast.Permit().When(ast.SetNodes(ast.Long(42), ast.Long(43))),
+			ast.Permit().When(ast.Set(ast.Long(42), ast.Long(43))),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
 				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeSet{Elements: []ast.IsNode{ast.NodeValue{Value: types.Long(42)}, ast.NodeValue{Value: types.Long(43)}}}}},
 			},
 		},
 		{
 			"valueRecord",
-			ast.Permit().When(ast.Record(types.Record{"key": types.Long(43)})),
+			ast.Permit().When(ast.Value(types.Record{"key": types.Long(43)})),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
-				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeRecord{Elements: []ast.RecordElementNode{{Key: "key", Value: ast.NodeValue{Value: types.Long(43)}}}}}},
-			},
-		},
-		{
-			"valueRecordNodes",
-			ast.Permit().When(ast.RecordNodes(map[types.String]ast.Node{"key": ast.Long(42)})),
-			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
-				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeRecord{Elements: []ast.RecordElementNode{{Key: "key", Value: ast.NodeValue{Value: types.Long(42)}}}}}},
-			},
-		},
-		{
-			"valueRecordElements",
-			ast.Permit().When(ast.RecordElements(ast.RecordElement{Key: "key", Value: ast.Long(42)})),
-			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
-				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeRecord{Elements: []ast.RecordElementNode{{Key: "key", Value: ast.NodeValue{Value: types.Long(42)}}}}}},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeValue{Value: types.Record{"key": types.Long(43)}}}},
 			},
 		},
 		{

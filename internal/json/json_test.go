@@ -208,14 +208,14 @@ func TestUnmarshalJSON(t *testing.T) {
 			"set",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"Set":[{"Value":42},{"Value":"bananas"}]}}]}`,
-			ast.Permit().When(ast.Set(types.Set{types.Long(42), types.String("bananas")})),
+			ast.Permit().When(ast.SetDeprecated(types.Set{types.Long(42), types.String("bananas")})),
 			testutil.OK,
 		},
 		{
 			"record",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"Record":{"key":{"Value":42}}}}]}`,
-			ast.Permit().When(ast.Record(types.Record{"key": types.Long(42)})),
+			ast.Permit().When(ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(42)}})),
 			testutil.OK,
 		},
 		{

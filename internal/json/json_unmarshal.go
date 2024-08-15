@@ -115,19 +115,19 @@ func (j arrayJSON) ToNode() (ast.Node, error) {
 		}
 		nodes = append(nodes, n)
 	}
-	return ast.SetNodes(nodes...), nil
+	return ast.Set(nodes...), nil
 }
 
 func (j recordJSON) ToNode() (ast.Node, error) {
-	nodes := map[types.String]ast.Node{}
+	var nodes ast.Pairs
 	for k, v := range j {
 		n, err := v.ToNode()
 		if err != nil {
 			return ast.Node{}, fmt.Errorf("error in record: %w", err)
 		}
-		nodes[types.String(k)] = n
+		nodes = append(nodes, ast.Pair{Key: types.String(k), Value: n})
 	}
-	return ast.RecordNodes(nodes), nil
+	return ast.Record(nodes), nil
 }
 
 func (e extensionJSON) ToNode() (ast.Node, error) {
@@ -158,7 +158,7 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 	switch {
 	// Value
 	case j.Value != nil:
-		return ast.NewValueNode(j.Value.v), nil
+		return ast.Value(j.Value.v), nil
 
 	// Var
 	case j.Var != nil:

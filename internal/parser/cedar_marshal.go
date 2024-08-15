@@ -42,7 +42,7 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 		for i, e := range t.Entities {
 			set[i] = e
 		}
-		return ast.NewNode(varNode).In(ast.Set(set))
+		return ast.NewNode(varNode).In(ast.SetDeprecated(set))
 	case ast.ScopeTypeIs:
 		return ast.NewNode(varNode).Is(t.Type)
 

@@ -19,13 +19,13 @@ func TestToEval(t *testing.T) {
 	}{
 		{
 			"access",
-			ast.Record(types.Record{"key": types.Long(42)}).Access("key"),
+			ast.Value(types.Record{"key": types.Long(42)}).Access("key"),
 			types.Long(42),
 			testutil.OK,
 		},
 		{
 			"has",
-			ast.Record(types.Record{"key": types.Long(42)}).Has("key"),
+			ast.Value(types.Record{"key": types.Long(42)}).Has("key"),
 			types.True,
 			testutil.OK,
 		},
@@ -61,13 +61,13 @@ func TestToEval(t *testing.T) {
 		},
 		{
 			"record",
-			ast.RecordElements(ast.RecordElement{Key: "key", Value: ast.Long(42)}),
+			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(42)}}),
 			types.Record{"key": types.Long(42)},
 			testutil.OK,
 		},
 		{
 			"set",
-			ast.SetNodes(ast.Long(42)),
+			ast.Set(ast.Long(42)),
 			types.Set{types.Long(42)},
 			testutil.OK,
 		},
@@ -181,19 +181,19 @@ func TestToEval(t *testing.T) {
 		},
 		{
 			"contains",
-			ast.Set(types.Set{types.Long(42)}).Contains(ast.Long(42)),
+			ast.SetDeprecated(types.Set{types.Long(42)}).Contains(ast.Long(42)),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"containsAll",
-			ast.Set(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAll(ast.Set(types.Set{types.Long(42), types.Long(43)})),
+			ast.SetDeprecated(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAll(ast.SetDeprecated(types.Set{types.Long(42), types.Long(43)})),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"containsAny",
-			ast.Set(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAny(ast.Set(types.Set{types.Long(1), types.Long(42)})),
+			ast.SetDeprecated(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAny(ast.SetDeprecated(types.Set{types.Long(1), types.Long(42)})),
 			types.True,
 			testutil.OK,
 		},

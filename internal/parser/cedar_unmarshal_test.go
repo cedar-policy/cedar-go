@@ -173,13 +173,13 @@ when { context.strings.contains("foo") };`,
 			"containsAll method call",
 			`permit ( principal, action, resource )
 when { context.strings.containsAll(["foo"]) };`,
-			ast.Permit().When(ast.Context().Access("strings").ContainsAll(ast.SetNodes(ast.String("foo")))),
+			ast.Permit().When(ast.Context().Access("strings").ContainsAll(ast.Set(ast.String("foo")))),
 		},
 		{
 			"containsAny method call",
 			`permit ( principal, action, resource )
 when { context.strings.containsAny(["foo"]) };`,
-			ast.Permit().When(ast.Context().Access("strings").ContainsAny(ast.SetNodes(ast.String("foo")))),
+			ast.Permit().When(ast.Context().Access("strings").ContainsAny(ast.Set(ast.String("foo")))),
 		},
 		{
 			"extension method call",
