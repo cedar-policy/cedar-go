@@ -11,13 +11,13 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func (p *PolicySet) UnmarshalCedar(b []byte) error {
+func (p *PolicySlice) UnmarshalCedar(b []byte) error {
 	tokens, err := Tokenize(b)
 	if err != nil {
 		return err
 	}
 
-	var policySet PolicySet
+	var policySet PolicySlice
 	parser := newParser(tokens)
 	for !parser.peek().isEOF() {
 		var policy Policy
