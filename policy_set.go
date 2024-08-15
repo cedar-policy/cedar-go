@@ -11,17 +11,21 @@ import (
 
 type PolicyID string
 
-// TODO: Put a better comment here
+// A set of named policies against which a request can be authorized.
 type PolicySet struct {
 	policies map[PolicyID]*Policy
 }
 
-// NewPolicySet will create a PolicySet from the given text document with the
-// given file name used in Position data.  If there is an error parsing the
-// document, it will be returned.
+// Create a new, empty PolicySet
+func NewPolicySet() PolicySet {
+	return PolicySet{policies: map[PolicyID]*Policy{}}
+}
+
+// NewPolicySetFromFile will create a PolicySet from the given text document with the/ given file name used in Position
+// data.  If there is an error parsing the document, it will be returned.
 //
-// NewPolicySet assigns default PolicyIDs to the policies contained in fileName.
-func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
+// NewPolicySetFromFile assigns default PolicyIDs to the policies contained in fileName.
+func NewPolicySetFromFile(fileName string, document []byte) (PolicySet, error) {
 	var res parser.PolicySet
 	if err := res.UnmarshalCedar(document); err != nil {
 		return PolicySet{}, fmt.Errorf("parser error: %w", err)
@@ -43,30 +47,6 @@ func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 		}
 	}
 	return PolicySet{policies: policyMap}, nil
-}
-
-// NewPolicySetFromPolicies will create a PolicySet from a slice of existing Policys. This constructor can be used to
-// support the creation of a PolicySet from JSON-encoded policies or policies created via the ast package, like so:
-//
-//	policy0 := NewPolicyFromAST(ast.Forbid())
-//
-//	var policy1 Policy
-//	_ = policy1.UnmarshalJSON(
-//		[]byte(`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`),
-//	))
-//
-//	ps := NewPolicySetFromPolicies([]*Policy{policy0, &policy1})
-//
-// NewPolicySetFromPolicies assigns default PolicyIDs to the policies that are passed. If you would like to assign your
-// own PolicyIDs, call NewPolicySetFromPolicies() with an empty slice and use PolicySet.UpsertPolicy() to add the
-// policies individually with the desired PolicyID.
-func NewPolicySetFromPolicies(policies []*Policy) PolicySet {
-	policyMap := make(map[PolicyID]*Policy, len(policies))
-	for i, p := range policies {
-		policyID := PolicyID(fmt.Sprintf("policy%d", i))
-		policyMap[policyID] = p
-	}
-	return PolicySet{policies: policyMap}
 }
 
 // GetPolicy returns a pointer to the Policy with the given ID. If a policy with the given ID does not exist, nil is
