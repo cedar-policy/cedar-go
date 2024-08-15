@@ -295,25 +295,9 @@ func TestToEval(t *testing.T) {
 
 }
 
-func TestToEvalPanics(t *testing.T) {
+func TestToEvalPanic(t *testing.T) {
 	t.Parallel()
-	tests := []struct {
-		name string
-		in   ast.Node
-	}{
-		{
-			"unknownNode",
-			ast.Node{},
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			testutil.AssertPanic(t, func() {
-				_ = toEval(tt.in.AsIsNode())
-			})
-		})
-	}
+	testutil.AssertPanic(t, func() {
+		_ = toEval(ast.Node{}.AsIsNode())
+	})
 }
