@@ -410,7 +410,6 @@ func TestIP(t *testing.T) {
 		}
 	})
 
-
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		tests := []struct {
