@@ -16,7 +16,6 @@ import (
 
 var ErrDecimal = fmt.Errorf("error parsing decimal value")
 var ErrIP = fmt.Errorf("error parsing ip value")
-var ErrType = fmt.Errorf("type error")
 
 type Value interface {
 	// String produces a string representation of the Value.
@@ -62,14 +61,6 @@ func (v Boolean) Cedar() string {
 func (v Boolean) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
 func (v Boolean) deepClone() Value                     { return v }
 
-func ValueToBool(v Value) (Boolean, error) {
-	bv, ok := v.(Boolean)
-	if !ok {
-		return false, fmt.Errorf("%w: expected bool, got %v", ErrType, v.TypeName())
-	}
-	return bv, nil
-}
-
 // A Long is a whole number without decimals that can range from -9223372036854775808 to 9223372036854775807.
 type Long int64
 
@@ -90,14 +81,6 @@ func (v Long) Cedar() string {
 	return fmt.Sprint(int64(v))
 }
 func (v Long) deepClone() Value { return v }
-
-func ValueToLong(v Value) (Long, error) {
-	lv, ok := v.(Long)
-	if !ok {
-		return 0, fmt.Errorf("%w: expected long, got %v", ErrType, v.TypeName())
-	}
-	return lv, nil
-}
 
 // A String is a sequence of characters consisting of letters, numbers, or symbols.
 type String string
@@ -121,14 +104,6 @@ func (v String) Cedar() string {
 	return strconv.Quote(string(v))
 }
 func (v String) deepClone() Value { return v }
-
-func ValueToString(v Value) (String, error) {
-	sv, ok := v.(String)
-	if !ok {
-		return "", fmt.Errorf("%w: expected string, got %v", ErrType, v.TypeName())
-	}
-	return sv, nil
-}
 
 // A Set is a collection of elements that can be of the same or different types.
 type Set []Value
@@ -234,14 +209,6 @@ func (v Set) DeepClone() Set {
 	return res
 }
 
-func ValueToSet(v Value) (Set, error) {
-	sv, ok := v.(Set)
-	if !ok {
-		return nil, fmt.Errorf("%w: expected set, got %v", ErrType, v.TypeName())
-	}
-	return sv, nil
-}
-
 // A Record is a collection of attributes. Each attribute consists of a name and
 // an associated value. Names are simple strings. Values can be of any type.
 type Record map[string]Value
@@ -343,14 +310,6 @@ func (v Record) DeepClone() Record {
 	return res
 }
 
-func ValueToRecord(v Value) (Record, error) {
-	rv, ok := v.(Record)
-	if !ok {
-		return nil, fmt.Errorf("%w: expected record got %v", ErrType, v.TypeName())
-	}
-	return rv, nil
-}
-
 // An EntityUID is the identifier for a principal, action, or resource.
 type EntityUID struct {
 	Type string
@@ -420,14 +379,6 @@ func (v EntityUID) ExplicitMarshalJSON() ([]byte, error) {
 }
 func (v EntityUID) deepClone() Value { return v }
 
-func ValueToEntity(v Value) (EntityUID, error) {
-	ev, ok := v.(EntityUID)
-	if !ok {
-		return EntityUID{}, fmt.Errorf("%w: expected (entity of type `any_entity_type`), got %v", ErrType, v.TypeName())
-	}
-	return ev, nil
-}
-
 func EntityValueFromSlice(v []string) EntityUID {
 	return EntityUID{
 		Type: strings.Join(v[:len(v)-1], "::"),
@@ -448,14 +399,6 @@ func (v Path) String() string                       { return string(v) }
 func (v Path) Cedar() string                        { return string(v) }
 func (v Path) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(string(v)) }
 func (v Path) deepClone() Value                     { return v }
-
-func ValueToPath(v Value) (Path, error) {
-	ev, ok := v.(Path)
-	if !ok {
-		return "", fmt.Errorf("%w: expected (Path of type `any_entity_type`), got %v", ErrType, v.TypeName())
-	}
-	return ev, nil
-}
 
 func PathFromSlice(v []string) Path {
 	return Path(strings.Join(v, "::"))
@@ -637,14 +580,6 @@ func (v Decimal) ExplicitMarshalJSON() ([]byte, error) {
 }
 func (v Decimal) deepClone() Value { return v }
 
-func ValueToDecimal(v Value) (Decimal, error) {
-	d, ok := v.(Decimal)
-	if !ok {
-		return 0, fmt.Errorf("%w: expected decimal, got %v", ErrType, v.TypeName())
-	}
-	return d, nil
-}
-
 // An IPAddr is value that represents an IP address. It can be either IPv4 or IPv6.
 // The value can represent an individual address or a range of addresses.
 type IPAddr netip.Prefix
@@ -793,11 +728,3 @@ func (v IPAddr) ExplicitMarshalJSON() ([]byte, error) {
 // in this case, netip.Prefix does contain a pointer, but
 // the interface given is immutable, so it is safe to return
 func (v IPAddr) deepClone() Value { return v }
-
-func ValueToIP(v Value) (IPAddr, error) {
-	i, ok := v.(IPAddr)
-	if !ok {
-		return IPAddr{}, fmt.Errorf("%w: expected ipaddr, got %v", ErrType, v.TypeName())
-	}
-	return i, nil
-}

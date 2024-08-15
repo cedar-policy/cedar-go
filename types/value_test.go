@@ -9,19 +9,6 @@ import (
 
 func TestBool(t *testing.T) {
 	t.Parallel()
-	t.Run("roundTrip", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToBool(Boolean(true))
-		testutil.OK(t, err)
-		testutil.Equals(t, v, true)
-	})
-
-	t.Run("toBoolOnNonBool", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToBool(Long(0))
-		testutil.AssertError(t, err, ErrType)
-		testutil.Equals(t, v, false)
-	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
@@ -50,19 +37,6 @@ func TestBool(t *testing.T) {
 
 func TestLong(t *testing.T) {
 	t.Parallel()
-	t.Run("roundTrip", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToLong(Long(42))
-		testutil.OK(t, err)
-		testutil.Equals(t, v, 42)
-	})
-
-	t.Run("toLongOnNonLong", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToLong(Boolean(true))
-		testutil.AssertError(t, err, ErrType)
-		testutil.Equals(t, v, 0)
-	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
@@ -91,19 +65,6 @@ func TestLong(t *testing.T) {
 
 func TestString(t *testing.T) {
 	t.Parallel()
-	t.Run("roundTrip", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToString(String("hello"))
-		testutil.OK(t, err)
-		testutil.Equals(t, v, "hello")
-	})
-
-	t.Run("toStringOnNonString", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToString(Boolean(true))
-		testutil.AssertError(t, err, ErrType)
-		testutil.Equals(t, v, "")
-	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
@@ -130,21 +91,6 @@ func TestString(t *testing.T) {
 
 func TestSet(t *testing.T) {
 	t.Parallel()
-	t.Run("roundTrip", func(t *testing.T) {
-		t.Parallel()
-		v := Set{Boolean(true), Long(1)}
-		slice, err := ValueToSet(v)
-		testutil.OK(t, err)
-		v2 := slice
-		testutil.FatalIf(t, !v.Equal(v2), "got %v want %v", v, v2)
-	})
-
-	t.Run("ToSetOnNonSet", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToSet(Boolean(true))
-		testutil.AssertError(t, err, ErrType)
-		testutil.Equals(t, v, nil)
-	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
@@ -197,24 +143,6 @@ func TestSet(t *testing.T) {
 
 func TestRecord(t *testing.T) {
 	t.Parallel()
-	t.Run("roundTrip", func(t *testing.T) {
-		t.Parallel()
-		v := Record{
-			"foo": Boolean(true),
-			"bar": Long(1),
-		}
-		map_, err := ValueToRecord(v)
-		testutil.OK(t, err)
-		v2 := map_
-		testutil.FatalIf(t, !v.Equal(v2), "got %v want %v", v, v2)
-	})
-
-	t.Run("toRecordOnNonRecord", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToRecord(String("hello"))
-		testutil.AssertError(t, err, ErrType)
-		testutil.Equals(t, v, nil)
-	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
@@ -286,19 +214,6 @@ func TestRecord(t *testing.T) {
 
 func TestEntity(t *testing.T) {
 	t.Parallel()
-	t.Run("roundTrip", func(t *testing.T) {
-		t.Parallel()
-		want := EntityUID{Type: "User", ID: "bananas"}
-		v, err := ValueToEntity(want)
-		testutil.OK(t, err)
-		testutil.Equals(t, v, want)
-	})
-	t.Run("ToEntityOnNonEntity", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToEntity(String("hello"))
-		testutil.AssertError(t, err, ErrType)
-		testutil.Equals(t, v, EntityUID{})
-	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
@@ -422,22 +337,6 @@ func TestDecimal(t *testing.T) {
 		}
 	}
 
-	t.Run("roundTrip", func(t *testing.T) {
-		t.Parallel()
-		dv, err := ParseDecimal("1.20")
-		testutil.OK(t, err)
-		v, err := ValueToDecimal(dv)
-		testutil.OK(t, err)
-		testutil.FatalIf(t, !v.Equal(dv), "got %v want %v", v, dv)
-	})
-
-	t.Run("toDecimalOnNonDecimal", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToDecimal(Boolean(true))
-		testutil.AssertError(t, err, ErrType)
-		testutil.Equals(t, v, 0)
-	})
-
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		one := Decimal(10000)
@@ -511,12 +410,6 @@ func TestIP(t *testing.T) {
 		}
 	})
 
-	t.Run("toIPOnNonIP", func(t *testing.T) {
-		t.Parallel()
-		v, err := ValueToIP(Boolean(true))
-		testutil.AssertError(t, err, ErrType)
-		testutil.Equals(t, v, IPAddr{})
-	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()

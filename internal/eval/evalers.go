@@ -30,7 +30,7 @@ func evalBool(n Evaler, ctx *Context) (types.Boolean, error) {
 	if err != nil {
 		return false, err
 	}
-	b, err := types.ValueToBool(v)
+	b, err := ValueToBool(v)
 	if err != nil {
 		return false, err
 	}
@@ -42,7 +42,7 @@ func evalLong(n Evaler, ctx *Context) (types.Long, error) {
 	if err != nil {
 		return 0, err
 	}
-	l, err := types.ValueToLong(v)
+	l, err := ValueToLong(v)
 	if err != nil {
 		return 0, err
 	}
@@ -54,7 +54,7 @@ func evalString(n Evaler, ctx *Context) (types.String, error) {
 	if err != nil {
 		return "", err
 	}
-	s, err := types.ValueToString(v)
+	s, err := ValueToString(v)
 	if err != nil {
 		return "", err
 	}
@@ -66,7 +66,7 @@ func evalSet(n Evaler, ctx *Context) (types.Set, error) {
 	if err != nil {
 		return nil, err
 	}
-	s, err := types.ValueToSet(v)
+	s, err := ValueToSet(v)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func evalEntity(n Evaler, ctx *Context) (types.EntityUID, error) {
 	if err != nil {
 		return types.EntityUID{}, err
 	}
-	e, err := types.ValueToEntity(v)
+	e, err := ValueToEntity(v)
 	if err != nil {
 		return types.EntityUID{}, err
 	}
@@ -90,7 +90,7 @@ func evalPath(n Evaler, ctx *Context) (types.Path, error) {
 	if err != nil {
 		return "", err
 	}
-	e, err := types.ValueToPath(v)
+	e, err := ValueToPath(v)
 	if err != nil {
 		return "", err
 	}
@@ -102,7 +102,7 @@ func evalDecimal(n Evaler, ctx *Context) (types.Decimal, error) {
 	if err != nil {
 		return types.Decimal(0), err
 	}
-	d, err := types.ValueToDecimal(v)
+	d, err := ValueToDecimal(v)
 	if err != nil {
 		return types.Decimal(0), err
 	}
@@ -114,7 +114,7 @@ func evalIP(n Evaler, ctx *Context) (types.IPAddr, error) {
 	if err != nil {
 		return types.IPAddr{}, err
 	}
-	i, err := types.ValueToIP(v)
+	i, err := ValueToIP(v)
 	if err != nil {
 		return types.IPAddr{}, err
 	}
@@ -167,7 +167,7 @@ func (n *orEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return types.ZeroValue(), err
 	}
-	b, err := types.ValueToBool(v)
+	b, err := ValueToBool(v)
 	if err != nil {
 		return types.ZeroValue(), err
 	}
@@ -178,7 +178,7 @@ func (n *orEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return types.ZeroValue(), err
 	}
-	_, err = types.ValueToBool(v)
+	_, err = ValueToBool(v)
 	if err != nil {
 		return types.ZeroValue(), err
 	}
@@ -203,7 +203,7 @@ func (n *andEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return types.ZeroValue(), err
 	}
-	b, err := types.ValueToBool(v)
+	b, err := ValueToBool(v)
 	if err != nil {
 		return types.ZeroValue(), err
 	}
@@ -214,7 +214,7 @@ func (n *andEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return types.ZeroValue(), err
 	}
-	_, err = types.ValueToBool(v)
+	_, err = ValueToBool(v)
 	if err != nil {
 		return types.ZeroValue(), err
 	}
@@ -237,7 +237,7 @@ func (n *notEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return types.ZeroValue(), err
 	}
-	b, err := types.ValueToBool(v)
+	b, err := ValueToBool(v)
 	if err != nil {
 		return types.ZeroValue(), err
 	}
@@ -833,7 +833,7 @@ func (n *attributeAccessEval) Eval(ctx *Context) (types.Value, error) {
 	case types.Record:
 		record = vv
 	default:
-		return types.ZeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", types.ErrType, v.TypeName())
+		return types.ZeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, v.TypeName())
 	}
 	val, ok := record[n.attribute]
 	if !ok {
@@ -869,7 +869,7 @@ func (n *hasEval) Eval(ctx *Context) (types.Value, error) {
 	case types.Record:
 		record = vv
 	default:
-		return types.ZeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", types.ErrType, v.TypeName())
+		return types.ZeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, v.TypeName())
 	}
 	_, ok := record[n.attribute]
 	return types.Boolean(ok), nil
@@ -957,7 +957,7 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 		query[rhsv] = struct{}{}
 	case types.Set:
 		for _, rhv := range rhsv {
-			e, err := types.ValueToEntity(rhv)
+			e, err := ValueToEntity(rhv)
 			if err != nil {
 				return types.ZeroValue(), err
 			}
@@ -965,7 +965,7 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 		}
 	default:
 		return types.ZeroValue(), fmt.Errorf(
-			"%w: expected one of [set, (entity of type `any_entity_type`)], got %v", types.ErrType, rhs.TypeName())
+			"%w: expected one of [set, (entity of type `any_entity_type`)], got %v", ErrType, rhs.TypeName())
 	}
 	return types.Boolean(entityIn(lhs, query, ctx.Entities)), nil
 }
