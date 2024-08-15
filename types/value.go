@@ -213,7 +213,7 @@ func (v Set) Cedar() string {
 	sb.WriteRune('[')
 	for i, elem := range v {
 		if i > 0 {
-			sb.WriteString(",")
+			sb.WriteString(", ")
 		}
 		sb.WriteString(elem.Cedar())
 	}
@@ -319,11 +319,11 @@ func (r Record) Cedar() string {
 	for _, k := range keys {
 		v := r[k]
 		if !first {
-			sb.WriteString(",")
+			sb.WriteString(", ")
 		}
 		first = false
 		sb.WriteString(strconv.Quote(k))
-		sb.WriteString(":")
+		sb.WriteString(": ")
 		sb.WriteString(v.Cedar())
 	}
 	sb.WriteRune('}')
