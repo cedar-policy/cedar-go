@@ -25,7 +25,7 @@ func TestNewPolicySetFromFile(t *testing.T) {
 		t.Parallel()
 		ps, err := NewPolicySetFromFile("policy.cedar", []byte(`@key("value") permit (principal, action, resource);`))
 		testutil.OK(t, err)
-		testutil.Equals(t, ps.GetPolicy("policy0").Annotations, Annotations{"key": "value"})
+		testutil.Equals(t, ps.GetPolicy("policy0").Annotations(), Annotations{"key": "value"})
 	})
 }
 
