@@ -13,7 +13,7 @@ func TestCompile(t *testing.T) {
 	e := Compile(ast.Permit())
 	res, err := e.Eval(nil)
 	testutil.OK(t, err)
-	testutil.Equals(t, res, types.Value(types.Boolean(true)))
+	testutil.Equals(t, res, types.Value(types.True))
 }
 
 func TestPolicyToNode(t *testing.T) {

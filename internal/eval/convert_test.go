@@ -26,13 +26,13 @@ func TestToEval(t *testing.T) {
 		{
 			"has",
 			ast.Record(types.Record{"key": types.Long(42)}).Has("key"),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"like",
 			ast.String("test").Like(types.Pattern{}),
-			types.Boolean(false),
+			types.False,
 			testutil.OK,
 		},
 		{
@@ -44,13 +44,13 @@ func TestToEval(t *testing.T) {
 		{
 			"is",
 			ast.EntityUID(types.NewEntityUID("T", "42")).Is("T"),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"isIn",
 			ast.EntityUID(types.NewEntityUID("T", "42")).IsIn("T", ast.EntityUID(types.NewEntityUID("T", "42"))),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
@@ -80,7 +80,7 @@ func TestToEval(t *testing.T) {
 		{
 			"not",
 			ast.Not(ast.True()),
-			types.Boolean(false),
+			types.False,
 			testutil.OK,
 		},
 		{
@@ -110,55 +110,55 @@ func TestToEval(t *testing.T) {
 		{
 			"in",
 			ast.EntityUID(types.NewEntityUID("T", "42")).In(ast.EntityUID(types.NewEntityUID("T", "43"))),
-			types.Boolean(false),
+			types.False,
 			testutil.OK,
 		},
 		{
 			"and",
 			ast.True().And(ast.False()),
-			types.Boolean(false),
+			types.False,
 			testutil.OK,
 		},
 		{
 			"or",
 			ast.True().Or(ast.False()),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"equals",
 			ast.Long(42).Equals(ast.Long(43)),
-			types.Boolean(false),
+			types.False,
 			testutil.OK,
 		},
 		{
 			"notEquals",
 			ast.Long(42).NotEquals(ast.Long(43)),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"greaterThan",
 			ast.Long(42).GreaterThan(ast.Long(43)),
-			types.Boolean(false),
+			types.False,
 			testutil.OK,
 		},
 		{
 			"greaterThanOrEqual",
 			ast.Long(42).GreaterThanOrEqual(ast.Long(43)),
-			types.Boolean(false),
+			types.False,
 			testutil.OK,
 		},
 		{
 			"lessThan",
 			ast.Long(42).LessThan(ast.Long(43)),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"lessThanOrEqual",
 			ast.Long(42).LessThanOrEqual(ast.Long(43)),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
@@ -182,19 +182,19 @@ func TestToEval(t *testing.T) {
 		{
 			"contains",
 			ast.Set(types.Set{types.Long(42)}).Contains(ast.Long(42)),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"containsAll",
 			ast.Set(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAll(ast.Set(types.Set{types.Long(42), types.Long(43)})),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"containsAny",
 			ast.Set(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAny(ast.Set(types.Set{types.Long(1), types.Long(42)})),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
@@ -212,55 +212,55 @@ func TestToEval(t *testing.T) {
 		{
 			"lessThan",
 			ast.ExtensionCall("lessThan", ast.Decimal(420000), ast.Decimal(430000)),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"lessThanOrEqual",
 			ast.ExtensionCall("lessThanOrEqual", ast.Decimal(420000), ast.Decimal(430000)),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"greaterThan",
 			ast.ExtensionCall("greaterThan", ast.Decimal(420000), ast.Decimal(430000)),
-			types.Boolean(false),
+			types.False,
 			testutil.OK,
 		},
 		{
 			"greaterThanOrEqual",
 			ast.ExtensionCall("greaterThanOrEqual", ast.Decimal(420000), ast.Decimal(430000)),
-			types.Boolean(false),
+			types.False,
 			testutil.OK,
 		},
 		{
 			"isIpv4",
 			ast.ExtensionCall("isIpv4", ast.IPAddr(types.IPAddr(netip.MustParsePrefix("127.0.0.42/16")))),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"isIpv6",
 			ast.ExtensionCall("isIpv6", ast.IPAddr(types.IPAddr(netip.MustParsePrefix("::1/16")))),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"isLoopback",
 			ast.ExtensionCall("isLoopback", ast.IPAddr(types.IPAddr(netip.MustParsePrefix("127.0.0.1/32")))),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"isMulticast",
 			ast.ExtensionCall("isMulticast", ast.IPAddr(types.IPAddr(netip.MustParsePrefix("239.255.255.255/32")))),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{
 			"isInRange",
 			ast.ExtensionCall("isInRange", ast.IPAddr(types.IPAddr(netip.MustParsePrefix("127.0.0.42/32"))), ast.IPAddr(types.IPAddr(netip.MustParsePrefix("127.0.0.0/16")))),
-			types.Boolean(true),
+			types.True,
 			testutil.OK,
 		},
 		{

@@ -39,6 +39,11 @@ func ZeroValue() Value {
 // A Boolean is a value that is either true or false.
 type Boolean bool
 
+const (
+	True  = Boolean(true)
+	False = Boolean(false)
+)
+
 func (a Boolean) Equal(bi Value) bool {
 	b, ok := bi.(Boolean)
 	return ok && a == b
