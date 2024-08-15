@@ -181,19 +181,19 @@ func TestToEval(t *testing.T) {
 		},
 		{
 			"contains",
-			ast.SetDeprecated(types.Set{types.Long(42)}).Contains(ast.Long(42)),
+			ast.Value(types.Set{types.Long(42)}).Contains(ast.Long(42)),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"containsAll",
-			ast.SetDeprecated(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAll(ast.SetDeprecated(types.Set{types.Long(42), types.Long(43)})),
+			ast.Value(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAll(ast.Value(types.Set{types.Long(42), types.Long(43)})),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"containsAny",
-			ast.SetDeprecated(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAny(ast.SetDeprecated(types.Set{types.Long(1), types.Long(42)})),
+			ast.Value(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAny(ast.Value(types.Set{types.Long(1), types.Long(42)})),
 			types.True,
 			testutil.OK,
 		},
@@ -299,5 +299,12 @@ func TestToEvalPanic(t *testing.T) {
 	t.Parallel()
 	testutil.AssertPanic(t, func() {
 		_ = toEval(ast.Node{}.AsIsNode())
+	})
+}
+
+func TestToEvalVariablePanic(t *testing.T) {
+	t.Parallel()
+	testutil.AssertPanic(t, func() {
+		_ = toEval(ast.NodeTypeVariable{Name: "bananas"})
 	})
 }

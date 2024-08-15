@@ -7,8 +7,8 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func Boolean(b bool) Node {
-	return wrapNode(ast.Boolean(b))
+func Boolean[T bool | types.Boolean](b T) Node {
+	return wrapNode(ast.Boolean(types.Boolean(b)))
 }
 
 func True() Node {
@@ -19,12 +19,12 @@ func False() Node {
 	return Boolean(false)
 }
 
-func String(s string) Node {
-	return wrapNode(ast.String(s))
+func String[T string | types.String](s T) Node {
+	return wrapNode(ast.String(types.String(s)))
 }
 
-func Long(l int64) Node {
-	return wrapNode(ast.Long(l))
+func Long[T int | int64 | types.Long](l T) Node {
+	return wrapNode(ast.Long(types.Long(l)))
 }
 
 // Set allows for a complex set definition with values potentially
@@ -67,8 +67,8 @@ func EntityUID(typ, id string) Node {
 	return wrapNode(ast.EntityUID(typ, id))
 }
 
-func IPAddr(i netip.Prefix) Node {
-	return wrapNode(ast.IPAddr(i))
+func IPAddr[T netip.Prefix | types.IPAddr](i T) Node {
+	return wrapNode(ast.IPAddr(types.IPAddr(i)))
 }
 
 func Value(v types.Value) Node {

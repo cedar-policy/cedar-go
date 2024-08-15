@@ -185,7 +185,7 @@ func TestSet(t *testing.T) {
 		AssertValueString(
 			t,
 			Set{Boolean(true), Long(1)},
-			"[true,1]")
+			"[true, 1]")
 	})
 
 	t.Run("TypeName", func(t *testing.T) {
@@ -267,14 +267,14 @@ func TestRecord(t *testing.T) {
 		AssertValueString(
 			t,
 			Record{"foo": Boolean(true)},
-			`{"foo":true}`)
+			`{"foo": true}`)
 		AssertValueString(
 			t,
 			Record{
 				"foo": Boolean(true),
 				"bar": String("blah"),
 			},
-			`{"bar":"blah","foo":true}`)
+			`{"bar": "blah", "foo": true}`)
 	})
 
 	t.Run("TypeName", func(t *testing.T) {

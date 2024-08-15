@@ -209,7 +209,7 @@ func TestUnmarshalJSON(t *testing.T) {
 			"set",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"Set":[{"Value":42},{"Value":"bananas"}]}}]}`,
-			ast.Permit().When(ast.SetDeprecated(types.Set{types.Long(42), types.String("bananas")})),
+			ast.Permit().When(ast.Set(ast.Long(42), ast.String("bananas"))),
 			testutil.OK,
 		},
 		{

@@ -6,7 +6,7 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func Boolean(b bool) Node {
+func Boolean[T bool | types.Boolean](b T) Node {
 	return Value(types.Boolean(b))
 }
 
@@ -18,11 +18,11 @@ func False() Node {
 	return Boolean(false)
 }
 
-func String(s string) Node {
+func String[T string | types.String](s T) Node {
 	return Value(types.String(s))
 }
 
-func Long(l int64) Node {
+func Long[T int | int64 | types.Long](l T) Node {
 	return Value(types.Long(l))
 }
 
@@ -72,7 +72,7 @@ func EntityUID(typ, id string) Node {
 	return Value(e)
 }
 
-func IPAddr(i netip.Prefix) Node {
+func IPAddr[T netip.Prefix | types.IPAddr](i T) Node {
 	return Value(types.IPAddr(i))
 }
 
