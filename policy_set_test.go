@@ -1,6 +1,7 @@
 package cedar
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/ast"
@@ -83,4 +84,33 @@ func TestDeletePolicy(t *testing.T) {
 
 		testutil.Equals(t, ps.GetPolicy("a policy"), nil)
 	})
+}
+
+func TestNewPolicySetFromSlice(t *testing.T) {
+	t.Parallel()
+
+	policiesStr := `permit (
+    principal,
+    action == Action::"editPhoto",
+    resource
+)
+when { resource.owner == principal };
+
+forbid (
+    principal in Groups::"bannedUsers",
+    action,
+    resource
+);`
+
+	var policies PolicySlice
+	testutil.OK(t, policies.UnmarshalCedar([]byte(policiesStr)))
+
+	ps := NewPolicySet()
+	for i, p := range policies {
+		p.Position.Filename = "example.cedar"
+		ps.UpsertPolicy(PolicyID(fmt.Sprintf("policy%d", i)), p)
+	}
+
+	testutil.Equals(t, ps.GetPolicy("policy0").Effect, Permit)
+	testutil.Equals(t, ps.GetPolicy("policy1").Effect, Forbid)
 }

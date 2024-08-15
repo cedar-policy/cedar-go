@@ -295,7 +295,7 @@ func TestParse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			var policies parser.PolicySet
+			var policies parser.PolicySlice
 			err := policies.UnmarshalCedar([]byte(tt.in))
 			if tt.err {
 				testutil.Error(t, err)
@@ -315,7 +315,7 @@ func TestParse(t *testing.T) {
 			pp := policies[0]
 			pp.MarshalCedar(&buf)
 
-			var p2 parser.PolicySet
+			var p2 parser.PolicySlice
 			err = p2.UnmarshalCedar(buf.Bytes())
 			testutil.OK(t, err)
 
@@ -340,7 +340,7 @@ permit( principal, action, resource );
  @test("1234") permit (principal, action, resource );
 `
 
-	var out parser.PolicySet
+	var out parser.PolicySlice
 	err := out.UnmarshalCedar([]byte(in))
 	testutil.OK(t, err)
 	testutil.Equals(t, len(out), 3)

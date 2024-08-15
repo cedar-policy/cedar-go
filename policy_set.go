@@ -3,10 +3,6 @@ package cedar
 
 import (
 	"fmt"
-
-	internalast "github.com/cedar-policy/cedar-go/internal/ast"
-	"github.com/cedar-policy/cedar-go/internal/eval"
-	"github.com/cedar-policy/cedar-go/internal/parser"
 )
 
 type PolicyID string
@@ -24,27 +20,19 @@ func NewPolicySet() PolicySet {
 // NewPolicySetFromFile will create a PolicySet from the given text document with the/ given file name used in Position
 // data.  If there is an error parsing the document, it will be returned.
 //
-// NewPolicySetFromFile assigns default PolicyIDs to the policies contained in fileName.
+// NewPolicySetFromFile assigns default PolicyIDs to the policies contained in fileName in the format "policy<n>" where
+// <n> is incremented for each new policy found in the file.
 func NewPolicySetFromFile(fileName string, document []byte) (PolicySet, error) {
-	var res parser.PolicySet
-	if err := res.UnmarshalCedar(document); err != nil {
-		return PolicySet{}, fmt.Errorf("parser error: %w", err)
+	var policySlice PolicySlice
+	if err := policySlice.UnmarshalCedar(document); err != nil {
+		return PolicySet{}, err
 	}
-	policyMap := make(map[PolicyID]*Policy, len(res))
-	for i, p := range res {
+
+	policyMap := make(map[PolicyID]*Policy, len(policySlice))
+	for i, p := range policySlice {
 		policyID := PolicyID(fmt.Sprintf("policy%d", i))
-		policyMap[policyID] = &Policy{
-			Position: Position{
-				Filename: fileName,
-				Offset:   p.Position.Offset,
-				Line:     p.Position.Line,
-				Column:   p.Position.Column,
-			},
-			Annotations: newAnnotationsFromSlice(p.Annotations),
-			Effect:      Effect(p.Effect),
-			eval:        eval.Compile((*internalast.Policy)(p)),
-			ast:         (*internalast.Policy)(p),
-		}
+		p.Position.Filename = fileName
+		policyMap[policyID] = p
 	}
 	return PolicySet{policies: policyMap}, nil
 }

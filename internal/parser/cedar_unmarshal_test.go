@@ -495,7 +495,7 @@ func TestParsePolicySet(t *testing.T) {
 			resource
 		);`)
 
-		var policies parser.PolicySet
+		var policies parser.PolicySlice
 		testutil.OK(t, policies.UnmarshalCedar(policyStr))
 
 		expectedPolicy := ast.Permit()
@@ -513,7 +513,7 @@ func TestParsePolicySet(t *testing.T) {
 			action,
 			resource
 		);`)
-		var policies parser.PolicySet
+		var policies parser.PolicySlice
 		testutil.OK(t, policies.UnmarshalCedar(policyStr))
 
 		expectedPolicy0 := ast.Permit()

@@ -96,3 +96,28 @@ func TestPolicyAST(t *testing.T) {
 
 	_ = NewPolicyFromAST(astExample)
 }
+
+func TestPolicySlice(t *testing.T) {
+	t.Parallel()
+
+	policiesStr := `permit (
+    principal,
+    action == Action::"editPhoto",
+    resource
+)
+when { resource.owner == principal };
+
+forbid (
+    principal in Groups::"bannedUsers",
+    action,
+    resource
+);`
+
+	var policies PolicySlice
+	testutil.OK(t, policies.UnmarshalCedar([]byte(policiesStr)))
+
+	var buf bytes.Buffer
+	policies.MarshalCedar(&buf)
+
+	testutil.Equals(t, buf.String(), policiesStr)
+}
