@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -136,6 +137,10 @@ func (e extensionJSON) ToNode() (ast.Node, error) {
 	var v arrayJSON
 	for k, v = range e {
 		_, _ = k, v
+	}
+	_, ok := extensions.ExtMap[types.String(k)]
+	if !ok {
+		return ast.Node{}, fmt.Errorf("`%v` is not a known extension function or method", k)
 	}
 	var argNodes []ast.Node
 	for _, n := range v {
