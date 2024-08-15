@@ -481,7 +481,7 @@ func TestIsAuthorized(t *testing.T) {
 			Context:   types.Record{},
 			Want:      false,
 			DiagErr:   1,
-			ParseErr:  false,
+			ParseErr:  true,
 		},
 		{
 			Name:      "permit-when-like",
@@ -504,7 +504,7 @@ func TestIsAuthorized(t *testing.T) {
 			Context:   types.Record{},
 			Want:      false,
 			DiagErr:   1,
-			ParseErr:  false,
+			ParseErr:  true,
 		},
 		{
 			Name: "permit-when-decimal",

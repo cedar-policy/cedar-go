@@ -174,8 +174,8 @@ func (n NodeTypeExtensionCall) marshalCedar(buf *bytes.Buffer) {
 	buf.WriteString(string(n.NodeTypeExtensionCall.Name))
 	buf.WriteRune('(')
 	for i := range args {
-		marshalChildNode(n.precedenceLevel(), n.NodeTypeExtensionCall.Args[i], buf)
-		if i != len(n.NodeTypeExtensionCall.Args)-1 {
+		marshalChildNode(n.precedenceLevel(), args[i], buf)
+		if i != len(args)-1 {
 			buf.WriteString(", ")
 		}
 	}
