@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -162,13 +163,13 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 	// Var
 	case j.Var != nil:
 		switch *j.Var {
-		case "principal":
+		case consts.Principal:
 			return ast.Principal(), nil
-		case "action":
+		case consts.Action:
 			return ast.Action(), nil
-		case "resource":
+		case consts.Resource:
 			return ast.Resource(), nil
-		case "context":
+		case consts.Context:
 			return ast.Context(), nil
 		}
 		return ast.Node{}, fmt.Errorf("unknown variable: %v", j.Var)
