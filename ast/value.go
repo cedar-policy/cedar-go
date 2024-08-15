@@ -99,11 +99,3 @@ func Decimal(d types.Decimal) Node {
 func IPAddr(i types.IPAddr) Node {
 	return wrapNode(ast.IPAddr(i))
 }
-
-func ExtensionCall(name types.String, args ...Node) Node {
-	var astNodes []ast.Node
-	for _, v := range args {
-		astNodes = append(astNodes, v.Node)
-	}
-	return wrapNode(ast.ExtensionCall(name, astNodes...))
-}
