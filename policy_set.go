@@ -2,7 +2,9 @@
 package cedar
 
 import (
+	"bytes"
 	"fmt"
+	"slices"
 )
 
 type PolicyID string
@@ -51,4 +53,25 @@ func (p *PolicySet) UpsertPolicy(policyID PolicyID, policy *Policy) {
 // DeletePolicy removes a policy from the PolicySet. Deleting a non-existent policy is a no-op.
 func (p *PolicySet) DeletePolicy(policyID PolicyID) {
 	delete(p.policies, policyID)
+}
+
+// MarshalCedar emits a concatenated Cedar representation of a PolicySet. The policy names are stripped, but policies
+// are emitted in lexicographical order by ID.
+func (p PolicySet) MarshalCedar(buf *bytes.Buffer) {
+	ids := make([]PolicyID, 0, len(p.policies))
+	for k := range p.policies {
+		ids = append(ids, k)
+	}
+	slices.Sort(ids)
+
+	i := 0
+	for _, id := range ids {
+		policy := p.policies[id]
+		policy.MarshalCedar(buf)
+
+		if i < len(p.policies)-1 {
+			buf.WriteString("\n\n")
+		}
+		i++
+	}
 }
