@@ -97,20 +97,19 @@ func TestParse(t *testing.T) {
 				when { Org::User::"alice" };
 			`, false},
 		{"primaryExtFun", `permit(principal, action, resource)
-				when { foo() }
-				unless { foo::bar::as() }
-				when { foo("hello") }
-				unless { foo::bar(true, 42, "forty two") };
+				when { ip() }
+				when { ip("hello") }
+				when { ip(context.someString) };
 			`, false},
 		{"ifElseThen", `permit(principal, action, resource)
 			when { if false then principal else principal };`, false},
 		{"access", `permit(principal, action, resource)
 			when { resource.foo }
 			unless { resource.foo.bar }
-			when { principal.foo() }
-			unless { principal.bar(false) }
-			when { action.foo["bar"].baz() }
-			unless { principal.bar(false, 123, "foo") }
+			when { principal.isIpv4() }
+			unless { principal.isIpv4(false) }
+			when { action.foo["bar"].isIpv4() }
+			unless { principal.isIpv4(false, 123, "foo") }
 			when { principal["foo"] };`, false},
 		{"unary", `permit(principal, action, resource)
 			when { !resource.foo }
@@ -129,26 +128,26 @@ func TestParse(t *testing.T) {
 			when { 42 + resource.bar - 43 }
 			when { resource.foo + principal.bar };`, false},
 		{"relations", `permit(principal, action, resource)
-			when { foo() }
-			unless { foo() < 3 }
-			unless { foo() <= 3 }
-			unless { foo() > 3 }
-			unless { foo() >= 3 }
-			unless { foo() != 3 }
-			unless { foo() == 3 }
-            unless { foo() in Domain::"value" }
-            unless { foo() has blah }
-            when { foo() has "bar" }
-            when { foo() like "h*ll*" };`, false},
+			when { ip() }
+			unless { ip() < 3 }
+			unless { ip() <= 3 }
+			unless { ip() > 3 }
+			unless { ip() >= 3 }
+			unless { ip() != 3 }
+			unless { ip() == 3 }
+            unless { ip() in Domain::"value" }
+            unless { ip() has blah }
+            when { ip() has "bar" }
+            when { ip() like "h*ll*" };`, false},
 		{"foo-like-foo", `permit(principal, action, resource)
 			when { "f*o" like "f\*o" };`, false},
 		{"ands", `permit(principal, action, resource)
-			when { foo() && bar() && 3};`, false},
+			when { ip() && decimal() && 3};`, false},
 		{"ors_and_ands", `permit(principal, action, resource)
-			when { foo() && bar() || baz() || 1 < 2 && 2 < 3};`, false},
+			when { ip() && decimal() || ip() || 1 < 2 && 2 < 3};`, false},
 		{"primaryExpression", `permit(principal, action, resource)
 			when { (true) }
-			unless { ((if (foo() <= 234) then principal else principal) like "") };`, false},
+			unless { ((if (ip() <= 234) then principal else principal) like "") };`, false},
 		{"primaryExprList", `permit(principal, action, resource)
 			when { [] }
 			unless { [true] }
@@ -298,10 +297,11 @@ func TestParse(t *testing.T) {
 
 			var policies parser.PolicySet
 			err := policies.UnmarshalCedar([]byte(tt.in))
-			testutil.Equals(t, err != nil, tt.err)
-			if err != nil {
+			if tt.err {
+				testutil.Error(t, err)
 				return
 			}
+			testutil.OK(t, err)
 			if len(policies) != 1 {
 				// TODO: handle 0, > 1
 				return

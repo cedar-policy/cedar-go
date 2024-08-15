@@ -446,6 +446,46 @@ when { (if true then 2 else 3) * 4 == 8 };`,
 	}
 }
 
+func TestParsePolicySetErrors(t *testing.T) {
+	t.Parallel()
+	parseTests := []struct {
+		Name          string
+		Text          string
+		ExpectedError string
+	}{
+		{
+			"not-extension-function",
+			"permit ( principal, action, resource ) when { not_an_extension_fn() };",
+			"parse error at <input>:1:67 \")\": `not_an_extension_fn` is not a function",
+		},
+		{
+			"extension-function-is-method",
+			"permit ( principal, action, resource ) when { isIpv4() };",
+			"parse error at <input>:1:54 \")\": `isIpv4` is a method, not a function",
+		},
+		{
+			"not-extension-method",
+			"permit ( principal, action, resource ) when { context.not_an_extension_method() };",
+			"parse error at <input>:1:81 \"}\": `not_an_extension_method` is not a method",
+		},
+		{
+			"extension-method-is-function",
+			"permit ( principal, action, resource ) when { context.ip() };",
+			"parse error at <input>:1:60 \"}\": `ip` is a function, not a method",
+		},
+	}
+
+	for _, tt := range parseTests {
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
+			var policy parser.Policy
+			err := policy.UnmarshalCedar([]byte(tt.Text))
+			testutil.Error(t, err)
+			testutil.Equals(t, err.Error(), tt.ExpectedError)
+		})
+	}
+}
+
 func TestParsePolicySet(t *testing.T) {
 	t.Parallel()
 	t.Run("single policy", func(t *testing.T) {

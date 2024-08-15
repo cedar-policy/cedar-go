@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -740,10 +741,7 @@ func (p *parser) primary() (ast.Node, error) {
 	return res, nil
 }
 
-func (p *parser) entityOrExtFun(ident string) (ast.Node, error) {
-	var res types.EntityUID
-	var err error
-	res.Type = ident
+func (p *parser) entityOrExtFun(prefix string) (ast.Node, error) {
 	for {
 		t := p.advance()
 		switch t.Text {
@@ -751,30 +749,33 @@ func (p *parser) entityOrExtFun(ident string) (ast.Node, error) {
 			t := p.advance()
 			switch {
 			case t.isIdent():
-				res.Type = fmt.Sprintf("%v::%v", res.Type, t.Text)
+				prefix = prefix + "::" + t.Text
 			case t.isString():
-				res.ID, err = t.stringValue()
+				id, err := t.stringValue()
 				if err != nil {
 					return ast.Node{}, err
 				}
-				return ast.EntityUID(res), nil
+				return ast.EntityUID(types.NewEntityUID(prefix, id)), nil
 			default:
 				return ast.Node{}, p.errorf("unexpected token")
 			}
 		case "(":
+			// Although the Cedar grammar says that any name can be provided here, the reference implementation actually
+			// checks at parse time whether the name corresponds to a known extension function.
+			i, ok := extensions.ExtMap[types.String(prefix)]
+			if !ok {
+				return ast.Node{}, p.errorf("`%v` is not a function", prefix)
+			}
+			if i.IsMethod {
+				return ast.Node{}, p.errorf("`%v` is a method, not a function", prefix)
+			}
+
 			args, err := p.expressions(")")
 			if err != nil {
 				return ast.Node{}, err
 			}
 			p.advance()
-			// i, ok := extensions.ExtMap[types.String(res.Type)]
-			// if !ok {
-			// 	return Node{}, p.errorf("`%v` is not a function", res.Type)
-			// }
-			// if i.IsMethod {
-			// 	return Node{}, p.errorf("`%v` is a method, not a function", res.Type)
-			// }
-			return ast.ExtensionCall(types.String(res.Type), args...), nil
+			return ast.ExtensionCall(types.String(prefix), args...), nil
 		default:
 			return ast.Node{}, p.errorf("unexpected token")
 		}
@@ -880,13 +881,15 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 			case "containsAny":
 				knownMethod = ast.Node.ContainsAny
 			default:
-				// i, ok := extensions.ExtMap[types.String(methodName)]
-				// if !ok {
-				// 	return Node{}, false, p.errorf("not a valid method name: `%v`", methodName)
-				// }
-				// if !i.IsMethod {
-				// 	return Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
-				// }
+				// Although the Cedar grammar says that any name can be provided here, the reference implementation
+				// actually checks at parse time whether the name corresponds to a known extension method.
+				i, ok := extensions.ExtMap[types.String(methodName)]
+				if !ok {
+					return ast.Node{}, false, p.errorf("`%v` is not a method", methodName)
+				}
+				if !i.IsMethod {
+					return ast.Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
+				}
 				return ast.NewMethodCall(lhs, types.String(methodName), exprs...), true, nil
 			}
 
