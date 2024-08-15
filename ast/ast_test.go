@@ -38,7 +38,7 @@ func TestAstExamples(t *testing.T) {
 	// forbid (principal, action, resource)
 	// when { resource.tags.contains("private") }
 	// unless { resource in principal.allowed_resources };
-	private := types.String("private")
+	private := "private"
 	_ = ast.Annotation("example", "two").
 		Forbid().
 		When(
@@ -235,18 +235,13 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"valueEntityUID",
-			ast.Permit().When(ast.EntityUID(types.NewEntityUID("T", "42"))),
-			internalast.Permit().When(internalast.EntityUID(types.NewEntityUID("T", "42"))),
-		},
-		{
-			"valueDecimal",
-			ast.Permit().When(ast.Decimal(420000)),
-			internalast.Permit().When(internalast.Decimal(420000)),
+			ast.Permit().When(ast.EntityUID("T", "42")),
+			internalast.Permit().When(internalast.EntityUID("T", "42")),
 		},
 		{
 			"valueIPAddr",
-			ast.Permit().When(ast.IPAddr(types.IPAddr(netip.MustParsePrefix("127.0.0.1/16")))),
-			internalast.Permit().When(internalast.IPAddr(types.IPAddr(netip.MustParsePrefix("127.0.0.1/16")))),
+			ast.Permit().When(ast.IPAddr(netip.MustParsePrefix("127.0.0.1/16"))),
+			internalast.Permit().When(internalast.IPAddr(netip.MustParsePrefix("127.0.0.1/16"))),
 		},
 		{
 			"opEquals",

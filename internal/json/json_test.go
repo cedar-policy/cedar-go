@@ -2,6 +2,7 @@ package json
 
 import (
 	"encoding/json"
+	"net/netip"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
@@ -201,7 +202,7 @@ func TestUnmarshalJSON(t *testing.T) {
 			"entity",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"Value":{"__entity":{"type":"T","id":"42"}}}}]}`,
-			ast.Permit().When(ast.EntityUID(types.NewEntityUID("T", "42"))),
+			ast.Permit().When(ast.EntityUID("T", "42")),
 			testutil.OK,
 		},
 		{
@@ -390,7 +391,7 @@ func TestUnmarshalJSON(t *testing.T) {
 			"isIn",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"resource"},"entity_type":"T","in":{"Value":{"__entity":{"type":"P","id":"42"}}}}}}]}`,
-			ast.Permit().When(ast.Resource().IsIn("T", ast.EntityUID(types.NewEntityUID("P", "42")))),
+			ast.Permit().When(ast.Resource().IsIn("T", ast.EntityUID("P", "42"))),
 			testutil.OK,
 		},
 		{
@@ -508,7 +509,7 @@ func TestMarshalJSON(t *testing.T) {
 	}{
 		{
 			"decimal",
-			ast.Permit().When(ast.Decimal(mustParseDecimal("42.24"))),
+			ast.Permit().When(ast.Value(mustParseDecimal("42.24"))),
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.24"}]}}]}`,
 			testutil.OK,
@@ -561,9 +562,9 @@ func mustParseDecimal(v string) types.Decimal {
 	res, _ := types.ParseDecimal(v)
 	return res
 }
-func mustParseIPAddr(v string) types.IPAddr {
+func mustParseIPAddr(v string) netip.Prefix {
 	res, _ := types.ParseIPAddr(v)
-	return res
+	return netip.Prefix(res)
 }
 
 func TestMarshalPanics(t *testing.T) {

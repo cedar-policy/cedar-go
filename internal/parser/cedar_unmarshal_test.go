@@ -269,7 +269,7 @@ when { 2 != 42 };`,
 			"in",
 			`permit ( principal, action, resource )
 when { principal in Group::"folkHeroes" };`,
-			ast.Permit().When(ast.Principal().In(ast.EntityUID(folkHeroes))),
+			ast.Permit().When(ast.Principal().In(ast.Value(folkHeroes))),
 		},
 		{
 			"has ident",
@@ -312,7 +312,7 @@ when { principal is User };`,
 			"is in",
 			`permit ( principal, action, resource )
 when { principal is User in Group::"folkHeroes" };`,
-			ast.Permit().When(ast.Principal().IsIn("User", ast.EntityUID(folkHeroes))),
+			ast.Permit().When(ast.Principal().IsIn("User", ast.Value(folkHeroes))),
 		},
 		{
 			"and",

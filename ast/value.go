@@ -1,11 +1,13 @@
 package ast
 
 import (
+	"net/netip"
+
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func Boolean(b types.Boolean) Node {
+func Boolean(b bool) Node {
 	return wrapNode(ast.Boolean(b))
 }
 
@@ -17,11 +19,11 @@ func False() Node {
 	return Boolean(false)
 }
 
-func String(s types.String) Node {
+func String(s string) Node {
 	return wrapNode(ast.String(s))
 }
 
-func Long(l types.Long) Node {
+func Long(l int64) Node {
 	return wrapNode(ast.Long(l))
 }
 
@@ -46,12 +48,13 @@ func Set(nodes ...Node) Node {
 }
 
 type Pair struct {
-	Key   types.String
+	Key   string
 	Value Node
 }
 
 type Pairs []Pair
 
+// Record, TODO: document how duplicate keys might not really get handled in a meaningful way
 func Record(elements Pairs) Node {
 	var astNodes []ast.Pair
 	for _, v := range elements {
@@ -60,15 +63,11 @@ func Record(elements Pairs) Node {
 	return wrapNode(ast.Record(astNodes))
 }
 
-func EntityUID(e types.EntityUID) Node {
-	return wrapNode(ast.EntityUID(e))
+func EntityUID(typ, id string) Node {
+	return wrapNode(ast.EntityUID(typ, id))
 }
 
-func Decimal(d types.Decimal) Node {
-	return wrapNode(ast.Decimal(d))
-}
-
-func IPAddr(i types.IPAddr) Node {
+func IPAddr(i netip.Prefix) Node {
 	return wrapNode(ast.IPAddr(i))
 }
 
