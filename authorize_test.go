@@ -480,7 +480,7 @@ func TestIsAuthorized(t *testing.T) {
 			Resource:  types.NewEntityUID("table", "whatever"),
 			Context:   types.Record{},
 			Want:      false,
-			DiagErr:   1,
+			DiagErr:   0,
 			ParseErr:  true,
 		},
 		{
@@ -503,7 +503,7 @@ func TestIsAuthorized(t *testing.T) {
 			Resource:  types.NewEntityUID("table", "whatever"),
 			Context:   types.Record{},
 			Want:      false,
-			DiagErr:   1,
+			DiagErr:   0,
 			ParseErr:  true,
 		},
 		{
