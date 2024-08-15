@@ -36,9 +36,9 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 	case ast.ScopeTypeAll:
 		return ast.True()
 	case ast.ScopeTypeEq:
-		return ast.NewNode(varNode).Equals(ast.EntityUID(t.Entity))
+		return ast.NewNode(varNode).Equals(ast.Value(t.Entity))
 	case ast.ScopeTypeIn:
-		return ast.NewNode(varNode).In(ast.EntityUID(t.Entity))
+		return ast.NewNode(varNode).In(ast.Value(t.Entity))
 	case ast.ScopeTypeInSet:
 		set := make([]types.Value, len(t.Entities))
 		for i, e := range t.Entities {
@@ -49,7 +49,7 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 		return ast.NewNode(varNode).Is(t.Type)
 
 	case ast.ScopeTypeIsIn:
-		return ast.NewNode(varNode).IsIn(t.Type, ast.EntityUID(t.Entity))
+		return ast.NewNode(varNode).IsIn(t.Type, ast.Value(t.Entity))
 	default:
 		panic(fmt.Sprintf("unknown scope type %T", t))
 	}

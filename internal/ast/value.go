@@ -1,11 +1,13 @@
 package ast
 
 import (
+	"net/netip"
+
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func Boolean(b types.Boolean) Node {
-	return Value(b)
+func Boolean(b bool) Node {
+	return Value(types.Boolean(b))
 }
 
 func True() Node {
@@ -16,12 +18,12 @@ func False() Node {
 	return Boolean(false)
 }
 
-func String(s types.String) Node {
-	return Value(s)
+func String(s string) Node {
+	return Value(types.String(s))
 }
 
-func Long(l types.Long) Node {
-	return Value(l)
+func Long(l int64) Node {
+	return Value(types.Long(l))
 }
 
 // SetDeprecated is a convenience function that wraps concrete instances of a Cedar SetDeprecated type
@@ -51,7 +53,7 @@ func Set(nodes ...Node) Node {
 }
 
 type Pair struct {
-	Key   types.String
+	Key   string
 	Value Node
 }
 
@@ -60,21 +62,18 @@ type Pairs []Pair
 func Record(elements Pairs) Node {
 	var res NodeTypeRecord
 	for _, e := range elements {
-		res.Elements = append(res.Elements, RecordElementNode{Key: e.Key, Value: e.Value.v})
+		res.Elements = append(res.Elements, RecordElementNode{Key: types.String(e.Key), Value: e.Value.v})
 	}
 	return NewNode(res)
 }
 
-func EntityUID(e types.EntityUID) Node {
+func EntityUID(typ, id string) Node {
+	e := types.NewEntityUID(typ, id)
 	return Value(e)
 }
 
-func Decimal(d types.Decimal) Node {
-	return Value(d)
-}
-
-func IPAddr(i types.IPAddr) Node {
-	return Value(i)
+func IPAddr(i netip.Prefix) Node {
+	return Value(types.IPAddr(i))
 }
 
 func ExtensionCall(name types.String, args ...Node) Node {

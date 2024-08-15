@@ -650,7 +650,7 @@ func (p *parser) unary() (ast.Node, error) {
 		if err != nil {
 			return ast.Node{}, err
 		}
-		res = ast.Long(types.Long(i))
+		res = ast.Long(i)
 		ops = ops[:len(ops)-1]
 	} else {
 		var err error
@@ -693,13 +693,13 @@ func (p *parser) primary() (ast.Node, error) {
 		if err != nil {
 			return res, err
 		}
-		res = ast.Long(types.Long(i))
+		res = ast.Long(i)
 	case t.isString():
 		str, err := t.stringValue()
 		if err != nil {
 			return res, err
 		}
-		res = ast.String(types.String(str))
+		res = ast.String(str)
 	case t.Text == "true":
 		res = ast.True()
 	case t.Text == "false":
@@ -756,7 +756,7 @@ func (p *parser) entityOrExtFun(prefix string) (ast.Node, error) {
 				if err != nil {
 					return ast.Node{}, err
 				}
-				return ast.EntityUID(types.NewEntityUID(prefix, id)), nil
+				return ast.EntityUID(prefix, id), nil
 			default:
 				return ast.Node{}, p.errorf("unexpected token")
 			}
@@ -803,7 +803,7 @@ func (p *parser) expressions(endOfListMarker string) ([]ast.Node, error) {
 func (p *parser) record() (ast.Node, error) {
 	var res ast.Node
 	var elements ast.Pairs
-	known := map[types.String]struct{}{}
+	known := map[string]struct{}{}
 	for {
 		t := p.peek()
 		if t.Text == "}" {
@@ -828,20 +828,20 @@ func (p *parser) record() (ast.Node, error) {
 	}
 }
 
-func (p *parser) recordEntry() (types.String, ast.Node, error) {
-	var key types.String
+func (p *parser) recordEntry() (string, ast.Node, error) {
+	var key string
 	var value ast.Node
 	var err error
 	t := p.advance()
 	switch {
 	case t.isIdent():
-		key = types.String(t.Text)
+		key = t.Text
 	case t.isString():
 		str, err := t.stringValue()
 		if err != nil {
 			return key, value, err
 		}
-		key = types.String(str)
+		key = str
 	default:
 		return key, value, p.errorf("unexpected token")
 	}

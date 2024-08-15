@@ -125,7 +125,7 @@ func (j recordJSON) ToNode() (ast.Node, error) {
 		if err != nil {
 			return ast.Node{}, fmt.Errorf("error in record: %w", err)
 		}
-		nodes = append(nodes, ast.Pair{Key: types.String(k), Value: n})
+		nodes = append(nodes, ast.Pair{Key: k, Value: n})
 	}
 	return ast.Record(nodes), nil
 }
