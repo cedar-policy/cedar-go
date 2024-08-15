@@ -19,6 +19,8 @@ type PolicySet struct {
 // NewPolicySet will create a PolicySet from the given text document with the
 // given file name used in Position data.  If there is an error parsing the
 // document, it will be returned.
+//
+// NewPolicySet assigns default PolicyIDs to the policies contained in fileName.
 func NewPolicySet(fileName string, document []byte) (PolicySet, error) {
 	var res parser.PolicySet
 	if err := res.UnmarshalCedar(document); err != nil {
