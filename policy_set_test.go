@@ -1,6 +1,7 @@
 package cedar
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
@@ -113,4 +114,9 @@ forbid (
 
 	testutil.Equals(t, ps.GetPolicy("policy0").Effect, Permit)
 	testutil.Equals(t, ps.GetPolicy("policy1").Effect, Forbid)
+
+	var buf bytes.Buffer
+	ps.MarshalCedar(&buf)
+
+	testutil.Equals(t, buf.String(), policiesStr)
 }
