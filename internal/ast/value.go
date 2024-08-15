@@ -5,7 +5,7 @@ import (
 )
 
 func Boolean(b types.Boolean) Node {
-	return NewValueNode(b)
+	return Value(b)
 }
 
 func True() Node {
@@ -17,74 +17,47 @@ func False() Node {
 }
 
 func String(s types.String) Node {
-	return NewValueNode(s)
+	return Value(s)
 }
 
 func Long(l types.Long) Node {
-	return NewValueNode(l)
+	return Value(l)
 }
 
-// Set is a convenience function that wraps concrete instances of a Cedar Set type
+// SetDeprecated is a convenience function that wraps concrete instances of a Cedar SetDeprecated type
 // types in AST value nodes and passes them along to SetNodes.
-func Set(s types.Set) Node {
+func SetDeprecated(s types.Set) Node {
 	var nodes []IsNode
 	for _, v := range s {
-		nodes = append(nodes, NewValueNode(v).v)
+		nodes = append(nodes, Value(v).v)
 	}
 	return NewNode(NodeTypeSet{Elements: nodes})
 }
 
-// SetNodes allows for a complex set definition with values potentially
+// Set allows for a complex set definition with values potentially
 // being Cedar expressions of their own. For example, this Cedar text:
 //
 //	[1, 2 + 3, context.fooCount]
 //
 // could be expressed in Golang as:
 //
-//	ast.SetNodes(
+//	ast.Set(
 //	    ast.Long(1),
 //	    ast.Long(2).Plus(ast.Long(3)),
 //	    ast.Context().Access("fooCount"),
 //	)
-func SetNodes(nodes ...Node) Node {
+func Set(nodes ...Node) Node {
 	return NewNode(NodeTypeSet{Elements: stripNodes(nodes)})
 }
 
-// Record is a convenience function that wraps concrete instances of a Cedar Record type
-// types in AST value nodes and passes them along to RecordNodes.
-func Record(r types.Record) Node {
-	// TODO: this results in a double allocation, fix that
-	recordNodes := map[types.String]Node{}
-	for k, v := range r {
-		recordNodes[types.String(k)] = NewValueNode(v)
-	}
-	return RecordNodes(recordNodes)
-}
-
-// RecordNodes allows for a complex record definition with values potentially
-// being Cedar expressions of their own. For example, this Cedar text:
-//
-//	{"x": 1 + context.fooCount}
-//
-// could be expressed in Golang as:
-//
-//	ast.RecordNodes(map[types.String]Node{
-//	    "x": ast.Long(1).Plus(ast.Context().Access("fooCount"))},
-//	})
-func RecordNodes(entries map[types.String]Node) Node {
-	var res NodeTypeRecord
-	for k, v := range entries {
-		res.Elements = append(res.Elements, RecordElementNode{Key: k, Value: v.v})
-	}
-	return NewNode(res)
-}
-
-type RecordElement struct {
+type Pair struct {
 	Key   types.String
 	Value Node
 }
 
-func RecordElements(elements ...RecordElement) Node {
+type Pairs []Pair
+
+func Record(elements Pairs) Node {
 	var res NodeTypeRecord
 	for _, e := range elements {
 		res.Elements = append(res.Elements, RecordElementNode{Key: e.Key, Value: e.Value.v})
@@ -93,21 +66,21 @@ func RecordElements(elements ...RecordElement) Node {
 }
 
 func EntityUID(e types.EntityUID) Node {
-	return NewValueNode(e)
+	return Value(e)
 }
 
 func Decimal(d types.Decimal) Node {
-	return NewValueNode(d)
+	return Value(d)
 }
 
 func IPAddr(i types.IPAddr) Node {
-	return NewValueNode(i)
+	return Value(i)
 }
 
 func ExtensionCall(name types.String, args ...Node) Node {
 	return NewExtensionCall(name, args...)
 }
 
-func NewValueNode(v types.Value) Node {
+func Value(v types.Value) Node {
 	return NewNode(NodeValue{Value: v})
 }

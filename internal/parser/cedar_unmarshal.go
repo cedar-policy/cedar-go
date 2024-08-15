@@ -729,7 +729,7 @@ func (p *parser) primary() (ast.Node, error) {
 			return res, err
 		}
 		p.advance() // expressions guarantees "]"
-		res = ast.SetNodes(set...)
+		res = ast.Set(set...)
 	case t.Text == "{":
 		record, err := p.record()
 		if err != nil {
@@ -802,13 +802,13 @@ func (p *parser) expressions(endOfListMarker string) ([]ast.Node, error) {
 
 func (p *parser) record() (ast.Node, error) {
 	var res ast.Node
-	var elements []ast.RecordElement
+	var elements ast.Pairs
 	known := map[types.String]struct{}{}
 	for {
 		t := p.peek()
 		if t.Text == "}" {
 			p.advance()
-			return ast.RecordElements(elements...), nil
+			return ast.Record(elements), nil
 		}
 		if len(elements) > 0 {
 			if err := p.exact(","); err != nil {
@@ -824,7 +824,7 @@ func (p *parser) record() (ast.Node, error) {
 			return res, p.errorf("duplicate key: %v", k)
 		}
 		known[k] = struct{}{}
-		elements = append(elements, ast.RecordElement{Key: k, Value: v})
+		elements = append(elements, ast.Pair{Key: k, Value: v})
 	}
 }
 

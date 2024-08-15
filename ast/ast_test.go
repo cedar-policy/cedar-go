@@ -57,15 +57,13 @@ func TestAstExamples(t *testing.T) {
 	}
 	_ = ast.Forbid().
 		When(
-			ast.Record(simpleRecord).Access("x").Equals(ast.String("value")),
+			ast.Value(simpleRecord).Access("x").Equals(ast.String("value")),
 		).
 		When(
-			ast.RecordNodes(map[types.String]ast.Node{
-				"x": ast.Long(1).Plus(ast.Context().Access("fooCount")),
-			}).Access("x").Equals(ast.Long(3)),
+			ast.Record(ast.Pairs{{Key: "x", Value: ast.Long(1).Plus(ast.Context().Access("fooCount"))}}).Access("x").Equals(ast.Long(3)),
 		).
 		When(
-			ast.SetNodes(
+			ast.Set(
 				ast.Long(1),
 				ast.Long(2).Plus(ast.Long(3)).Times(ast.Long(4)),
 				ast.Context().Access("fooCount"),
@@ -226,29 +224,14 @@ func TestASTByTable(t *testing.T) {
 			internalast.Permit().When(internalast.Long(42)),
 		},
 		{
-			"valueSet",
-			ast.Permit().When(ast.Set(types.Set{types.Long(42), types.Long(43)})),
-			internalast.Permit().When(internalast.Set(types.Set{types.Long(42), types.Long(43)})),
-		},
-		{
 			"valueSetNodes",
-			ast.Permit().When(ast.SetNodes(ast.Long(42), ast.Long(43))),
-			internalast.Permit().When(internalast.SetNodes(internalast.Long(42), internalast.Long(43))),
-		},
-		{
-			"valueRecord",
-			ast.Permit().When(ast.Record(types.Record{"key": types.Long(43)})),
-			internalast.Permit().When(internalast.Record(types.Record{"key": types.Long(43)})),
-		},
-		{
-			"valueRecordNodes",
-			ast.Permit().When(ast.RecordNodes(map[types.String]ast.Node{"key": ast.Long(42)})),
-			internalast.Permit().When(internalast.RecordNodes(map[types.String]internalast.Node{"key": internalast.Long(42)})),
+			ast.Permit().When(ast.Set(ast.Long(42), ast.Long(43))),
+			internalast.Permit().When(internalast.Set(internalast.Long(42), internalast.Long(43))),
 		},
 		{
 			"valueRecordElements",
-			ast.Permit().When(ast.RecordElements(ast.RecordElement{Key: "key", Value: ast.Long(42)})),
-			internalast.Permit().When(internalast.RecordElements(internalast.RecordElement{Key: "key", Value: internalast.Long(42)})),
+			ast.Permit().When(ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(42)}})),
+			internalast.Permit().When(internalast.Record(internalast.Pairs{{Key: "key", Value: internalast.Long(42)}})),
 		},
 		{
 			"valueEntityUID",
