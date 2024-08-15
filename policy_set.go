@@ -79,3 +79,8 @@ func (p PolicySet) GetPolicy(policyID PolicyID) *Policy {
 func (p *PolicySet) UpsertPolicy(policyID PolicyID, policy *Policy) {
 	p.policies[policyID] = policy
 }
+
+// DeletePolicy removes a policy from the PolicySet. Deleting a non-existent policy is a no-op.
+func (p *PolicySet) DeletePolicy(policyID PolicyID) {
+	delete(p.policies, policyID)
+}

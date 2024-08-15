@@ -78,3 +78,26 @@ func TestUpsertPolicy(t *testing.T) {
 		testutil.Equals(t, ps.GetPolicy("a wavering policy"), p2)
 	})
 }
+
+func TestDeletePolicy(t *testing.T) {
+	t.Parallel()
+	t.Run("delete non-existent", func(t *testing.T) {
+		t.Parallel()
+
+		ps := NewPolicySetFromPolicies(nil)
+
+		// Just verify that this doesn't crash
+		ps.DeletePolicy("not a policy")
+	})
+	t.Run("delete existing", func(t *testing.T) {
+		t.Parallel()
+
+		ps := NewPolicySetFromPolicies(nil)
+
+		p1 := NewPolicyFromAST(ast.Forbid())
+		ps.UpsertPolicy("a policy", p1)
+		ps.DeletePolicy("a policy")
+
+		testutil.Equals(t, ps.GetPolicy("a policy"), nil)
+	})
+}
