@@ -42,9 +42,13 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
+func (p *Policy) MarshalCedar() []byte {
 	cedarPolicy := (*parser.Policy)(p.ast)
-	cedarPolicy.MarshalCedar(buf)
+
+	var buf bytes.Buffer
+	cedarPolicy.MarshalCedar(&buf)
+
+	return buf.Bytes()
 }
 
 func (p *Policy) UnmarshalCedar(b []byte) error {
@@ -121,12 +125,14 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
 }
 
 // MarshalCedar emits a concatenated Cedar representation of a PolicySlice
-func (p PolicySlice) MarshalCedar(buf *bytes.Buffer) {
+func (p PolicySlice) MarshalCedar() []byte {
+	var buf bytes.Buffer
 	for i, policy := range p {
-		policy.MarshalCedar(buf)
+		buf.Write(policy.MarshalCedar())
 
 		if i < len(p)-1 {
 			buf.WriteString("\n\n")
 		}
 	}
+	return buf.Bytes()
 }

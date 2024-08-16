@@ -82,10 +82,7 @@ when { resource.owner == principal };`
 	var policy cedar.Policy
 	testutil.OK(t, policy.UnmarshalCedar([]byte(policyStr)))
 
-	var buf bytes.Buffer
-	policy.MarshalCedar(&buf)
-
-	testutil.Equals(t, buf.String(), policyStr)
+	testutil.Equals(t, string(policy.MarshalCedar()), policyStr)
 }
 
 func TestPolicyAST(t *testing.T) {
@@ -117,8 +114,5 @@ forbid (
 	var policies cedar.PolicySlice
 	testutil.OK(t, policies.UnmarshalCedar([]byte(policiesStr)))
 
-	var buf bytes.Buffer
-	policies.MarshalCedar(&buf)
-
-	testutil.Equals(t, buf.String(), policiesStr)
+	testutil.Equals(t, string(policies.MarshalCedar()), policiesStr)
 }
