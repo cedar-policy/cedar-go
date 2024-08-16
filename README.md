@@ -56,7 +56,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cedar-policy/cedar-go"
+	cedar "github.com/cedar-policy/cedar-go"
 )
 
 const policyCedar = `permit (
@@ -80,10 +80,14 @@ const entitiesJSON = `[
 ]`
 
 func main() {
-	ps, err := cedar.NewPolicySet("policy.cedar", []byte(policyCedar))
-	if err != nil {
+	var policy cedar.Policy
+	if err := policy.UnmarshalCedar([]byte(policyCedar)); err != nil {
 		log.Fatal(err)
 	}
+	
+	ps := cedar.NewPolicySet()
+	ps.UpsertPolicy("policy0", &policy)
+
 	var entities cedar.Entities
 	if err := json.Unmarshal([]byte(entitiesJSON), &entities); err != nil {
 		log.Fatal(err)
@@ -94,6 +98,7 @@ func main() {
 		Resource:  cedar.EntityUID{Type: "Photo", ID: "VacationPhoto94.jpg"},
 		Context:   cedar.Record{},
 	}
+
 	ok, _ := ps.IsAuthorized(entities, req)
 	fmt.Println(ok)
 }
