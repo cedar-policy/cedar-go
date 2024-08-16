@@ -55,6 +55,14 @@ func (p *PolicySet) DeletePolicy(policyID PolicyID) {
 	delete(p.policies, policyID)
 }
 
+// UpsertPolicySet inserts or updates all the policies from src into this PolicySet. Policies in this PolicySet with
+// identical IDs in src are clobbered by the policies from src.
+func (p *PolicySet) UpsertPolicySet(src PolicySet) {
+	for id, policy := range src.policies {
+		p.policies[id] = policy
+	}
+}
+
 // MarshalCedar emits a concatenated Cedar representation of a PolicySet. The policy names are stripped, but policies
 // are emitted in lexicographical order by ID.
 func (p PolicySet) MarshalCedar(buf *bytes.Buffer) {
