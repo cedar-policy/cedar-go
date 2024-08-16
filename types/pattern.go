@@ -21,17 +21,40 @@ type Pattern struct {
 	comps []patternComponent
 }
 
-var WildcardPattern = newPattern([]patternComponent{{Wildcard: true}})
-
-func newPattern(comps []patternComponent) Pattern {
-	return Pattern{comps: comps}
+// A PatternComponent is either a wildcard (represented as "*" in Cedar text) or a literal string. Note that *
+// characters in literal strings are treated as literal asterisks rather than wildcards.
+type PatternComponent interface {
+	isPatternComponent()
 }
 
-func LiteralPattern(literal string) Pattern {
-	if literal == "" {
-		return newPattern(nil)
+type WildcardPatternComponent struct{}
+
+func (WildcardPatternComponent) isPatternComponent() {}
+
+// Wildcard is a constant which can be used to conveniently construct an instance of WildcardPatternComponent
+var Wildcard = WildcardPatternComponent{}
+
+func (String) isPatternComponent() {}
+
+// NewPattern permits for the programmatic construction of a Pattern out of a set of PatternComponents.
+func NewPattern(components ...PatternComponent) Pattern {
+	var comps []patternComponent
+	for _, c := range components {
+		switch v := c.(type) {
+		case WildcardPatternComponent:
+			if len(comps) == 0 || comps[len(comps)-1].Literal != "" {
+				comps = append(comps, patternComponent{Wildcard: true, Literal: ""})
+			}
+		case String:
+			if len(comps) == 0 {
+				comps = []patternComponent{{Wildcard: false, Literal: ""}}
+			}
+			comps[len(comps)-1].Literal += string(v)
+		default:
+			panic(fmt.Sprintf("unexpected component type: %T", v))
+		}
 	}
-	return newPattern([]patternComponent{{Wildcard: false, Literal: literal}})
+	return Pattern{comps: comps}
 }
 
 func (p Pattern) Cedar() string {
@@ -115,22 +138,23 @@ func matchChunk(chunk, s string) (rest string, ok bool) {
 }
 
 func (p *Pattern) UnmarshalCedar(b []byte) error {
-	var comps []patternComponent
+	var comps []PatternComponent
 	for len(b) > 0 {
-		var comp patternComponent
-		var err error
 		for len(b) > 0 && b[0] == '*' {
 			b = b[1:]
-			comp.Wildcard = true
+			comps = append(comps, Wildcard)
 		}
-		comp.Literal, b, err = rust.Unquote(b, true)
+
+		var err error
+		var literal string
+		literal, b, err = rust.Unquote(b, true)
 		if err != nil {
 			return err
 		}
-		comps = append(comps, comp)
+		comps = append(comps, String(literal))
 	}
 
-	*p = Pattern{comps: comps}
+	*p = NewPattern(comps...)
 	return nil
 }
 
@@ -161,23 +185,23 @@ func (p Pattern) MarshalJSON() ([]byte, error) {
 
 func (p *Pattern) UnmarshalJSON(b []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(b))
-	var comps []any
-	if err := dec.Decode(&comps); err != nil {
+	var objs []any
+	if err := dec.Decode(&objs); err != nil {
 		return err
 	}
 
-	if len(comps) == 0 {
+	if len(objs) == 0 {
 		return fmt.Errorf(`%w: must provide at least one pattern component`, errJSONInvalidPatternComponent)
 	}
 
-	pb := PatternBuilder{}
-	for _, comp := range comps {
+	var comps []PatternComponent
+	for _, comp := range objs {
 		switch v := comp.(type) {
 		case string:
 			if v != "Wildcard" {
 				return fmt.Errorf(`%w: invalid component string "%v"`, errJSONInvalidPatternComponent, v)
 			}
-			pb = pb.AddWildcard()
+			comps = append(comps, Wildcard)
 		case map[string]any:
 			if len(v) != 1 {
 				return fmt.Errorf(`%w: too many keys in literal object`, errJSONInvalidPatternComponent)
@@ -193,42 +217,12 @@ func (p *Pattern) UnmarshalJSON(b []byte) error {
 				return fmt.Errorf(`%w: invalid "Literal" value "%v"`, errJSONInvalidPatternComponent, literal)
 			}
 
-			pb = pb.AddLiteral(literalStr)
+			comps = append(comps, String(literalStr))
 		default:
 			return fmt.Errorf(`%w: unknown component type`, errJSONInvalidPatternComponent)
 		}
 	}
 
-	*p = pb.Build()
+	*p = NewPattern(comps...)
 	return nil
-}
-
-// PatternBuilder can be used to programmatically build a Cedar pattern string, like so:
-// PatternBuilder{}.AddWildcard().AddLiteral("foo").AddWildcard().Build()
-type PatternBuilder []patternComponent
-
-func (p PatternBuilder) AddWildcard() PatternBuilder {
-	star := patternComponent{Wildcard: true}
-	if len(p) == 0 {
-		return PatternBuilder{star}
-	}
-
-	lastComp := (p)[len(p)-1]
-	if lastComp.Wildcard && lastComp.Literal == "" {
-		return p
-	}
-
-	return append(p, star)
-}
-
-func (p PatternBuilder) AddLiteral(s string) PatternBuilder {
-	if len(p) == 0 {
-		p = PatternBuilder{patternComponent{}}
-	}
-	p[len(p)-1].Literal += s
-	return p
-}
-
-func (p PatternBuilder) Build() Pattern {
-	return newPattern(p)
 }
