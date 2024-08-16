@@ -9,12 +9,12 @@ import (
 
 type PolicyID string
 
-// A set of named policies against which a request can be authorized.
+// PolicySet is a set of named policies against which a request can be authorized.
 type PolicySet struct {
 	policies map[PolicyID]*Policy
 }
 
-// Create a new, empty PolicySet
+// NewPolicySet creates a new, empty PolicySet
 func NewPolicySet() PolicySet {
 	return PolicySet{policies: map[PolicyID]*Policy{}}
 }
