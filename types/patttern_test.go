@@ -126,3 +126,160 @@ func TestMatch(t *testing.T) {
 		})
 	}
 }
+
+func TestJSON(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name            string
+		pattern         string
+		errFunc         func(testing.TB, error)
+		target          Pattern
+		shouldRoundTrip bool
+	}{{
+		"like single wildcard",
+		`["Wildcard"]`,
+		testutil.OK,
+		Pattern{}.Wildcard(),
+		true,
+	},
+		{
+			"like single literal",
+			`[{"Literal":"foo"}]`,
+			testutil.OK,
+			Pattern{}.Literal("foo"),
+			true,
+		},
+		{
+			"like wildcard then literal",
+			`["Wildcard", {"Literal":"foo"}]`,
+			testutil.OK,
+			Pattern{}.Wildcard().Literal("foo"),
+			true,
+		},
+		{
+			"like literal then wildcard",
+			`[{"Literal":"foo"}, "Wildcard"]`,
+			testutil.OK,
+			Pattern{}.Literal("foo").Wildcard(),
+			true,
+		},
+		{
+			"like literal with asterisk then wildcard",
+			`[{"Literal":"f*oo"}, "Wildcard"]`,
+			testutil.OK,
+			Pattern{}.Literal("f*oo").Wildcard(),
+			true,
+		},
+		{
+			"like literal sandwich",
+			`[{"Literal":"foo"}, "Wildcard", {"Literal":"bar"}]`,
+			testutil.OK,
+			Pattern{}.Literal("foo").Wildcard().Literal("bar"),
+			true,
+		},
+		{
+			"like wildcard sandwich",
+			`["Wildcard", {"Literal":"foo"}, "Wildcard"]`,
+			testutil.OK,
+			Pattern{}.Wildcard().Literal("foo").Wildcard(),
+			true,
+		},
+		{
+			"double wildcard",
+			`["Wildcard", "Wildcard", {"Literal":"foo"}]`,
+			testutil.OK,
+			Pattern{}.Wildcard().Literal("foo"),
+			false,
+		},
+		{
+			"double literal",
+			`["Wildcard", {"Literal":"foo"}, {"Literal":"bar"}]`,
+			testutil.OK,
+			Pattern{}.Wildcard().Literal("foobar"),
+			false,
+		},
+		{
+			"literal with asterisk",
+			`["Wildcard", {"Literal":"foo*"}, "Wildcard"]`,
+			testutil.OK,
+			Pattern{}.Wildcard().Literal("foo*").Wildcard(),
+			true,
+		},
+		{
+			"not list",
+			`"Wildcard"`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
+			"lower case wildcard",
+			`["wildcard"]`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
+			"other string",
+			`["cardwild"]`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
+			"lowercase literal",
+			`[{"literal": "foo"}]`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
+			"missing literal",
+			`[{"figurative": "haha"}]`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
+			"two keys",
+			`[{"Literal": "foo", "Figurative": "haha"}]`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
+			"nonstring literal",
+			`[{"Literal": 2}]`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
+			"empty pattern",
+			`[]`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var pat Pattern
+			err := pat.UnmarshalJSON([]byte(tt.pattern))
+			tt.errFunc(t, err)
+			if err != nil {
+				return
+			}
+
+			marshaled, err := pat.MarshalJSON()
+			testutil.OK(t, err)
+
+			if tt.shouldRoundTrip {
+				testutil.Equals(t, string(marshaled), tt.pattern)
+			}
+		})
+	}
+}

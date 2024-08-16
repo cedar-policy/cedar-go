@@ -2,6 +2,8 @@ package types
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -138,5 +140,74 @@ func (p *Pattern) UnmarshalCedar(b []byte) error {
 	}
 
 	*p = comps
+	return nil
+}
+
+func (p Pattern) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteRune('[')
+	for i, comp := range p {
+		if comp.Wildcard {
+			buf.WriteString(`"Wildcard"`)
+		}
+
+		if comp.Literal != "" {
+			if comp.Wildcard {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(`{"Literal":"`)
+			buf.WriteString(comp.Literal)
+			buf.WriteString(`"}`)
+		}
+
+		if i < len(p)-1 {
+			buf.WriteString(", ")
+		}
+	}
+	buf.WriteRune(']')
+	return buf.Bytes(), nil
+}
+
+func (p *Pattern) UnmarshalJSON(b []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(b))
+	var comps []any
+	if err := dec.Decode(&comps); err != nil {
+		return err
+	}
+
+	if len(comps) == 0 {
+		return fmt.Errorf(`%w: must provide at least one pattern component`, errJSONInvalidPatternComponent)
+	}
+
+	newPattern := Pattern{}
+	for _, comp := range comps {
+		switch v := comp.(type) {
+		case string:
+			if v != "Wildcard" {
+				return fmt.Errorf(`%w: invalid component string "%v"`, errJSONInvalidPatternComponent, v)
+			}
+			newPattern = newPattern.Wildcard()
+		case map[string]any:
+			if len(v) != 1 {
+				return fmt.Errorf(`%w: too many keys in literal object`, errJSONInvalidPatternComponent)
+			}
+
+			literal, ok := v["Literal"]
+			if !ok {
+				return fmt.Errorf(`%w: missing "Literal" key in literal object`, errJSONInvalidPatternComponent)
+			}
+
+			literalStr, ok := literal.(string)
+			if !ok {
+				return fmt.Errorf(`%w: invalid "Literal" value "%v"`, errJSONInvalidPatternComponent, literal)
+			}
+
+			newPattern = newPattern.Literal(literalStr)
+		default:
+			return fmt.Errorf(`%w: unknown component type`, errJSONInvalidPatternComponent)
+		}
+	}
+
+	*p = newPattern
 	return nil
 }
