@@ -350,9 +350,9 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"opLike",
-			ast.Permit().When(ast.Long(42).Like(types.Pattern{})),
+			ast.Permit().When(ast.Long(42).Like(types.Pattern{}.Wildcard())),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
-				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeLike{Arg: ast.NodeValue{Value: types.Long(42)}, Value: types.Pattern{}}}}},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeLike{Arg: ast.NodeValue{Value: types.Long(42)}, Value: types.Pattern{}.Wildcard()}}}},
 		},
 		{
 			"opAnd",

@@ -66,16 +66,16 @@ func (j patternJSON) ToNode(f func(a ast.Node, k types.Pattern) ast.Node) (ast.N
 	if err != nil {
 		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
-	pattern := &types.Pattern{}
+	pattern := types.Pattern{}
 	for _, compJSON := range j.Pattern {
 		if compJSON.Wildcard {
-			pattern = pattern.AddWildcard()
+			pattern = pattern.Wildcard()
 		} else {
-			pattern = pattern.AddLiteral(compJSON.Literal.Literal)
+			pattern = pattern.Literal(compJSON.Literal.Literal)
 		}
 	}
 
-	return f(left, *pattern), nil
+	return f(left, pattern), nil
 }
 func (j isJSON) ToNode() (ast.Node, error) {
 	left, err := j.Left.ToNode()

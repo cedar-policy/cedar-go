@@ -9,23 +9,23 @@ import (
 func TestPatternFromBuilder(t *testing.T) {
 	tests := []struct {
 		name    string
-		Pattern *Pattern
+		Pattern Pattern
 		want    []PatternComponent
 	}{
-		{"empty", &Pattern{}, nil},
-		{"wildcard", (&Pattern{}).AddWildcard(), []PatternComponent{{Wildcard: true}}},
-		{"saturate two wildcards", (&Pattern{}).AddWildcard().AddWildcard(), []PatternComponent{{Wildcard: true}}},
-		{"literal", (&Pattern{}).AddLiteral("foo"), []PatternComponent{{Literal: "foo"}}},
-		{"saturate two literals", (&Pattern{}).AddLiteral("foo").AddLiteral("bar"), []PatternComponent{{Literal: "foobar"}}},
-		{"literal with asterisk", (&Pattern{}).AddLiteral("fo*o"), []PatternComponent{{Literal: "fo*o"}}},
-		{"wildcard sandwich", (&Pattern{}).AddLiteral("foo").AddWildcard().AddLiteral("bar"), []PatternComponent{{Literal: "foo"}, {Wildcard: true, Literal: "bar"}}},
-		{"literal sandwich", (&Pattern{}).AddWildcard().AddLiteral("foo").AddWildcard(), []PatternComponent{{Wildcard: true, Literal: "foo"}, {Wildcard: true}}},
+		{"empty", Pattern{}, Pattern{}},
+		{"wildcard", (Pattern{}).Wildcard(), Pattern{{Wildcard: true}}},
+		{"saturate two wildcards", (Pattern{}).Wildcard().Wildcard(), Pattern{{Wildcard: true}}},
+		{"literal", (Pattern{}).Literal("foo"), Pattern{{Literal: "foo"}}},
+		{"saturate two literals", (Pattern{}).Literal("foo").Literal("bar"), Pattern{{Literal: "foobar"}}},
+		{"literal with asterisk", (Pattern{}).Literal("fo*o"), Pattern{{Literal: "fo*o"}}},
+		{"wildcard sandwich", (Pattern{}).Literal("foo").Wildcard().Literal("bar"), Pattern{{Literal: "foo"}, {Wildcard: true, Literal: "bar"}}},
+		{"literal sandwich", (Pattern{}).Wildcard().Literal("foo").Wildcard(), Pattern{{Wildcard: true, Literal: "foo"}, {Wildcard: true}}},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testutil.Equals(t, tt.Pattern.Components, tt.want)
+			testutil.Equals(t, tt.Pattern, tt.want)
 		})
 	}
 }
@@ -81,7 +81,7 @@ func TestParsePattern(t *testing.T) {
 				testutil.Equals(t, err.Error(), tt.wantErr)
 			} else {
 				testutil.Equals(t, tt.wantOk, true)
-				testutil.Equals(t, got.Components, tt.want)
+				testutil.Equals(t, got, tt.want)
 			}
 		})
 	}
