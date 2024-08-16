@@ -65,21 +65,23 @@ func (p *PolicySet) UpsertPolicySet(src PolicySet) {
 
 // MarshalCedar emits a concatenated Cedar representation of a PolicySet. The policy names are stripped, but policies
 // are emitted in lexicographical order by ID.
-func (p PolicySet) MarshalCedar(buf *bytes.Buffer) {
+func (p PolicySet) MarshalCedar() []byte {
 	ids := make([]PolicyID, 0, len(p.policies))
 	for k := range p.policies {
 		ids = append(ids, k)
 	}
 	slices.Sort(ids)
 
+	var buf bytes.Buffer
 	i := 0
 	for _, id := range ids {
 		policy := p.policies[id]
-		policy.MarshalCedar(buf)
+		buf.Write(policy.MarshalCedar())
 
 		if i < len(p.policies)-1 {
 			buf.WriteString("\n\n")
 		}
 		i++
 	}
+	return buf.Bytes()
 }
