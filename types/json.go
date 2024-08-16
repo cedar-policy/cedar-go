@@ -27,14 +27,14 @@ type extValueJSON struct {
 }
 
 type extEntity struct {
-	Type string `json:"type"`
-	ID   string `json:"id"`
+	Type EntityType `json:"type"`
+	ID   string     `json:"id"`
 }
 
 type entityValueJSON struct {
-	Type   *string    `json:"type,omitempty"`
-	ID     *string    `json:"id,omitempty"`
-	Entity *extEntity `json:"__entity,omitempty"`
+	Type   *EntityType `json:"type,omitempty"`
+	ID     *string     `json:"id,omitempty"`
+	Entity *extEntity  `json:"__entity,omitempty"`
 }
 
 type explicitValue struct {

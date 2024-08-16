@@ -16,7 +16,7 @@ var errTest = fmt.Errorf("test error")
 // not a real parser
 func strEnt(v string) types.EntityUID {
 	p := strings.Split(v, "::\"")
-	return types.EntityUID{Type: p[0], ID: p[1][:len(p[1])-1]}
+	return types.EntityUID{Type: types.EntityType(p[0]), ID: p[1][:len(p[1])-1]}
 }
 
 func TestOrNode(t *testing.T) {
