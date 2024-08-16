@@ -19,28 +19,6 @@ type Policy struct {
 	sourceFile string
 }
 
-// A Position describes an arbitrary source position including the file, line, and column location.
-type Position struct {
-	Filename string // filename, if any
-	Offset   int    // byte offset, starting at 0
-	Line     int    // line number, starting at 1
-	Column   int    // column number, starting at 1 (character count per line)
-}
-
-// An Annotations is a map of key, value pairs found in the policy. Annotations
-// have no impact on policy evaluation.
-type Annotations map[string]string
-
-// An Effect specifies the intent of the policy, to either permit or forbid any
-// request that matches the scope and conditions specified in the policy.
-type Effect internalast.Effect
-
-// Each Policy has a Permit or Forbid effect that is determined during parsing.
-const (
-	Permit = Effect(true)
-	Forbid = Effect(false)
-)
-
 func newPolicy(astIn *internalast.Policy) Policy {
 	return Policy{eval: eval.Compile(astIn), ast: astIn, sourceFile: ""}
 }
@@ -86,6 +64,10 @@ func NewPolicyFromAST(astIn *ast.Policy) *Policy {
 	return &p
 }
 
+// An Annotations is a map of key, value pairs found in the policy. Annotations
+// have no impact on policy evaluation.
+type Annotations map[string]string
+
 func (p Policy) Annotations() Annotations {
 	// TODO: Where should we deal with duplicate keys?
 	res := make(map[string]string, len(p.ast.Annotations))
@@ -95,8 +77,26 @@ func (p Policy) Annotations() Annotations {
 	return res
 }
 
+// An Effect specifies the intent of the policy, to either permit or forbid any
+// request that matches the scope and conditions specified in the policy.
+type Effect internalast.Effect
+
+// Each Policy has a Permit or Forbid effect that is determined during parsing.
+const (
+	Permit = Effect(true)
+	Forbid = Effect(false)
+)
+
 func (p Policy) Effect() Effect {
 	return Effect(p.ast.Effect)
+}
+
+// A Position describes an arbitrary source position including the file, line, and column location.
+type Position struct {
+	Filename string // filename, if any
+	Offset   int    // byte offset, starting at 0
+	Line     int    // line number, starting at 1
+	Column   int    // column number, starting at 1 (character count per line)
 }
 
 func (p Policy) Position() Position {
