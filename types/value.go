@@ -316,9 +316,9 @@ type EntityUID struct {
 	ID   string
 }
 
-func NewEntityUID(typ, id string) EntityUID {
+func NewEntityUID(typ EntityType, id string) EntityUID {
 	return EntityUID{
-		Type: EntityType(typ),
+		Type: typ,
 		ID:   id,
 	}
 }

@@ -68,7 +68,7 @@ func Record(elements Pairs) Node {
 }
 
 func EntityUID(typ, id string) Node {
-	e := types.NewEntityUID(typ, id)
+	e := types.NewEntityUID(types.EntityType(typ), id)
 	return Value(e)
 }
 

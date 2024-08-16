@@ -1563,15 +1563,15 @@ func TestEntityIn(t *testing.T) {
 		entityMap := entities.Entities{}
 		for i := 0; i < 100; i++ {
 			p := []types.EntityUID{
-				types.NewEntityUID(fmt.Sprint(i+1), "1"),
-				types.NewEntityUID(fmt.Sprint(i+1), "2"),
+				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "1"),
+				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "2"),
 			}
-			uid1 := types.NewEntityUID(fmt.Sprint(i), "1")
+			uid1 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "1")
 			entityMap[uid1] = entities.Entity{
 				UID:     uid1,
 				Parents: p,
 			}
-			uid2 := types.NewEntityUID(fmt.Sprint(i), "2")
+			uid2 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "2")
 			entityMap[uid2] = entities.Entity{
 				UID:     uid2,
 				Parents: p,
