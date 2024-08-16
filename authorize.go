@@ -92,23 +92,23 @@ func (p PolicySet) IsAuthorized(entityMap entities.Entities, req Request) (Decis
 	for id, po := range p.policies {
 		v, err := po.eval.Eval(c)
 		if err != nil {
-			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position, Message: err.Error()})
+			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position(), Message: err.Error()})
 			continue
 		}
 		vb, err := eval.ValueToBool(v)
 		if err != nil {
 			// should never happen, maybe remove this case
-			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position, Message: err.Error()})
+			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position(), Message: err.Error()})
 			continue
 		}
 		if !vb {
 			continue
 		}
 		if po.Effect() == Forbid {
-			forbidReasons = append(forbidReasons, Reason{PolicyID: id, Position: po.Position})
+			forbidReasons = append(forbidReasons, Reason{PolicyID: id, Position: po.Position()})
 			gotForbid = true
 		} else {
-			permitReasons = append(permitReasons, Reason{PolicyID: id, Position: po.Position})
+			permitReasons = append(permitReasons, Reason{PolicyID: id, Position: po.Position()})
 			gotPermit = true
 		}
 	}

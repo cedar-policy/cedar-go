@@ -108,7 +108,7 @@ forbid (
 
 	ps := NewPolicySet()
 	for i, p := range policies {
-		p.Position.Filename = "example.cedar"
+		p.SetSourceFile("example.cedar")
 		ps.UpsertPolicy(PolicyID(fmt.Sprintf("policy%d", i)), p)
 	}
 
