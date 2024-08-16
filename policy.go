@@ -13,9 +13,10 @@ import (
 
 // A Policy is the parsed form of a single Cedar language policy statement.
 type Policy struct {
-	Position Position // location within the policy text document
-	eval     evaler   // determines if a policy matches a request.
-	ast      *internalast.Policy
+	eval evaler // determines if a policy matches a request.
+	ast  *internalast.Policy
+	// TODO: Remove this and just store source file information in the generated policy ID?
+	sourceFile string
 }
 
 // A Position describes an arbitrary source position including the file, line, and column location.
@@ -57,9 +58,8 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*p = Policy{
-		Position: Position{},
-		eval:     eval.Compile((*internalast.Policy)(&jsonPolicy)),
-		ast:      (*internalast.Policy)(&jsonPolicy),
+		eval: eval.Compile((*internalast.Policy)(&jsonPolicy)),
+		ast:  (*internalast.Policy)(&jsonPolicy),
 	}
 	return nil
 }
@@ -76,9 +76,8 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 	}
 
 	*p = Policy{
-		Position: Position{},
-		eval:     eval.Compile((*internalast.Policy)(&cedarPolicy)),
-		ast:      (*internalast.Policy)(&cedarPolicy),
+		eval: eval.Compile((*internalast.Policy)(&cedarPolicy)),
+		ast:  (*internalast.Policy)(&cedarPolicy),
 	}
 	return nil
 }
@@ -86,9 +85,8 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 func NewPolicyFromAST(astIn *ast.Policy) *Policy {
 	pp := (*internalast.Policy)(astIn)
 	return &Policy{
-		Position: Position{},
-		eval:     eval.Compile(pp),
-		ast:      pp,
+		eval: eval.Compile(pp),
+		ast:  pp,
 	}
 }
 
@@ -105,6 +103,19 @@ func (p Policy) Effect() Effect {
 	return Effect(p.ast.Effect)
 }
 
+func (p Policy) Position() Position {
+	return Position{
+		Filename: p.sourceFile,
+		Offset:   p.ast.Position.Offset,
+		Line:     p.ast.Position.Line,
+		Column:   p.ast.Position.Column,
+	}
+}
+
+func (p *Policy) SetSourceFile(path string) {
+	p.sourceFile = path
+}
+
 // PolicySlice represents a set of un-named Policy's. Cedar documents, unlike the JSON format, don't have a means of
 // naming individual policies.
 type PolicySlice []*Policy
@@ -119,11 +130,6 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
 	policySlice := make([]*Policy, 0, len(res))
 	for _, p := range res {
 		policySlice = append(policySlice, &Policy{
-			Position: Position{
-				Offset: p.Position.Offset,
-				Line:   p.Position.Line,
-				Column: p.Position.Column,
-			},
 			eval: eval.Compile((*internalast.Policy)(p)),
 			ast:  (*internalast.Policy)(p),
 		})

@@ -33,7 +33,7 @@ func NewPolicySetFromFile(fileName string, document []byte) (PolicySet, error) {
 	policyMap := make(map[PolicyID]*Policy, len(policySlice))
 	for i, p := range policySlice {
 		policyID := PolicyID(fmt.Sprintf("policy%d", i))
-		p.Position.Filename = fileName
+		p.SetSourceFile(fileName)
 		policyMap[policyID] = p
 	}
 	return PolicySet{policies: policyMap}, nil
