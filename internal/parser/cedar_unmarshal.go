@@ -230,10 +230,10 @@ func (p *parser) entity() (types.EntityUID, error) {
 	if !t.isIdent() {
 		return res, p.errorf("expected ident")
 	}
-	return p.entityFirstPathPreread(t.Text)
+	return p.entityFirstPathPreread(types.EntityType(t.Text))
 }
 
-func (p *parser) entityFirstPathPreread(firstPath string) (types.EntityUID, error) {
+func (p *parser) entityFirstPathPreread(firstPath types.EntityType) (types.EntityUID, error) {
 	var res types.EntityUID
 	var err error
 	res.Type = firstPath
@@ -244,7 +244,7 @@ func (p *parser) entityFirstPathPreread(firstPath string) (types.EntityUID, erro
 		t := p.advance()
 		switch {
 		case t.isIdent():
-			res.Type = fmt.Sprintf("%v::%v", res.Type, t.Text)
+			res.Type = types.EntityType(res.Type.String() + "::" + t.Text)
 		case t.isString():
 			res.ID, err = t.stringValue()
 			if err != nil {

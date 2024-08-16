@@ -312,13 +312,13 @@ func (v Record) DeepClone() Record {
 
 // An EntityUID is the identifier for a principal, action, or resource.
 type EntityUID struct {
-	Type string
+	Type EntityType
 	ID   string
 }
 
 func NewEntityUID(typ, id string) EntityUID {
 	return EntityUID{
-		Type: typ,
+		Type: EntityType(typ),
 		ID:   id,
 	}
 }
@@ -339,7 +339,7 @@ func (v EntityUID) String() string { return v.Cedar() }
 
 // Cedar produces a valid Cedar language representation of the EntityUID, e.g. `Type::"id"`.
 func (v EntityUID) Cedar() string {
-	return v.Type + "::" + strconv.Quote(v.ID)
+	return v.Type.String() + "::" + strconv.Quote(v.ID)
 }
 
 func (v *EntityUID) UnmarshalJSON(b []byte) error {
@@ -378,13 +378,6 @@ func (v EntityUID) ExplicitMarshalJSON() ([]byte, error) {
 	})
 }
 func (v EntityUID) deepClone() Value { return v }
-
-func EntityValueFromSlice(v []string) EntityUID {
-	return EntityUID{
-		Type: strings.Join(v[:len(v)-1], "::"),
-		ID:   v[len(v)-1],
-	}
-}
 
 // EntityType is the type portion of an EntityUID
 type EntityType string
