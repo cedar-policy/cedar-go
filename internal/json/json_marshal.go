@@ -94,17 +94,10 @@ func strToJSON(dest **strJSON, src ast.StrOpNode) {
 	*dest = res
 }
 
-func patternToJSON(dest **patternJSON, src ast.NodeTypeLike) {
-	res := &patternJSON{}
+func likeToJSON(dest **likeJSON, src ast.NodeTypeLike) {
+	res := &likeJSON{}
 	res.Left.FromNode(src.Arg)
-	for _, comp := range src.Value {
-		if comp.Wildcard {
-			res.Pattern = append(res.Pattern, patternComponentJSON{Wildcard: true})
-		}
-		if comp.Literal != "" {
-			res.Pattern = append(res.Pattern, patternComponentJSON{Literal: patternComponentLiteralJSON{Literal: comp.Literal}})
-		}
-	}
+	res.Pattern = src.Value
 	*dest = res
 }
 
@@ -246,7 +239,7 @@ func (j *nodeJSON) FromNode(src ast.IsNode) {
 	// like
 	// Like *strJSON `json:"like"`
 	case ast.NodeTypeLike:
-		patternToJSON(&j.Like, t)
+		likeToJSON(&j.Like, t)
 		return
 
 	// if-then-else
@@ -287,13 +280,6 @@ func (j *nodeJSON) MarshalJSON() ([]byte, error) {
 
 	type nodeJSONAlias nodeJSON
 	return json.Marshal((*nodeJSONAlias)(j))
-}
-
-func (p *patternComponentJSON) MarshalJSON() ([]byte, error) {
-	if p.Wildcard {
-		return json.Marshal("Wildcard")
-	}
-	return json.Marshal(p.Literal)
 }
 
 type Policy ast.Policy

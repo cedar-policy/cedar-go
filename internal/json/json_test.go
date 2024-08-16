@@ -394,6 +394,7 @@ func TestUnmarshalJSON(t *testing.T) {
 			ast.Permit().When(ast.Resource().IsIn("T", ast.EntityUID("P", "42"))),
 			testutil.OK,
 		},
+		// N.B. Most pattern parsing tests can be found in types/pattern_test.go
 		{
 			"like single wildcard",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
@@ -420,27 +421,6 @@ func TestUnmarshalJSON(t *testing.T) {
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"like":{"left":{"Value":"text"},"pattern":[{"Literal":"foo"}, "Wildcard"]}}}]}`,
 			ast.Permit().When(ast.String("text").Like(types.Pattern{}.Literal("foo").Wildcard())),
-			testutil.OK,
-		},
-		{
-			"like literal with asterisk then wildcard",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"like":{"left":{"Value":"text"},"pattern":[{"Literal":"f*oo"}, "Wildcard"]}}}]}`,
-			ast.Permit().When(ast.String("text").Like(types.Pattern{}.Literal("f*oo").Wildcard())),
-			testutil.OK,
-		},
-		{
-			"like literal sandwich",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"like":{"left":{"Value":"text"},"pattern":[{"Literal":"foo"}, "Wildcard", {"Literal":"bar"}]}}}]}`,
-			ast.Permit().When(ast.String("text").Like(types.Pattern{}.Literal("foo").Wildcard().Literal("bar"))),
-			testutil.OK,
-		},
-		{
-			"like wildcard sandwich",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"like":{"left":{"Value":"text"},"pattern":["Wildcard", {"Literal":"foo"}, "Wildcard"]}}}]}`,
-			ast.Permit().When(ast.String("text").Like(types.Pattern{}.Wildcard().Literal("foo").Wildcard())),
 			testutil.OK,
 		},
 		{

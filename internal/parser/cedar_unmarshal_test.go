@@ -283,7 +283,7 @@ when { principal has firstName };`,
 when { principal has "1stName" };`,
 			ast.Permit().When(ast.Principal().Has("1stName")),
 		},
-		// N.B. Most pattern parsing tests can be found in pattern_test.go
+		// N.B. Most pattern parsing tests can be found in types/pattern_test.go
 		{
 			"like no wildcards",
 			`permit ( principal, action, resource )

@@ -44,18 +44,9 @@ type strJSON struct {
 	Attr string   `json:"attr"`
 }
 
-type patternComponentLiteralJSON struct {
-	Literal string `json:"Literal,omitempty"`
-}
-
-type patternComponentJSON struct {
-	Wildcard bool
-	Literal  patternComponentLiteralJSON
-}
-
-type patternJSON struct {
-	Left    nodeJSON               `json:"left"`
-	Pattern []patternComponentJSON `json:"pattern"`
+type likeJSON struct {
+	Left    nodeJSON      `json:"left"`
+	Pattern types.Pattern `json:"pattern"`
 }
 
 type isJSON struct {
@@ -126,7 +117,7 @@ type nodeJSON struct {
 	Is *isJSON `json:"is,omitempty"`
 
 	// like
-	Like *patternJSON `json:"like,omitempty"`
+	Like *likeJSON `json:"like,omitempty"`
 
 	// if-then-else
 	IfThenElse *ifThenElseJSON `json:"if-then-else,omitempty"`

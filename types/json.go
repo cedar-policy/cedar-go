@@ -7,13 +7,14 @@ import (
 )
 
 var (
-	errJSONInvalidExtn     = fmt.Errorf("invalid extension")
-	errJSONDecode          = fmt.Errorf("error decoding json")
-	errJSONLongOutOfRange  = fmt.Errorf("long out of range")
-	errJSONUnsupportedType = fmt.Errorf("unsupported type")
-	errJSONExtFnMatch      = fmt.Errorf("json extn mismatch")
-	errJSONExtNotFound     = fmt.Errorf("json extn not found")
-	errJSONEntityNotFound  = fmt.Errorf("json entity not found")
+	errJSONInvalidExtn             = fmt.Errorf("invalid extension")
+	errJSONDecode                  = fmt.Errorf("error decoding json")
+	errJSONLongOutOfRange          = fmt.Errorf("long out of range")
+	errJSONUnsupportedType         = fmt.Errorf("unsupported type")
+	errJSONExtFnMatch              = fmt.Errorf("json extn mismatch")
+	errJSONExtNotFound             = fmt.Errorf("json extn not found")
+	errJSONEntityNotFound          = fmt.Errorf("json entity not found")
+	errJSONInvalidPatternComponent = fmt.Errorf("invalid pattern component")
 )
 
 type extn struct {
