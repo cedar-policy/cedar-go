@@ -15,14 +15,12 @@ type PatternComponent struct {
 
 // Pattern is used to define a string used for the like operator.  It does not
 // conform to the Value interface, as it is not one of the Cedar types.
-type Pattern struct {
-	Components []PatternComponent
-}
+type Pattern []PatternComponent
 
 func (p Pattern) Cedar() string {
 	var buf bytes.Buffer
 	buf.WriteRune('"')
-	for _, comp := range p.Components {
+	for _, comp := range p {
 		if comp.Wildcard {
 			buf.WriteRune('*')
 		}
@@ -36,29 +34,27 @@ func (p Pattern) Cedar() string {
 	return buf.String()
 }
 
-func (p *Pattern) AddWildcard() *Pattern {
+func (p Pattern) Wildcard() Pattern {
 	star := PatternComponent{Wildcard: true}
-	if len(p.Components) == 0 {
-		p.Components = []PatternComponent{star}
+	if len(p) == 0 {
+		p = Pattern{star}
 		return p
 	}
 
-	lastComp := p.Components[len(p.Components)-1]
+	lastComp := p[len(p)-1]
 	if lastComp.Wildcard && lastComp.Literal == "" {
 		return p
 	}
 
-	p.Components = append(p.Components, star)
+	p = append(p, star)
 	return p
 }
 
-func (p *Pattern) AddLiteral(s string) *Pattern {
-	if len(p.Components) == 0 {
-		p.Components = []PatternComponent{{}}
+func (p Pattern) Literal(s string) Pattern {
+	if len(p) == 0 {
+		p = Pattern{{}}
 	}
-
-	lastComp := &p.Components[len(p.Components)-1]
-	lastComp.Literal = lastComp.Literal + s
+	p[len(p)-1].Literal += s
 	return p
 }
 
@@ -77,8 +73,8 @@ func (p *Pattern) AddLiteral(s string) *Pattern {
 //		c           matches character c (c != '*')
 func (p Pattern) Match(arg string) (matched bool) {
 Pattern:
-	for i, comp := range p.Components {
-		lastChunk := i == len(p.Components)-1
+	for i, comp := range p {
+		lastChunk := i == len(p)-1
 		if comp.Wildcard && comp.Literal == "" {
 			return true
 		}
@@ -144,7 +140,5 @@ func ParsePattern(s string) (Pattern, error) {
 		}
 		comps = append(comps, comp)
 	}
-	return Pattern{
-		Components: comps,
-	}, nil
+	return comps, nil
 }

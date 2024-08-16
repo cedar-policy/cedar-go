@@ -97,7 +97,7 @@ func strToJSON(dest **strJSON, src ast.StrOpNode) {
 func patternToJSON(dest **patternJSON, src ast.NodeTypeLike) {
 	res := &patternJSON{}
 	res.Left.FromNode(src.Arg)
-	for _, comp := range src.Value.Components {
+	for _, comp := range src.Value {
 		if comp.Wildcard {
 			res.Pattern = append(res.Pattern, patternComponentJSON{Wildcard: true})
 		}
