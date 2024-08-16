@@ -15,12 +15,10 @@ import (
 type Policy struct {
 	eval evaler // determines if a policy matches a request.
 	ast  *internalast.Policy
-	// TODO: Remove this and just store source file information in the generated policy ID?
-	sourceFile string
 }
 
 func newPolicy(astIn *internalast.Policy) Policy {
-	return Policy{eval: eval.Compile(astIn), ast: astIn, sourceFile: ""}
+	return Policy{eval: eval.Compile(astIn), ast: astIn}
 }
 
 // MarshalJSON encodes a single Policy statement in the JSON format specified by the [Cedar documentation].
@@ -92,24 +90,14 @@ func (p Policy) Effect() Effect {
 }
 
 // A Position describes an arbitrary source position including the file, line, and column location.
-type Position struct {
-	Filename string // filename, if any
-	Offset   int    // byte offset, starting at 0
-	Line     int    // line number, starting at 1
-	Column   int    // column number, starting at 1 (character count per line)
-}
+type Position internalast.Position
 
 func (p Policy) Position() Position {
-	return Position{
-		Filename: p.sourceFile,
-		Offset:   p.ast.Position.Offset,
-		Line:     p.ast.Position.Line,
-		Column:   p.ast.Position.Column,
-	}
+	return Position(p.ast.Position)
 }
 
 func (p *Policy) SetSourceFile(path string) {
-	p.sourceFile = path
+	p.ast.Position.FileName = path
 }
 
 // PolicySlice represents a set of un-named Policy's. Cedar documents, unlike the JSON format, don't have a means of
