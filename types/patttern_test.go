@@ -75,8 +75,8 @@ func TestParsePattern(t *testing.T) {
 		tt := tt
 		t.Run(tt.input, func(t *testing.T) {
 			t.Parallel()
-			got, err := ParsePattern(tt.input)
-			if err != nil {
+			var got Pattern
+			if err := got.UnmarshalCedar([]byte(tt.input)); err != nil {
 				testutil.Equals(t, tt.wantOk, false)
 				testutil.Equals(t, err.Error(), tt.wantErr)
 			} else {
@@ -118,7 +118,8 @@ func TestMatch(t *testing.T) {
 		tt := tt
 		t.Run(tt.pattern+":"+tt.target, func(t *testing.T) {
 			t.Parallel()
-			pat, err := ParsePattern(tt.pattern[1 : len(tt.pattern)-1])
+			var pat Pattern
+			err := pat.UnmarshalCedar([]byte(tt.pattern[1 : len(tt.pattern)-1]))
 			testutil.OK(t, err)
 			got := pat.Match(tt.target)
 			testutil.Equals(t, got, tt.want)

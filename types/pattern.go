@@ -58,8 +58,6 @@ func (p Pattern) Literal(s string) Pattern {
 	return p
 }
 
-// TODO: move this into the types package
-
 // ported from Go's stdlib and reduced to our scope.
 // https://golang.org/src/path/filepath/match.go?s=1226:1284#L34
 
@@ -123,9 +121,7 @@ func matchChunk(chunk, s string) (rest string, ok bool) {
 	return s, true
 }
 
-func ParsePattern(s string) (Pattern, error) {
-	b := []byte(s)
-
+func (p *Pattern) UnmarshalCedar(b []byte) error {
 	var comps []PatternComponent
 	for len(b) > 0 {
 		var comp PatternComponent
@@ -136,9 +132,11 @@ func ParsePattern(s string) (Pattern, error) {
 		}
 		comp.Literal, b, err = rust.Unquote(b, true)
 		if err != nil {
-			return Pattern{}, err
+			return err
 		}
 		comps = append(comps, comp)
 	}
-	return comps, nil
+
+	*p = comps
+	return nil
 }
