@@ -7,27 +7,15 @@ import (
 )
 
 func TestPatternFromBuilder(t *testing.T) {
-	tests := []struct {
-		name    string
-		Pattern Pattern
-		want    []PatternComponent
-	}{
-		{"empty", Pattern{}, Pattern{}},
-		{"wildcard", (Pattern{}).Wildcard(), Pattern{{Wildcard: true}}},
-		{"saturate two wildcards", (Pattern{}).Wildcard().Wildcard(), Pattern{{Wildcard: true}}},
-		{"literal", (Pattern{}).Literal("foo"), Pattern{{Literal: "foo"}}},
-		{"saturate two literals", (Pattern{}).Literal("foo").Literal("bar"), Pattern{{Literal: "foobar"}}},
-		{"literal with asterisk", (Pattern{}).Literal("fo*o"), Pattern{{Literal: "fo*o"}}},
-		{"wildcard sandwich", (Pattern{}).Literal("foo").Wildcard().Literal("bar"), Pattern{{Literal: "foo"}, {Wildcard: true, Literal: "bar"}}},
-		{"literal sandwich", (Pattern{}).Wildcard().Literal("foo").Wildcard(), Pattern{{Wildcard: true, Literal: "foo"}, {Wildcard: true}}},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			testutil.Equals(t, tt.Pattern, tt.want)
-		})
-	}
+	t.Run("saturate two wildcards", func(t *testing.T) {
+		pattern1 := PatternBuilder{}.AddWildcard().AddWildcard().Build()
+		testutil.Equals(t, pattern1, WildcardPattern)
+	})
+	t.Run("saturate two literals", func(t *testing.T) {
+		pattern1 := PatternBuilder{}.AddLiteral("foo").AddLiteral("bar").Build()
+		pattern2 := LiteralPattern("foobar")
+		testutil.Equals(t, pattern1, pattern2)
+	})
 }
 
 func TestParsePattern(t *testing.T) {
@@ -35,41 +23,27 @@ func TestParsePattern(t *testing.T) {
 	tests := []struct {
 		input   string
 		wantOk  bool
-		want    []PatternComponent
+		want    Pattern
 		wantErr string
 	}{
-		{"", true, nil, ""},
-		{"a", true, []PatternComponent{{false, "a"}}, ""},
-		{"*", true, []PatternComponent{{true, ""}}, ""},
-		{"*a", true, []PatternComponent{{true, "a"}}, ""},
-		{"a*", true, []PatternComponent{{false, "a"}, {true, ""}}, ""},
-		{"**", true, []PatternComponent{{true, ""}}, ""},
-		{"**a", true, []PatternComponent{{true, "a"}}, ""},
-		{"a**", true, []PatternComponent{{false, "a"}, {true, ""}}, ""},
-		{"*a*", true, []PatternComponent{{true, "a"}, {true, ""}}, ""},
-		{"**a**", true, []PatternComponent{{true, "a"}, {true, ""}}, ""},
-		{"abra*ca", true, []PatternComponent{
-			{false, "abra"}, {true, "ca"},
-		}, ""},
-		{"abra**ca", true, []PatternComponent{
-			{false, "abra"}, {true, "ca"},
-		}, ""},
-		{"*abra*ca", true, []PatternComponent{
-			{true, "abra"}, {true, "ca"},
-		}, ""},
-		{"abra*ca*", true, []PatternComponent{
-			{false, "abra"}, {true, "ca"}, {true, ""},
-		}, ""},
-		{"*abra*ca*", true, []PatternComponent{
-			{true, "abra"}, {true, "ca"}, {true, ""},
-		}, ""},
-		{"*abra*ca*dabra", true, []PatternComponent{
-			{true, "abra"}, {true, "ca"}, {true, "dabra"},
-		}, ""},
-		{`*abra*c\**da\*ra`, true, []PatternComponent{
-			{true, "abra"}, {true, "c*"}, {true, "da*ra"},
-		}, ""},
-		{`\u`, false, nil, "bad unicode rune"},
+		{"", true, LiteralPattern(""), ""},
+		{"a", true, LiteralPattern("a"), ""},
+		{"*", true, WildcardPattern, ""},
+		{"*a", true, PatternBuilder{}.AddWildcard().AddLiteral("a").Build(), ""},
+		{"a*", true, PatternBuilder{}.AddLiteral("a").AddWildcard().Build(), ""},
+		{"**", true, WildcardPattern, ""},
+		{"**a", true, PatternBuilder{}.AddWildcard().AddLiteral("a").Build(), ""},
+		{"a**", true, PatternBuilder{}.AddLiteral("a").AddWildcard().Build(), ""},
+		{"*a*", true, PatternBuilder{}.AddWildcard().AddLiteral("a").AddWildcard().Build(), ""},
+		{"**a**", true, PatternBuilder{}.AddWildcard().AddLiteral("a").AddWildcard().Build(), ""},
+		{"abra*ca", true, PatternBuilder{}.AddLiteral("abra").AddWildcard().AddLiteral("ca").Build(), ""},
+		{"abra**ca", true, PatternBuilder{}.AddLiteral("abra").AddWildcard().AddLiteral("ca").Build(), ""},
+		{"*abra*ca", true, PatternBuilder{}.AddWildcard().AddLiteral("abra").AddWildcard().AddLiteral("ca").Build(), ""},
+		{"abra*ca*", true, PatternBuilder{}.AddLiteral("abra").AddWildcard().AddLiteral("ca").AddWildcard().Build(), ""},
+		{"*abra*ca*", true, PatternBuilder{}.AddWildcard().AddLiteral("abra").AddWildcard().AddLiteral("ca").AddWildcard().Build(), ""},
+		{"*abra*ca*dabra", true, PatternBuilder{}.AddWildcard().AddLiteral("abra").AddWildcard().AddLiteral("ca").AddWildcard().AddLiteral("dabra").Build(), ""},
+		{`*abra*c\**da\*bra`, true, PatternBuilder{}.AddWildcard().AddLiteral("abra").AddWildcard().AddLiteral("c*").AddWildcard().AddLiteral("da*bra").Build(), ""},
+		{`\u`, false, Pattern{}, "bad unicode rune"},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -135,74 +109,75 @@ func TestJSON(t *testing.T) {
 		errFunc         func(testing.TB, error)
 		target          Pattern
 		shouldRoundTrip bool
-	}{{
-		"like single wildcard",
-		`["Wildcard"]`,
-		testutil.OK,
-		Pattern{}.Wildcard(),
-		true,
-	},
+	}{
+		{
+			"like single wildcard",
+			`["Wildcard"]`,
+			testutil.OK,
+			WildcardPattern,
+			true,
+		},
 		{
 			"like single literal",
 			`[{"Literal":"foo"}]`,
 			testutil.OK,
-			Pattern{}.Literal("foo"),
+			LiteralPattern("foo"),
 			true,
 		},
 		{
 			"like wildcard then literal",
 			`["Wildcard", {"Literal":"foo"}]`,
 			testutil.OK,
-			Pattern{}.Wildcard().Literal("foo"),
+			PatternBuilder{}.AddWildcard().AddLiteral("foo").Build(),
 			true,
 		},
 		{
 			"like literal then wildcard",
 			`[{"Literal":"foo"}, "Wildcard"]`,
 			testutil.OK,
-			Pattern{}.Literal("foo").Wildcard(),
+			PatternBuilder{}.AddLiteral("foo").AddWildcard().Build(),
 			true,
 		},
 		{
 			"like literal with asterisk then wildcard",
 			`[{"Literal":"f*oo"}, "Wildcard"]`,
 			testutil.OK,
-			Pattern{}.Literal("f*oo").Wildcard(),
+			PatternBuilder{}.AddLiteral("f*oo").AddWildcard().Build(),
 			true,
 		},
 		{
 			"like literal sandwich",
 			`[{"Literal":"foo"}, "Wildcard", {"Literal":"bar"}]`,
 			testutil.OK,
-			Pattern{}.Literal("foo").Wildcard().Literal("bar"),
+			PatternBuilder{}.AddLiteral("foo").AddWildcard().AddLiteral("bar").Build(),
 			true,
 		},
 		{
 			"like wildcard sandwich",
 			`["Wildcard", {"Literal":"foo"}, "Wildcard"]`,
 			testutil.OK,
-			Pattern{}.Wildcard().Literal("foo").Wildcard(),
+			PatternBuilder{}.AddWildcard().AddLiteral("foo").AddWildcard().Build(),
 			true,
 		},
 		{
 			"double wildcard",
 			`["Wildcard", "Wildcard", {"Literal":"foo"}]`,
 			testutil.OK,
-			Pattern{}.Wildcard().Literal("foo"),
+			PatternBuilder{}.AddWildcard().AddLiteral("foo").Build(),
 			false,
 		},
 		{
 			"double literal",
 			`["Wildcard", {"Literal":"foo"}, {"Literal":"bar"}]`,
 			testutil.OK,
-			Pattern{}.Wildcard().Literal("foobar"),
+			PatternBuilder{}.AddWildcard().AddLiteral("foobar").Build(),
 			false,
 		},
 		{
 			"literal with asterisk",
 			`["Wildcard", {"Literal":"foo*"}, "Wildcard"]`,
 			testutil.OK,
-			Pattern{}.Wildcard().Literal("foo*").Wildcard(),
+			PatternBuilder{}.AddWildcard().AddLiteral("foo*").AddWildcard().Build(),
 			true,
 		},
 		{
