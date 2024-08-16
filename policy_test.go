@@ -1,10 +1,11 @@
-package cedar
+package cedar_test
 
 import (
 	"bytes"
 	"encoding/json"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
@@ -58,7 +59,7 @@ func TestPolicyJSON(t *testing.T) {
 		}`,
 	))
 
-	var policy Policy
+	var policy cedar.Policy
 	testutil.OK(t, policy.UnmarshalJSON(jsonEncodedPolicy))
 
 	output, err := policy.MarshalJSON()
@@ -78,7 +79,7 @@ func TestPolicyCedar(t *testing.T) {
 )
 when { resource.owner == principal };`
 
-	var policy Policy
+	var policy cedar.Policy
 	testutil.OK(t, policy.UnmarshalCedar([]byte(policyStr)))
 
 	var buf bytes.Buffer
@@ -94,7 +95,7 @@ func TestPolicyAST(t *testing.T) {
 		ActionEq(types.NewEntityUID("Action", "editPhoto")).
 		When(ast.Resource().Access("owner").Equals(ast.Principal()))
 
-	_ = NewPolicyFromAST(astExample)
+	_ = cedar.NewPolicyFromAST(astExample)
 }
 
 func TestPolicySlice(t *testing.T) {
@@ -113,7 +114,7 @@ forbid (
     resource
 );`
 
-	var policies PolicySlice
+	var policies cedar.PolicySlice
 	testutil.OK(t, policies.UnmarshalCedar([]byte(policiesStr)))
 
 	var buf bytes.Buffer
