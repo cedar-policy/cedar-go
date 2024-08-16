@@ -41,6 +41,10 @@ const (
 	Forbid = Effect(false)
 )
 
+func newPolicy(astIn *internalast.Policy) Policy {
+	return Policy{eval: eval.Compile(astIn), ast: astIn, sourceFile: ""}
+}
+
 // MarshalJSON encodes a single Policy statement in the JSON format specified by the [Cedar documentation].
 //
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
@@ -57,10 +61,8 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 	if err := jsonPolicy.UnmarshalJSON(b); err != nil {
 		return err
 	}
-	*p = Policy{
-		eval: eval.Compile((*internalast.Policy)(&jsonPolicy)),
-		ast:  (*internalast.Policy)(&jsonPolicy),
-	}
+
+	*p = newPolicy((*internalast.Policy)(&jsonPolicy))
 	return nil
 }
 
@@ -75,19 +77,13 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 		return err
 	}
 
-	*p = Policy{
-		eval: eval.Compile((*internalast.Policy)(&cedarPolicy)),
-		ast:  (*internalast.Policy)(&cedarPolicy),
-	}
+	*p = newPolicy((*internalast.Policy)(&cedarPolicy))
 	return nil
 }
 
 func NewPolicyFromAST(astIn *ast.Policy) *Policy {
-	pp := (*internalast.Policy)(astIn)
-	return &Policy{
-		eval: eval.Compile(pp),
-		ast:  pp,
-	}
+	p := newPolicy((*internalast.Policy)(astIn))
+	return &p
 }
 
 func (p Policy) Annotations() Annotations {
@@ -129,10 +125,8 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
 	}
 	policySlice := make([]*Policy, 0, len(res))
 	for _, p := range res {
-		policySlice = append(policySlice, &Policy{
-			eval: eval.Compile((*internalast.Policy)(p)),
-			ast:  (*internalast.Policy)(p),
-		})
+		newPolicy := newPolicy((*internalast.Policy)(p))
+		policySlice = append(policySlice, &newPolicy)
 	}
 	*p = policySlice
 	return nil
