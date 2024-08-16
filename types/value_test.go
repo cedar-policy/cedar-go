@@ -719,13 +719,13 @@ func TestDeepClone(t *testing.T) {
 	})
 }
 
-func TestPath(t *testing.T) {
+func TestEntityType(t *testing.T) {
 	t.Parallel()
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
-		a := Path("X")
-		b := Path("X")
-		c := Path("Y")
+		a := EntityType("X")
+		b := EntityType("X")
+		c := EntityType("Y")
 		testutil.Equals(t, a.Equal(b), true)
 		testutil.Equals(t, b.Equal(a), true)
 		testutil.Equals(t, a.Equal(c), false)
@@ -733,39 +733,39 @@ func TestPath(t *testing.T) {
 	})
 	t.Run("TypeName", func(t *testing.T) {
 		t.Parallel()
-		a := Path("X")
-		testutil.Equals(t, a.TypeName(), "(Path of type `X`)")
+		a := EntityType("X")
+		testutil.Equals(t, a.TypeName(), "(EntityType of type `X`)")
 	})
 	t.Run("String", func(t *testing.T) {
 		t.Parallel()
-		a := Path("X")
+		a := EntityType("X")
 		testutil.Equals(t, a.String(), "X")
 	})
 	t.Run("Cedar", func(t *testing.T) {
 		t.Parallel()
-		a := Path("X")
+		a := EntityType("X")
 		testutil.Equals(t, a.Cedar(), "X")
 	})
 	t.Run("ExplicitMarshalJSON", func(t *testing.T) {
 		t.Parallel()
-		a := Path("X")
+		a := EntityType("X")
 		v, err := a.ExplicitMarshalJSON()
 		testutil.OK(t, err)
 		testutil.Equals(t, string(v), `"X"`)
 	})
 	t.Run("deepClone", func(t *testing.T) {
 		t.Parallel()
-		a := Path("X")
+		a := EntityType("X")
 		b := a.deepClone()
-		c, ok := b.(Path)
+		c, ok := b.(EntityType)
 		testutil.Equals(t, ok, true)
 		testutil.Equals(t, c, a)
 	})
 
 	t.Run("pathFromSlice", func(t *testing.T) {
 		t.Parallel()
-		a := PathFromSlice([]string{"X", "Y"})
-		testutil.Equals(t, a, Path("X::Y"))
+		a := EntityTypeFromSlice([]string{"X", "Y"})
+		testutil.Equals(t, a, EntityType("X::Y"))
 	})
 
 }
