@@ -135,12 +135,12 @@ func TestASTByTable(t *testing.T) {
 		{
 			"scopePrincipalIs",
 			ast.Permit().PrincipalIs("T"),
-			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeIs{Type: types.Path("T")}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{}},
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeIs{Type: types.EntityType("T")}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{}},
 		},
 		{
 			"scopePrincipalIsIn",
 			ast.Permit().PrincipalIsIn("T", types.NewEntityUID("T", "42")),
-			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeIsIn{Type: types.Path("T"), Entity: types.NewEntityUID("T", "42")}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{}},
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeIsIn{Type: types.EntityType("T"), Entity: types.NewEntityUID("T", "42")}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{}},
 		},
 		{
 			"scopeActionEq",
@@ -170,12 +170,12 @@ func TestASTByTable(t *testing.T) {
 		{
 			"scopeResourceIs",
 			ast.Permit().ResourceIs("T"),
-			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeIs{Type: types.Path("T")}},
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeIs{Type: types.EntityType("T")}},
 		},
 		{
 			"scopeResourceIsIn",
 			ast.Permit().ResourceIsIn("T", types.NewEntityUID("T", "42")),
-			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeIsIn{Type: types.Path("T"), Entity: types.NewEntityUID("T", "42")}},
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeIsIn{Type: types.EntityType("T"), Entity: types.NewEntityUID("T", "42")}},
 		},
 		{
 			"variablePrincipal",
@@ -410,15 +410,15 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"opIs",
-			ast.Permit().When(ast.Long(42).Is(types.Path("T"))),
+			ast.Permit().When(ast.Long(42).Is(types.EntityType("T"))),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
-				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeIs{Left: ast.NodeValue{Value: types.Long(42)}, EntityType: types.Path("T")}}}},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeIs{Left: ast.NodeValue{Value: types.Long(42)}, EntityType: types.EntityType("T")}}}},
 		},
 		{
 			"opIsIn",
-			ast.Permit().When(ast.Long(42).IsIn(types.Path("T"), ast.Long(43))),
+			ast.Permit().When(ast.Long(42).IsIn(types.EntityType("T"), ast.Long(43))),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
-				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeIsIn{NodeTypeIs: ast.NodeTypeIs{Left: ast.NodeValue{Value: types.Long(42)}, EntityType: types.Path("T")}, Entity: ast.NodeValue{Value: types.Long(43)}}}}},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeIsIn{NodeTypeIs: ast.NodeTypeIs{Left: ast.NodeValue{Value: types.Long(42)}, EntityType: types.EntityType("T")}, Entity: ast.NodeValue{Value: types.Long(43)}}}}},
 		},
 		{
 			"opContains",

@@ -1591,11 +1591,11 @@ func TestIsNode(t *testing.T) {
 		result   types.Value
 		err      error
 	}{
-		{"happyEq", newLiteralEval(types.NewEntityUID("X", "z")), newLiteralEval(types.Path("X")), types.True, nil},
-		{"happyNeq", newLiteralEval(types.NewEntityUID("X", "z")), newLiteralEval(types.Path("Y")), types.False, nil},
-		{"badLhs", newLiteralEval(types.Long(42)), newLiteralEval(types.Path("X")), types.ZeroValue(), ErrType},
+		{"happyEq", newLiteralEval(types.NewEntityUID("X", "z")), newLiteralEval(types.EntityType("X")), types.True, nil},
+		{"happyNeq", newLiteralEval(types.NewEntityUID("X", "z")), newLiteralEval(types.EntityType("Y")), types.False, nil},
+		{"badLhs", newLiteralEval(types.Long(42)), newLiteralEval(types.EntityType("X")), types.ZeroValue(), ErrType},
 		{"badRhs", newLiteralEval(types.NewEntityUID("X", "z")), newLiteralEval(types.Long(42)), types.ZeroValue(), ErrType},
-		{"errLhs", newErrorEval(errTest), newLiteralEval(types.Path("X")), types.ZeroValue(), errTest},
+		{"errLhs", newErrorEval(errTest), newLiteralEval(types.EntityType("X")), types.ZeroValue(), errTest},
 		{"errRhs", newLiteralEval(types.NewEntityUID("X", "z")), newErrorEval(errTest), types.ZeroValue(), errTest},
 	}
 	for _, tt := range tests {

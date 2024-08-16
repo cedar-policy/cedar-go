@@ -56,10 +56,10 @@ func ValueToEntity(v types.Value) (types.EntityUID, error) {
 	return ev, nil
 }
 
-func ValueToPath(v types.Value) (types.Path, error) {
-	ev, ok := v.(types.Path)
+func ValueToEntityType(v types.Value) (types.EntityType, error) {
+	ev, ok := v.(types.EntityType)
 	if !ok {
-		return "", fmt.Errorf("%w: expected (Path of type `any_entity_type`), got %v", ErrType, v.TypeName())
+		return "", fmt.Errorf("%w: expected (EntityType of type `any_entity_type`), got %v", ErrType, v.TypeName())
 	}
 	return ev, nil
 }

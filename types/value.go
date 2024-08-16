@@ -386,22 +386,22 @@ func EntityValueFromSlice(v []string) EntityUID {
 	}
 }
 
-// Path is the type portion of an EntityUID
-type Path string
+// EntityType is the type portion of an EntityUID
+type EntityType string
 
-func (a Path) Equal(bi Value) bool {
-	b, ok := bi.(Path)
+func (a EntityType) Equal(bi Value) bool {
+	b, ok := bi.(EntityType)
 	return ok && a == b
 }
-func (v Path) TypeName() string { return fmt.Sprintf("(Path of type `%s`)", v) }
+func (v EntityType) TypeName() string { return fmt.Sprintf("(EntityType of type `%s`)", v) }
 
-func (v Path) String() string                       { return string(v) }
-func (v Path) Cedar() string                        { return string(v) }
-func (v Path) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(string(v)) }
-func (v Path) deepClone() Value                     { return v }
+func (v EntityType) String() string                       { return string(v) }
+func (v EntityType) Cedar() string                        { return string(v) }
+func (v EntityType) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(string(v)) }
+func (v EntityType) deepClone() Value                     { return v }
 
-func PathFromSlice(v []string) Path {
-	return Path(strings.Join(v, "::"))
+func EntityTypeFromSlice(v []string) EntityType {
+	return EntityType(strings.Join(v, "::"))
 }
 
 // A Decimal is a value with both a whole number part and a decimal part of no

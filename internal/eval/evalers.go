@@ -85,12 +85,12 @@ func evalEntity(n Evaler, ctx *Context) (types.EntityUID, error) {
 	return e, nil
 }
 
-func evalPath(n Evaler, ctx *Context) (types.Path, error) {
+func evalEntityType(n Evaler, ctx *Context) (types.EntityType, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
 		return "", err
 	}
-	e, err := ValueToPath(v)
+	e, err := ValueToEntityType(v)
 	if err != nil {
 		return "", err
 	}
@@ -985,12 +985,12 @@ func (n *isEval) Eval(ctx *Context) (types.Value, error) {
 		return types.ZeroValue(), err
 	}
 
-	rhs, err := evalPath(n.rhs, ctx)
+	rhs, err := evalEntityType(n.rhs, ctx)
 	if err != nil {
 		return types.ZeroValue(), err
 	}
 
-	return types.Boolean(types.Path(lhs.Type) == rhs), nil
+	return types.Boolean(types.EntityType(lhs.Type) == rhs), nil
 }
 
 // decimalLiteralEval
