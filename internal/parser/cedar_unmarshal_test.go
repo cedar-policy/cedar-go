@@ -288,19 +288,19 @@ when { principal has "1stName" };`,
 			"like no wildcards",
 			`permit ( principal, action, resource )
 when { principal.firstName like "johnny" };`,
-			ast.Permit().When(ast.Principal().Access("firstName").Like(types.LiteralPattern("johnny"))),
+			ast.Permit().When(ast.Principal().Access("firstName").Like(types.NewPattern(types.String("johnny")))),
 		},
 		{
 			"like escaped asterisk",
 			`permit ( principal, action, resource )
 when { principal.firstName like "joh\*nny" };`,
-			ast.Permit().When(ast.Principal().Access("firstName").Like(types.LiteralPattern("joh*nny"))),
+			ast.Permit().When(ast.Principal().Access("firstName").Like(types.NewPattern(types.String("joh*nny")))),
 		},
 		{
 			"like wildcard",
 			`permit ( principal, action, resource )
 when { principal.firstName like "*" };`,
-			ast.Permit().When(ast.Principal().Access("firstName").Like(types.WildcardPattern)),
+			ast.Permit().When(ast.Principal().Access("firstName").Like(types.NewPattern(types.Wildcard))),
 		},
 		{
 			"is",
