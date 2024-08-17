@@ -18,6 +18,15 @@ func mustIPValue(v string) IPAddr {
 	return r
 }
 
+func AssertValue(t *testing.T, got, want Value) {
+	t.Helper()
+	testutil.FatalIf(
+		t,
+		!((got == ZeroValue() && want == ZeroValue()) ||
+			(got != ZeroValue() && want != ZeroValue() && got.Equal(want))),
+		"got %v want %v", got, want)
+}
+
 func TestJSON_Value(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
