@@ -36,7 +36,7 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 	case ast.ScopeTypeAll:
 		return ast.True()
 	case ast.ScopeTypeEq:
-		return ast.NewNode(varNode).Equals(ast.Value(t.Entity))
+		return ast.NewNode(varNode).Equal(ast.Value(t.Entity))
 	case ast.ScopeTypeIn:
 		return ast.NewNode(varNode).In(ast.Value(t.Entity))
 	case ast.ScopeTypeInSet:

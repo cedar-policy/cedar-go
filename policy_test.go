@@ -90,7 +90,7 @@ func TestPolicyAST(t *testing.T) {
 
 	astExample := ast.Permit().
 		ActionEq(types.NewEntityUID("Action", "editPhoto")).
-		When(ast.Resource().Access("owner").Equals(ast.Principal()))
+		When(ast.Resource().Access("owner").Equal(ast.Principal()))
 
 	_ = cedar.NewPolicyFromAST(astExample)
 }

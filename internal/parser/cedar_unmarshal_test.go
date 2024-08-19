@@ -257,13 +257,13 @@ when { 2 >= 42 };`,
 			"equal",
 			`permit ( principal, action, resource )
 when { 2 == 42 };`,
-			ast.Permit().When(ast.Long(2).Equals(ast.Long(42))),
+			ast.Permit().When(ast.Long(2).Equal(ast.Long(42))),
 		},
 		{
 			"not equal",
 			`permit ( principal, action, resource )
 when { 2 != 42 };`,
-			ast.Permit().When(ast.Long(2).NotEquals(ast.Long(42))),
+			ast.Permit().When(ast.Long(2).NotEqual(ast.Long(42))),
 		},
 		{
 			"in",
@@ -349,7 +349,7 @@ when { if true then true else false };`,
 			`permit ( principal, action, resource )
 when { ip("1.2.3.4") == ip("2.3.4.5") };`,
 			ast.Permit().When(
-				ast.ExtensionCall("ip", ast.String("1.2.3.4")).Equals(
+				ast.ExtensionCall("ip", ast.String("1.2.3.4")).Equal(
 					ast.ExtensionCall("ip", ast.String("2.3.4.5")),
 				),
 			),
@@ -359,7 +359,7 @@ when { ip("1.2.3.4") == ip("2.3.4.5") };`,
 			`permit ( principal, action, resource )
 when { decimal("12.34") == decimal("23.45") };`,
 			ast.Permit().When(
-				ast.ExtensionCall("decimal", ast.String("12.34")).Equals(ast.ExtensionCall("decimal", ast.String("23.45"))),
+				ast.ExtensionCall("decimal", ast.String("12.34")).Equal(ast.ExtensionCall("decimal", ast.String("23.45"))),
 			),
 		},
 		{
@@ -384,19 +384,19 @@ when { 1 + 1 < 3 };`,
 			"mult over add precedence (rhs add)",
 			`permit ( principal, action, resource )
 when { 2 * 3 + 4 == 10 };`,
-			ast.Permit().When(ast.Long(2).Multiply(ast.Long(3)).Add(ast.Long(4)).Equals(ast.Long(10))),
+			ast.Permit().When(ast.Long(2).Multiply(ast.Long(3)).Add(ast.Long(4)).Equal(ast.Long(10))),
 		},
 		{
 			"mult over add precedence (lhs add)",
 			`permit ( principal, action, resource )
 when { 2 + 3 * 4 == 14 };`,
-			ast.Permit().When(ast.Long(2).Add(ast.Long(3).Multiply(ast.Long(4))).Equals(ast.Long(14))),
+			ast.Permit().When(ast.Long(2).Add(ast.Long(3).Multiply(ast.Long(4))).Equal(ast.Long(14))),
 		},
 		{
 			"unary over mult precedence",
 			`permit ( principal, action, resource )
 when { -2 * 3 == -6 };`,
-			ast.Permit().When(ast.Long(-2).Multiply(ast.Long(3)).Equals(ast.Long(-6))),
+			ast.Permit().When(ast.Long(-2).Multiply(ast.Long(3)).Equal(ast.Long(-6))),
 		},
 		{
 			"member over unary precedence",
@@ -408,25 +408,25 @@ when { -context.num };`,
 			"parens over unary precedence",
 			`permit ( principal, action, resource )
 when { -(2 + 3) == -5 };`,
-			ast.Permit().When(ast.Negate(ast.Long(2).Add(ast.Long(3))).Equals(ast.Long(-5))),
+			ast.Permit().When(ast.Negate(ast.Long(2).Add(ast.Long(3))).Equal(ast.Long(-5))),
 		},
 		{
 			"multiple parenthesized operations",
 			`permit ( principal, action, resource )
 when { (2 + 3 + 4) * 5 == 18 };`,
-			ast.Permit().When(ast.Long(2).Add(ast.Long(3)).Add(ast.Long(4)).Multiply(ast.Long(5)).Equals(ast.Long(18))),
+			ast.Permit().When(ast.Long(2).Add(ast.Long(3)).Add(ast.Long(4)).Multiply(ast.Long(5)).Equal(ast.Long(18))),
 		},
 		{
 			"parenthesized if",
 			`permit ( principal, action, resource )
 when { (if true then 2 else 3 * 4) == 2 };`,
-			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(2), ast.Long(3).Multiply(ast.Long(4))).Equals(ast.Long(2))),
+			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(2), ast.Long(3).Multiply(ast.Long(4))).Equal(ast.Long(2))),
 		},
 		{
 			"parenthesized if with trailing mult",
 			`permit ( principal, action, resource )
 when { (if true then 2 else 3) * 4 == 8 };`,
-			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(2), ast.Long(3)).Multiply(ast.Long(4)).Equals(ast.Long(8))),
+			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(2), ast.Long(3)).Multiply(ast.Long(4)).Equal(ast.Long(8))),
 		},
 	}
 

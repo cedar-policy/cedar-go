@@ -177,9 +177,9 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
 	case j.Equals != nil:
-		return j.Equals.ToNode(ast.Node.Equals)
+		return j.Equals.ToNode(ast.Node.Equal)
 	case j.NotEquals != nil:
-		return j.NotEquals.ToNode(ast.Node.NotEquals)
+		return j.NotEquals.ToNode(ast.Node.NotEqual)
 	case j.In != nil:
 		return j.In.ToNode(ast.Node.In)
 	case j.LessThan != nil:

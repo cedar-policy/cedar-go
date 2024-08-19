@@ -9,11 +9,11 @@ import "github.com/cedar-policy/cedar-go/types"
 //  \____\___/|_| |_| |_| .__/ \__,_|_|  |_|___/\___/|_| |_|
 //                      |_|
 
-func (lhs Node) Equals(rhs Node) Node {
+func (lhs Node) Equal(rhs Node) Node {
 	return NewNode(NodeTypeEquals{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
-func (lhs Node) NotEquals(rhs Node) Node {
+func (lhs Node) NotEqual(rhs Node) Node {
 	return NewNode(NodeTypeNotEquals{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
 }
 

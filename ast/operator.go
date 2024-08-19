@@ -12,12 +12,12 @@ import (
 //  \____\___/|_| |_| |_| .__/ \__,_|_|  |_|___/\___/|_| |_|
 //                      |_|
 
-func (lhs Node) Equals(rhs Node) Node {
-	return wrapNode(lhs.Node.Equals(rhs.Node))
+func (lhs Node) Equal(rhs Node) Node {
+	return wrapNode(lhs.Node.Equal(rhs.Node))
 }
 
-func (lhs Node) NotEquals(rhs Node) Node {
-	return wrapNode(lhs.Node.NotEquals(rhs.Node))
+func (lhs Node) NotEqual(rhs Node) Node {
+	return wrapNode(lhs.Node.NotEqual(rhs.Node))
 }
 
 func (lhs Node) LessThan(rhs Node) Node {

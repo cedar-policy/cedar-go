@@ -517,9 +517,9 @@ func (p *parser) relation() (ast.Node, error) {
 	case ">=":
 		operator = ast.Node.GreaterThanOrEqual
 	case "!=":
-		operator = ast.Node.NotEquals
+		operator = ast.Node.NotEqual
 	case "==":
-		operator = ast.Node.Equals
+		operator = ast.Node.Equal
 	case "in":
 		operator = ast.Node.In
 	default:
