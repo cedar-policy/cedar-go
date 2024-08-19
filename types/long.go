@@ -15,7 +15,6 @@ func (a Long) Equal(bi Value) bool {
 
 // ExplicitMarshalJSON marshals the Long into JSON.
 func (v Long) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
-func (v Long) TypeName() string                     { return "long" }
 
 // String produces a string representation of the Long, e.g. `42`.
 func (v Long) String() string { return v.Cedar() }

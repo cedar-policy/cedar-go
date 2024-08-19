@@ -17,6 +17,5 @@ type Value interface {
 	// Sets or Records where the type is not defined.
 	ExplicitMarshalJSON() ([]byte, error)
 	Equal(Value) bool
-	TypeName() string
 	deepClone() Value
 }

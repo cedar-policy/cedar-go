@@ -52,9 +52,4 @@ func TestSet(t *testing.T) {
 			"[true, 1]")
 	})
 
-	t.Run("TypeName", func(t *testing.T) {
-		t.Parallel()
-		tn := types.Set{}.TypeName()
-		testutil.Equals(t, tn, "set")
-	})
 }

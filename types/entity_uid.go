@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 )
 
@@ -28,7 +27,6 @@ func (a EntityUID) Equal(bi Value) bool {
 	b, ok := bi.(EntityUID)
 	return ok && a == b
 }
-func (v EntityUID) TypeName() string { return fmt.Sprintf("(entity of type `%s`)", v.Type) }
 
 // String produces a string representation of the EntityUID, e.g. `Type::"id"`.
 func (v EntityUID) String() string { return v.Cedar() }

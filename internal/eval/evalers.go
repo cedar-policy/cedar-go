@@ -837,7 +837,7 @@ func (n *attributeAccessEval) Eval(ctx *Context) (types.Value, error) {
 	case types.Record:
 		record = vv
 	default:
-		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, v.TypeName())
+		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
 	}
 	val, ok := record[n.attribute]
 	if !ok {
@@ -873,7 +873,7 @@ func (n *hasEval) Eval(ctx *Context) (types.Value, error) {
 	case types.Record:
 		record = vv
 	default:
-		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, v.TypeName())
+		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
 	}
 	_, ok := record[n.attribute]
 	return types.Boolean(ok), nil
@@ -969,7 +969,7 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 		}
 	default:
 		return zeroValue(), fmt.Errorf(
-			"%w: expected one of [set, (entity of type `any_entity_type`)], got %v", ErrType, rhs.TypeName())
+			"%w: expected one of [set, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(rhs))
 	}
 	return types.Boolean(entityIn(lhs, query, ctx.Entities)), nil
 }

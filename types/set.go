@@ -76,8 +76,6 @@ func (v Set) MarshalJSON() ([]byte, error) {
 // explicit JSON form for all the values in the Set.
 func (v Set) ExplicitMarshalJSON() ([]byte, error) { return v.MarshalJSON() }
 
-func (v Set) TypeName() string { return "set" }
-
 // String produces a string representation of the Set, e.g. `[1,2,3]`.
 func (v Set) String() string { return v.Cedar() }
 

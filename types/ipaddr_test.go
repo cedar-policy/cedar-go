@@ -270,9 +270,4 @@ func TestIP(t *testing.T) {
 		}
 	})
 
-	t.Run("TypeName", func(t *testing.T) {
-		t.Parallel()
-		tn := types.IPAddr{}.TypeName()
-		testutil.Equals(t, tn, "IP")
-	})
 }

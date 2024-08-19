@@ -19,11 +19,7 @@ func TestEntityType(t *testing.T) {
 		testutil.Equals(t, a.Equal(c), false)
 		testutil.Equals(t, c.Equal(a), false)
 	})
-	t.Run("TypeName", func(t *testing.T) {
-		t.Parallel()
-		a := types.EntityType("X")
-		testutil.Equals(t, a.TypeName(), "(EntityType of type `X`)")
-	})
+
 	t.Run("String", func(t *testing.T) {
 		t.Parallel()
 		a := types.EntityType("X")

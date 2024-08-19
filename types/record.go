@@ -70,7 +70,6 @@ func (v Record) MarshalJSON() ([]byte, error) {
 // ExplicitMarshalJSON marshals the Record into JSON, the marshaller uses the
 // explicit JSON form for all the values in the Record.
 func (v Record) ExplicitMarshalJSON() ([]byte, error) { return v.MarshalJSON() }
-func (r Record) TypeName() string                     { return "record" }
 
 // String produces a string representation of the Record, e.g. `{"a":1,"b":2,"c":3}`.
 func (r Record) String() string { return r.Cedar() }

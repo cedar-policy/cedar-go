@@ -151,3 +151,32 @@ func TestUtil(t *testing.T) {
 	})
 
 }
+
+func TestTypeName(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   types.Value
+		out  string
+	}{
+
+		{"boolean", types.Boolean(true), "bool"},
+		{"decimal", types.Decimal(42), "decimal"},
+		{"entityType", types.EntityType("T"), "(EntityType of type `T`)"},
+		{"entityUID", types.NewEntityUID("T", "42"), "(entity of type `T`)"},
+		{"ip", types.IPAddr{}, "IP"},
+		{"long", types.Long(42), "long"},
+		{"record", types.Record{}, "record"},
+		{"set", types.Set{}, "set"},
+		{"string", types.String("test"), "string"},
+		{"nil", nil, "unknown type"},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := TypeName(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
