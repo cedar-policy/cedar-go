@@ -85,16 +85,16 @@ func If(condition Node, ifTrue Node, ifFalse Node) Node {
 //  / ___ \| |  | | |_| | | | | | | | |  __/ |_| | (__
 // /_/   \_\_|  |_|\__|_| |_|_| |_| |_|\___|\__|_|\___|
 
-func (lhs Node) Plus(rhs Node) Node {
-	return wrapNode(lhs.Node.Plus(rhs.Node))
+func (lhs Node) Add(rhs Node) Node {
+	return wrapNode(lhs.Node.Add(rhs.Node))
 }
 
-func (lhs Node) Minus(rhs Node) Node {
-	return wrapNode(lhs.Node.Minus(rhs.Node))
+func (lhs Node) Subtract(rhs Node) Node {
+	return wrapNode(lhs.Node.Subtract(rhs.Node))
 }
 
-func (lhs Node) Times(rhs Node) Node {
-	return wrapNode(lhs.Node.Times(rhs.Node))
+func (lhs Node) Multiply(rhs Node) Node {
+	return wrapNode(lhs.Node.Multiply(rhs.Node))
 }
 
 func Negate(rhs Node) Node {

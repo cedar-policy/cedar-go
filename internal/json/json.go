@@ -102,9 +102,9 @@ type nodeJSON struct {
 	GreaterThanOrEqual *binaryJSON `json:">=,omitempty"`
 	And                *binaryJSON `json:"&&,omitempty"`
 	Or                 *binaryJSON `json:"||,omitempty"`
-	Plus               *binaryJSON `json:"+,omitempty"`
-	Minus              *binaryJSON `json:"-,omitempty"`
-	Times              *binaryJSON `json:"*,omitempty"`
+	Add                *binaryJSON `json:"+,omitempty"`
+	Subtract           *binaryJSON `json:"-,omitempty"`
+	Multiply           *binaryJSON `json:"*,omitempty"`
 	Contains           *binaryJSON `json:"contains,omitempty"`
 	ContainsAll        *binaryJSON `json:"containsAll,omitempty"`
 	ContainsAny        *binaryJSON `json:"containsAny,omitempty"`

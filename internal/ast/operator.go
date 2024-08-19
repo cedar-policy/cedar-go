@@ -82,15 +82,15 @@ func If(condition Node, ifTrue Node, ifFalse Node) Node {
 //  / ___ \| |  | | |_| | | | | | | | |  __/ |_| | (__
 // /_/   \_\_|  |_|\__|_| |_|_| |_| |_|\___|\__|_|\___|
 
-func (lhs Node) Plus(rhs Node) Node {
+func (lhs Node) Add(rhs Node) Node {
 	return NewNode(NodeTypeAdd{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
-func (lhs Node) Minus(rhs Node) Node {
+func (lhs Node) Subtract(rhs Node) Node {
 	return NewNode(NodeTypeSub{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
-func (lhs Node) Times(rhs Node) Node {
+func (lhs Node) Multiply(rhs Node) Node {
 	return NewNode(NodeTypeMult{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
 }
 

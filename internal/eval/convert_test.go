@@ -163,19 +163,19 @@ func TestToEval(t *testing.T) {
 		},
 		{
 			"sub",
-			ast.Long(42).Minus(ast.Long(2)),
+			ast.Long(42).Subtract(ast.Long(2)),
 			types.Long(40),
 			testutil.OK,
 		},
 		{
 			"add",
-			ast.Long(40).Plus(ast.Long(2)),
+			ast.Long(40).Add(ast.Long(2)),
 			types.Long(42),
 			testutil.OK,
 		},
 		{
 			"mult",
-			ast.Long(6).Times(ast.Long(7)),
+			ast.Long(6).Multiply(ast.Long(7)),
 			types.Long(42),
 			testutil.OK,
 		},

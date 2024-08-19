@@ -191,43 +191,43 @@ when { context.sourceIP.isIpv4() };`,
 			"multiplication",
 			`permit ( principal, action, resource )
 when { 42 * 2 };`,
-			ast.Permit().When(ast.Long(42).Times(ast.Long(2))),
+			ast.Permit().When(ast.Long(42).Multiply(ast.Long(2))),
 		},
 		{
 			"multiple multiplication",
 			`permit ( principal, action, resource )
 when { 42 * 2 * 1 };`,
-			ast.Permit().When(ast.Long(42).Times(ast.Long(2)).Times(ast.Long(1))),
+			ast.Permit().When(ast.Long(42).Multiply(ast.Long(2)).Multiply(ast.Long(1))),
 		},
 		{
 			"addition",
 			`permit ( principal, action, resource )
 when { 42 + 2 };`,
-			ast.Permit().When(ast.Long(42).Plus(ast.Long(2))),
+			ast.Permit().When(ast.Long(42).Add(ast.Long(2))),
 		},
 		{
 			"multiple addition",
 			`permit ( principal, action, resource )
 when { 42 + 2 + 1 };`,
-			ast.Permit().When(ast.Long(42).Plus(ast.Long(2)).Plus(ast.Long(1))),
+			ast.Permit().When(ast.Long(42).Add(ast.Long(2)).Add(ast.Long(1))),
 		},
 		{
 			"subtraction",
 			`permit ( principal, action, resource )
 when { 42 - 2 };`,
-			ast.Permit().When(ast.Long(42).Minus(ast.Long(2))),
+			ast.Permit().When(ast.Long(42).Subtract(ast.Long(2))),
 		},
 		{
 			"multiple subtraction",
 			`permit ( principal, action, resource )
 when { 42 - 2 - 1 };`,
-			ast.Permit().When(ast.Long(42).Minus(ast.Long(2)).Minus(ast.Long(1))),
+			ast.Permit().When(ast.Long(42).Subtract(ast.Long(2)).Subtract(ast.Long(1))),
 		},
 		{
 			"mixed addition and subtraction",
 			`permit ( principal, action, resource )
 when { 42 - 2 + 1 };`,
-			ast.Permit().When(ast.Long(42).Minus(ast.Long(2)).Plus(ast.Long(1))),
+			ast.Permit().When(ast.Long(42).Subtract(ast.Long(2)).Add(ast.Long(1))),
 		},
 		{
 			"less than",
@@ -378,25 +378,25 @@ when { 1 < 2 && true };`,
 			"add over rel precedence",
 			`permit ( principal, action, resource )
 when { 1 + 1 < 3 };`,
-			ast.Permit().When(ast.Long(1).Plus(ast.Long(1)).LessThan(ast.Long(3))),
+			ast.Permit().When(ast.Long(1).Add(ast.Long(1)).LessThan(ast.Long(3))),
 		},
 		{
 			"mult over add precedence (rhs add)",
 			`permit ( principal, action, resource )
 when { 2 * 3 + 4 == 10 };`,
-			ast.Permit().When(ast.Long(2).Times(ast.Long(3)).Plus(ast.Long(4)).Equals(ast.Long(10))),
+			ast.Permit().When(ast.Long(2).Multiply(ast.Long(3)).Add(ast.Long(4)).Equals(ast.Long(10))),
 		},
 		{
 			"mult over add precedence (lhs add)",
 			`permit ( principal, action, resource )
 when { 2 + 3 * 4 == 14 };`,
-			ast.Permit().When(ast.Long(2).Plus(ast.Long(3).Times(ast.Long(4))).Equals(ast.Long(14))),
+			ast.Permit().When(ast.Long(2).Add(ast.Long(3).Multiply(ast.Long(4))).Equals(ast.Long(14))),
 		},
 		{
 			"unary over mult precedence",
 			`permit ( principal, action, resource )
 when { -2 * 3 == -6 };`,
-			ast.Permit().When(ast.Long(-2).Times(ast.Long(3)).Equals(ast.Long(-6))),
+			ast.Permit().When(ast.Long(-2).Multiply(ast.Long(3)).Equals(ast.Long(-6))),
 		},
 		{
 			"member over unary precedence",
@@ -408,25 +408,25 @@ when { -context.num };`,
 			"parens over unary precedence",
 			`permit ( principal, action, resource )
 when { -(2 + 3) == -5 };`,
-			ast.Permit().When(ast.Negate(ast.Long(2).Plus(ast.Long(3))).Equals(ast.Long(-5))),
+			ast.Permit().When(ast.Negate(ast.Long(2).Add(ast.Long(3))).Equals(ast.Long(-5))),
 		},
 		{
 			"multiple parenthesized operations",
 			`permit ( principal, action, resource )
 when { (2 + 3 + 4) * 5 == 18 };`,
-			ast.Permit().When(ast.Long(2).Plus(ast.Long(3)).Plus(ast.Long(4)).Times(ast.Long(5)).Equals(ast.Long(18))),
+			ast.Permit().When(ast.Long(2).Add(ast.Long(3)).Add(ast.Long(4)).Multiply(ast.Long(5)).Equals(ast.Long(18))),
 		},
 		{
 			"parenthesized if",
 			`permit ( principal, action, resource )
 when { (if true then 2 else 3 * 4) == 2 };`,
-			ast.Permit().When(ast.If(ast.True(), ast.Long(2), ast.Long(3).Times(ast.Long(4))).Equals(ast.Long(2))),
+			ast.Permit().When(ast.If(ast.True(), ast.Long(2), ast.Long(3).Multiply(ast.Long(4))).Equals(ast.Long(2))),
 		},
 		{
 			"parenthesized if with trailing mult",
 			`permit ( principal, action, resource )
 when { (if true then 2 else 3) * 4 == 8 };`,
-			ast.Permit().When(ast.If(ast.True(), ast.Long(2), ast.Long(3)).Times(ast.Long(4)).Equals(ast.Long(8))),
+			ast.Permit().When(ast.If(ast.True(), ast.Long(2), ast.Long(3)).Multiply(ast.Long(4)).Equals(ast.Long(8))),
 		},
 	}
 
