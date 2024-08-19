@@ -41,18 +41,18 @@ func TestRecord(t *testing.T) {
 			"nest": twoElems,
 		}
 
-		testutil.FatalIf(t, !empty.Equals(empty), "%v not Equal to %v", empty, empty)
-		testutil.FatalIf(t, !empty.Equals(empty2), "%v not Equal to %v", empty, empty2)
+		testutil.FatalIf(t, !empty.Equal(empty), "%v not Equal to %v", empty, empty)
+		testutil.FatalIf(t, !empty.Equal(empty2), "%v not Equal to %v", empty, empty2)
 
-		testutil.FatalIf(t, !twoElems.Equals(twoElems), "%v not Equal to %v", twoElems, twoElems)
-		testutil.FatalIf(t, !twoElems.Equals(twoElems2), "%v not Equal to %v", twoElems, twoElems2)
+		testutil.FatalIf(t, !twoElems.Equal(twoElems), "%v not Equal to %v", twoElems, twoElems)
+		testutil.FatalIf(t, !twoElems.Equal(twoElems2), "%v not Equal to %v", twoElems, twoElems2)
 
-		testutil.FatalIf(t, !nested.Equals(nested), "%v not Equal to %v", nested, nested)
-		testutil.FatalIf(t, !nested.Equals(nested2), "%v not Equal to %v", nested, nested2)
+		testutil.FatalIf(t, !nested.Equal(nested), "%v not Equal to %v", nested, nested)
+		testutil.FatalIf(t, !nested.Equal(nested2), "%v not Equal to %v", nested, nested2)
 
-		testutil.FatalIf(t, nested.Equals(twoElems), "%v Equal to %v", nested, twoElems)
-		testutil.FatalIf(t, twoElems.Equals(differentValues), "%v Equal to %v", twoElems, differentValues)
-		testutil.FatalIf(t, twoElems.Equals(differentKeys), "%v Equal to %v", twoElems, differentKeys)
+		testutil.FatalIf(t, nested.Equal(twoElems), "%v Equal to %v", nested, twoElems)
+		testutil.FatalIf(t, twoElems.Equal(differentValues), "%v Equal to %v", twoElems, differentValues)
+		testutil.FatalIf(t, twoElems.Equal(differentKeys), "%v Equal to %v", twoElems, differentKeys)
 	})
 
 	t.Run("string", func(t *testing.T) {
