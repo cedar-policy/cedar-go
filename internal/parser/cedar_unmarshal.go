@@ -444,7 +444,7 @@ func (p *parser) expression() (ast.Node, error) {
 			return ast.Node{}, err
 		}
 
-		return ast.If(condition, ifTrue, ifFalse), nil
+		return ast.IfThenElse(condition, ifTrue, ifFalse), nil
 	}
 
 	return p.or()

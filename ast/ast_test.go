@@ -315,8 +315,8 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"opIf",
-			ast.Permit().When(ast.If(ast.True(), ast.Long(42), ast.Long(43))),
-			internalast.Permit().When(internalast.If(internalast.True(), internalast.Long(42), internalast.Long(43))),
+			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(42), ast.Long(43))),
+			internalast.Permit().When(internalast.IfThenElse(internalast.True(), internalast.Long(42), internalast.Long(43))),
 		},
 		{
 			"opPlus",

@@ -37,7 +37,7 @@ func TestToEval(t *testing.T) {
 		},
 		{
 			"if",
-			ast.If(ast.True(), ast.Long(42), ast.Long(43)),
+			ast.IfThenElse(ast.True(), ast.Long(42), ast.Long(43)),
 			types.Long(42),
 			testutil.OK,
 		},

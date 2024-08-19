@@ -316,16 +316,16 @@ func (n NodeTypeLike) marshalCedar(buf *bytes.Buffer) {
 
 func (n NodeTypeIf) marshalCedar(buf *bytes.Buffer) {
 	buf.WriteString("if ")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeIf.If, buf)
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeIfThenElse.If, buf)
 	buf.WriteString(" then ")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeIf.Then, buf)
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeIfThenElse.Then, buf)
 	buf.WriteString(" else ")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeIf.Else, buf)
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeIfThenElse.Else, buf)
 }
 
 func astNodeToMarshalNode(astNode ast.IsNode) IsNode {
 	switch v := astNode.(type) {
-	case ast.NodeTypeIf:
+	case ast.NodeTypeIfThenElse:
 		return NodeTypeIf{v}
 	case ast.NodeTypeOr:
 		return NodeTypeOr{v}

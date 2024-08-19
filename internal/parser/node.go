@@ -6,7 +6,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/ast"
 )
 
-type NodeTypeIf struct{ ast.NodeTypeIf }
+type NodeTypeIf struct{ ast.NodeTypeIfThenElse }
 
 func (n NodeTypeIf) precedenceLevel() nodePrecedenceLevel {
 	return ifPrecedence
