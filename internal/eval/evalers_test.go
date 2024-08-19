@@ -1889,7 +1889,7 @@ func TestCedarString(t *testing.T) {
 		{"string", types.String("hello"), `hello`, `"hello"`},
 		{"number", types.Long(42), `42`, `42`},
 		{"bool", types.True, `true`, `true`},
-		{"record", types.Record{"a": types.Long(42), "b": types.Long(43)}, `{"a": 42, "b": 43}`, `{"a": 42, "b": 43}`},
+		{"record", types.Record{"a": types.Long(42), "b": types.Long(43)}, `{"a":42, "b":43}`, `{"a":42, "b":43}`},
 		{"set", types.Set{types.Long(42), types.Long(43)}, `[42, 43]`, `[42, 43]`},
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},

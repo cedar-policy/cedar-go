@@ -61,14 +61,14 @@ func TestRecord(t *testing.T) {
 		AssertValueString(
 			t,
 			types.Record{"foo": types.Boolean(true)},
-			`{"foo": true}`)
+			`{"foo":true}`)
 		AssertValueString(
 			t,
 			types.Record{
 				"foo": types.Boolean(true),
 				"bar": types.String("blah"),
 			},
-			`{"bar": "blah", "foo": true}`)
+			`{"bar":"blah", "foo":true}`)
 	})
 
 	t.Run("TypeName", func(t *testing.T) {
