@@ -18,9 +18,7 @@ func (s Set) Contains(v Value) bool {
 	return false
 }
 
-// Equals returns true if the sets are Equal.
-func (s Set) Equals(b Set) bool { return s.Equal(b) }
-
+// Equal returns true if the sets are Equal.
 func (as Set) Equal(bi Value) bool {
 	bs, ok := bi.(Set)
 	if !ok {
