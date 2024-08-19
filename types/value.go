@@ -20,7 +20,3 @@ type Value interface {
 	TypeName() string
 	deepClone() Value
 }
-
-func ZeroValue() Value {
-	return nil
-}
