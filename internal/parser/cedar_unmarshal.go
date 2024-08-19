@@ -591,9 +591,9 @@ func (p *parser) add() (ast.Node, error) {
 		var operator func(ast.Node, ast.Node) ast.Node
 		switch t.Text {
 		case "+":
-			operator = ast.Node.Plus
+			operator = ast.Node.Add
 		case "-":
-			operator = ast.Node.Minus
+			operator = ast.Node.Subtract
 		}
 
 		if operator == nil {
@@ -623,7 +623,7 @@ func (p *parser) mult() (ast.Node, error) {
 		if err != nil {
 			return ast.Node{}, err
 		}
-		lhs = lhs.Times(rhs)
+		lhs = lhs.Multiply(rhs)
 	}
 
 	return lhs, nil

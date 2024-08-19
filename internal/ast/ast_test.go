@@ -59,13 +59,13 @@ func TestAstExamples(t *testing.T) {
 			ast.Value(simpleRecord).Access("x").Equals(ast.String("value")),
 		).
 		When(
-			ast.Record(ast.Pairs{{Key: "x", Value: ast.Long(1).Plus(ast.Context().Access("fooCount"))}}).
+			ast.Record(ast.Pairs{{Key: "x", Value: ast.Long(1).Add(ast.Context().Access("fooCount"))}}).
 				Access("x").Equals(ast.Long(3)),
 		).
 		When(
 			ast.Set(
 				ast.Long(1),
-				ast.Long(2).Plus(ast.Long(3)).Times(ast.Long(4)),
+				ast.Long(2).Add(ast.Long(3)).Multiply(ast.Long(4)),
 				ast.Context().Access("fooCount"),
 			).Contains(ast.Long(1)),
 		)
@@ -380,19 +380,19 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"opPlus",
-			ast.Permit().When(ast.Long(42).Plus(ast.Long(43))),
+			ast.Permit().When(ast.Long(42).Add(ast.Long(43))),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
 				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeAdd{BinaryNode: ast.BinaryNode{Left: ast.NodeValue{Value: types.Long(42)}, Right: ast.NodeValue{Value: types.Long(43)}}}}}},
 		},
 		{
 			"opMinus",
-			ast.Permit().When(ast.Long(42).Minus(ast.Long(43))),
+			ast.Permit().When(ast.Long(42).Subtract(ast.Long(43))),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
 				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeSub{BinaryNode: ast.BinaryNode{Left: ast.NodeValue{Value: types.Long(42)}, Right: ast.NodeValue{Value: types.Long(43)}}}}}},
 		},
 		{
 			"opTimes",
-			ast.Permit().When(ast.Long(42).Times(ast.Long(43))),
+			ast.Permit().When(ast.Long(42).Multiply(ast.Long(43))),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
 				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeMult{BinaryNode: ast.BinaryNode{Left: ast.NodeValue{Value: types.Long(42)}, Right: ast.NodeValue{Value: types.Long(43)}}}}}},
 		},

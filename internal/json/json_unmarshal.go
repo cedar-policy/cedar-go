@@ -194,12 +194,12 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 		return j.And.ToNode(ast.Node.And)
 	case j.Or != nil:
 		return j.Or.ToNode(ast.Node.Or)
-	case j.Plus != nil:
-		return j.Plus.ToNode(ast.Node.Plus)
-	case j.Minus != nil:
-		return j.Minus.ToNode(ast.Node.Minus)
-	case j.Times != nil:
-		return j.Times.ToNode(ast.Node.Times)
+	case j.Add != nil:
+		return j.Add.ToNode(ast.Node.Add)
+	case j.Subtract != nil:
+		return j.Subtract.ToNode(ast.Node.Subtract)
+	case j.Multiply != nil:
+		return j.Multiply.ToNode(ast.Node.Multiply)
 	case j.Contains != nil:
 		return j.Contains.ToNode(ast.Node.Contains)
 	case j.ContainsAll != nil:

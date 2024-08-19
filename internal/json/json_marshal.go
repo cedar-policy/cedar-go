@@ -174,7 +174,7 @@ func (j *nodeJSON) FromNode(src ast.IsNode) {
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
 	case ast.NodeTypeAdd:
-		binaryToJSON(&j.Plus, t.BinaryNode)
+		binaryToJSON(&j.Add, t.BinaryNode)
 		return
 	case ast.NodeTypeAnd:
 		binaryToJSON(&j.And, t.BinaryNode)
@@ -207,7 +207,7 @@ func (j *nodeJSON) FromNode(src ast.IsNode) {
 		binaryToJSON(&j.LessThanOrEqual, t.BinaryNode)
 		return
 	case ast.NodeTypeMult:
-		binaryToJSON(&j.Times, t.BinaryNode)
+		binaryToJSON(&j.Multiply, t.BinaryNode)
 		return
 	case ast.NodeTypeNotEquals:
 		binaryToJSON(&j.NotEquals, t.BinaryNode)
@@ -216,7 +216,7 @@ func (j *nodeJSON) FromNode(src ast.IsNode) {
 		binaryToJSON(&j.Or, t.BinaryNode)
 		return
 	case ast.NodeTypeSub:
-		binaryToJSON(&j.Minus, t.BinaryNode)
+		binaryToJSON(&j.Subtract, t.BinaryNode)
 		return
 
 	// ., has
