@@ -33,19 +33,19 @@ func (lhs Node) GreaterThanOrEqual(rhs Node) Node {
 	return NewNode(NodeTypeGreaterThanOrEqual{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
-func (lhs Node) LessThanExt(rhs Node) Node {
+func (lhs Node) DecimalLessThan(rhs Node) Node {
 	return NewMethodCall(lhs, "lessThan", rhs)
 }
 
-func (lhs Node) LessThanOrEqualExt(rhs Node) Node {
+func (lhs Node) DecimalLessThanOrEqual(rhs Node) Node {
 	return NewMethodCall(lhs, "lessThanOrEqual", rhs)
 }
 
-func (lhs Node) GreaterThanExt(rhs Node) Node {
+func (lhs Node) DecimalGreaterThan(rhs Node) Node {
 	return NewMethodCall(lhs, "greaterThan", rhs)
 }
 
-func (lhs Node) GreaterThanOrEqualExt(rhs Node) Node {
+func (lhs Node) DecimalGreaterThanOrEqual(rhs Node) Node {
 	return NewMethodCall(lhs, "greaterThanOrEqual", rhs)
 }
 

@@ -275,23 +275,23 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"opLessThanExt",
-			ast.Permit().When(ast.Long(42).LessThanExt(ast.Long(43))),
-			internalast.Permit().When(internalast.Long(42).LessThanExt(internalast.Long(43))),
+			ast.Permit().When(ast.Long(42).DecimalLessThan(ast.Long(43))),
+			internalast.Permit().When(internalast.Long(42).DecimalLessThan(internalast.Long(43))),
 		},
 		{
 			"opLessThanOrEqualExt",
-			ast.Permit().When(ast.Long(42).LessThanOrEqualExt(ast.Long(43))),
-			internalast.Permit().When(internalast.Long(42).LessThanOrEqualExt(internalast.Long(43))),
+			ast.Permit().When(ast.Long(42).DecimalLessThanOrEqual(ast.Long(43))),
+			internalast.Permit().When(internalast.Long(42).DecimalLessThanOrEqual(internalast.Long(43))),
 		},
 		{
 			"opGreaterThanExt",
-			ast.Permit().When(ast.Long(42).GreaterThanExt(ast.Long(43))),
-			internalast.Permit().When(internalast.Long(42).GreaterThanExt(internalast.Long(43))),
+			ast.Permit().When(ast.Long(42).DecimalGreaterThan(ast.Long(43))),
+			internalast.Permit().When(internalast.Long(42).DecimalGreaterThan(internalast.Long(43))),
 		},
 		{
 			"opGreaterThanOrEqualExt",
-			ast.Permit().When(ast.Long(42).GreaterThanOrEqualExt(ast.Long(43))),
-			internalast.Permit().When(internalast.Long(42).GreaterThanOrEqualExt(internalast.Long(43))),
+			ast.Permit().When(ast.Long(42).DecimalGreaterThanOrEqual(ast.Long(43))),
+			internalast.Permit().When(internalast.Long(42).DecimalGreaterThanOrEqual(internalast.Long(43))),
 		},
 		{
 			"opLike",
