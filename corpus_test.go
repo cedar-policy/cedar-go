@@ -150,7 +150,7 @@ func TestCorpus(t *testing.T) {
 				t.Fatal("error reading policy content", err)
 			}
 
-			policySet, err := NewPolicySetFromFile("policy.cedar", policyContent)
+			policySet, err := NewPolicySetFromBytes("policy.cedar", policyContent)
 			if err != nil {
 				t.Fatal("error parsing policy set", err)
 			}
@@ -336,7 +336,7 @@ func TestCorpusRelated(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			policy, err := NewPolicySetFromFile("", []byte(tt.policy))
+			policy, err := NewPolicySetFromBytes("", []byte(tt.policy))
 			testutil.OK(t, err)
 			ok, diag := policy.IsAuthorized(entities2.Entities{}, tt.request)
 			testutil.Equals(t, ok, tt.decision)

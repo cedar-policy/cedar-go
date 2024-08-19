@@ -19,21 +19,19 @@ func NewPolicySet() PolicySet {
 	return PolicySet{policies: map[PolicyID]*Policy{}}
 }
 
-// NewPolicySetFromFile will create a PolicySet from the given text document with the/ given file name used in Position
+// NewPolicySetFromBytes will create a PolicySet from the given text document with the/ given file name used in Position
 // data.  If there is an error parsing the document, it will be returned.
 //
-// NewPolicySetFromFile assigns default PolicyIDs to the policies contained in fileName in the format "policy<n>" where
+// NewPolicySetFromBytes assigns default PolicyIDs to the policies contained in fileName in the format "policy<n>" where
 // <n> is incremented for each new policy found in the file.
-func NewPolicySetFromFile(fileName string, document []byte) (PolicySet, error) {
-	var policySlice PolicySlice
-	if err := policySlice.UnmarshalCedar(document); err != nil {
+func NewPolicySetFromBytes(fileName string, document []byte) (PolicySet, error) {
+	policySlice, err := NewPolicySliceFromBytes(fileName, document)
+	if err != nil {
 		return PolicySet{}, err
 	}
-
 	policyMap := make(map[PolicyID]*Policy, len(policySlice))
 	for i, p := range policySlice {
 		policyID := PolicyID(fmt.Sprintf("policy%d", i))
-		p.SetSourceFile(fileName)
 		policyMap[policyID] = p
 	}
 	return PolicySet{policies: policyMap}, nil

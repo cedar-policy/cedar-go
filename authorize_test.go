@@ -709,7 +709,7 @@ func TestIsAuthorized(t *testing.T) {
 		tt := tt
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
-			ps, err := NewPolicySetFromFile("policy.cedar", []byte(tt.Policy))
+			ps, err := NewPolicySetFromBytes("policy.cedar", []byte(tt.Policy))
 			testutil.Equals(t, (err != nil), tt.ParseErr)
 			ok, diag := ps.IsAuthorized(tt.Entities, Request{
 				Principal: tt.Principal,

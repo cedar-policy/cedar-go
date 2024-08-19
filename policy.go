@@ -2,7 +2,6 @@ package cedar
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/cedar-policy/cedar-go/ast"
 	internalast "github.com/cedar-policy/cedar-go/internal/ast"
@@ -100,39 +99,6 @@ func (p Policy) Position() Position {
 	return Position(p.ast.Position)
 }
 
-func (p *Policy) SetSourceFile(path string) {
+func (p *Policy) SetFileName(path string) {
 	p.ast.Position.FileName = path
-}
-
-// PolicySlice represents a set of un-named Policy's. Cedar documents, unlike the JSON format, don't have a means of
-// naming individual policies.
-type PolicySlice []*Policy
-
-// UnmarshalCedar parses a concatenation of un-named Cedar policy statements. Names can be assigned to these policies
-// when adding them to a PolicySet.
-func (p *PolicySlice) UnmarshalCedar(b []byte) error {
-	var res parser.PolicySlice
-	if err := res.UnmarshalCedar(b); err != nil {
-		return fmt.Errorf("parser error: %w", err)
-	}
-	policySlice := make([]*Policy, 0, len(res))
-	for _, p := range res {
-		newPolicy := newPolicy((*internalast.Policy)(p))
-		policySlice = append(policySlice, &newPolicy)
-	}
-	*p = policySlice
-	return nil
-}
-
-// MarshalCedar emits a concatenated Cedar representation of a PolicySlice
-func (p PolicySlice) MarshalCedar() []byte {
-	var buf bytes.Buffer
-	for i, policy := range p {
-		buf.Write(policy.MarshalCedar())
-
-		if i < len(p)-1 {
-			buf.WriteString("\n\n")
-		}
-	}
-	return buf.Bytes()
 }
