@@ -25,7 +25,7 @@ func TestLong(t *testing.T) {
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		AssertValueString(t, types.Long(1), "1")
+		assertValueString(t, types.Long(1), "1")
 	})
 
 }
