@@ -137,25 +137,24 @@ func matchChunk(chunk, s string) (rest string, ok bool) {
 	return s, true
 }
 
-func (p *Pattern) UnmarshalCedar(b []byte) error {
+// ParsePattern will parse an unquoted rust-style string with \*'s in it.
+func ParsePattern(v string) (Pattern, error) {
+	b := []byte(v)
 	var comps []PatternComponent
 	for len(b) > 0 {
 		for len(b) > 0 && b[0] == '*' {
 			b = b[1:]
 			comps = append(comps, Wildcard)
 		}
-
 		var err error
 		var literal string
 		literal, b, err = rust.Unquote(b, true)
 		if err != nil {
-			return err
+			return Pattern{}, err
 		}
 		comps = append(comps, String(literal))
 	}
-
-	*p = NewPattern(comps...)
-	return nil
+	return NewPattern(comps...), nil
 }
 
 func (p Pattern) MarshalJSON() ([]byte, error) {

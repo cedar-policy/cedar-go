@@ -1424,8 +1424,7 @@ func TestLikeNode(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			var pat types.Pattern
-			err := pat.UnmarshalCedar([]byte(tt.pattern[1 : len(tt.pattern)-1]))
+			pat, err := types.ParsePattern(tt.pattern[1 : len(tt.pattern)-1])
 			testutil.OK(t, err)
 			n := newLikeEval(tt.str, pat)
 			v, err := n.Eval(&Context{})
