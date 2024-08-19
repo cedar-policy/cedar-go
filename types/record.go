@@ -15,8 +15,6 @@ import (
 type Record map[string]Value
 
 // Equals returns true if the records are Equal.
-func (r Record) Equals(b Record) bool { return r.Equal(b) }
-
 func (a Record) Equal(bi Value) bool {
 	b, ok := bi.(Record)
 	if !ok || len(a) != len(b) {
