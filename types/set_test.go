@@ -45,8 +45,8 @@ func TestSet(t *testing.T) {
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		AssertValueString(t, types.Set{}, "[]")
-		AssertValueString(
+		assertValueString(t, types.Set{}, "[]")
+		assertValueString(
 			t,
 			types.Set{types.Boolean(true), types.Long(1)},
 			"[true, 1]")

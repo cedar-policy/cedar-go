@@ -22,8 +22,8 @@ func TestString(t *testing.T) {
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		AssertValueString(t, types.String("hello"), `hello`)
-		AssertValueString(t, types.String("hello\ngoodbye"), "hello\ngoodbye")
+		assertValueString(t, types.String("hello"), `hello`)
+		assertValueString(t, types.String("hello\ngoodbye"), "hello\ngoodbye")
 	})
 
 }
