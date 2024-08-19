@@ -18,7 +18,6 @@ func zeroValue() types.Value {
 	return nil
 }
 
-// TODO: make private again
 type Context struct {
 	Entities                    entities.Entities
 	Principal, Action, Resource types.Value

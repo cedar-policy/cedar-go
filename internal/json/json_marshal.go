@@ -71,7 +71,7 @@ func arrayToJSON(dest *arrayJSON, args []ast.IsNode) {
 
 func extToJSON(dest *extensionJSON, name string, src types.Value) {
 	res := arrayJSON{}
-	str := src.String() // TODO: is this the correct string?
+	str := src.String()
 	val := valueJSON{v: types.String(str)}
 	res = append(res, nodeJSON{
 		Value: &val,
