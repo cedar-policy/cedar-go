@@ -13,7 +13,7 @@ func TestIsNode(t *testing.T) {
 
 	StrOpNode{}.isNode()
 	BinaryNode{}.isNode()
-	NodeTypeIf{}.isNode()
+	NodeTypeIfThenElse{}.isNode()
 	NodeTypeLike{}.isNode()
 	NodeTypeIs{}.isNode()
 	UnaryNode{}.isNode()

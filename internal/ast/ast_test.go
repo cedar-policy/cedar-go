@@ -374,9 +374,9 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"opIf",
-			ast.Permit().When(ast.If(ast.True(), ast.Long(42), ast.Long(43))),
+			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(42), ast.Long(43))),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
-				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeIf{If: ast.NodeValue{Value: types.True}, Then: ast.NodeValue{Value: types.Long(42)}, Else: ast.NodeValue{Value: types.Long(43)}}}}},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeIfThenElse{If: ast.NodeValue{Value: types.True}, Then: ast.NodeValue{Value: types.Long(42)}, Else: ast.NodeValue{Value: types.Long(43)}}}}},
 		},
 		{
 			"opPlus",

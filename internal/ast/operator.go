@@ -72,8 +72,8 @@ func Not(rhs Node) Node {
 	return NewNode(NodeTypeNot{UnaryNode: UnaryNode{Arg: rhs.v}})
 }
 
-func If(condition Node, ifTrue Node, ifFalse Node) Node {
-	return NewNode(NodeTypeIf{If: condition.v, Then: ifTrue.v, Else: ifFalse.v})
+func IfThenElse(condition Node, thenNode Node, elseNode Node) Node {
+	return NewNode(NodeTypeIfThenElse{If: condition.v, Then: thenNode.v, Else: elseNode.v})
 }
 
 //     _         _ _   _                    _   _

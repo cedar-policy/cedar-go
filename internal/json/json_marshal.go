@@ -111,7 +111,7 @@ func recordToJSON(dest *recordJSON, src ast.NodeTypeRecord) {
 	*dest = res
 }
 
-func ifToJSON(dest **ifThenElseJSON, src ast.NodeTypeIf) {
+func ifToJSON(dest **ifThenElseJSON, src ast.NodeTypeIfThenElse) {
 	res := &ifThenElseJSON{}
 	res.If.FromNode(src.If)
 	res.Then.FromNode(src.Then)
@@ -244,7 +244,7 @@ func (j *nodeJSON) FromNode(src ast.IsNode) {
 
 	// if-then-else
 	// IfThenElse *ifThenElseJSON `json:"if-then-else"`
-	case ast.NodeTypeIf:
+	case ast.NodeTypeIfThenElse:
 		ifToJSON(&j.IfThenElse, t)
 		return
 

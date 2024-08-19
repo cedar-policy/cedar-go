@@ -16,7 +16,7 @@ func toEval(n ast.IsNode) Evaler {
 		return newHasEval(toEval(v.Arg), string(v.Value))
 	case ast.NodeTypeLike:
 		return newLikeEval(toEval(v.Arg), v.Value)
-	case ast.NodeTypeIf:
+	case ast.NodeTypeIfThenElse:
 		return newIfThenElseEval(toEval(v.If), toEval(v.Then), toEval(v.Else))
 	case ast.NodeTypeIs:
 		return newIsEval(toEval(v.Left), newLiteralEval(v.EntityType))

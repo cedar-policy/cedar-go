@@ -75,8 +75,8 @@ func Not(rhs Node) Node {
 	return wrapNode(ast.Not(rhs.Node))
 }
 
-func If(condition Node, ifTrue Node, ifFalse Node) Node {
-	return wrapNode(ast.If(condition.Node, ifTrue.Node, ifFalse.Node))
+func IfThenElse(condition Node, thenNode Node, elseNode Node) Node {
+	return wrapNode(ast.IfThenElse(condition.Node, thenNode.Node, elseNode.Node))
 }
 
 //     _         _ _   _                    _   _

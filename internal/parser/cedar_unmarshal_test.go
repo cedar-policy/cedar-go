@@ -342,7 +342,7 @@ when { true || false || true };`,
 			"if then else",
 			`permit ( principal, action, resource )
 when { if true then true else false };`,
-			ast.Permit().When(ast.If(ast.True(), ast.True(), ast.False())),
+			ast.Permit().When(ast.IfThenElse(ast.True(), ast.True(), ast.False())),
 		},
 		{
 			"ip extension function",
@@ -420,13 +420,13 @@ when { (2 + 3 + 4) * 5 == 18 };`,
 			"parenthesized if",
 			`permit ( principal, action, resource )
 when { (if true then 2 else 3 * 4) == 2 };`,
-			ast.Permit().When(ast.If(ast.True(), ast.Long(2), ast.Long(3).Multiply(ast.Long(4))).Equals(ast.Long(2))),
+			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(2), ast.Long(3).Multiply(ast.Long(4))).Equals(ast.Long(2))),
 		},
 		{
 			"parenthesized if with trailing mult",
 			`permit ( principal, action, resource )
 when { (if true then 2 else 3) * 4 == 8 };`,
-			ast.Permit().When(ast.If(ast.True(), ast.Long(2), ast.Long(3)).Multiply(ast.Long(4)).Equals(ast.Long(8))),
+			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(2), ast.Long(3)).Multiply(ast.Long(4)).Equals(ast.Long(8))),
 		},
 	}
 

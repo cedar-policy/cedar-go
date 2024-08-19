@@ -29,11 +29,11 @@ type BinaryNode struct {
 
 func (n BinaryNode) isNode() {}
 
-type NodeTypeIf struct {
+type NodeTypeIfThenElse struct {
 	If, Then, Else IsNode
 }
 
-func (n NodeTypeIf) isNode() {}
+func (n NodeTypeIfThenElse) isNode() {}
 
 type NodeTypeOr struct{ BinaryNode }
 

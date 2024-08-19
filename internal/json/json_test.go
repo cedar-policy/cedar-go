@@ -427,7 +427,7 @@ func TestUnmarshalJSON(t *testing.T) {
 			"ifThenElse",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Value":42},"else":{"Value":24}}}}]}`,
-			ast.Permit().When(ast.If(ast.True(), ast.Long(42), ast.Long(24))),
+			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(42), ast.Long(24))),
 			testutil.OK,
 		},
 		{

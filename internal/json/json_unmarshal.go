@@ -96,7 +96,7 @@ func (j ifThenElseJSON) ToNode() (ast.Node, error) {
 	if err != nil {
 		return ast.Node{}, fmt.Errorf("error in else: %w", err)
 	}
-	return ast.If(if_, then, else_), nil
+	return ast.IfThenElse(if_, then, else_), nil
 }
 func (j arrayJSON) ToNode() (ast.Node, error) {
 	var nodes []ast.Node
