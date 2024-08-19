@@ -57,7 +57,7 @@ func NewPattern(components ...PatternComponent) Pattern {
 	return Pattern{comps: comps}
 }
 
-func (p Pattern) Cedar() string {
+func (p Pattern) MarshalCedar() []byte {
 	var buf bytes.Buffer
 	buf.WriteRune('"')
 	for _, comp := range p.comps {
@@ -71,7 +71,7 @@ func (p Pattern) Cedar() string {
 		buf.WriteString(quotedString)
 	}
 	buf.WriteRune('"')
-	return buf.String()
+	return buf.Bytes()
 }
 
 // ported from Go's stdlib and reduced to our scope.
