@@ -700,3 +700,44 @@ func TestUnmarshalErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestMarshalExtensions(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   *ast.Policy
+		out  string
+	}{
+		{
+			"decimalType",
+			ast.Permit().When(ast.Value(types.Decimal(420000))),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.0"}]}}]}`,
+		},
+		{
+			"decimalExtension",
+			ast.Permit().When(ast.ExtensionCall("decimal", ast.String("42.0"))),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.0"}]}}]}`,
+		},
+		{
+			"ipType",
+			ast.Permit().When(ast.Value(types.IPAddr(netip.MustParsePrefix("127.0.0.1/16")))),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"ip":[{"Value":"127.0.0.1/16"}]}}]}`,
+		},
+		{
+			"ipExtension",
+			ast.Permit().When(ast.ExtensionCall("ip", ast.String("127.0.0.1/16"))),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"ip":[{"Value":"127.0.0.1/16"}]}}]}`,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			p := (*Policy)(tt.in)
+			out, err := p.MarshalJSON()
+			testutil.OK(t, err)
+			testutil.Equals(t, string(out), tt.out)
+
+		})
+	}
+}
