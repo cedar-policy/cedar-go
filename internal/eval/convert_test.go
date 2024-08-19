@@ -127,13 +127,13 @@ func TestToEval(t *testing.T) {
 		},
 		{
 			"equals",
-			ast.Long(42).Equals(ast.Long(43)),
+			ast.Long(42).Equal(ast.Long(43)),
 			types.False,
 			testutil.OK,
 		},
 		{
 			"notEquals",
-			ast.Long(42).NotEquals(ast.Long(43)),
+			ast.Long(42).NotEqual(ast.Long(43)),
 			types.True,
 			testutil.OK,
 		},

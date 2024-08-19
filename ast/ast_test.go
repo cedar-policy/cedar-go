@@ -57,10 +57,10 @@ func TestAstExamples(t *testing.T) {
 	}
 	_ = ast.Forbid().
 		When(
-			ast.Value(simpleRecord).Access("x").Equals(ast.String("value")),
+			ast.Value(simpleRecord).Access("x").Equal(ast.String("value")),
 		).
 		When(
-			ast.Record(ast.Pairs{{Key: "x", Value: ast.Long(1).Add(ast.Context().Access("fooCount"))}}).Access("x").Equals(ast.Long(3)),
+			ast.Record(ast.Pairs{{Key: "x", Value: ast.Long(1).Add(ast.Context().Access("fooCount"))}}).Access("x").Equal(ast.Long(3)),
 		).
 		When(
 			ast.Set(
@@ -245,13 +245,13 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"opEquals",
-			ast.Permit().When(ast.Long(42).Equals(ast.Long(43))),
-			internalast.Permit().When(internalast.Long(42).Equals(internalast.Long(43))),
+			ast.Permit().When(ast.Long(42).Equal(ast.Long(43))),
+			internalast.Permit().When(internalast.Long(42).Equal(internalast.Long(43))),
 		},
 		{
 			"opNotEquals",
-			ast.Permit().When(ast.Long(42).NotEquals(ast.Long(43))),
-			internalast.Permit().When(internalast.Long(42).NotEquals(internalast.Long(43))),
+			ast.Permit().When(ast.Long(42).NotEqual(ast.Long(43))),
+			internalast.Permit().When(internalast.Long(42).NotEqual(internalast.Long(43))),
 		},
 		{
 			"opLessThan",

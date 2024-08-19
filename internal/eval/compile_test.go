@@ -36,9 +36,9 @@ func TestPolicyToNode(t *testing.T) {
 				ActionEq(types.NewEntityUID("Action", "test")).
 				ResourceEq(types.NewEntityUID("Resource", "database")),
 
-			ast.Principal().Equals(ast.EntityUID("Account", "principal")).And(
-				ast.Action().Equals(ast.EntityUID("Action", "test")).And(
-					ast.Resource().Equals(ast.EntityUID("Resource", "database")),
+			ast.Principal().Equal(ast.EntityUID("Account", "principal")).And(
+				ast.Action().Equal(ast.EntityUID("Action", "test")).And(
+					ast.Resource().Equal(ast.EntityUID("Resource", "database")),
 				),
 			),
 		},
@@ -81,7 +81,7 @@ func TestScopeToNode(t *testing.T) {
 			"eq",
 			ast.NewPrincipalNode(),
 			ast.ScopeTypeEq{Entity: types.NewEntityUID("T", "42")},
-			ast.Principal().Equals(ast.EntityUID("T", "42")),
+			ast.Principal().Equal(ast.EntityUID("T", "42")),
 		},
 		{
 			"in",

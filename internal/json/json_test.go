@@ -81,7 +81,7 @@ func TestUnmarshalJSON(t *testing.T) {
 				ActionEq(types.NewEntityUID("Action", "view")).
 				ResourceIn(types.NewEntityUID("Folder", "abc")).
 				When(
-					ast.Context().Access("tls_version").Equals(ast.String("1.3")),
+					ast.Context().Access("tls_version").Equal(ast.String("1.3")),
 				),
 			testutil.OK,
 		},
@@ -265,14 +265,14 @@ func TestUnmarshalJSON(t *testing.T) {
 			"equals",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"==":{"left":{"Value":42},"right":{"Value":24}}}}]}`,
-			ast.Permit().When(ast.Long(42).Equals(ast.Long(24))),
+			ast.Permit().When(ast.Long(42).Equal(ast.Long(24))),
 			testutil.OK,
 		},
 		{
 			"notEquals",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"!=":{"left":{"Value":42},"right":{"Value":24}}}}]}`,
-			ast.Permit().When(ast.Long(42).NotEquals(ast.Long(24))),
+			ast.Permit().When(ast.Long(42).NotEqual(ast.Long(24))),
 			testutil.OK,
 		},
 		{
