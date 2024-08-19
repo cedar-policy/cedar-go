@@ -8,6 +8,10 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
+func zeroValue() Value {
+	return nil
+}
+
 func mustDecimalValue(v string) Decimal {
 	r, _ := ParseDecimal(v)
 	return r
@@ -22,8 +26,8 @@ func AssertValue(t *testing.T, got, want Value) {
 	t.Helper()
 	testutil.FatalIf(
 		t,
-		!((got == ZeroValue() && want == ZeroValue()) ||
-			(got != ZeroValue() && want != ZeroValue() && got.Equal(want))),
+		!((got == zeroValue() && want == zeroValue()) ||
+			(got != zeroValue() && want != zeroValue() && got.Equal(want))),
 		"got %v want %v", got, want)
 }
 
@@ -39,15 +43,15 @@ func TestJSON_Value(t *testing.T) {
 		{"explicitEntity", `{ "__entity": { "type": "User", "id": "alice" } }`, EntityUID{Type: "User", ID: "alice"}, nil},
 		{"impliedLongEntity", `{ "type": "User::External", "id": "alice" }`, EntityUID{Type: "User::External", ID: "alice"}, nil},
 		{"explicitLongEntity", `{ "__entity": { "type": "User::External", "id": "alice" } }`, EntityUID{Type: "User::External", ID: "alice"}, nil},
-		{"invalidJSON", `!@#$`, ZeroValue(), errJSONDecode},
-		{"numericOverflow", "12341234123412341234", ZeroValue(), errJSONLongOutOfRange},
-		{"unsupportedNull", "null", ZeroValue(), errJSONUnsupportedType},
+		{"invalidJSON", `!@#$`, zeroValue(), errJSONDecode},
+		{"numericOverflow", "12341234123412341234", zeroValue(), errJSONLongOutOfRange},
+		{"unsupportedNull", "null", zeroValue(), errJSONUnsupportedType},
 		{"explicitIP", `{ "__extn": { "fn": "ip", "arg": "222.222.222.7" } }`, mustIPValue("222.222.222.7"), nil},
 		{"explicitSubnet", `{ "__extn": { "fn": "ip", "arg": "192.168.0.0/16" } }`, mustIPValue("192.168.0.0/16"), nil},
 		{"explicitDecimal", `{ "__extn": { "fn": "decimal", "arg": "33.57" } }`, mustDecimalValue("33.57"), nil},
-		{"invalidExtension", `{ "__extn": { "fn": "asdf", "arg": "blah" } }`, ZeroValue(), errJSONInvalidExtn},
-		{"badIP", `{ "__extn": { "fn": "ip", "arg": "bad" } }`, ZeroValue(), ErrIP},
-		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, ZeroValue(), ErrDecimal},
+		{"invalidExtension", `{ "__extn": { "fn": "asdf", "arg": "blah" } }`, zeroValue(), errJSONInvalidExtn},
+		{"badIP", `{ "__extn": { "fn": "ip", "arg": "bad" } }`, zeroValue(), ErrIP},
+		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), ErrDecimal},
 		{"set", `[42]`, Set{Long(42)}, nil},
 		{"record", `{"a":"b"}`, Record{"a": String("b")}, nil},
 		{"bool", `false`, Boolean(false), nil},
