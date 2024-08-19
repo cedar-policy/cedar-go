@@ -21,8 +21,8 @@ func (v String) String() string {
 	return string(v)
 }
 
-// Cedar produces a valid Cedar language representation of the String, e.g. `"hello"`.
-func (v String) Cedar() string {
-	return strconv.Quote(string(v))
+// MarshalCedar produces a valid MarshalCedar language representation of the String, e.g. `"hello"`.
+func (v String) MarshalCedar() []byte {
+	return []byte(strconv.Quote(string(v)))
 }
 func (v String) deepClone() Value { return v }

@@ -99,9 +99,9 @@ func TestDeepClone(t *testing.T) {
 		t.Parallel()
 		a := mustIPValue("127.0.0.42")
 		b := a.deepClone()
-		testutil.Equals(t, a.Cedar(), b.Cedar())
+		testutil.Equals(t, a.MarshalCedar(), b.MarshalCedar())
 		a = mustIPValue("127.0.0.43")
-		testutil.Equals(t, a.Cedar(), mustIPValue("127.0.0.43").Cedar())
-		testutil.Equals(t, b.Cedar(), mustIPValue("127.0.0.42").Cedar())
+		testutil.Equals(t, a.MarshalCedar(), mustIPValue("127.0.0.43").MarshalCedar())
+		testutil.Equals(t, b.MarshalCedar(), mustIPValue("127.0.0.42").MarshalCedar())
 	})
 }

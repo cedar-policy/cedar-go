@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // A Boolean is a value that is either true or false.
@@ -20,11 +19,14 @@ func (a Boolean) Equal(bi Value) bool {
 func (v Boolean) TypeName() string { return "bool" }
 
 // String produces a string representation of the Boolean, e.g. `true`.
-func (v Boolean) String() string { return v.Cedar() }
+func (v Boolean) String() string { return string(v.MarshalCedar()) }
 
-// Cedar produces a valid Cedar language representation of the Boolean, e.g. `true`.
-func (v Boolean) Cedar() string {
-	return fmt.Sprint(bool(v))
+// MarshalCedar produces a valid MarshalCedar language representation of the Boolean, e.g. `true`.
+func (v Boolean) MarshalCedar() []byte {
+	if v {
+		return []byte("true")
+	}
+	return []byte("false")
 }
 
 // ExplicitMarshalJSON marshals the Boolean into JSON.

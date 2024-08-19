@@ -14,7 +14,7 @@ func (a EntityType) Equal(bi Value) bool {
 }
 
 func (v EntityType) String() string                       { return string(v) }
-func (v EntityType) Cedar() string                        { return string(v) }
+func (v EntityType) MarshalCedar() []byte                 { return []byte(v) }
 func (v EntityType) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(string(v)) }
 func (v EntityType) deepClone() Value                     { return v }
 

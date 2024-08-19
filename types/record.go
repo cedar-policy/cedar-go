@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"slices"
 	"strconv"
-	"strings"
 
 	"golang.org/x/exp/maps"
 )
@@ -72,11 +71,11 @@ func (v Record) MarshalJSON() ([]byte, error) {
 func (v Record) ExplicitMarshalJSON() ([]byte, error) { return v.MarshalJSON() }
 
 // String produces a string representation of the Record, e.g. `{"a":1,"b":2,"c":3}`.
-func (r Record) String() string { return r.Cedar() }
+func (r Record) String() string { return string(r.MarshalCedar()) }
 
-// Cedar produces a valid Cedar language representation of the Record, e.g. `{"a":1,"b":2,"c":3}`.
-func (r Record) Cedar() string {
-	var sb strings.Builder
+// MarshalCedar produces a valid MarshalCedar language representation of the Record, e.g. `{"a":1,"b":2,"c":3}`.
+func (r Record) MarshalCedar() []byte {
+	var sb bytes.Buffer
 	sb.WriteRune('{')
 	first := true
 	keys := maps.Keys(r)
@@ -89,10 +88,10 @@ func (r Record) Cedar() string {
 		first = false
 		sb.WriteString(strconv.Quote(k))
 		sb.WriteString(":")
-		sb.WriteString(v.Cedar())
+		sb.Write(v.MarshalCedar())
 	}
 	sb.WriteRune('}')
-	return sb.String()
+	return sb.Bytes()
 }
 func (v Record) deepClone() Value { return v.DeepClone() }
 

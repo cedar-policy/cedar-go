@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"encoding/json"
-	"strings"
 )
 
 // A Set is a collection of elements that can be of the same or different types.
@@ -77,20 +76,20 @@ func (v Set) MarshalJSON() ([]byte, error) {
 func (v Set) ExplicitMarshalJSON() ([]byte, error) { return v.MarshalJSON() }
 
 // String produces a string representation of the Set, e.g. `[1,2,3]`.
-func (v Set) String() string { return v.Cedar() }
+func (v Set) String() string { return string(v.MarshalCedar()) }
 
-// Cedar produces a valid Cedar language representation of the Set, e.g. `[1,2,3]`.
-func (v Set) Cedar() string {
-	var sb strings.Builder
+// MarshalCedar produces a valid MarshalCedar language representation of the Set, e.g. `[1,2,3]`.
+func (v Set) MarshalCedar() []byte {
+	var sb bytes.Buffer
 	sb.WriteRune('[')
 	for i, elem := range v {
 		if i > 0 {
 			sb.WriteString(", ")
 		}
-		sb.WriteString(elem.Cedar())
+		sb.Write(elem.MarshalCedar())
 	}
 	sb.WriteRune(']')
-	return sb.String()
+	return sb.Bytes()
 }
 func (v Set) deepClone() Value { return v.DeepClone() }
 

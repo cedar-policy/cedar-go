@@ -87,7 +87,7 @@ func marshalAnnotation(n ast.AnnotationType, buf *bytes.Buffer) {
 	buf.WriteRune('@')
 	buf.WriteString(string(n.Key))
 	buf.WriteRune('(')
-	buf.WriteString(n.Value.Cedar())
+	buf.Write(n.Value.MarshalCedar())
 	buf.WriteString(")")
 }
 
@@ -116,7 +116,7 @@ func marshalCondition(c ast.ConditionType, buf *bytes.Buffer) {
 }
 
 func (n NodeValue) marshalCedar(buf *bytes.Buffer) {
-	buf.WriteString(n.NodeValue.Value.Cedar())
+	buf.Write(n.NodeValue.Value.MarshalCedar())
 }
 
 func marshalChildNode(thisNodePrecedence nodePrecedenceLevel, childAstNode ast.IsNode, buf *bytes.Buffer) {
@@ -157,7 +157,7 @@ func (n NodeTypeAccess) marshalCedar(buf *bytes.Buffer) {
 		buf.WriteString(string(n.NodeTypeAccess.Value))
 	} else {
 		buf.WriteRune('[')
-		buf.WriteString(n.NodeTypeAccess.Value.Cedar())
+		buf.Write(n.NodeTypeAccess.Value.MarshalCedar())
 		buf.WriteRune(']')
 	}
 }
@@ -218,7 +218,7 @@ func (n NodeTypeSet) marshalCedar(buf *bytes.Buffer) {
 func (n NodeTypeRecord) marshalCedar(buf *bytes.Buffer) {
 	buf.WriteRune('{')
 	for i := range n.NodeTypeRecord.Elements {
-		buf.WriteString(n.NodeTypeRecord.Elements[i].Key.Cedar())
+		buf.Write(n.NodeTypeRecord.Elements[i].Key.MarshalCedar())
 		buf.WriteString(":")
 		marshalChildNode(n.precedenceLevel(), n.NodeTypeRecord.Elements[i].Value, buf)
 		if i != len(n.NodeTypeRecord.Elements)-1 {
@@ -290,7 +290,7 @@ func (n NodeTypeHas) marshalCedar(buf *bytes.Buffer) {
 	if canMarshalAsIdent(string(n.NodeTypeHas.Value)) {
 		buf.WriteString(string(n.NodeTypeHas.Value))
 	} else {
-		buf.WriteString(n.NodeTypeHas.Value.Cedar())
+		buf.Write(n.NodeTypeHas.Value.MarshalCedar())
 	}
 }
 
