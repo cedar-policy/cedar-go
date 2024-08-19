@@ -28,9 +28,4 @@ func TestBool(t *testing.T) {
 		AssertValueString(t, types.Boolean(true), "true")
 	})
 
-	t.Run("TypeName", func(t *testing.T) {
-		t.Parallel()
-		tn := types.Boolean(true).TypeName()
-		testutil.Equals(t, tn, "bool")
-	})
 }

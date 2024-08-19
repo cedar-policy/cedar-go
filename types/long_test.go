@@ -28,9 +28,4 @@ func TestLong(t *testing.T) {
 		AssertValueString(t, types.Long(1), "1")
 	})
 
-	t.Run("TypeName", func(t *testing.T) {
-		t.Parallel()
-		tn := types.Long(1).TypeName()
-		testutil.Equals(t, tn, "long")
-	})
 }

@@ -112,7 +112,6 @@ func (a Decimal) Equal(bi Value) bool {
 	return ok && a == b
 }
 
-func (v Decimal) TypeName() string { return "decimal" }
 
 // Cedar produces a valid Cedar language representation of the Decimal, e.g. `decimal("12.34")`.
 func (v Decimal) Cedar() string { return `decimal("` + v.String() + `")` }

@@ -26,9 +26,4 @@ func TestEntity(t *testing.T) {
 		AssertValueString(t, types.EntityUID{Type: "namespace::type", ID: "id"}, `namespace::type::"id"`)
 	})
 
-	t.Run("TypeName", func(t *testing.T) {
-		t.Parallel()
-		tn := types.EntityUID{"T", "id"}.TypeName()
-		testutil.Equals(t, tn, "(entity of type `T`)")
-	})
 }

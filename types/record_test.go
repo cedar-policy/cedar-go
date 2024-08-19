@@ -71,9 +71,4 @@ func TestRecord(t *testing.T) {
 			`{"bar":"blah", "foo":true}`)
 	})
 
-	t.Run("TypeName", func(t *testing.T) {
-		t.Parallel()
-		tn := types.Record{}.TypeName()
-		testutil.Equals(t, tn, "record")
-	})
 }

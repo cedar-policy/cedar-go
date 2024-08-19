@@ -120,9 +120,4 @@ func TestDecimal(t *testing.T) {
 		testutil.FatalIf(t, zero.Equal(f), "%v Equal to %v", zero, f)
 	})
 
-	t.Run("TypeName", func(t *testing.T) {
-		t.Parallel()
-		tn := types.Decimal(0).TypeName()
-		testutil.Equals(t, tn, "decimal")
-	})
 }
