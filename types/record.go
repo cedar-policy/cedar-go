@@ -91,7 +91,7 @@ func (r Record) Cedar() string {
 		}
 		first = false
 		sb.WriteString(strconv.Quote(k))
-		sb.WriteString(": ")
+		sb.WriteString(":")
 		sb.WriteString(v.Cedar())
 	}
 	sb.WriteRune('}')
