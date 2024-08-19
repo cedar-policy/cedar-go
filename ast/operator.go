@@ -36,20 +36,20 @@ func (lhs Node) GreaterThanOrEqual(rhs Node) Node {
 	return wrapNode(lhs.Node.GreaterThanOrEqual(rhs.Node))
 }
 
-func (lhs Node) LessThanExt(rhs Node) Node {
-	return wrapNode(lhs.Node.LessThanExt(rhs.Node))
+func (lhs Node) DecimalLessThan(rhs Node) Node {
+	return wrapNode(lhs.Node.DecimalLessThan(rhs.Node))
 }
 
-func (lhs Node) LessThanOrEqualExt(rhs Node) Node {
-	return wrapNode(lhs.Node.LessThanOrEqualExt(rhs.Node))
+func (lhs Node) DecimalLessThanOrEqual(rhs Node) Node {
+	return wrapNode(lhs.Node.DecimalLessThanOrEqual(rhs.Node))
 }
 
-func (lhs Node) GreaterThanExt(rhs Node) Node {
-	return wrapNode(lhs.Node.GreaterThanExt(rhs.Node))
+func (lhs Node) DecimalGreaterThan(rhs Node) Node {
+	return wrapNode(lhs.Node.DecimalGreaterThan(rhs.Node))
 }
 
-func (lhs Node) GreaterThanOrEqualExt(rhs Node) Node {
-	return wrapNode(lhs.Node.GreaterThanOrEqualExt(rhs.Node))
+func (lhs Node) DecimalGreaterThanOrEqual(rhs Node) Node {
+	return wrapNode(lhs.Node.DecimalGreaterThanOrEqual(rhs.Node))
 }
 
 func (lhs Node) Like(pattern types.Pattern) Node {
