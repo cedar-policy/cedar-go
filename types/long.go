@@ -17,10 +17,10 @@ func (a Long) Equal(bi Value) bool {
 func (v Long) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
 
 // String produces a string representation of the Long, e.g. `42`.
-func (v Long) String() string { return v.Cedar() }
+func (v Long) String() string { return fmt.Sprint(int64(v)) }
 
-// Cedar produces a valid Cedar language representation of the Long, e.g. `42`.
-func (v Long) Cedar() string {
-	return fmt.Sprint(int64(v))
+// MarshalCedar produces a valid MarshalCedar language representation of the Long, e.g. `42`.
+func (v Long) MarshalCedar() []byte {
+	return []byte(v.String())
 }
 func (v Long) deepClone() Value { return v }

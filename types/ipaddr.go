@@ -31,9 +31,8 @@ func (a IPAddr) Equal(bi Value) bool {
 	return ok && a == b
 }
 
-
-// Cedar produces a valid Cedar language representation of the IPAddr, e.g. `ip("127.0.0.1")`.
-func (v IPAddr) Cedar() string { return `ip("` + v.String() + `")` }
+// MarshalCedar produces a valid MarshalCedar language representation of the IPAddr, e.g. `ip("127.0.0.1")`.
+func (v IPAddr) MarshalCedar() []byte { return []byte(`ip("` + v.String() + `")`) }
 
 // String produces a string representation of the IPAddr, e.g. `127.0.0.1`.
 func (v IPAddr) String() string {

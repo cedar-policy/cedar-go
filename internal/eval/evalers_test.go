@@ -1900,7 +1900,7 @@ func TestCedarString(t *testing.T) {
 			t.Parallel()
 			gotString := tt.in.String()
 			testutil.Equals(t, gotString, tt.wantString)
-			gotCedar := tt.in.Cedar()
+			gotCedar := string(tt.in.MarshalCedar())
 			testutil.Equals(t, gotCedar, tt.wantCedar)
 		})
 	}

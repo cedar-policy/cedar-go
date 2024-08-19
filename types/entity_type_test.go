@@ -28,7 +28,7 @@ func TestEntityType(t *testing.T) {
 	t.Run("Cedar", func(t *testing.T) {
 		t.Parallel()
 		a := types.EntityType("X")
-		testutil.Equals(t, a.Cedar(), "X")
+		testutil.Equals(t, a.MarshalCedar(), []byte("X"))
 	})
 	t.Run("ExplicitMarshalJSON", func(t *testing.T) {
 		t.Parallel()

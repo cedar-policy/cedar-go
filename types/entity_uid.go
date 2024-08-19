@@ -29,11 +29,11 @@ func (a EntityUID) Equal(bi Value) bool {
 }
 
 // String produces a string representation of the EntityUID, e.g. `Type::"id"`.
-func (v EntityUID) String() string { return v.Cedar() }
+func (v EntityUID) String() string { return string(v.Type.String() + "::" + strconv.Quote(v.ID)) }
 
-// Cedar produces a valid Cedar language representation of the EntityUID, e.g. `Type::"id"`.
-func (v EntityUID) Cedar() string {
-	return v.Type.String() + "::" + strconv.Quote(v.ID)
+// MarshalCedar produces a valid MarshalCedar language representation of the EntityUID, e.g. `Type::"id"`.
+func (v EntityUID) MarshalCedar() []byte {
+	return []byte(v.String())
 }
 
 func (v *EntityUID) UnmarshalJSON(b []byte) error {
