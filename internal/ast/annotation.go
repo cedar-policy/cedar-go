@@ -13,8 +13,8 @@ type Annotations struct {
 //	    Annotation("baz", "quux").
 //		Permit().
 //		PrincipalEq(superUser)
-func Annotation(name, value types.String) *Annotations {
-	return &Annotations{nodes: []AnnotationType{newAnnotation(name, value)}}
+func Annotation(key, value types.String) *Annotations {
+	return &Annotations{nodes: []AnnotationType{newAnnotation(key, value)}}
 }
 
 func addAnnotation(in []AnnotationType, key, value types.String) []AnnotationType {

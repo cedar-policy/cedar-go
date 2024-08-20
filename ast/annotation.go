@@ -22,8 +22,8 @@ func wrapAnnotations(a *ast.Annotations) *Annotations {
 //	    Annotation("baz", "quux").
 //		Permit().
 //		PrincipalEq(superUser)
-func Annotation(name, value types.String) *Annotations {
-	return wrapAnnotations(ast.Annotation(name, value))
+func Annotation(key, value types.String) *Annotations {
+	return wrapAnnotations(ast.Annotation(key, value))
 }
 
 // If a previous annotation exists with the same key, this builder will replace it.
