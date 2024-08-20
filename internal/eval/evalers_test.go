@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/entities"
+	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -1424,7 +1425,7 @@ func TestLikeNode(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			pat, err := types.ParsePattern(tt.pattern[1 : len(tt.pattern)-1])
+			pat, err := parser.ParsePattern(tt.pattern[1 : len(tt.pattern)-1])
 			testutil.OK(t, err)
 			n := newLikeEval(tt.str, pat)
 			v, err := n.Eval(&Context{})

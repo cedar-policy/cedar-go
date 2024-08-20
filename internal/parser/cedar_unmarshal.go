@@ -557,7 +557,7 @@ func (p *parser) like(lhs ast.Node) (ast.Node, error) {
 	patternRaw := t.Text
 	patternRaw = strings.TrimPrefix(patternRaw, "\"")
 	patternRaw = strings.TrimSuffix(patternRaw, "\"")
-	pattern, err := types.ParsePattern(patternRaw)
+	pattern, err := ParsePattern(patternRaw)
 	if err != nil {
 		return ast.Node{}, err
 	}
