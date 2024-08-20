@@ -31,3 +31,11 @@ func TestAsNode(t *testing.T) {
 	v := n.AsIsNode()
 	testutil.Equals(t, v, (IsNode)(NodeValue{Value: types.Long(42)}))
 }
+
+func TestIsScope(t *testing.T) {
+	t.Parallel()
+	ScopeNode{}.isScope()
+	PrincipalScopeNode{}.isPrincipalScope()
+	ActionScopeNode{}.isActionScope()
+	ResourceScopeNode{}.isResourceScope()
+}
