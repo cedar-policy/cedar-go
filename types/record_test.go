@@ -57,17 +57,17 @@ func TestRecord(t *testing.T) {
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		assertValueString(t, types.Record{}, "{}")
-		assertValueString(
+		testutil.Equals(t, types.Record{}.String(), "{}")
+		testutil.Equals(
 			t,
-			types.Record{"foo": types.Boolean(true)},
+			types.Record{"foo": types.Boolean(true)}.String(),
 			`{"foo":true}`)
-		assertValueString(
+		testutil.Equals(
 			t,
 			types.Record{
 				"foo": types.Boolean(true),
 				"bar": types.String("blah"),
-			},
+			}.String(),
 			`{"bar":"blah", "foo":true}`)
 	})
 
