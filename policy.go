@@ -12,7 +12,7 @@ import (
 
 // A Policy is the parsed form of a single Cedar language policy statement.
 type Policy struct {
-	eval evaler // determines if a policy matches a request.
+	eval eval.Evaler // determines if a policy matches a request.
 	ast  *internalast.Policy
 }
 
@@ -70,7 +70,6 @@ func NewPolicyFromAST(astIn *ast.Policy) *Policy {
 type Annotations map[string]string
 
 func (p Policy) Annotations() Annotations {
-	// TODO: Where should we deal with duplicate keys?
 	res := make(map[string]string, len(p.ast.Annotations))
 	for _, e := range p.ast.Annotations {
 		res[string(e.Key)] = string(e.Value)
@@ -80,7 +79,7 @@ func (p Policy) Annotations() Annotations {
 
 // An Effect specifies the intent of the policy, to either permit or forbid any
 // request that matches the scope and conditions specified in the policy.
-type Effect internalast.Effect
+type Effect bool
 
 // Each Policy has a Permit or Forbid effect that is determined during parsing.
 const (
@@ -93,7 +92,12 @@ func (p Policy) Effect() Effect {
 }
 
 // A Position describes an arbitrary source position including the file, line, and column location.
-type Position internalast.Position
+type Position struct {
+	Filename string // optional name of the source file for the enclosing policy, "" if the source is unknown or not a named file
+	Offset   int    // byte offset, starting at 0
+	Line     int    // line number, starting at 1
+	Column   int    // column number, starting at 1 (character count per line)
+}
 
 func (p Policy) Position() Position {
 	return Position(p.ast.Position)

@@ -19,7 +19,7 @@ func NewPolicySet() PolicySet {
 	return PolicySet{policies: map[PolicyID]*Policy{}}
 }
 
-// NewPolicySetFromBytes will create a PolicySet from the given text document with the/ given file name used in Position
+// NewPolicySetFromBytes will create a PolicySet from the given text document with the given file name used in Position
 // data.  If there is an error parsing the document, it will be returned.
 //
 // NewPolicySetFromBytes assigns default PolicyIDs to the policies contained in fileName in the format "policy<n>" where

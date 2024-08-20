@@ -12,7 +12,7 @@ import (
 // naming individual policies.
 type PolicySlice []*Policy
 
-// NewPolicySliceFromBytes will create a PolicySet from the given text document with the/ given file name used in Position
+// NewPolicySliceFromBytes will create a PolicySet from the given text document with the given file name used in Position
 // data.  If there is an error parsing the document, it will be returned.
 func NewPolicySliceFromBytes(fileName string, document []byte) (PolicySlice, error) {
 	var policySlice PolicySlice
