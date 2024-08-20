@@ -59,10 +59,17 @@ type Pair struct {
 
 type Pairs []Pair
 
+// In the case where duplicate keys exist, the latter value will be preserved.
 func Record(elements Pairs) Node {
 	var res NodeTypeRecord
-	for _, e := range elements {
-		res.Elements = append(res.Elements, RecordElementNode{Key: types.String(e.Key), Value: e.Value.v})
+	m := make(map[string]int, len(elements))
+	for _, v := range elements {
+		if i, ok := m[v.Key]; ok {
+			res.Elements[i] = RecordElementNode{Key: types.String(v.Key), Value: v.Value.v}
+			continue
+		}
+		m[v.Key] = len(res.Elements)
+		res.Elements = append(res.Elements, RecordElementNode{Key: types.String(v.Key), Value: v.Value.v})
 	}
 	return NewNode(res)
 }
