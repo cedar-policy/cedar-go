@@ -87,12 +87,12 @@ func TestDeepClone(t *testing.T) {
 
 	t.Run("Decimal", func(t *testing.T) {
 		t.Parallel()
-		a := Decimal(42)
+		a := NewDecimal(42)
 		b := a.deepClone()
 		testutil.Equals(t, Value(a), b)
-		a = Decimal(43)
-		testutil.Equals(t, a, Decimal(43))
-		testutil.Equals(t, b, Value(Decimal(42)))
+		a = NewDecimal(43)
+		testutil.Equals(t, a, NewDecimal(43))
+		testutil.Equals(t, b, Value(NewDecimal(42)))
 	})
 
 	t.Run("IPAddr", func(t *testing.T) {
