@@ -11,7 +11,15 @@ import (
 // A Decimal is a value with both a whole number part and a decimal part of no
 // more than four digits. In Go this is stored as an int64, the precision is
 // defined by the constant DecimalPrecision.
-type Decimal int64
+type Decimal struct {
+	Value int64
+}
+
+// NewDecimal creates a decimal via trivial conversion from int, int64, float64.
+// Precision may be lost and overflows may occur.
+func NewDecimal[T int | int64 | float64](v T) Decimal {
+	return Decimal{Value: int64(v * DecimalPrecision)}
+}
 
 // DecimalPrecision is the precision of a Decimal.
 const DecimalPrecision = 10000
@@ -20,7 +28,7 @@ const DecimalPrecision = 10000
 func ParseDecimal(s string) (Decimal, error) {
 	// Check for empty string.
 	if len(s) == 0 {
-		return Decimal(0), fmt.Errorf("%w: string too short", ErrDecimal)
+		return Decimal{}, fmt.Errorf("%w: string too short", ErrDecimal)
 	}
 	i := 0
 
@@ -30,14 +38,14 @@ func ParseDecimal(s string) (Decimal, error) {
 		negative = true
 		i++
 		if i == len(s) {
-			return Decimal(0), fmt.Errorf("%w: string too short", ErrDecimal)
+			return Decimal{}, fmt.Errorf("%w: string too short", ErrDecimal)
 		}
 	}
 
 	// Parse the required first digit.
 	c := rune(s[i])
 	if !unicode.IsDigit(c) {
-		return Decimal(0), fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
+		return Decimal{}, fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
 	}
 	integer := int64(c - '0')
 	i++
@@ -45,18 +53,18 @@ func ParseDecimal(s string) (Decimal, error) {
 	// Parse any other digits, ending with i pointing to '.'.
 	for ; ; i++ {
 		if i == len(s) {
-			return Decimal(0), fmt.Errorf("%w: string missing decimal point", ErrDecimal)
+			return Decimal{}, fmt.Errorf("%w: string missing decimal point", ErrDecimal)
 		}
 		c = rune(s[i])
 		if c == '.' {
 			break
 		}
 		if !unicode.IsDigit(c) {
-			return Decimal(0), fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
+			return Decimal{}, fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
 		}
 		integer = 10*integer + int64(c-'0')
 		if integer > 922337203685477 {
-			return Decimal(0), fmt.Errorf("%w: overflow", ErrDecimal)
+			return Decimal{}, fmt.Errorf("%w: overflow", ErrDecimal)
 		}
 	}
 
@@ -69,7 +77,7 @@ func ParseDecimal(s string) (Decimal, error) {
 	for ; i < len(s); i++ {
 		c = rune(s[i])
 		if !unicode.IsDigit(c) {
-			return Decimal(0), fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
+			return Decimal{}, fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
 		}
 		fraction = 10*fraction + int64(c-'0')
 		fractionDigits++
@@ -78,7 +86,7 @@ func ParseDecimal(s string) (Decimal, error) {
 	// Adjust the fraction part based on how many digits we parsed.
 	switch fractionDigits {
 	case 0:
-		return Decimal(0), fmt.Errorf("%w: missing digits after decimal point", ErrDecimal)
+		return Decimal{}, fmt.Errorf("%w: missing digits after decimal point", ErrDecimal)
 	case 1:
 		fraction *= 1000
 	case 2:
@@ -87,12 +95,12 @@ func ParseDecimal(s string) (Decimal, error) {
 		fraction *= 10
 	case 4:
 	default:
-		return Decimal(0), fmt.Errorf("%w: too many digits after decimal point", ErrDecimal)
+		return Decimal{}, fmt.Errorf("%w: too many digits after decimal point", ErrDecimal)
 	}
 
 	// Check for overflow before we put the number together.
 	if integer >= 922337203685477 && (fraction > 5808 || (!negative && fraction == 5808)) {
-		return Decimal(0), fmt.Errorf("%w: overflow", ErrDecimal)
+		return Decimal{}, fmt.Errorf("%w: overflow", ErrDecimal)
 	}
 
 	// Put the number together.
@@ -101,9 +109,9 @@ func ParseDecimal(s string) (Decimal, error) {
 		// -922337203685477.5808. This isn't technically necessary because the
 		// go spec defines arithmetic to be well-defined when overflowing.
 		// However, doing things this way doesn't hurt, so let's be pedantic.
-		return Decimal(DecimalPrecision*-integer - fraction), nil
+		return Decimal{Value: DecimalPrecision*-integer - fraction}, nil
 	} else {
-		return Decimal(DecimalPrecision*integer + fraction), nil
+		return Decimal{Value: DecimalPrecision*integer + fraction}, nil
 	}
 }
 
@@ -118,13 +126,13 @@ func (v Decimal) MarshalCedar() []byte { return []byte(`decimal("` + v.String() 
 // String produces a string representation of the Decimal, e.g. `12.34`.
 func (v Decimal) String() string {
 	var res string
-	if v < 0 {
+	if v.Value < 0 {
 		// Make sure we don't overflow here. Also, go truncates towards zero.
-		integer := v / DecimalPrecision
-		decimal := integer*DecimalPrecision - v
+		integer := v.Value / DecimalPrecision
+		decimal := integer*DecimalPrecision - v.Value
 		res = fmt.Sprintf("-%d.%04d", -integer, decimal)
 	} else {
-		res = fmt.Sprintf("%d.%04d", v/DecimalPrecision, v%DecimalPrecision)
+		res = fmt.Sprintf("%d.%04d", v.Value/DecimalPrecision, v.Value%DecimalPrecision)
 	}
 
 	// Trim off up to three trailing zeros.

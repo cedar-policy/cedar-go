@@ -103,11 +103,11 @@ func evalEntityType(n Evaler, ctx *Context) (types.EntityType, error) {
 func evalDecimal(n Evaler, ctx *Context) (types.Decimal, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
-		return types.Decimal(0), err
+		return types.Decimal{}, err
 	}
 	d, err := ValueToDecimal(v)
 	if err != nil {
-		return types.Decimal(0), err
+		return types.Decimal{}, err
 	}
 	return d, nil
 }
@@ -523,7 +523,7 @@ func (n *decimalLessThanEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs < rhs), nil
+	return types.Boolean(lhs.Value < rhs.Value), nil
 }
 
 // decimalLessThanOrEqualEval
@@ -548,7 +548,7 @@ func (n *decimalLessThanOrEqualEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs <= rhs), nil
+	return types.Boolean(lhs.Value <= rhs.Value), nil
 }
 
 // decimalGreaterThanEval
@@ -573,7 +573,7 @@ func (n *decimalGreaterThanEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs > rhs), nil
+	return types.Boolean(lhs.Value > rhs.Value), nil
 }
 
 // decimalGreaterThanOrEqualEval
@@ -598,7 +598,7 @@ func (n *decimalGreaterThanOrEqualEval) Eval(ctx *Context) (types.Value, error) 
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs >= rhs), nil
+	return types.Boolean(lhs.Value >= rhs.Value), nil
 }
 
 // ifThenElseEval

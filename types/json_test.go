@@ -210,7 +210,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 				return res, err
 			},
 			in:        `"bad`,
-			wantValue: Decimal(0),
+			wantValue: Decimal{},
 			wantErr:   errJSONDecode,
 		},
 		{
@@ -221,7 +221,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 				return res, err
 			},
 			in:        `{ "__extn": { "fn": "decimal", "arg": "bad" } }`,
-			wantValue: Decimal(0),
+			wantValue: Decimal{},
 			wantErr:   ErrDecimal,
 		},
 		{
@@ -232,7 +232,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 				return res, err
 			},
 			in:        `bad`,
-			wantValue: Decimal(0),
+			wantValue: Decimal{},
 			wantErr:   errJSONDecode,
 		},
 		{
@@ -243,7 +243,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 				return res, err
 			},
 			in:        `{ "__extn": { "fn": "bad", "arg": "1234.5678" } }`,
-			wantValue: Decimal(0),
+			wantValue: Decimal{},
 			wantErr:   errJSONExtFnMatch,
 		},
 		{
@@ -254,7 +254,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 				return res, err
 			},
 			in:        `{ }`,
-			wantValue: Decimal(0),
+			wantValue: Decimal{},
 			wantErr:   errJSONExtNotFound,
 		},
 	}

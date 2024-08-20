@@ -758,10 +758,10 @@ func TestDecimalLessThanNode(t *testing.T) {
 			lhs, rhs Evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal(0)), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Decimal(0)), ErrType},
-			{"RhsError", newLiteralEval(types.Decimal(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.Decimal(0)), newLiteralEval(types.True), ErrType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal{}), errTest},
+			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Decimal{}), ErrType},
+			{"RhsError", newLiteralEval(types.Decimal{}), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Decimal{}), newLiteralEval(types.True), ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -815,10 +815,10 @@ func TestDecimalLessThanOrEqualNode(t *testing.T) {
 			lhs, rhs Evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal(0)), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Decimal(0)), ErrType},
-			{"RhsError", newLiteralEval(types.Decimal(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.Decimal(0)), newLiteralEval(types.True), ErrType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal{}), errTest},
+			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Decimal{}), ErrType},
+			{"RhsError", newLiteralEval(types.Decimal{}), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Decimal{}), newLiteralEval(types.True), ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -872,10 +872,10 @@ func TestDecimalGreaterThanNode(t *testing.T) {
 			lhs, rhs Evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal(0)), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Decimal(0)), ErrType},
-			{"RhsError", newLiteralEval(types.Decimal(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.Decimal(0)), newLiteralEval(types.True), ErrType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal{}), errTest},
+			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Decimal{}), ErrType},
+			{"RhsError", newLiteralEval(types.Decimal{}), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Decimal{}), newLiteralEval(types.True), ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -929,10 +929,10 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 			lhs, rhs Evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal(0)), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Decimal(0)), ErrType},
-			{"RhsError", newLiteralEval(types.Decimal(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.Decimal(0)), newLiteralEval(types.True), ErrType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Decimal{}), errTest},
+			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Decimal{}), ErrType},
+			{"RhsError", newLiteralEval(types.Decimal{}), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Decimal{}), newLiteralEval(types.True), ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1760,7 +1760,7 @@ func TestDecimalLiteralNode(t *testing.T) {
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
 		{"DecimalError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDecimal},
-		{"Success", newLiteralEval(types.String("1.0")), types.Decimal(10000), nil},
+		{"Success", newLiteralEval(types.String("1.0")), types.NewDecimal(1), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -1892,7 +1892,7 @@ func TestCedarString(t *testing.T) {
 		{"set", types.Set{types.Long(42), types.Long(43)}, `[42, 43]`, `[42, 43]`},
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
-		{"decimal", types.Decimal(12345678), `1234.5678`, `decimal("1234.5678")`},
+		{"decimal", types.NewDecimal(1234.5678), `1234.5678`, `decimal("1234.5678")`},
 	}
 	for _, tt := range tests {
 		tt := tt

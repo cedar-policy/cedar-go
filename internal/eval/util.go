@@ -92,7 +92,7 @@ func ValueToEntityType(v types.Value) (types.EntityType, error) {
 func ValueToDecimal(v types.Value) (types.Decimal, error) {
 	d, ok := v.(types.Decimal)
 	if !ok {
-		return 0, fmt.Errorf("%w: expected decimal, got %v", ErrType, TypeName(v))
+		return types.Decimal{}, fmt.Errorf("%w: expected decimal, got %v", ErrType, TypeName(v))
 	}
 	return d, nil
 }

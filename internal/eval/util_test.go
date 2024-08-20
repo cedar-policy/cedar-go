@@ -134,7 +134,7 @@ func TestUtil(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToDecimal(types.Boolean(true))
 			testutil.AssertError(t, err, ErrType)
-			testutil.Equals(t, v, 0)
+			testutil.Equals(t, v, types.Decimal{})
 		})
 
 	})
@@ -161,7 +161,7 @@ func TestTypeName(t *testing.T) {
 	}{
 
 		{"boolean", types.Boolean(true), "bool"},
-		{"decimal", types.Decimal(42), "decimal"},
+		{"decimal", types.NewDecimal(42), "decimal"},
 		{"entityType", types.EntityType("T"), "(EntityType of type `T`)"},
 		{"entityUID", types.NewEntityUID("T", "42"), "(entity of type `T`)"},
 		{"ip", types.IPAddr{}, "IP"},
