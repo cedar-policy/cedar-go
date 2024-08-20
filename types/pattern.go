@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/cedar-policy/cedar-go/internal/rust"
 )
 
 var errJSONInvalidPatternComponent = fmt.Errorf("invalid pattern component")
@@ -137,26 +135,6 @@ func matchChunk(chunk, s string) (rest string, ok bool) {
 		chunk = chunk[1:]
 	}
 	return s, true
-}
-
-// ParsePattern will parse an unquoted rust-style string with \*'s in it.
-func ParsePattern(v string) (Pattern, error) {
-	b := []byte(v)
-	var comps []PatternComponent
-	for len(b) > 0 {
-		for len(b) > 0 && b[0] == '*' {
-			b = b[1:]
-			comps = append(comps, Wildcard())
-		}
-		var err error
-		var literal string
-		literal, b, err = rust.Unquote(b, true)
-		if err != nil {
-			return Pattern{}, err
-		}
-		comps = append(comps, String(literal))
-	}
-	return NewPattern(comps...), nil
 }
 
 func (p Pattern) MarshalJSON() ([]byte, error) {

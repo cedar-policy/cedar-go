@@ -399,7 +399,7 @@ func TestUnmarshalJSON(t *testing.T) {
 			"like single wildcard",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"like":{"left":{"Value":"text"},"pattern":["Wildcard"]}}}]}`,
-			ast.Permit().When(ast.String("text").Like(types.NewPattern(types.Wildcard))),
+			ast.Permit().When(ast.String("text").Like(types.NewPattern(types.Wildcard()))),
 			testutil.OK,
 		},
 		{
@@ -413,14 +413,14 @@ func TestUnmarshalJSON(t *testing.T) {
 			"like wildcard then literal",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"like":{"left":{"Value":"text"},"pattern":["Wildcard", {"Literal":"foo"}]}}}]}`,
-			ast.Permit().When(ast.String("text").Like(types.NewPattern(types.Wildcard, types.String("foo")))),
+			ast.Permit().When(ast.String("text").Like(types.NewPattern(types.Wildcard(), types.String("foo")))),
 			testutil.OK,
 		},
 		{
 			"like literal then wildcard",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"like":{"left":{"Value":"text"},"pattern":[{"Literal":"foo"}, "Wildcard"]}}}]}`,
-			ast.Permit().When(ast.String("text").Like(types.NewPattern(types.String("foo"), types.Wildcard))),
+			ast.Permit().When(ast.String("text").Like(types.NewPattern(types.String("foo"), types.Wildcard()))),
 			testutil.OK,
 		},
 		{

@@ -881,7 +881,7 @@ func (l *likeEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(l.pattern.Match(string(v))), nil
+	return types.Boolean(l.pattern.Match(v)), nil
 }
 
 type variableName func(ctx *Context) types.Value

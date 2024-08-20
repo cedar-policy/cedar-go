@@ -295,8 +295,8 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"opLike",
-			ast.Permit().When(ast.Long(42).Like(types.NewPattern(types.Wildcard))),
-			internalast.Permit().When(internalast.Long(42).Like(types.NewPattern(types.Wildcard))),
+			ast.Permit().When(ast.Long(42).Like(types.NewPattern(types.Wildcard()))),
+			internalast.Permit().When(internalast.Long(42).Like(types.NewPattern(types.Wildcard()))),
 		},
 		{
 			"opAnd",
