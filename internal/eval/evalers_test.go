@@ -1759,7 +1759,7 @@ func TestDecimalLiteralNode(t *testing.T) {
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
 		{"DecimalError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDecimal},
-		{"Success", newLiteralEval(types.String("1.0")), types.NewDecimal(1), nil},
+		{"Success", newLiteralEval(types.String("1.0")), types.UnsafeDecimal(1), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -1891,7 +1891,7 @@ func TestCedarString(t *testing.T) {
 		{"set", types.Set{types.Long(42), types.Long(43)}, `[42, 43]`, `[42, 43]`},
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
-		{"decimal", types.NewDecimal(1234.5678), `1234.5678`, `decimal("1234.5678")`},
+		{"decimal", types.UnsafeDecimal(1234.5678), `1234.5678`, `decimal("1234.5678")`},
 	}
 	for _, tt := range tests {
 		tt := tt
