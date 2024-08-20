@@ -1,24 +1,23 @@
-package entities
+package types
 
 import (
 	"encoding/json"
 	"slices"
 	"strings"
 
-	"github.com/cedar-policy/cedar-go/types"
 	"golang.org/x/exp/maps"
 )
 
 // An Entities is a collection of all the Entities that are needed to evaluate
 // authorization requests.  The key is an EntityUID which uniquely identifies
 // the Entity (it must be the same as the UID within the Entity itself.)
-type Entities map[types.EntityUID]Entity
+type Entities map[EntityUID]Entity
 
 // An Entity defines the parents and attributes for an EntityUID.
 type Entity struct {
-	UID        types.EntityUID   `json:"uid"`
-	Parents    []types.EntityUID `json:"parents,omitempty"`
-	Attributes types.Record      `json:"attrs"`
+	UID        EntityUID   `json:"uid"`
+	Parents    []EntityUID `json:"parents,omitempty"`
+	Attributes Record      `json:"attrs"`
 }
 
 func (e Entities) MarshalJSON() ([]byte, error) {

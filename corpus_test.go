@@ -12,7 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	entities2 "github.com/cedar-policy/cedar-go/internal/entities"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -140,7 +139,7 @@ func TestCorpus(t *testing.T) {
 				t.Fatal("error reading entities content", err)
 			}
 
-			var entities entities2.Entities
+			var entities types.Entities
 			if err := json.Unmarshal(entitiesContent, &entities); err != nil {
 				t.Fatal("error unmarshalling test", err)
 			}
@@ -338,7 +337,7 @@ func TestCorpusRelated(t *testing.T) {
 			t.Parallel()
 			policy, err := NewPolicySetFromBytes("", []byte(tt.policy))
 			testutil.OK(t, err)
-			ok, diag := policy.IsAuthorized(entities2.Entities{}, tt.request)
+			ok, diag := policy.IsAuthorized(types.Entities{}, tt.request)
 			testutil.Equals(t, ok, tt.decision)
 			var reasons []PolicyID
 			for _, n := range diag.Reasons {
