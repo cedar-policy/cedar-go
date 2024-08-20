@@ -38,7 +38,7 @@ type Position struct {
 
 type Policy struct {
 	Effect      Effect
-	Annotations []AnnotationType
+	Annotations []AnnotationType // duplicate keys are prevented via the builders
 	Principal   IsPrincipalScopeNode
 	Action      IsActionScopeNode
 	Resource    IsResourceScopeNode
