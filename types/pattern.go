@@ -10,6 +10,8 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/rust"
 )
 
+var errJSONInvalidPatternComponent = fmt.Errorf("invalid pattern component")
+
 type patternComponent struct {
 	Wildcard bool
 	Literal  string
@@ -27,21 +29,21 @@ type PatternComponent interface {
 	isPatternComponent()
 }
 
-type WildcardPatternComponent struct{}
+type wildcardComponent struct{}
 
-func (WildcardPatternComponent) isPatternComponent() {}
-
-// Wildcard is a constant which can be used to conveniently construct an instance of WildcardPatternComponent
-var Wildcard = WildcardPatternComponent{}
+func (wildcardComponent) isPatternComponent() {}
 
 func (String) isPatternComponent() {}
+
+// Wildcard is a constant which can be used to conveniently construct an instance of WildcardPatternComponent
+func Wildcard() PatternComponent { return wildcardComponent{} }
 
 // NewPattern permits for the programmatic construction of a Pattern out of a set of PatternComponents.
 func NewPattern(components ...PatternComponent) Pattern {
 	var comps []patternComponent
 	for _, c := range components {
 		switch v := c.(type) {
-		case WildcardPatternComponent:
+		case wildcardComponent:
 			if len(comps) == 0 || comps[len(comps)-1].Literal != "" {
 				comps = append(comps, patternComponent{Wildcard: true, Literal: ""})
 			}
@@ -85,7 +87,7 @@ func (p Pattern) MarshalCedar() []byte {
 //	term:
 //		'*'         matches any sequence of non-Separator characters
 //		c           matches character c (c != '*')
-func (p Pattern) Match(arg string) (matched bool) {
+func (p Pattern) Match(arg String) (matched bool) {
 Pattern:
 	for i, comp := range p.comps {
 		lastChunk := i == len(p.comps)-1
@@ -93,24 +95,24 @@ Pattern:
 			return true
 		}
 		// Look for Match at current position.
-		t, ok := matchChunk(comp.Literal, arg)
+		t, ok := matchChunk(comp.Literal, string(arg))
 		// if we're the last chunk, make sure we've exhausted the name
 		// otherwise we'll give a false result even if we could still Match
 		// using the star
 		if ok && (len(t) == 0 || !lastChunk) {
-			arg = t
+			arg = String(t)
 			continue
 		}
 		if comp.Wildcard {
 			// Look for Match skipping i+1 bytes.
 			for i := 0; i < len(arg); i++ {
-				t, ok := matchChunk(comp.Literal, arg[i+1:])
+				t, ok := matchChunk(comp.Literal, string(arg[i+1:]))
 				if ok {
 					// if we're the last chunk, make sure we exhausted the name
 					if lastChunk && len(t) > 0 {
 						continue
 					}
-					arg = t
+					arg = String(t)
 					continue Pattern
 				}
 			}
@@ -144,7 +146,7 @@ func ParsePattern(v string) (Pattern, error) {
 	for len(b) > 0 {
 		for len(b) > 0 && b[0] == '*' {
 			b = b[1:]
-			comps = append(comps, Wildcard)
+			comps = append(comps, Wildcard())
 		}
 		var err error
 		var literal string
@@ -200,7 +202,7 @@ func (p *Pattern) UnmarshalJSON(b []byte) error {
 			if v != "Wildcard" {
 				return fmt.Errorf(`%w: invalid component string "%v"`, errJSONInvalidPatternComponent, v)
 			}
-			comps = append(comps, Wildcard)
+			comps = append(comps, Wildcard())
 		case map[string]any:
 			if len(v) != 1 {
 				return fmt.Errorf(`%w: too many keys in literal object`, errJSONInvalidPatternComponent)
