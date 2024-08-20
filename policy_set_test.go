@@ -162,7 +162,7 @@ forbid (
 
 	ps := cedar.NewPolicySet()
 	for i, p := range policies {
-		p.SetFileName("example.cedar")
+		p.SetFilename("example.cedar")
 		ps.UpsertPolicy(cedar.PolicyID(fmt.Sprintf("policy%d", i)), p)
 	}
 

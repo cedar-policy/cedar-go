@@ -20,7 +20,7 @@ func NewPolicySliceFromBytes(fileName string, document []byte) (PolicySlice, err
 		return nil, err
 	}
 	for _, p := range policySlice {
-		p.SetFileName(fileName)
+		p.SetFilename(fileName)
 	}
 	return policySlice, nil
 }

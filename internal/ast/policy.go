@@ -30,7 +30,7 @@ const (
 // Position is a value that represents a source Position.
 // A Position is valid if Line > 0.
 type Position struct {
-	FileName string // optional name of the source file for the enclosing policy, "" if the source is unknown or not a named file
+	Filename string // optional name of the source file for the enclosing policy, "" if the source is unknown or not a named file
 	Offset   int    // byte offset, starting at 0
 	Line     int    // line number, starting at 1
 	Column   int    // column number, starting at 1 (character count per line)
