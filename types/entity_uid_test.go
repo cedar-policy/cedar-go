@@ -22,8 +22,8 @@ func TestEntity(t *testing.T) {
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		assertValueString(t, types.EntityUID{Type: "type", ID: "id"}, `type::"id"`)
-		assertValueString(t, types.EntityUID{Type: "namespace::type", ID: "id"}, `namespace::type::"id"`)
+		testutil.Equals(t, types.EntityUID{Type: "type", ID: "id"}.String(), `type::"id"`)
+		testutil.Equals(t, types.EntityUID{Type: "namespace::type", ID: "id"}.String(), `namespace::type::"id"`)
 	})
 
 }
