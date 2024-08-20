@@ -88,18 +88,6 @@ func evalEntity(n Evaler, ctx *Context) (types.EntityUID, error) {
 	return e, nil
 }
 
-func evalEntityType(n Evaler, ctx *Context) (types.EntityType, error) {
-	v, err := n.Eval(ctx)
-	if err != nil {
-		return "", err
-	}
-	e, err := ValueToEntityType(v)
-	if err != nil {
-		return "", err
-	}
-	return e, nil
-}
-
 func evalDecimal(n Evaler, ctx *Context) (types.Decimal, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
@@ -975,10 +963,11 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 
 // isEval
 type isEval struct {
-	lhs, rhs Evaler
+	lhs Evaler
+	rhs types.Path
 }
 
-func newIsEval(lhs, rhs Evaler) *isEval {
+func newIsEval(lhs Evaler, rhs types.Path) *isEval {
 	return &isEval{lhs: lhs, rhs: rhs}
 }
 
@@ -988,12 +977,7 @@ func (n *isEval) Eval(ctx *Context) (types.Value, error) {
 		return zeroValue(), err
 	}
 
-	rhs, err := evalEntityType(n.rhs, ctx)
-	if err != nil {
-		return zeroValue(), err
-	}
-
-	return types.Boolean(types.EntityType(lhs.Type) == rhs), nil
+	return types.Boolean(lhs.Type == n.rhs), nil
 }
 
 // decimalLiteralEval

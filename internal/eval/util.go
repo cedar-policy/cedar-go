@@ -12,8 +12,6 @@ func TypeName(v types.Value) string {
 		return "bool"
 	case types.Decimal:
 		return "decimal"
-	case types.EntityType:
-		return fmt.Sprintf("(EntityType of type `%s`)", t)
 	case types.EntityUID:
 		return fmt.Sprintf("(entity of type `%s`)", t.Type)
 	case types.IPAddr:
@@ -77,14 +75,6 @@ func ValueToEntity(v types.Value) (types.EntityUID, error) {
 	ev, ok := v.(types.EntityUID)
 	if !ok {
 		return types.EntityUID{}, fmt.Errorf("%w: expected (entity of type `any_entity_type`), got %v", ErrType, TypeName(v))
-	}
-	return ev, nil
-}
-
-func ValueToEntityType(v types.Value) (types.EntityType, error) {
-	ev, ok := v.(types.EntityType)
-	if !ok {
-		return "", fmt.Errorf("%w: expected (EntityType of type `any_entity_type`), got %v", ErrType, TypeName(v))
 	}
 	return ev, nil
 }

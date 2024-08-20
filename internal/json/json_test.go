@@ -119,13 +119,13 @@ func TestUnmarshalJSON(t *testing.T) {
 		{
 			"principalIs",
 			`{"effect":"permit","principal":{"op":"is","entity_type":"T"},"action":{"op":"All"},"resource":{"op":"All"}}`,
-			ast.Permit().PrincipalIs(types.EntityType("T")),
+			ast.Permit().PrincipalIs(types.Path("T")),
 			testutil.OK,
 		},
 		{
 			"principalIsIn",
 			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"}}},"action":{"op":"All"},"resource":{"op":"All"}}`,
-			ast.Permit().PrincipalIsIn(types.EntityType("T"), types.NewEntityUID("P", "42")),
+			ast.Permit().PrincipalIsIn(types.Path("T"), types.NewEntityUID("P", "42")),
 			testutil.OK,
 		},
 		{
@@ -161,13 +161,13 @@ func TestUnmarshalJSON(t *testing.T) {
 		{
 			"resourceIs",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":"T"}}`,
-			ast.Permit().ResourceIs(types.EntityType("T")),
+			ast.Permit().ResourceIs(types.Path("T")),
 			testutil.OK,
 		},
 		{
 			"resourceIsIn",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"}}}}`,
-			ast.Permit().ResourceIsIn(types.EntityType("T"), types.NewEntityUID("P", "42")),
+			ast.Permit().ResourceIsIn(types.Path("T"), types.NewEntityUID("P", "42")),
 			testutil.OK,
 		},
 		{

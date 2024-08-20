@@ -127,7 +127,7 @@ func (p *parser) errorf(s string, args ...interface{}) error {
 
 func (p *parser) annotations() (ast.Annotations, error) {
 	var res ast.Annotations
-	known := map[types.String]struct{}{}
+	known := map[string]struct{}{}
 	for p.peek().Text == "@" {
 		p.advance()
 		err := p.annotation(&res, known)
@@ -139,13 +139,13 @@ func (p *parser) annotations() (ast.Annotations, error) {
 
 }
 
-func (p *parser) annotation(a *ast.Annotations, known map[types.String]struct{}) error {
+func (p *parser) annotation(a *ast.Annotations, known map[string]struct{}) error {
 	var err error
 	t := p.advance()
 	if !t.isIdent() {
 		return p.errorf("expected ident")
 	}
-	name := types.String(t.Text)
+	name := t.Text
 	if err = p.exact("("); err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func (p *parser) annotation(a *ast.Annotations, known map[types.String]struct{})
 		return err
 	}
 
-	a.Annotation(name, types.String(value))
+	a.Annotation(types.Ident(name), types.String(value))
 	return nil
 }
 
@@ -230,12 +230,11 @@ func (p *parser) entity() (types.EntityUID, error) {
 	if !t.isIdent() {
 		return res, p.errorf("expected ident")
 	}
-	return p.entityFirstPathPreread(types.EntityType(t.Text))
+	return p.entityFirstPathPreread(types.Path(t.Text))
 }
 
-func (p *parser) entityFirstPathPreread(firstPath types.EntityType) (types.EntityUID, error) {
+func (p *parser) entityFirstPathPreread(firstPath types.Path) (types.EntityUID, error) {
 	var res types.EntityUID
-	var err error
 	res.Type = firstPath
 	for {
 		if err := p.exact("::"); err != nil {
@@ -244,12 +243,13 @@ func (p *parser) entityFirstPathPreread(firstPath types.EntityType) (types.Entit
 		t := p.advance()
 		switch {
 		case t.isIdent():
-			res.Type = types.EntityType(res.Type.String() + "::" + t.Text)
+			res.Type = types.Path(res.Type) + "::" + types.Path(t.Text)
 		case t.isString():
-			res.ID, err = t.stringValue()
+			id, err := t.stringValue()
 			if err != nil {
 				return res, err
 			}
+			res.ID = types.String(id)
 			return res, nil
 		default:
 			return res, p.errorf("unexpected token")
@@ -257,8 +257,8 @@ func (p *parser) entityFirstPathPreread(firstPath types.EntityType) (types.Entit
 	}
 }
 
-func (p *parser) pathFirstPathPreread(firstPath string) (types.EntityType, error) {
-	res := types.EntityType(firstPath)
+func (p *parser) pathFirstPathPreread(firstPath string) (types.Path, error) {
+	res := types.Path(firstPath)
 	for {
 		if p.peek().Text != "::" {
 			return res, nil
@@ -267,14 +267,14 @@ func (p *parser) pathFirstPathPreread(firstPath string) (types.EntityType, error
 		t := p.advance()
 		switch {
 		case t.isIdent():
-			res = types.EntityType(fmt.Sprintf("%v::%v", res, t.Text))
+			res = types.Path(fmt.Sprintf("%v::%v", res, t.Text))
 		default:
 			return res, p.errorf("unexpected token")
 		}
 	}
 }
 
-func (p *parser) path() (types.EntityType, error) {
+func (p *parser) path() (types.Path, error) {
 	t := p.advance()
 	if !t.isIdent() {
 		return "", p.errorf("expected ident")
@@ -756,14 +756,14 @@ func (p *parser) entityOrExtFun(prefix string) (ast.Node, error) {
 				if err != nil {
 					return ast.Node{}, err
 				}
-				return ast.EntityUID(prefix, id), nil
+				return ast.EntityUID(types.Ident(prefix), types.String(id)), nil
 			default:
 				return ast.Node{}, p.errorf("unexpected token")
 			}
 		case "(":
 			// Although the Cedar grammar says that any name can be provided here, the reference implementation actually
 			// checks at parse time whether the name corresponds to a known extension function.
-			i, ok := extensions.ExtMap[types.String(prefix)]
+			i, ok := extensions.ExtMap[types.Path(prefix)]
 			if !ok {
 				return ast.Node{}, p.errorf("`%v` is not a function", prefix)
 			}
@@ -776,7 +776,7 @@ func (p *parser) entityOrExtFun(prefix string) (ast.Node, error) {
 				return ast.Node{}, err
 			}
 			p.advance()
-			return ast.ExtensionCall(types.String(prefix), args...), nil
+			return ast.ExtensionCall(types.Path(prefix), args...), nil
 		default:
 			return ast.Node{}, p.errorf("unexpected token")
 		}
@@ -824,7 +824,7 @@ func (p *parser) record() (ast.Node, error) {
 			return res, p.errorf("duplicate key: %v", k)
 		}
 		known[k] = struct{}{}
-		elements = append(elements, ast.Pair{Key: k, Value: v})
+		elements = append(elements, ast.Pair{Key: types.String(k), Value: v})
 	}
 }
 
@@ -884,14 +884,14 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 			default:
 				// Although the Cedar grammar says that any name can be provided here, the reference implementation
 				// actually checks at parse time whether the name corresponds to a known extension method.
-				i, ok := extensions.ExtMap[types.String(methodName)]
+				i, ok := extensions.ExtMap[types.Path(methodName)]
 				if !ok {
 					return ast.Node{}, false, p.errorf("`%v` is not a method", methodName)
 				}
 				if !i.IsMethod {
 					return ast.Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
 				}
-				return ast.NewMethodCall(lhs, types.String(methodName), exprs...), true, nil
+				return ast.NewMethodCall(lhs, types.Path(methodName), exprs...), true, nil
 			}
 
 			if len(exprs) != 1 {

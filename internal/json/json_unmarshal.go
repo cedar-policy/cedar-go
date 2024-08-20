@@ -33,9 +33,9 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 		return ast.Scope{}.In(*s.Entity), nil
 	case "is":
 		if s.In == nil {
-			return ast.Scope{}.Is(types.EntityType(s.EntityType)), nil
+			return ast.Scope{}.Is(types.Path(s.EntityType)), nil
 		}
-		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), s.In.Entity), nil
+		return ast.Scope{}.IsIn(types.Path(s.EntityType), s.In.Entity), nil
 	}
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }
@@ -101,9 +101,9 @@ func (j isJSON) ToNode() (ast.Node, error) {
 		if err != nil {
 			return ast.Node{}, fmt.Errorf("error in entity: %w", err)
 		}
-		return left.IsIn(types.EntityType(j.EntityType), right), nil
+		return left.IsIn(types.Path(j.EntityType), right), nil
 	}
-	return left.Is(types.EntityType(j.EntityType)), nil
+	return left.Is(types.Path(j.EntityType)), nil
 }
 func (j ifThenElseJSON) ToNode() (ast.Node, error) {
 	if_, err := j.If.ToNode()
@@ -139,7 +139,7 @@ func (j recordJSON) ToNode() (ast.Node, error) {
 		if err != nil {
 			return ast.Node{}, fmt.Errorf("error in record: %w", err)
 		}
-		nodes = append(nodes, ast.Pair{Key: k, Value: n})
+		nodes = append(nodes, ast.Pair{Key: types.String(k), Value: n})
 	}
 	return ast.Record(nodes), nil
 }
@@ -153,7 +153,7 @@ func (e extensionJSON) ToNode() (ast.Node, error) {
 	for k, v = range e {
 		_, _ = k, v
 	}
-	_, ok := extensions.ExtMap[types.String(k)]
+	_, ok := extensions.ExtMap[types.Path(k)]
 	if !ok {
 		return ast.Node{}, fmt.Errorf("`%v` is not a known extension function or method", k)
 	}
@@ -165,7 +165,7 @@ func (e extensionJSON) ToNode() (ast.Node, error) {
 		}
 		argNodes = append(argNodes, node)
 	}
-	return ast.NewExtensionCall(types.String(k), argNodes...), nil
+	return ast.NewExtensionCall(types.Path(k), argNodes...), nil
 }
 
 func (j nodeJSON) ToNode() (ast.Node, error) {
@@ -294,7 +294,7 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("unknown effect: %v", j.Effect)
 	}
 	for k, v := range j.Annotations {
-		p.unwrap().Annotate(types.String(k), types.String(v))
+		p.unwrap().Annotate(types.Ident(k), types.String(v))
 	}
 	var err error
 	p.Principal, err = j.Principal.ToPrincipalResourceNode()

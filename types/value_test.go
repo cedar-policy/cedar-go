@@ -44,14 +44,6 @@ func TestDeepClone(t *testing.T) {
 		testutil.Equals(t, a, NewEntityUID("Action", "bananas"))
 		testutil.Equals(t, b, Value(NewEntityUID("Action", "test")))
 	})
-	t.Run("EntityType", func(t *testing.T) {
-		t.Parallel()
-		a := EntityType("X")
-		b := a.deepClone()
-		c, ok := b.(EntityType)
-		testutil.Equals(t, ok, true)
-		testutil.Equals(t, c, a)
-	})
 	t.Run("Set", func(t *testing.T) {
 		t.Parallel()
 		a := Set{Long(42)}

@@ -53,7 +53,7 @@ func Set(nodes ...Node) Node {
 }
 
 type Pair struct {
-	Key   string
+	Key   types.String
 	Value Node
 }
 
@@ -62,7 +62,7 @@ type Pairs []Pair
 // In the case where duplicate keys exist, the latter value will be preserved.
 func Record(elements Pairs) Node {
 	var res NodeTypeRecord
-	m := make(map[string]int, len(elements))
+	m := make(map[types.String]int, len(elements))
 	for _, v := range elements {
 		if i, ok := m[v.Key]; ok {
 			res.Elements[i] = RecordElementNode{Key: types.String(v.Key), Value: v.Value.v}
@@ -74,8 +74,8 @@ func Record(elements Pairs) Node {
 	return NewNode(res)
 }
 
-func EntityUID(typ, id string) Node {
-	e := types.NewEntityUID(types.EntityType(typ), id)
+func EntityUID(typ types.Ident, id types.String) Node {
+	e := types.NewEntityUID(types.Path(typ), types.String(id))
 	return Value(e)
 }
 
@@ -83,7 +83,7 @@ func IPAddr[T netip.Prefix | types.IPAddr](i T) Node {
 	return Value(types.IPAddr(i))
 }
 
-func ExtensionCall(name types.String, args ...Node) Node {
+func ExtensionCall(name types.Path, args ...Node) Node {
 	return NewExtensionCall(name, args...)
 }
 

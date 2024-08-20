@@ -22,11 +22,11 @@ func (s Scope) InSet(entities []types.EntityUID) ScopeTypeInSet {
 	return ScopeTypeInSet{Entities: entities}
 }
 
-func (s Scope) Is(entityType types.EntityType) ScopeTypeIs {
+func (s Scope) Is(entityType types.Path) ScopeTypeIs {
 	return ScopeTypeIs{Type: entityType}
 }
 
-func (s Scope) IsIn(entityType types.EntityType, entity types.EntityUID) ScopeTypeIsIn {
+func (s Scope) IsIn(entityType types.Path, entity types.EntityUID) ScopeTypeIsIn {
 	return ScopeTypeIsIn{Type: entityType, Entity: entity}
 }
 
@@ -40,12 +40,12 @@ func (p *Policy) PrincipalIn(entity types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) PrincipalIs(entityType types.EntityType) *Policy {
+func (p *Policy) PrincipalIs(entityType types.Path) *Policy {
 	p.Principal = Scope{}.Is(entityType)
 	return p
 }
 
-func (p *Policy) PrincipalIsIn(entityType types.EntityType, entity types.EntityUID) *Policy {
+func (p *Policy) PrincipalIsIn(entityType types.Path, entity types.EntityUID) *Policy {
 	p.Principal = Scope{}.IsIn(entityType, entity)
 	return p
 }
@@ -75,12 +75,12 @@ func (p *Policy) ResourceIn(entity types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) ResourceIs(entityType types.EntityType) *Policy {
+func (p *Policy) ResourceIs(entityType types.Path) *Policy {
 	p.Resource = Scope{}.Is(entityType)
 	return p
 }
 
-func (p *Policy) ResourceIsIn(entityType types.EntityType, entity types.EntityUID) *Policy {
+func (p *Policy) ResourceIsIn(entityType types.Path, entity types.EntityUID) *Policy {
 	p.Resource = Scope{}.IsIn(entityType, entity)
 	return p
 }
@@ -153,13 +153,13 @@ type ScopeTypeIs struct {
 	ScopeNode
 	PrincipalScopeNode
 	ResourceScopeNode
-	Type types.EntityType
+	Type types.Path
 }
 
 type ScopeTypeIsIn struct {
 	ScopeNode
 	PrincipalScopeNode
 	ResourceScopeNode
-	Type   types.EntityType
+	Type   types.Path
 	Entity types.EntityUID
 }

@@ -76,7 +76,7 @@ func (n NodeTypeLike) isNode() {}
 
 type NodeTypeIs struct {
 	Left       IsNode
-	EntityType types.EntityType
+	EntityType types.Path
 }
 
 func (n NodeTypeIs) isNode() {}
@@ -112,7 +112,7 @@ type NodeTypeNot struct{ UnaryNode }
 type NodeTypeAccess struct{ StrOpNode }
 
 type NodeTypeExtensionCall struct {
-	Name types.String // TODO: review type
+	Name types.Path
 	Args []IsNode
 }
 
@@ -126,14 +126,14 @@ func stripNodes(args []Node) []IsNode {
 	return res
 }
 
-func NewExtensionCall(method types.String, args ...Node) Node {
+func NewExtensionCall(method types.Path, args ...Node) Node {
 	return NewNode(NodeTypeExtensionCall{
 		Name: method,
 		Args: stripNodes(args),
 	})
 }
 
-func NewMethodCall(lhs Node, method types.String, args ...Node) Node {
+func NewMethodCall(lhs Node, method types.Path, args ...Node) Node {
 	res := make([]IsNode, 1+len(args))
 	res[0] = lhs.v
 	for i, v := range args {
@@ -179,7 +179,7 @@ type NodeTypeSet struct {
 func (n NodeTypeSet) isNode() {}
 
 type NodeTypeVariable struct {
-	Name types.String // TODO: Review type
+	Name types.String
 }
 
 func (n NodeTypeVariable) isNode() {}
