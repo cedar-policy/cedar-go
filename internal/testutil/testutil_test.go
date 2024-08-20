@@ -8,7 +8,7 @@ import (
 func newTB() *TBMock {
 	return &TBMock{
 		HelperFunc: func() {},
-		FatalfFunc: func(format string, args ...any) {},
+		FatalfFunc: func(string, ...any) {},
 	}
 }
 
