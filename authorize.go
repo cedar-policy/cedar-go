@@ -3,7 +3,6 @@ package cedar
 import (
 	"fmt"
 
-	"github.com/cedar-policy/cedar-go/internal/entities"
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -67,7 +66,7 @@ type Request struct {
 
 // IsAuthorized uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
-func (p PolicySet) IsAuthorized(entityMap entities.Entities, req Request) (Decision, Diagnostic) {
+func (p PolicySet) IsAuthorized(entityMap types.Entities, req Request) (Decision, Diagnostic) {
 	c := &eval.Context{
 		Entities:  entityMap,
 		Principal: req.Principal,
