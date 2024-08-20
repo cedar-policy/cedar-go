@@ -316,7 +316,6 @@ func (j *jsonErr) String() string                       { return "" }
 func (j *jsonErr) MarshalCedar() []byte                 { return nil }
 func (j *jsonErr) Equal(Value) bool                     { return false }
 func (j *jsonErr) ExplicitMarshalJSON() ([]byte, error) { return nil, fmt.Errorf("jsonErr") }
-func (j *jsonErr) TypeName() string                     { return "jsonErr" }
 func (j *jsonErr) deepClone() Value                     { return nil }
 
 func TestJSONSet(t *testing.T) {
