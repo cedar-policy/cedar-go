@@ -99,6 +99,6 @@ func (p Policy) Position() Position {
 	return Position(p.ast.Position)
 }
 
-func (p *Policy) SetFileName(path string) {
-	p.ast.Position.FileName = path
+func (p *Policy) SetFilename(fileName string) {
+	p.ast.Position.Filename = fileName
 }
