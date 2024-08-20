@@ -26,16 +26,6 @@ func Long[T int | int64 | types.Long](l T) Node {
 	return Value(types.Long(l))
 }
 
-// SetDeprecated is a convenience function that wraps concrete instances of a Cedar SetDeprecated type
-// types in AST value nodes and passes them along to SetNodes.
-func SetDeprecated(s types.Set) Node {
-	var nodes []IsNode
-	for _, v := range s {
-		nodes = append(nodes, Value(v).v)
-	}
-	return NewNode(NodeTypeSet{Elements: nodes})
-}
-
 // Set allows for a complex set definition with values potentially
 // being Cedar expressions of their own. For example, this Cedar text:
 //

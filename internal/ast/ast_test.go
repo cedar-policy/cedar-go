@@ -480,6 +480,25 @@ func TestASTByTable(t *testing.T) {
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
 				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "isInRange", Args: []ast.IsNode{ast.NodeValue{Value: types.Long(42)}, ast.NodeValue{Value: types.Long(43)}}}}}},
 		},
+
+		{
+			"duplicateAnnotations",
+			ast.Permit().Annotate("key", "value").Annotate("key", "value2"),
+			ast.Policy{Annotations: []ast.AnnotationType{{Key: "key", Value: "value2"}}, Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{}},
+		},
+
+		{
+			"valueRecordElements",
+			ast.Permit().When(ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(42)}})),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeRecord{Elements: []ast.RecordElementNode{{Key: "key", Value: ast.NodeValue{Value: types.Long(42)}}}}}}},
+		},
+		{
+			"duplicateValueRecordElements",
+			ast.Permit().When(ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(42)}, {Key: "key", Value: ast.Long(43)}})),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeRecord{Elements: []ast.RecordElementNode{{Key: "key", Value: ast.NodeValue{Value: types.Long(43)}}}}}}},
+		},
 	}
 
 	for _, tt := range tests {
