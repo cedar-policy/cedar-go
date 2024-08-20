@@ -345,13 +345,13 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"opIs",
-			ast.Permit().When(ast.Long(42).Is(types.EntityType("T"))),
-			internalast.Permit().When(internalast.Long(42).Is(types.EntityType("T"))),
+			ast.Permit().When(ast.Long(42).Is(types.Path("T"))),
+			internalast.Permit().When(internalast.Long(42).Is(types.Path("T"))),
 		},
 		{
 			"opIsIn",
-			ast.Permit().When(ast.Long(42).IsIn(types.EntityType("T"), ast.Long(43))),
-			internalast.Permit().When(internalast.Long(42).IsIn(types.EntityType("T"), internalast.Long(43))),
+			ast.Permit().When(ast.Long(42).IsIn(types.Path("T"), ast.Long(43))),
+			internalast.Permit().When(internalast.Long(42).IsIn(types.Path("T"), internalast.Long(43))),
 		},
 		{
 			"opContains",

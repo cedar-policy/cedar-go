@@ -7,11 +7,11 @@ import (
 
 // An EntityUID is the identifier for a principal, action, or resource.
 type EntityUID struct {
-	Type EntityType
-	ID   string
+	Type Path
+	ID   String
 }
 
-func NewEntityUID(typ EntityType, id string) EntityUID {
+func NewEntityUID(typ Path, id String) EntityUID {
 	return EntityUID{
 		Type: typ,
 		ID:   id,
@@ -29,7 +29,7 @@ func (a EntityUID) Equal(bi Value) bool {
 }
 
 // String produces a string representation of the EntityUID, e.g. `Type::"id"`.
-func (v EntityUID) String() string { return string(v.Type.String() + "::" + strconv.Quote(v.ID)) }
+func (v EntityUID) String() string { return string(v.Type) + "::" + strconv.Quote(string(v.ID)) }
 
 // MarshalCedar produces a valid MarshalCedar language representation of the EntityUID, e.g. `Type::"id"`.
 func (v EntityUID) MarshalCedar() []byte {
@@ -43,12 +43,12 @@ func (v *EntityUID) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if res.Entity != nil {
-		v.Type = res.Entity.Type
-		v.ID = res.Entity.ID
+		v.Type = Path(res.Entity.Type)
+		v.ID = String(res.Entity.ID)
 		return nil
 	} else if res.Type != nil && res.ID != nil { // require both Type and ID to parse "implicit" JSON
-		v.Type = *res.Type
-		v.ID = *res.ID
+		v.Type = Path(*res.Type)
+		v.ID = String(*res.ID)
 		return nil
 	}
 	return errJSONEntityNotFound
@@ -57,8 +57,8 @@ func (v *EntityUID) UnmarshalJSON(b []byte) error {
 // ExplicitMarshalJSON marshals the EntityUID into JSON using the implicit form.
 func (v EntityUID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(entityValueJSON{
-		Type: &v.Type,
-		ID:   &v.ID,
+		Type: (*string)(&v.Type),
+		ID:   (*string)(&v.ID),
 	})
 }
 
@@ -66,8 +66,8 @@ func (v EntityUID) MarshalJSON() ([]byte, error) {
 func (v EntityUID) ExplicitMarshalJSON() ([]byte, error) {
 	return json.Marshal(entityValueJSON{
 		Entity: &extEntity{
-			Type: v.Type,
-			ID:   v.ID,
+			Type: string(v.Type),
+			ID:   string(v.ID),
 		},
 	})
 }

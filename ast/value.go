@@ -48,7 +48,7 @@ func Set(nodes ...Node) Node {
 }
 
 type Pair struct {
-	Key   string
+	Key   types.String
 	Value Node
 }
 
@@ -63,7 +63,7 @@ func Record(elements Pairs) Node {
 	return wrapNode(ast.Record(astNodes))
 }
 
-func EntityUID(typ, id string) Node {
+func EntityUID(typ types.Ident, id types.String) Node {
 	return wrapNode(ast.EntityUID(typ, id))
 }
 

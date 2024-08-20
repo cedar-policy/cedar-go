@@ -5,7 +5,7 @@ import (
 )
 
 type AnnotationType struct {
-	Key   types.String // TODO: review type
+	Key   types.Ident
 	Value types.String
 }
 type Condition bool

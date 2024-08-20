@@ -17,6 +17,7 @@ type Decimal struct {
 
 // NewDecimal creates a decimal via trivial conversion from int, int64, float64.
 // Precision may be lost and overflows may occur.
+// TODO: reconsider ...
 func NewDecimal[T int | int64 | float64](v T) Decimal {
 	return Decimal{Value: int64(v * DecimalPrecision)}
 }

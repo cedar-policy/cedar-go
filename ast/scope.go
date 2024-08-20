@@ -15,12 +15,12 @@ func (p *Policy) PrincipalIn(entity types.EntityUID) *Policy {
 }
 
 // This builder will replace the previous principal scope condition.
-func (p *Policy) PrincipalIs(entityType types.EntityType) *Policy {
+func (p *Policy) PrincipalIs(entityType types.Path) *Policy {
 	return wrapPolicy(p.unwrap().PrincipalIs(entityType))
 }
 
 // This builder will replace the previous principal scope condition.
-func (p *Policy) PrincipalIsIn(entityType types.EntityType, entity types.EntityUID) *Policy {
+func (p *Policy) PrincipalIsIn(entityType types.Path, entity types.EntityUID) *Policy {
 	return wrapPolicy(p.unwrap().PrincipalIsIn(entityType, entity))
 }
 
@@ -50,11 +50,11 @@ func (p *Policy) ResourceIn(entity types.EntityUID) *Policy {
 }
 
 // This builder will replace the previous resource scope condition.
-func (p *Policy) ResourceIs(entityType types.EntityType) *Policy {
+func (p *Policy) ResourceIs(entityType types.Path) *Policy {
 	return wrapPolicy(p.unwrap().ResourceIs(entityType))
 }
 
 // This builder will replace the previous resource scope condition.
-func (p *Policy) ResourceIsIn(entityType types.EntityType, entity types.EntityUID) *Policy {
+func (p *Policy) ResourceIsIn(entityType types.Path, entity types.EntityUID) *Policy {
 	return wrapPolicy(p.unwrap().ResourceIsIn(entityType, entity))
 }

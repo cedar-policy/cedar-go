@@ -22,12 +22,12 @@ func wrapAnnotations(a *ast.Annotations) *Annotations {
 //	    Annotation("baz", "quux").
 //		Permit().
 //		PrincipalEq(superUser)
-func Annotation(key, value types.String) *Annotations {
+func Annotation(key types.Ident, value types.String) *Annotations {
 	return wrapAnnotations(ast.Annotation(key, value))
 }
 
 // If a previous annotation exists with the same key, this builder will replace it.
-func (a *Annotations) Annotation(key, value types.String) *Annotations {
+func (a *Annotations) Annotation(key types.Ident, value types.String) *Annotations {
 	return wrapAnnotations(a.unwrap().Annotation(key, value))
 }
 
@@ -40,6 +40,6 @@ func (a *Annotations) Forbid() *Policy {
 }
 
 // If a previous annotation exists with the same key, this builder will replace it.
-func (p *Policy) Annotate(key, value types.String) *Policy {
+func (p *Policy) Annotate(key types.Ident, value types.String) *Policy {
 	return wrapPolicy(p.unwrap().Annotate(key, value))
 }

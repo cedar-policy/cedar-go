@@ -7,7 +7,7 @@ type extInfo struct {
 	IsMethod bool
 }
 
-var ExtMap = map[types.String]extInfo{
+var ExtMap = map[types.Path]extInfo{
 	"ip":      {Args: 1, IsMethod: false},
 	"decimal": {Args: 1, IsMethod: false},
 

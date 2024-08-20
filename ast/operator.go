@@ -112,11 +112,11 @@ func (lhs Node) In(rhs Node) Node {
 	return wrapNode(lhs.Node.In(rhs.Node))
 }
 
-func (lhs Node) Is(entityType types.EntityType) Node {
+func (lhs Node) Is(entityType types.Path) Node {
 	return wrapNode(lhs.Node.Is(entityType))
 }
 
-func (lhs Node) IsIn(entityType types.EntityType, rhs Node) Node {
+func (lhs Node) IsIn(entityType types.Path, rhs Node) Node {
 	return wrapNode(lhs.Node.IsIn(entityType, rhs.Node))
 }
 
