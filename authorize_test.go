@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/ast"
+	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -726,6 +728,23 @@ func TestError(t *testing.T) {
 	t.Parallel()
 	e := Error{PolicyID: "policy42", Message: "bad error"}
 	testutil.Equals(t, e.String(), "while evaluating policy `policy42`: bad error")
+}
+
+type badEvaler struct{}
+
+func (e *badEvaler) Eval(*eval.Context) (types.Value, error) {
+	return types.Long(42), nil
+}
+
+func TestBadEval(t *testing.T) {
+	t.Parallel()
+	ps := NewPolicySet()
+	pol := NewPolicyFromAST(ast.Permit())
+	pol.eval = &badEvaler{}
+	ps.Upsert("pol", pol)
+	dec, diag := ps.IsAuthorized(nil, Request{})
+	testutil.Equals(t, dec, Deny)
+	testutil.Equals(t, len(diag.Errors), 1)
 }
 
 func TestJSONDecision(t *testing.T) {

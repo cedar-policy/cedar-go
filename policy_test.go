@@ -94,3 +94,17 @@ func TestPolicyAST(t *testing.T) {
 
 	_ = cedar.NewPolicyFromAST(astExample)
 }
+
+func TestUnmarshalJSONPolicyErr(t *testing.T) {
+	t.Parallel()
+	var p cedar.Policy
+	err := p.UnmarshalJSON([]byte("!@#$"))
+	testutil.Error(t, err)
+}
+
+func TestUnmarshalCedarPolicyErr(t *testing.T) {
+	t.Parallel()
+	var p cedar.Policy
+	err := p.UnmarshalCedar([]byte("!@#$"))
+	testutil.Error(t, err)
+}
