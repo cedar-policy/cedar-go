@@ -2,6 +2,7 @@ package parser_test
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
@@ -524,4 +525,62 @@ func TestParsePolicySet(t *testing.T) {
 		expectedPolicy1.Position = ast.Position{Offset: 53, Line: 6, Column: 3}
 		testutil.Equals(t, policies[1], (*parser.Policy)(expectedPolicy1))
 	})
+}
+
+func TestParseApproximateErrors(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name            string
+		in              string
+		outErrSubstring string
+	}{
+		{"unexpectedEffect", "!", "unexpected effect"},
+		{"nul", "\x00", "invalid character"},
+		{"notTerminated", `"`, "literal not terminated"},
+		{"principalBadIsIn", `permit (principal is T in error);`, "got ) want ::"},
+		{"principalBadIn", `permit (principal in error);`, "got ) want ::"},
+		{"resourceBadEq", `permit (principal, action, resource == error);`, "got ) want ::"},
+		{"resourceBadIsIn1", `permit (principal, action, resource is "error");`, "expected ident"},
+		{"resourceBadIsIn1", `permit (principal, action, resource is T in error);`, "got ) want ::"},
+		{"resourceBadIn", `permit (principal, action, resource in error);`, "got ) want ::"},
+		{"unlessCondition", `permit (principal, action, resource) unless {`, "invalid primary"},
+		{"or", `permit (principal, action, resource) when { true ||`, "invalid primary"},
+		{"and", `permit (principal, action, resource) when { true &&`, "invalid primary"},
+		{"isPath", `permit (principal, action, resource) when { context is`, "expected ident"},
+		{"isIn", `permit (principal, action, resource) when { context is T in`, "invalid primary"},
+		{"mult", `permit (principal, action, resource) when { 42 *`, "invalid primary"},
+		{"parens", `permit (principal, action, resource) when { (42}`, "got } want )"},
+		{"func", `permit (principal, action, resource) when { ip(}`, "invalid primary"},
+		{"args", `permit (principal, action, resource) when { ip(42 42)`, "got 42 want ,"},
+		{"dupeKey", `permit (principal, action, resource) when { {k:42,k:43}`, "duplicate key"},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var pol parser.Policy
+			err := pol.UnmarshalCedar([]byte(tt.in))
+			testutil.FatalIf(t, !strings.Contains(err.Error(), tt.outErrSubstring), "got %v want %v", err.Error(), tt.outErrSubstring)
+		})
+	}
+}
+
+func TestPolicySliceErrors(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name            string
+		in              string
+		outErrSubstring string
+	}{
+		{"notTerminated", `"`, "literal not terminated"},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var pol parser.PolicySlice
+			err := pol.UnmarshalCedar([]byte(tt.in))
+			testutil.FatalIf(t, !strings.Contains(err.Error(), tt.outErrSubstring), "got %v want %v", err.Error(), tt.outErrSubstring)
+		})
+	}
 }
