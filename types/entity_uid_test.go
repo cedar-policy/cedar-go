@@ -26,4 +26,9 @@ func TestEntity(t *testing.T) {
 		testutil.Equals(t, types.EntityUID{Type: "namespace::type", ID: "id"}.String(), `namespace::type::"id"`)
 	})
 
+	t.Run("MarshalCedar", func(t *testing.T) {
+		t.Parallel()
+		testutil.Equals(t, string(types.EntityUID{"type", "id"}.MarshalCedar()), `type::"id"`)
+	})
+
 }

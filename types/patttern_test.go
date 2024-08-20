@@ -6,20 +6,73 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
-func TestPatternFromBuilder(t *testing.T) {
+func TestPattern(t *testing.T) {
+	t.Parallel()
 	t.Run("saturate two wildcards", func(t *testing.T) {
+		t.Parallel()
 		pattern1 := NewPattern(Wildcard(), Wildcard())
 		pattern2 := NewPattern(Wildcard())
 		testutil.Equals(t, pattern1, pattern2)
 	})
 	t.Run("saturate two literals", func(t *testing.T) {
+		t.Parallel()
 		pattern1 := NewPattern(String("foo"), String("bar"))
 		pattern2 := NewPattern(String("foobar"))
 		testutil.Equals(t, pattern1, pattern2)
 	})
+	t.Run("panicOnNil", func(t *testing.T) {
+		t.Parallel()
+		testutil.AssertPanic(t, func() {
+			NewPattern(nil)
+		})
+	})
+	t.Run("MarshalCedar", func(t *testing.T) {
+		t.Parallel()
+		testutil.Equals(t, string(NewPattern(String("*foo"), Wildcard()).MarshalCedar()), `"\*foo*"`)
+	})
+
+	t.Run("isPatternComponent", func(t *testing.T) {
+		t.Parallel()
+		String("").isPatternComponent()
+		Wildcard().isPatternComponent()
+	})
 }
 
-func TestJSON(t *testing.T) {
+func TestPatternMatch(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		pattern Pattern
+		target  string
+		want    bool
+	}{
+		{NewPattern(), "", true},
+		{NewPattern(), "hello", false},
+		{NewPattern(Wildcard()), "hello", true},
+		{NewPattern(String("e")), "hello", false},
+		{NewPattern(Wildcard(), String("e")), "hello", false},
+		{NewPattern(Wildcard(), String("e"), Wildcard()), "hello", true},
+		{NewPattern(String("hello")), "hello", true},
+		{NewPattern(String("hello"), Wildcard()), "hello", true},
+		{NewPattern(Wildcard(), String("h"), Wildcard(), String("llo"), Wildcard()), "hello", true},
+		{NewPattern(String("h"), Wildcard(), String("e"), Wildcard(), String("o")), "hello", true},
+		{NewPattern(String("h"), Wildcard(), String("e"), Wildcard(), Wildcard(), String("o")), "hello", true},
+		{NewPattern(String("h"), Wildcard(), String("z"), Wildcard(), String("o")), "hello", false},
+
+		{NewPattern(String("**"), Wildcard(), String("**")), "**foo**", true},
+		{NewPattern(String("**"), Wildcard(), String("**")), "**bar**", true},
+		{NewPattern(String("**"), Wildcard(), String("**")), "*bar*", false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(string(tt.pattern.MarshalCedar())+":"+tt.target, func(t *testing.T) {
+			t.Parallel()
+			got := tt.pattern.Match(String(tt.target))
+			testutil.Equals(t, got, tt.want)
+		})
+	}
+}
+
+func TestPatternJSON(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name            string
@@ -108,6 +161,13 @@ func TestJSON(t *testing.T) {
 		{
 			"other string",
 			`["cardwild"]`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
+			"other type",
+			`[null]`,
 			testutil.Error,
 			Pattern{},
 			false,

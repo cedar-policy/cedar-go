@@ -26,6 +26,7 @@ func TestBool(t *testing.T) {
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(t, types.Boolean(true).String(), "true")
+		testutil.Equals(t, types.Boolean(false).String(), "false")
 	})
 
 }

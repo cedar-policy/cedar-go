@@ -51,7 +51,7 @@ func TestParsePattern(t *testing.T) {
 	}
 }
 
-func TestMatch(t *testing.T) {
+func TestPatternParseAndMatch(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		pattern string
