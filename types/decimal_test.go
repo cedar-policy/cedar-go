@@ -101,7 +101,7 @@ func TestDecimal(t *testing.T) {
 			t.Run(fmt.Sprintf("%s->%s", tt.in, tt.errStr), func(t *testing.T) {
 				t.Parallel()
 				_, err := types.ParseDecimal(tt.in)
-				testutil.AssertError(t, err, types.ErrDecimal)
+				testutil.ErrorIs(t, err, types.ErrDecimal)
 				testutil.Equals(t, err.Error(), tt.errStr)
 			})
 		}

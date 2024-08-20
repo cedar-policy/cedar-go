@@ -3,10 +3,16 @@ package testutil
 import (
 	"errors"
 	"reflect"
-	"testing"
 )
 
-func Equals[T any](t testing.TB, a, b T) {
+type TB interface {
+	Helper()
+	Fatalf(format string, args ...any)
+}
+
+//go:generate moq -pkg testutil -fmt goimports -out mocks_test.go . TB
+
+func Equals[T any](t TB, a, b T) {
 	t.Helper()
 	if reflect.DeepEqual(a, b) {
 		return
@@ -14,7 +20,7 @@ func Equals[T any](t testing.TB, a, b T) {
 	t.Fatalf("got %+v want %+v", a, b)
 }
 
-func FatalIf(t testing.TB, c bool, f string, args ...any) {
+func FatalIf(t TB, c bool, f string, args ...any) {
 	t.Helper()
 	if !c {
 		return
@@ -22,7 +28,7 @@ func FatalIf(t testing.TB, c bool, f string, args ...any) {
 	t.Fatalf(f, args...)
 }
 
-func OK(t testing.TB, err error) {
+func OK(t TB, err error) {
 	t.Helper()
 	if err == nil {
 		return
@@ -30,7 +36,7 @@ func OK(t testing.TB, err error) {
 	t.Fatalf("got %v want nil", err)
 }
 
-func Error(t testing.TB, err error) {
+func Error(t TB, err error) {
 	t.Helper()
 	if err != nil {
 		return
@@ -38,22 +44,18 @@ func Error(t testing.TB, err error) {
 	t.Fatalf("got nil want error")
 }
 
-func AssertError(t *testing.T, got, want error) {
+func ErrorIs(t TB, got, want error) {
 	t.Helper()
-	FatalIf(t, !errors.Is(got, want), "err got %v want %v", got, want)
-}
-
-func Must[T any](obj T, err error) T {
-	if err != nil {
-		panic(err)
+	if !errors.Is(got, want) {
+		t.Fatalf("err got %v want %v", got, want)
 	}
-	return obj
 }
 
-func AssertPanic(t *testing.T, f func()) {
+func Panic(t TB, f func()) {
+	t.Helper()
 	defer func() {
 		if e := recover(); e == nil {
-			t.Fatal("expected panic, got nil")
+			t.Fatalf("got nil want panic")
 		}
 	}()
 	f()

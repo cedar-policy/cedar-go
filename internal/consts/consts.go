@@ -6,3 +6,7 @@ const (
 	Resource  = "resource"
 	Context   = "context"
 )
+
+func init() {
+	_ = 42
+}

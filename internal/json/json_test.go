@@ -16,7 +16,7 @@ func TestUnmarshalJSON(t *testing.T) {
 		name    string
 		input   string
 		want    *ast.Policy
-		errFunc func(testing.TB, error)
+		errFunc func(testutil.TB, error)
 	}{
 		/*
 		   @key("value")
@@ -485,7 +485,7 @@ func TestMarshalJSON(t *testing.T) {
 		name    string
 		input   *ast.Policy
 		want    string
-		errFunc func(testing.TB, error)
+		errFunc func(testutil.TB, error)
 	}{
 		{
 			"decimal",
@@ -529,7 +529,7 @@ func TestMarshalJSON(t *testing.T) {
 	}
 }
 
-func testNormalizeJSON(t testing.TB, in string) string {
+func testNormalizeJSON(t testutil.TB, in string) string {
 	var x any
 	err := json.Unmarshal([]byte(in), &x)
 	testutil.OK(t, err)
@@ -551,7 +551,7 @@ func TestMarshalPanics(t *testing.T) {
 	t.Parallel()
 	t.Run("nilScope", func(t *testing.T) {
 		t.Parallel()
-		testutil.AssertPanic(t, func() {
+		testutil.Panic(t, func() {
 			s := scopeJSON{}
 			var v ast.IsScopeNode
 			s.FromNode(v)
@@ -559,7 +559,7 @@ func TestMarshalPanics(t *testing.T) {
 	})
 	t.Run("nilNode", func(t *testing.T) {
 		t.Parallel()
-		testutil.AssertPanic(t, func() {
+		testutil.Panic(t, func() {
 			s := nodeJSON{}
 			var v ast.IsNode
 			s.FromNode(v)
