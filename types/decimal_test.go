@@ -109,9 +109,9 @@ func TestDecimal(t *testing.T) {
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
-		one := types.NewDecimal(1)
-		one2 := types.NewDecimal(1)
-		zero := types.NewDecimal(0)
+		one := types.UnsafeDecimal(1)
+		one2 := types.UnsafeDecimal(1)
+		zero := types.UnsafeDecimal(0)
 		f := types.Boolean(false)
 		testutil.FatalIf(t, !one.Equal(one), "%v not Equal to %v", one, one)
 		testutil.FatalIf(t, !one.Equal(one2), "%v not Equal to %v", one, one2)

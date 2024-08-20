@@ -161,7 +161,7 @@ func TestTypeName(t *testing.T) {
 	}{
 
 		{"boolean", types.Boolean(true), "bool"},
-		{"decimal", types.NewDecimal(42), "decimal"},
+		{"decimal", types.UnsafeDecimal(42), "decimal"},
 		{"entityUID", types.NewEntityUID("T", "42"), "(entity of type `T`)"},
 		{"ip", types.IPAddr{}, "IP"},
 		{"long", types.Long(42), "long"},

@@ -79,12 +79,12 @@ func TestDeepClone(t *testing.T) {
 
 	t.Run("Decimal", func(t *testing.T) {
 		t.Parallel()
-		a := NewDecimal(42)
+		a := UnsafeDecimal(42)
 		b := a.deepClone()
 		testutil.Equals(t, Value(a), b)
-		a = NewDecimal(43)
-		testutil.Equals(t, a, NewDecimal(43))
-		testutil.Equals(t, b, Value(NewDecimal(42)))
+		a = UnsafeDecimal(43)
+		testutil.Equals(t, a, UnsafeDecimal(43))
+		testutil.Equals(t, b, Value(UnsafeDecimal(42)))
 	})
 
 	t.Run("IPAddr", func(t *testing.T) {
