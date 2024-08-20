@@ -39,9 +39,9 @@ type Position struct {
 type Policy struct {
 	Effect      Effect
 	Annotations []AnnotationType
-	Principal   IsScopeNode
-	Action      IsScopeNode
-	Resource    IsScopeNode
+	Principal   IsPrincipalScopeNode
+	Action      IsActionScopeNode
+	Resource    IsResourceScopeNode
 	Conditions  []ConditionType
 	Position    Position
 }
@@ -50,9 +50,9 @@ func newPolicy(effect Effect, annotations []AnnotationType) *Policy {
 	return &Policy{
 		Effect:      effect,
 		Annotations: annotations,
-		Principal:   Scope(NewPrincipalNode()).All(),
-		Action:      Scope(NewActionNode()).All(),
-		Resource:    Scope(NewResourceNode()).All(),
+		Principal:   Scope{}.All(),
+		Action:      Scope{}.All(),
+		Resource:    Scope{}.All(),
 	}
 }
 

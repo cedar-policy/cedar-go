@@ -12,26 +12,48 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func (s *scopeJSON) ToNode(variable ast.Scope) (ast.IsScopeNode, error) {
-	// TODO: should we be careful to be more strict about what is allowed here?
+type isPrincipalResourceScopeNode interface {
+	ast.IsPrincipalScopeNode
+	ast.IsResourceScopeNode
+}
+
+func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, error) {
 	switch s.Op {
 	case "All":
-		return variable.All(), nil
+		return ast.Scope{}.All(), nil
 	case "==":
 		if s.Entity == nil {
 			return nil, fmt.Errorf("missing entity")
 		}
-		return variable.Eq(*s.Entity), nil
+		return ast.Scope{}.Eq(*s.Entity), nil
 	case "in":
-		if s.Entity != nil {
-			return variable.In(*s.Entity), nil
+		if s.Entity == nil {
+			return nil, fmt.Errorf("missing entity")
 		}
-		return variable.InSet(s.Entities), nil
+		return ast.Scope{}.In(*s.Entity), nil
 	case "is":
 		if s.In == nil {
-			return variable.Is(types.EntityType(s.EntityType)), nil
+			return ast.Scope{}.Is(types.EntityType(s.EntityType)), nil
 		}
-		return variable.IsIn(types.EntityType(s.EntityType), s.In.Entity), nil
+		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), s.In.Entity), nil
+	}
+	return nil, fmt.Errorf("unknown op: %v", s.Op)
+}
+
+func (s *scopeJSON) ToActionNode() (ast.IsActionScopeNode, error) {
+	switch s.Op {
+	case "All":
+		return ast.Scope{}.All(), nil
+	case "==":
+		if s.Entity == nil {
+			return nil, fmt.Errorf("missing entity")
+		}
+		return ast.Scope{}.Eq(*s.Entity), nil
+	case "in":
+		if s.Entity != nil {
+			return ast.Scope{}.In(*s.Entity), nil
+		}
+		return ast.Scope{}.InSet(s.Entities), nil
 	}
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }
@@ -275,15 +297,15 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		p.unwrap().Annotate(types.String(k), types.String(v))
 	}
 	var err error
-	p.Principal, err = j.Principal.ToNode(ast.Scope(ast.NewPrincipalNode()))
+	p.Principal, err = j.Principal.ToPrincipalResourceNode()
 	if err != nil {
 		return fmt.Errorf("error in principal: %w", err)
 	}
-	p.Action, err = j.Action.ToNode(ast.Scope(ast.NewActionNode()))
+	p.Action, err = j.Action.ToActionNode()
 	if err != nil {
 		return fmt.Errorf("error in action: %w", err)
 	}
-	p.Resource, err = j.Resource.ToNode(ast.Scope(ast.NewResourceNode()))
+	p.Resource, err = j.Resource.ToPrincipalResourceNode()
 	if err != nil {
 		return fmt.Errorf("error in resource: %w", err)
 	}
