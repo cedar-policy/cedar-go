@@ -44,12 +44,6 @@ func (p PolicySet) Get(policyID PolicyID) Policy {
 	return p.policies[policyID]
 }
 
-// Has indicates if the policy exists.
-func (p PolicySet) Has(policyID PolicyID) bool {
-	_, ok := p.policies[policyID]
-	return ok
-}
-
 // Upsert inserts or updates a policy with the given ID.
 func (p *PolicySet) Upsert(policyID PolicyID, policy Policy) {
 	p.policies[policyID] = policy
