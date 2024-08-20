@@ -16,7 +16,6 @@ func (a Boolean) Equal(bi Value) bool {
 	b, ok := bi.(Boolean)
 	return ok && a == b
 }
-func (v Boolean) TypeName() string { return "bool" }
 
 // String produces a string representation of the Boolean, e.g. `true`.
 func (v Boolean) String() string { return string(v.MarshalCedar()) }
