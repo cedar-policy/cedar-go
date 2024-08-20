@@ -23,7 +23,7 @@ forbid (
     resource
 );`
 
-	var policies cedar.PolicySlice
+	var policies cedar.Policies
 	testutil.OK(t, policies.UnmarshalCedar([]byte(policiesStr)))
 
 	testutil.Equals(t, string(policies.MarshalCedar()), policiesStr)

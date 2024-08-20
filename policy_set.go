@@ -9,14 +9,16 @@ import (
 
 type PolicyID string
 
+type policyMap map[PolicyID]Policy
+
 // PolicySet is a set of named policies against which a request can be authorized.
 type PolicySet struct {
-	policies map[PolicyID]*Policy
+	policies policyMap
 }
 
 // NewPolicySet creates a new, empty PolicySet
 func NewPolicySet() PolicySet {
-	return PolicySet{policies: map[PolicyID]*Policy{}}
+	return PolicySet{policies: policyMap{}}
 }
 
 // NewPolicySetFromBytes will create a PolicySet from the given text document with the given file name used in Position
@@ -25,11 +27,11 @@ func NewPolicySet() PolicySet {
 // NewPolicySetFromBytes assigns default PolicyIDs to the policies contained in fileName in the format "policy<n>" where
 // <n> is incremented for each new policy found in the file.
 func NewPolicySetFromBytes(fileName string, document []byte) (PolicySet, error) {
-	policySlice, err := NewPolicySliceFromBytes(fileName, document)
+	policySlice, err := NewPoliciesFromBytes(fileName, document)
 	if err != nil {
 		return PolicySet{}, err
 	}
-	policyMap := make(map[PolicyID]*Policy, len(policySlice))
+	policyMap := make(policyMap, len(policySlice))
 	for i, p := range policySlice {
 		policyID := PolicyID(fmt.Sprintf("policy%d", i))
 		policyMap[policyID] = p
@@ -37,29 +39,34 @@ func NewPolicySetFromBytes(fileName string, document []byte) (PolicySet, error) 
 	return PolicySet{policies: policyMap}, nil
 }
 
-// GetPolicy returns a pointer to the Policy with the given ID. If a policy with the given ID does not exist, nil is
-// returned.
-func (p PolicySet) GetPolicy(policyID PolicyID) *Policy {
+// Get returns a pointer to the Policy with the given ID. If a policy with the given ID does not exist, an empty policy is returned.
+func (p PolicySet) Get(policyID PolicyID) Policy {
 	return p.policies[policyID]
 }
 
-// UpsertPolicy inserts or updates a policy with the given ID.
-func (p *PolicySet) UpsertPolicy(policyID PolicyID, policy *Policy) {
+// Has indicates if the policy exists.
+func (p PolicySet) Has(policyID PolicyID) bool {
+	_, ok := p.policies[policyID]
+	return ok
+}
+
+// Upsert inserts or updates a policy with the given ID.
+func (p *PolicySet) Upsert(policyID PolicyID, policy Policy) {
 	p.policies[policyID] = policy
 }
 
-// DeletePolicy removes a policy from the PolicySet. Deleting a non-existent policy is a no-op.
-func (p *PolicySet) DeletePolicy(policyID PolicyID) {
+// Delete removes a policy from the PolicySet. Deleting a non-existent policy is a no-op.
+func (p *PolicySet) Delete(policyID PolicyID) {
 	delete(p.policies, policyID)
 }
 
-// UpsertPolicySet inserts or updates all the policies from src into this PolicySet. Policies in this PolicySet with
-// identical IDs in src are clobbered by the policies from src.
-func (p *PolicySet) UpsertPolicySet(src PolicySet) {
-	for id, policy := range src.policies {
-		p.policies[id] = policy
-	}
-}
+// // UpsertPolicySet inserts or updates all the policies from src into this PolicySet. Policies in this PolicySet with
+// // identical IDs in src are clobbered by the policies from src.
+// func (p *PolicySet) UpsertPolicySet(src PolicySet) {
+// 	for id, policy := range src.policies {
+// 		p.policies[id] = policy
+// 	}
+// }
 
 // MarshalCedar emits a concatenated Cedar representation of a PolicySet. The policy names are stripped, but policies
 // are emitted in lexicographical order by ID.

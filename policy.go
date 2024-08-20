@@ -8,6 +8,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/json"
 	"github.com/cedar-policy/cedar-go/internal/parser"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 // A Policy is the parsed form of a single Cedar language policy statement.
@@ -60,19 +61,19 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 	return nil
 }
 
-func NewPolicyFromAST(astIn *ast.Policy) *Policy {
+func NewPolicyFromAST(astIn *ast.Policy) Policy {
 	p := newPolicy((*internalast.Policy)(astIn))
-	return &p
+	return p
 }
 
 // An Annotations is a map of key, value pairs found in the policy. Annotations
 // have no impact on policy evaluation.
-type Annotations map[string]string
+type Annotations map[types.Ident]types.String
 
 func (p Policy) Annotations() Annotations {
-	res := make(map[string]string, len(p.ast.Annotations))
+	res := make(Annotations, len(p.ast.Annotations))
 	for _, e := range p.ast.Annotations {
-		res[string(e.Key)] = string(e.Value)
+		res[e.Key] = e.Value
 	}
 	return res
 }
