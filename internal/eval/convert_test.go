@@ -15,7 +15,7 @@ func TestToEval(t *testing.T) {
 		name string
 		in   ast.Node
 		out  types.Value
-		err  func(testing.TB, error)
+		err  func(testutil.TB, error)
 	}{
 		{
 			"access",
@@ -297,14 +297,14 @@ func TestToEval(t *testing.T) {
 
 func TestToEvalPanic(t *testing.T) {
 	t.Parallel()
-	testutil.AssertPanic(t, func() {
+	testutil.Panic(t, func() {
 		_ = toEval(ast.Node{}.AsIsNode())
 	})
 }
 
 func TestToEvalVariablePanic(t *testing.T) {
 	t.Parallel()
-	testutil.AssertPanic(t, func() {
+	testutil.Panic(t, func() {
 		_ = toEval(ast.NodeTypeVariable{Name: "bananas"})
 	})
 }

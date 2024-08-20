@@ -22,3 +22,7 @@ var ExtMap = map[types.Path]extInfo{
 	"isMulticast": {Args: 1, IsMethod: true},
 	"isInRange":   {Args: 2, IsMethod: true},
 }
+
+func init() {
+	_ = 42
+}

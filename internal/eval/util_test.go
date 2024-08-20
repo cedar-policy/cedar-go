@@ -21,7 +21,7 @@ func TestUtil(t *testing.T) {
 		t.Run("toBoolOnNonBool", func(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToBool(types.Long(0))
-			testutil.AssertError(t, err, ErrType)
+			testutil.ErrorIs(t, err, ErrType)
 			testutil.Equals(t, v, false)
 		})
 	})
@@ -38,7 +38,7 @@ func TestUtil(t *testing.T) {
 		t.Run("toLongOnNonLong", func(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToLong(types.Boolean(true))
-			testutil.AssertError(t, err, ErrType)
+			testutil.ErrorIs(t, err, ErrType)
 			testutil.Equals(t, v, 0)
 		})
 	})
@@ -55,7 +55,7 @@ func TestUtil(t *testing.T) {
 		t.Run("toStringOnNonString", func(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToString(types.Boolean(true))
-			testutil.AssertError(t, err, ErrType)
+			testutil.ErrorIs(t, err, ErrType)
 			testutil.Equals(t, v, "")
 		})
 	})
@@ -74,7 +74,7 @@ func TestUtil(t *testing.T) {
 		t.Run("ToSetOnNonSet", func(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToSet(types.Boolean(true))
-			testutil.AssertError(t, err, ErrType)
+			testutil.ErrorIs(t, err, ErrType)
 			testutil.Equals(t, v, nil)
 		})
 	})
@@ -96,7 +96,7 @@ func TestUtil(t *testing.T) {
 		t.Run("toRecordOnNonRecord", func(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToRecord(types.String("hello"))
-			testutil.AssertError(t, err, ErrType)
+			testutil.ErrorIs(t, err, ErrType)
 			testutil.Equals(t, v, nil)
 		})
 	})
@@ -113,7 +113,7 @@ func TestUtil(t *testing.T) {
 		t.Run("ToEntityOnNonEntity", func(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToEntity(types.String("hello"))
-			testutil.AssertError(t, err, ErrType)
+			testutil.ErrorIs(t, err, ErrType)
 			testutil.Equals(t, v, types.EntityUID{})
 		})
 
@@ -133,7 +133,7 @@ func TestUtil(t *testing.T) {
 		t.Run("toDecimalOnNonDecimal", func(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToDecimal(types.Boolean(true))
-			testutil.AssertError(t, err, ErrType)
+			testutil.ErrorIs(t, err, ErrType)
 			testutil.Equals(t, v, types.Decimal{})
 		})
 
@@ -145,7 +145,7 @@ func TestUtil(t *testing.T) {
 		t.Run("toIPOnNonIP", func(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToIP(types.Boolean(true))
-			testutil.AssertError(t, err, ErrType)
+			testutil.ErrorIs(t, err, ErrType)
 			testutil.Equals(t, v, types.IPAddr{})
 		})
 	})

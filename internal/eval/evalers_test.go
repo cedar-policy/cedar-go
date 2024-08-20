@@ -92,7 +92,7 @@ func TestOrNode(t *testing.T) {
 				t.Parallel()
 				n := newOrNode(tt.lhs, tt.rhs)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -147,7 +147,7 @@ func TestAndNode(t *testing.T) {
 				t.Parallel()
 				n := newAndEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -189,7 +189,7 @@ func TestNotNode(t *testing.T) {
 				t.Parallel()
 				n := newNotEval(tt.arg)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -397,7 +397,7 @@ func TestAddNode(t *testing.T) {
 			t.Parallel()
 			n := newAddEval(tt.lhs, tt.rhs)
 			_, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 		})
 	}
 }
@@ -436,7 +436,7 @@ func TestSubtractNode(t *testing.T) {
 			t.Parallel()
 			n := newSubtractEval(tt.lhs, tt.rhs)
 			_, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 		})
 	}
 }
@@ -475,7 +475,7 @@ func TestMultiplyNode(t *testing.T) {
 			t.Parallel()
 			n := newMultiplyEval(tt.lhs, tt.rhs)
 			_, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 		})
 	}
 }
@@ -505,7 +505,7 @@ func TestNegateNode(t *testing.T) {
 			t.Parallel()
 			n := newNegateEval(tt.arg)
 			_, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 		})
 	}
 }
@@ -556,7 +556,7 @@ func TestLongLessThanNode(t *testing.T) {
 				t.Parallel()
 				n := newLongLessThanEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -608,7 +608,7 @@ func TestLongLessThanOrEqualNode(t *testing.T) {
 				t.Parallel()
 				n := newLongLessThanOrEqualEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -660,7 +660,7 @@ func TestLongGreaterThanNode(t *testing.T) {
 				t.Parallel()
 				n := newLongGreaterThanEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -712,7 +712,7 @@ func TestLongGreaterThanOrEqualNode(t *testing.T) {
 				t.Parallel()
 				n := newLongGreaterThanOrEqualEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -769,7 +769,7 @@ func TestDecimalLessThanNode(t *testing.T) {
 				t.Parallel()
 				n := newDecimalLessThanEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -826,7 +826,7 @@ func TestDecimalLessThanOrEqualNode(t *testing.T) {
 				t.Parallel()
 				n := newDecimalLessThanOrEqualEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -883,7 +883,7 @@ func TestDecimalGreaterThanNode(t *testing.T) {
 				t.Parallel()
 				n := newDecimalGreaterThanEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -940,7 +940,7 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 				t.Parallel()
 				n := newDecimalGreaterThanOrEqualEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
 	}
@@ -971,7 +971,7 @@ func TestIfThenElseNode(t *testing.T) {
 			t.Parallel()
 			n := newIfThenElseEval(tt.if_, tt.then, tt.else_)
 			v, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			testutil.Equals(t, v, tt.result)
 		})
 	}
@@ -997,7 +997,7 @@ func TestEqualNode(t *testing.T) {
 			t.Parallel()
 			n := newEqualEval(tt.lhs, tt.rhs)
 			v, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1023,7 +1023,7 @@ func TestNotEqualNode(t *testing.T) {
 			t.Parallel()
 			n := newNotEqualEval(tt.lhs, tt.rhs)
 			v, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1064,7 +1064,7 @@ func TestSetLiteralNode(t *testing.T) {
 			t.Parallel()
 			n := newSetLiteralEval(tt.elems)
 			v, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1088,7 +1088,7 @@ func TestContainsNode(t *testing.T) {
 				t.Parallel()
 				n := newContainsEval(tt.lhs, tt.rhs)
 				v, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 				AssertZeroValue(t, v)
 			})
 		}
@@ -1143,7 +1143,7 @@ func TestContainsAllNode(t *testing.T) {
 				t.Parallel()
 				n := newContainsAllEval(tt.lhs, tt.rhs)
 				v, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 				AssertZeroValue(t, v)
 			})
 		}
@@ -1197,7 +1197,7 @@ func TestContainsAnyNode(t *testing.T) {
 				t.Parallel()
 				n := newContainsAnyEval(tt.lhs, tt.rhs)
 				v, err := n.Eval(&Context{})
-				testutil.AssertError(t, err, tt.err)
+				testutil.ErrorIs(t, err, tt.err)
 				AssertZeroValue(t, v)
 			})
 		}
@@ -1260,7 +1260,7 @@ func TestRecordLiteralNode(t *testing.T) {
 			t.Parallel()
 			n := newRecordLiteralEval(tt.elems)
 			v, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1317,7 +1317,7 @@ func TestAttributeAccessNode(t *testing.T) {
 					entity.UID: entity,
 				},
 			})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1374,7 +1374,7 @@ func TestHasNode(t *testing.T) {
 					entity.UID: entity,
 				},
 			})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1428,7 +1428,7 @@ func TestLikeNode(t *testing.T) {
 			testutil.OK(t, err)
 			n := newLikeEval(tt.str, pat)
 			v, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1625,7 +1625,7 @@ func TestIsNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got, err := newIsEval(tt.lhs, tt.rhs).Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, got, tt.result)
 		})
 	}
@@ -1742,7 +1742,7 @@ func TestInNode(t *testing.T) {
 			}
 			ec := Context{Entities: entityMap}
 			v, err := n.Eval(&ec)
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1767,7 +1767,7 @@ func TestDecimalLiteralNode(t *testing.T) {
 			t.Parallel()
 			n := newDecimalLiteralEval(tt.arg)
 			v, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1794,7 +1794,7 @@ func TestIPLiteralNode(t *testing.T) {
 			t.Parallel()
 			n := newIPLiteralEval(tt.arg)
 			v, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1832,7 +1832,7 @@ func TestIPTestNode(t *testing.T) {
 			t.Parallel()
 			n := newIPTestEval(tt.lhs, tt.rhs)
 			v, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}
@@ -1870,7 +1870,7 @@ func TestIPIsInRangeNode(t *testing.T) {
 			t.Parallel()
 			n := newIPIsInRangeEval(tt.lhs, tt.rhs)
 			v, err := n.Eval(&Context{})
-			testutil.AssertError(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
 	}

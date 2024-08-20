@@ -22,7 +22,7 @@ func TestPattern(t *testing.T) {
 	})
 	t.Run("panicOnNil", func(t *testing.T) {
 		t.Parallel()
-		testutil.AssertPanic(t, func() {
+		testutil.Panic(t, func() {
 			NewPattern(nil)
 		})
 	})
@@ -77,7 +77,7 @@ func TestPatternJSON(t *testing.T) {
 	tests := []struct {
 		name            string
 		pattern         string
-		errFunc         func(testing.TB, error)
+		errFunc         func(testutil.TB, error)
 		target          Pattern
 		shouldRoundTrip bool
 	}{

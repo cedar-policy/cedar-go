@@ -13,7 +13,7 @@ func TestParseUnicodeEscape(t *testing.T) {
 		in   []byte
 		out  rune
 		outN int
-		err  func(t testing.TB, err error)
+		err  func(t testutil.TB, err error)
 	}{
 		{"happy", []byte{'{', '4', '2', '}'}, 0x42, 4, testutil.OK},
 		{"badRune", []byte{'{', 0x80, 0x81}, 0, 1, testutil.Error},
@@ -37,7 +37,7 @@ func TestUnquote(t *testing.T) {
 		name string
 		in   string
 		out  string
-		err  func(t testing.TB, err error)
+		err  func(t testutil.TB, err error)
 	}{
 		{"happy", `"test"`, `test`, testutil.OK},
 	}
