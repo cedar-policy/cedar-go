@@ -54,7 +54,7 @@ type Pair struct {
 
 type Pairs []Pair
 
-// Record, TODO: document how duplicate keys might not really get handled in a meaningful way
+// In the case where duplicate keys exist, the latter value will be preserved.
 func Record(elements Pairs) Node {
 	var astNodes []ast.Pair
 	for _, v := range elements {

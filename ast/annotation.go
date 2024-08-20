@@ -26,8 +26,9 @@ func Annotation(name, value types.String) *Annotations {
 	return wrapAnnotations(ast.Annotation(name, value))
 }
 
-func (a *Annotations) Annotation(name, value types.String) *Annotations {
-	return wrapAnnotations(a.unwrap().Annotation(name, value))
+// If a previous annotation exists with the same key, this builder will replace it.
+func (a *Annotations) Annotation(key, value types.String) *Annotations {
+	return wrapAnnotations(a.unwrap().Annotation(key, value))
 }
 
 func (a *Annotations) Permit() *Policy {
@@ -38,6 +39,7 @@ func (a *Annotations) Forbid() *Policy {
 	return wrapPolicy(a.unwrap().Forbid())
 }
 
-func (p *Policy) Annotate(name, value types.String) *Policy {
-	return wrapPolicy(p.unwrap().Annotate(name, value))
+// If a previous annotation exists with the same key, this builder will replace it.
+func (p *Policy) Annotate(key, value types.String) *Policy {
+	return wrapPolicy(p.unwrap().Annotate(key, value))
 }

@@ -17,8 +17,18 @@ func Annotation(name, value types.String) *Annotations {
 	return &Annotations{nodes: []AnnotationType{newAnnotation(name, value)}}
 }
 
-func (a *Annotations) Annotation(name, value types.String) *Annotations {
-	a.nodes = append(a.nodes, newAnnotation(name, value))
+func addAnnotation(in []AnnotationType, key, value types.String) []AnnotationType {
+	for i, aa := range in {
+		if aa.Key == key {
+			in[i] = newAnnotation(key, value)
+			return in
+		}
+	}
+	return append(in, newAnnotation(key, value))
+}
+
+func (a *Annotations) Annotation(key, value types.String) *Annotations {
+	a.nodes = addAnnotation(a.nodes, key, value)
 	return a
 }
 
@@ -30,11 +40,11 @@ func (a *Annotations) Forbid() *Policy {
 	return newPolicy(EffectForbid, a.nodes)
 }
 
-func (p *Policy) Annotate(name, value types.String) *Policy {
-	p.Annotations = append(p.Annotations, AnnotationType{Key: name, Value: value})
+func (p *Policy) Annotate(key, value types.String) *Policy {
+	p.Annotations = addAnnotation(p.Annotations, key, value)
 	return p
 }
 
-func newAnnotation(name, value types.String) AnnotationType {
-	return AnnotationType{Key: name, Value: value}
+func newAnnotation(key, value types.String) AnnotationType {
+	return AnnotationType{Key: key, Value: value}
 }
