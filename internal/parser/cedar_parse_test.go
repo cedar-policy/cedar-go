@@ -302,26 +302,21 @@ func TestParse(t *testing.T) {
 				return
 			}
 			testutil.OK(t, err)
-			if len(policies) != 1 {
-				// TODO: handle 0, > 1
-				return
-			}
 
 			// N.B. Until we support the re-rendering of comments, we have to ignore the position for the purposes of
 			// these tests (see test "ex1")
-			policies[0].Position = ast.Position{Offset: 0, Line: 1, Column: 1}
+			for _, pp := range policies {
+				pp.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
 
-			var buf bytes.Buffer
-			pp := policies[0]
-			pp.MarshalCedar(&buf)
+				var buf bytes.Buffer
+				pp.MarshalCedar(&buf)
 
-			var p2 parser.PolicySlice
-			err = p2.UnmarshalCedar(buf.Bytes())
-			testutil.OK(t, err)
+				var p2 parser.PolicySlice
+				err = p2.UnmarshalCedar(buf.Bytes())
+				testutil.OK(t, err)
 
-			// TODO: support 0, > 1
-			testutil.Equals(t, p2[0], policies[0])
-
+				testutil.Equals(t, p2[0], pp)
+			}
 		})
 	}
 }
