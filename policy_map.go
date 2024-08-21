@@ -28,7 +28,7 @@ func NewPolicySet() PolicySet {
 // NewPolicySetFromBytes assigns default PolicyIDs to the policies contained in fileName in the format "policy<n>" where
 // <n> is incremented for each new policy found in the file.
 func NewPolicySetFromBytes(fileName string, document []byte) (PolicySet, error) {
-	policySlice, err := NewPoliciesFromBytes(fileName, document)
+	policySlice, err := NewPolicyListFromBytes(fileName, document)
 	if err != nil {
 		return PolicySet{}, err
 	}

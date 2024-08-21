@@ -61,6 +61,7 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 }
 
 // NewPolicyFromAST lets you create a new policy statement from a programatically created AST.
+// Do not modify the *ast.Policy after passing it into NewPolicyFromAST.
 func NewPolicyFromAST(astIn *ast.Policy) Policy {
 	p := newPolicy((*internalast.Policy)(astIn))
 	return p
