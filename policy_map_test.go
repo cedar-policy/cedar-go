@@ -126,3 +126,29 @@ func TestPolicyMap(t *testing.T) {
 	m := ps.Map()
 	testutil.Equals(t, len(m), 1)
 }
+
+func TestPolicySetJSON(t *testing.T) {
+	t.Parallel()
+	t.Run("UnmarshalError", func(t *testing.T) {
+		t.Parallel()
+		var ps cedar.PolicySet
+		err := ps.UnmarshalJSON([]byte(`!@#$`))
+		testutil.Error(t, err)
+	})
+	t.Run("UnmarshalOK", func(t *testing.T) {
+		t.Parallel()
+		var ps cedar.PolicySet
+		err := ps.UnmarshalJSON([]byte(`{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}}}`))
+		testutil.OK(t, err)
+		testutil.Equals(t, len(ps.Map()), 1)
+	})
+
+	t.Run("MarshalOK", func(t *testing.T) {
+		t.Parallel()
+		ps, err := cedar.NewPolicySetFromBytes("", []byte(`permit (principal, action, resource);`))
+		testutil.OK(t, err)
+		out, err := ps.MarshalJSON()
+		testutil.OK(t, err)
+		testutil.Equals(t, string(out), `{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}}}`)
+	})
+}
