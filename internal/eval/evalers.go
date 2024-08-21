@@ -939,7 +939,7 @@ func entityInOneDo(ctx *Context, entity types.EntityUID, parent types.EntityUID)
 	if entity == parent {
 		return true
 	}
-	var known map[types.EntityUID]struct{}
+	var known []types.EntityUID // need benchmarks to compare with, maybe faster with short slices map[types.EntityUID]struct{}
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
@@ -948,14 +948,11 @@ func entityInOneDo(ctx *Context, entity types.EntityUID, parent types.EntityUID)
 			return true
 		}
 		for _, k := range fe.Parents {
-			if _, ok := known[k]; ok || k == entity || len(ctx.Entities[k].Parents) == 0 {
+			if len(ctx.Entities[k].Parents) == 0 || k == entity || slices.Contains(known, k) {
 				continue
 			}
 			todo = append(todo, k)
-			if known == nil {
-				known = map[types.EntityUID]struct{}{}
-			}
-			known[k] = struct{}{}
+			known = append(known, k)
 		}
 		if len(todo) == 0 {
 			return false
