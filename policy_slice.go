@@ -10,7 +10,7 @@ import (
 
 // PolicyList represents a list of un-named Policy's. Cedar documents, unlike the PolicySet form, don't have a means of
 // naming individual policies.
-type PolicyList []Policy
+type PolicyList []*Policy
 
 // NewPolicyListFromBytes will create a Policies from the given text document with the given file name used in Position
 // data.  If there is an error parsing the document, it will be returned.
@@ -32,7 +32,7 @@ func (p *PolicyList) UnmarshalCedar(b []byte) error {
 	if err := res.UnmarshalCedar(b); err != nil {
 		return fmt.Errorf("parser error: %w", err)
 	}
-	policySlice := make([]Policy, 0, len(res))
+	policySlice := make([]*Policy, 0, len(res))
 	for _, p := range res {
 		newPolicy := newPolicy((*internalast.Policy)(p))
 		policySlice = append(policySlice, newPolicy)

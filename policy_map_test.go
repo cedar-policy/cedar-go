@@ -43,11 +43,11 @@ func TestUpsertPolicy(t *testing.T) {
 
 		ps := cedar.NewPolicySet()
 		ps.Set("policy0", policy0)
-		ps.Set("policy1", policy1)
+		ps.Set("policy1", &policy1)
 
 		testutil.Equals(t, ps.Get("policy0"), policy0)
-		testutil.Equals(t, ps.Get("policy1"), policy1)
-		testutil.Equals(t, ps.Get("policy2"), cedar.Policy{})
+		testutil.Equals(t, ps.Get("policy1"), &policy1)
+		testutil.Equals(t, ps.Get("policy2"), nil)
 	})
 	t.Run("upsert", func(t *testing.T) {
 		t.Parallel()
@@ -83,7 +83,7 @@ func TestDeletePolicy(t *testing.T) {
 		ps.Set("a policy", p1)
 		ps.Delete("a policy")
 
-		testutil.Equals(t, ps.Get("a policy"), cedar.Policy{})
+		testutil.Equals(t, ps.Get("a policy"), nil)
 	})
 }
 
