@@ -17,10 +17,47 @@ func zeroValue() types.Value {
 	return nil
 }
 
+type inCacheKey struct {
+	lhs, rhs types.EntityUID
+}
+
 type Context struct {
 	Entities                    types.Entities
 	Principal, Action, Resource types.Value
 	Context                     types.Value
+
+	InCache         map[inCacheKey]bool
+	FastEntityCache map[types.EntityUID]fastEntity
+}
+
+func (c *Context) GetFastEntity(k types.EntityUID) fastEntity {
+	res, ok := c.FastEntityCache[k]
+	if ok {
+		return res
+	}
+	ent := c.Entities[k]
+	fe := fastEntity{
+		Attributes: ent.Attributes,
+	}
+	if len(ent.Parents) > 0 {
+		fe.Parents = make(map[types.EntityUID]struct{}, len(ent.Parents))
+	}
+	for _, p := range ent.Parents {
+		fe.Parents[p] = struct{}{}
+	}
+	c.FastEntityCache[k] = fe
+	return fe
+}
+
+type fastEntity struct {
+	Parents    map[types.EntityUID]struct{}
+	Attributes types.Record
+}
+
+func PrepContext(in *Context) *Context {
+	in.InCache = map[inCacheKey]bool{}
+	in.FastEntityCache = map[types.EntityUID]fastEntity{}
+	return in
 }
 
 type Evaler interface {
@@ -912,6 +949,46 @@ func newInEval(lhs, rhs Evaler) *inEval {
 	return &inEval{lhs: lhs, rhs: rhs}
 }
 
+func entityInOne(ctx *Context, entity types.EntityUID, query types.EntityUID) bool {
+	key := inCacheKey{lhs: entity, rhs: query}
+	res, ok := ctx.InCache[key]
+	if ok {
+		return res
+	}
+	res = entityInOneDo(ctx, entity, query)
+	ctx.InCache[key] = res
+	return res
+}
+
+func entityInOneDo(ctx *Context, entity types.EntityUID, parent types.EntityUID) bool {
+	if entity == parent {
+		return true
+	}
+	var known map[types.EntityUID]struct{}
+	var todo []types.EntityUID
+	var candidate = entity
+	for {
+		fe := ctx.GetFastEntity(candidate)
+		if _, ok := fe.Parents[parent]; ok {
+			return true
+		}
+		for k := range fe.Parents {
+			if _, ok := known[k]; ok || k == entity || len(ctx.GetFastEntity(k).Parents) == 0 {
+				continue
+			}
+			todo = append(todo, k)
+			if known == nil {
+				known = map[types.EntityUID]struct{}{}
+			}
+			known[k] = struct{}{}
+		}
+		if len(todo) == 0 {
+			return false
+		}
+		candidate, todo = todo[len(todo)-1], todo[:len(todo)-1]
+	}
+}
+
 func entityIn(entity types.EntityUID, query map[types.EntityUID]struct{}, entityMap types.Entities) bool {
 	checked := map[types.EntityUID]struct{}{}
 	toCheck := []types.EntityUID{entity}
@@ -947,7 +1024,7 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 	query := map[types.EntityUID]struct{}{}
 	switch rhsv := rhs.(type) {
 	case types.EntityUID:
-		query[rhsv] = struct{}{}
+		return types.Boolean(entityInOne(ctx, lhs, rhsv)), nil
 	case types.Set:
 		for _, rhv := range rhsv {
 			e, err := ValueToEntity(rhv)
@@ -956,11 +1033,10 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 			}
 			query[e] = struct{}{}
 		}
-	default:
-		return zeroValue(), fmt.Errorf(
-			"%w: expected one of [set, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(rhs))
+		return types.Boolean(entityIn(lhs, query, ctx.Entities)), nil
 	}
-	return types.Boolean(entityIn(lhs, query, ctx.Entities)), nil
+	return zeroValue(), fmt.Errorf(
+		"%w: expected one of [set, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(rhs))
 }
 
 // isEval

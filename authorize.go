@@ -67,13 +67,13 @@ type Request struct {
 // IsAuthorized uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
 func (p PolicySet) IsAuthorized(entityMap types.Entities, req Request) (Decision, Diagnostic) {
-	c := &eval.Context{
+	c := eval.PrepContext(&eval.Context{
 		Entities:  entityMap,
 		Principal: req.Principal,
 		Action:    req.Action,
 		Resource:  req.Resource,
 		Context:   req.Context,
-	}
+	})
 	var diag Diagnostic
 	var gotForbid bool
 	var forbidReasons []Reason
