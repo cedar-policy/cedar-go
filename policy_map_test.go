@@ -157,8 +157,8 @@ forbid (
     resource
 );`
 
-	var policies cedar.Policies
-	testutil.OK(t, policies.UnmarshalCedar([]byte(policiesStr)))
+	policies, err := cedar.NewPoliciesFromBytes("", []byte(policiesStr))
+	testutil.OK(t, err)
 
 	ps := cedar.NewPolicySet()
 	for i, p := range policies {
