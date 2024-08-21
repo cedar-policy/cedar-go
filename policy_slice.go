@@ -12,9 +12,9 @@ import (
 // naming individual policies.
 type PolicyList []Policy
 
-// NewPoliciesFromBytes will create a Policies from the given text document with the given file name used in Position
+// NewPolicyListFromBytes will create a Policies from the given text document with the given file name used in Position
 // data.  If there is an error parsing the document, it will be returned.
-func NewPoliciesFromBytes(fileName string, document []byte) (PolicyList, error) {
+func NewPolicyListFromBytes(fileName string, document []byte) (PolicyList, error) {
 	var policySlice PolicyList
 	if err := policySlice.UnmarshalCedar(document); err != nil {
 		return nil, err

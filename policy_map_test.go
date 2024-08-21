@@ -157,7 +157,7 @@ forbid (
     resource
 );`
 
-	policies, err := cedar.NewPoliciesFromBytes("", []byte(policiesStr))
+	policies, err := cedar.NewPolicyListFromBytes("", []byte(policiesStr))
 	testutil.OK(t, err)
 
 	ps := cedar.NewPolicySet()
