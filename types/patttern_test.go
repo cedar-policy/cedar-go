@@ -55,6 +55,10 @@ func TestPatternMatch(t *testing.T) {
 		{NewPattern(String("**"), Wildcard{}, String("**")), "**foo**", true},
 		{NewPattern(String("**"), Wildcard{}, String("**")), "**bar**", true},
 		{NewPattern(String("**"), Wildcard{}, String("**")), "*bar*", false},
+
+		// with native strings
+		{NewPattern(Wildcard{}, "ell", Wildcard{}), "hello", true},
+		{NewPattern("he", Wildcard{}), "hello", true},
 	}
 	for _, tt := range tests {
 		tt := tt
