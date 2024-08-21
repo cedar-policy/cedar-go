@@ -8,14 +8,14 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/parser"
 )
 
-// Policies represents a set of un-named Policy's. Cedar documents, unlike the JSON format, don't have a means of
+// PolicyList represents a list of un-named Policy's. Cedar documents, unlike the PolicySet form, don't have a means of
 // naming individual policies.
-type Policies []Policy
+type PolicyList []Policy
 
-// NewPoliciesFromBytes will create a PolicySet from the given text document with the given file name used in Position
+// NewPoliciesFromBytes will create a Policies from the given text document with the given file name used in Position
 // data.  If there is an error parsing the document, it will be returned.
-func NewPoliciesFromBytes(fileName string, document []byte) (Policies, error) {
-	var policySlice Policies
+func NewPoliciesFromBytes(fileName string, document []byte) (PolicyList, error) {
+	var policySlice PolicyList
 	if err := policySlice.UnmarshalCedar(document); err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func NewPoliciesFromBytes(fileName string, document []byte) (Policies, error) {
 
 // UnmarshalCedar parses a concatenation of un-named Cedar policy statements. Names can be assigned to these policies
 // when adding them to a PolicySet.
-func (p *Policies) UnmarshalCedar(b []byte) error {
+func (p *PolicyList) UnmarshalCedar(b []byte) error {
 	var res parser.PolicySlice
 	if err := res.UnmarshalCedar(b); err != nil {
 		return fmt.Errorf("parser error: %w", err)
@@ -41,8 +41,8 @@ func (p *Policies) UnmarshalCedar(b []byte) error {
 	return nil
 }
 
-// MarshalCedar emits a concatenated Cedar representation of a PolicySlice
-func (p Policies) MarshalCedar() []byte {
+// MarshalCedar emits a concatenated Cedar representation of the policies.
+func (p PolicyList) MarshalCedar() []byte {
 	var buf bytes.Buffer
 	for i, policy := range p {
 		buf.Write(policy.MarshalCedar())

@@ -7,6 +7,7 @@ import (
 	"slices"
 )
 
+// PolicyID is a string identifier for the policy within the PolicySet
 type PolicyID string
 
 type policyMap map[PolicyID]Policy

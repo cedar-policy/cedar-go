@@ -56,11 +56,11 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 	if err := cedarPolicy.UnmarshalCedar(b); err != nil {
 		return err
 	}
-
 	*p = newPolicy((*internalast.Policy)(&cedarPolicy))
 	return nil
 }
 
+// NewPolicyFromAST lets you create a new policy statement from a programatically created AST.
 func NewPolicyFromAST(astIn *ast.Policy) Policy {
 	p := newPolicy((*internalast.Policy)(astIn))
 	return p
@@ -70,6 +70,7 @@ func NewPolicyFromAST(astIn *ast.Policy) Policy {
 // have no impact on policy evaluation.
 type Annotations map[types.Ident]types.String
 
+// Annotations retrieves the annotations associated with this policy.
 func (p Policy) Annotations() Annotations {
 	res := make(Annotations, len(p.ast.Annotations))
 	for _, e := range p.ast.Annotations {
@@ -88,6 +89,7 @@ const (
 	Forbid = Effect(false)
 )
 
+// Effect retrieves the effect of this policy.
 func (p Policy) Effect() Effect {
 	return Effect(p.ast.Effect)
 }
@@ -100,10 +102,12 @@ type Position struct {
 	Column   int    // column number, starting at 1 (character count per line)
 }
 
+// Position retrieves the position of this policy.
 func (p Policy) Position() Position {
 	return Position(p.ast.Position)
 }
 
+// SetFilename sets the filename of this policy.
 func (p *Policy) SetFilename(fileName string) {
 	p.ast.Position.Filename = fileName
 }
