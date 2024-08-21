@@ -26,15 +26,17 @@ func Annotation(key types.Ident, value types.String) *Annotations {
 	return wrapAnnotations(ast.Annotation(key, value))
 }
 
-// If a previous annotation exists with the same key, this builder will replace it.
+// Annotation adds an annotation.  If a previous annotation exists with the same key, this builder will replace it.
 func (a *Annotations) Annotation(key types.Ident, value types.String) *Annotations {
 	return wrapAnnotations(a.unwrap().Annotation(key, value))
 }
 
+// Permit begins a permit policy from the given annotations.
 func (a *Annotations) Permit() *Policy {
 	return wrapPolicy(a.unwrap().Permit())
 }
 
+// Forbid begins a forbid policy from the given annotations.
 func (a *Annotations) Forbid() *Policy {
 	return wrapPolicy(a.unwrap().Forbid())
 }
