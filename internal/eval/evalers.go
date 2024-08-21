@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -26,37 +27,11 @@ type Context struct {
 	Principal, Action, Resource types.Value
 	Context                     types.Value
 
-	InCache         map[inCacheKey]bool
-	FastEntityCache map[types.EntityUID]fastEntity
-}
-
-func (c *Context) GetFastEntity(k types.EntityUID) fastEntity {
-	res, ok := c.FastEntityCache[k]
-	if ok {
-		return res
-	}
-	ent := c.Entities[k]
-	fe := fastEntity{
-		Attributes: ent.Attributes,
-	}
-	if len(ent.Parents) > 0 {
-		fe.Parents = make(map[types.EntityUID]struct{}, len(ent.Parents))
-	}
-	for _, p := range ent.Parents {
-		fe.Parents[p] = struct{}{}
-	}
-	c.FastEntityCache[k] = fe
-	return fe
-}
-
-type fastEntity struct {
-	Parents    map[types.EntityUID]struct{}
-	Attributes types.Record
+	InCache map[inCacheKey]bool
 }
 
 func PrepContext(in *Context) *Context {
 	in.InCache = map[inCacheKey]bool{}
-	in.FastEntityCache = map[types.EntityUID]fastEntity{}
 	return in
 }
 
@@ -968,12 +943,12 @@ func entityInOneDo(ctx *Context, entity types.EntityUID, parent types.EntityUID)
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
-		fe := ctx.GetFastEntity(candidate)
-		if _, ok := fe.Parents[parent]; ok {
+		fe := ctx.Entities[candidate]
+		if slices.Contains(fe.Parents, parent) {
 			return true
 		}
-		for k := range fe.Parents {
-			if _, ok := known[k]; ok || k == entity || len(ctx.GetFastEntity(k).Parents) == 0 {
+		for _, k := range fe.Parents {
+			if _, ok := known[k]; ok || k == entity || len(ctx.Entities[k].Parents) == 0 {
 				continue
 			}
 			todo = append(todo, k)
