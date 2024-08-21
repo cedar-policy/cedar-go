@@ -31,15 +31,20 @@ func NewPattern(components ...any) Pattern {
 	var comps []patternComponent
 	for _, c := range components {
 		switch v := c.(type) {
-		case Wildcard:
-			if len(comps) == 0 || comps[len(comps)-1].Literal != "" {
-				comps = append(comps, patternComponent{Wildcard: true, Literal: ""})
+		case string:
+			if len(comps) == 0 {
+				comps = []patternComponent{{Wildcard: false, Literal: ""}}
 			}
+			comps[len(comps)-1].Literal += string(v)
 		case String:
 			if len(comps) == 0 {
 				comps = []patternComponent{{Wildcard: false, Literal: ""}}
 			}
 			comps[len(comps)-1].Literal += string(v)
+		case Wildcard:
+			if len(comps) == 0 || comps[len(comps)-1].Literal != "" {
+				comps = append(comps, patternComponent{Wildcard: true, Literal: ""})
+			}
 		default:
 			panic(fmt.Sprintf("unexpected component type: %T", v))
 		}
