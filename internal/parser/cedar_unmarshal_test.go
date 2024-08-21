@@ -301,7 +301,7 @@ when { principal.firstName like "joh\*nny" };`,
 			"like wildcard",
 			`permit ( principal, action, resource )
 when { principal.firstName like "*" };`,
-			ast.Permit().When(ast.Principal().Access("firstName").Like(types.NewPattern(types.Wildcard()))),
+			ast.Permit().When(ast.Principal().Access("firstName").Like(types.NewPattern(types.Wildcard{}))),
 		},
 		{
 			"is",
