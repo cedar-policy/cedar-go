@@ -3,9 +3,13 @@ package cedar
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"maps"
 	"slices"
+
+	internalast "github.com/cedar-policy/cedar-go/internal/ast"
+	internaljson "github.com/cedar-policy/cedar-go/internal/json"
 )
 
 // PolicyID is a string identifier for the policy within the PolicySet
@@ -21,8 +25,8 @@ type PolicySet struct {
 }
 
 // NewPolicySet creates a new, empty PolicySet
-func NewPolicySet() PolicySet {
-	return PolicySet{policies: PolicyMap{}}
+func NewPolicySet() *PolicySet {
+	return &PolicySet{policies: PolicyMap{}}
 }
 
 // NewPolicySetFromBytes will create a PolicySet from the given text document with the given file name used in Position
@@ -30,17 +34,17 @@ func NewPolicySet() PolicySet {
 //
 // NewPolicySetFromBytes assigns default PolicyIDs to the policies contained in fileName in the format "policy<n>" where
 // <n> is incremented for each new policy found in the file.
-func NewPolicySetFromBytes(fileName string, document []byte) (PolicySet, error) {
+func NewPolicySetFromBytes(fileName string, document []byte) (*PolicySet, error) {
 	policySlice, err := NewPolicyListFromBytes(fileName, document)
 	if err != nil {
-		return PolicySet{}, err
+		return &PolicySet{}, err
 	}
 	policyMap := make(PolicyMap, len(policySlice))
 	for i, p := range policySlice {
 		policyID := PolicyID(fmt.Sprintf("policy%d", i))
 		policyMap[policyID] = p
 	}
-	return PolicySet{policies: policyMap}, nil
+	return &PolicySet{policies: policyMap}, nil
 }
 
 // Get returns the Policy with the given ID. If a policy with the given ID does not exist, an empty policy is returned.
@@ -65,7 +69,7 @@ func (p *PolicySet) Map() PolicyMap {
 
 // MarshalCedar emits a concatenated Cedar representation of a PolicySet. The policy names are stripped, but policies
 // are emitted in lexicographical order by ID.
-func (p PolicySet) MarshalCedar() []byte {
+func (p *PolicySet) MarshalCedar() []byte {
 	ids := make([]PolicyID, 0, len(p.policies))
 	for k := range p.policies {
 		ids = append(ids, k)
@@ -84,4 +88,34 @@ func (p PolicySet) MarshalCedar() []byte {
 		i++
 	}
 	return buf.Bytes()
+}
+
+// MarshalJSON encodes a PolicySet in the JSON format specified by the [Cedar documentation].
+//
+// [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
+func (p *PolicySet) MarshalJSON() ([]byte, error) {
+	jsonPolicySet := internaljson.PolicySetJSON{
+		StaticPolicies: make(internaljson.PolicySet, len(p.policies)),
+	}
+	for k, v := range p.policies {
+		jsonPolicySet.StaticPolicies[string(k)] = (*internaljson.Policy)(v.ast)
+	}
+	return json.Marshal(jsonPolicySet)
+}
+
+// UnmarshalJSON parses and compiles a PolicySet in the JSON format specified by the [Cedar documentation].
+//
+// [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
+func (p *PolicySet) UnmarshalJSON(b []byte) error {
+	var jsonPolicySet internaljson.PolicySetJSON
+	if err := json.Unmarshal(b, &jsonPolicySet); err != nil {
+		return err
+	}
+	*p = PolicySet{
+		policies: make(PolicyMap, len(jsonPolicySet.StaticPolicies)),
+	}
+	for k, v := range jsonPolicySet.StaticPolicies {
+		p.policies[PolicyID(k)] = newPolicy((*internalast.Policy)(v))
+	}
+	return nil
 }
