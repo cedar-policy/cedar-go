@@ -17,8 +17,8 @@ type Policy struct {
 	ast  *internalast.Policy
 }
 
-func newPolicy(astIn *internalast.Policy) Policy {
-	return Policy{eval: eval.Compile(astIn), ast: astIn}
+func newPolicy(astIn *internalast.Policy) *Policy {
+	return &Policy{eval: eval.Compile(astIn), ast: astIn}
 }
 
 // MarshalJSON encodes a single Policy statement in the JSON format specified by the [Cedar documentation].
@@ -38,7 +38,7 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*p = newPolicy((*internalast.Policy)(&jsonPolicy))
+	*p = *newPolicy((*internalast.Policy)(&jsonPolicy))
 	return nil
 }
 
@@ -56,13 +56,13 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
 	if err := cedarPolicy.UnmarshalCedar(b); err != nil {
 		return err
 	}
-	*p = newPolicy((*internalast.Policy)(&cedarPolicy))
+	*p = *newPolicy((*internalast.Policy)(&cedarPolicy))
 	return nil
 }
 
 // NewPolicyFromAST lets you create a new policy statement from a programatically created AST.
 // Do not modify the *ast.Policy after passing it into NewPolicyFromAST.
-func NewPolicyFromAST(astIn *ast.Policy) Policy {
+func NewPolicyFromAST(astIn *ast.Policy) *Policy {
 	p := newPolicy((*internalast.Policy)(astIn))
 	return p
 }
@@ -72,7 +72,7 @@ func NewPolicyFromAST(astIn *ast.Policy) Policy {
 type Annotations map[types.Ident]types.String
 
 // Annotations retrieves the annotations associated with this policy.
-func (p Policy) Annotations() Annotations {
+func (p *Policy) Annotations() Annotations {
 	res := make(Annotations, len(p.ast.Annotations))
 	for _, e := range p.ast.Annotations {
 		res[e.Key] = e.Value
@@ -91,7 +91,7 @@ const (
 )
 
 // Effect retrieves the effect of this policy.
-func (p Policy) Effect() Effect {
+func (p *Policy) Effect() Effect {
 	return Effect(p.ast.Effect)
 }
 
@@ -104,7 +104,7 @@ type Position struct {
 }
 
 // Position retrieves the position of this policy.
-func (p Policy) Position() Position {
+func (p *Policy) Position() Position {
 	return Position(p.ast.Position)
 }
 

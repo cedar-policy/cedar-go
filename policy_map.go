@@ -16,7 +16,7 @@ import (
 type PolicyID string
 
 // PolicyMap is a map of policy IDs to policy
-type PolicyMap map[PolicyID]Policy
+type PolicyMap map[PolicyID]*Policy
 
 // PolicySet is a set of named policies against which a request can be authorized.
 type PolicySet struct {
@@ -47,13 +47,13 @@ func NewPolicySetFromBytes(fileName string, document []byte) (*PolicySet, error)
 	return &PolicySet{policies: policyMap}, nil
 }
 
-// Get returns the Policy with the given ID. If a policy with the given ID does not exist, an empty policy is returned.
-func (p PolicySet) Get(policyID PolicyID) Policy {
+// Get returns the Policy with the given ID. If a policy with the given ID does not exist, nil is returned.
+func (p PolicySet) Get(policyID PolicyID) *Policy {
 	return p.policies[policyID]
 }
 
 // Set inserts or updates a policy with the given ID.
-func (p *PolicySet) Set(policyID PolicyID, policy Policy) {
+func (p *PolicySet) Set(policyID PolicyID, policy *Policy) {
 	p.policies[policyID] = policy
 }
 
