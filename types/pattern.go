@@ -21,27 +21,17 @@ type Pattern struct {
 	comps []patternComponent
 }
 
-// A PatternComponent is either a wildcard (represented as "*" in Cedar text) or a literal string. Note that *
-// characters in literal strings are treated as literal asterisks rather than wildcards.
-type PatternComponent interface {
-	isPatternComponent()
-}
+// Wildcard is a type which is used as a component to NewPattern.
+type Wildcard struct{}
 
-type wildcardComponent struct{}
-
-func (wildcardComponent) isPatternComponent() {}
-
-func (String) isPatternComponent() {}
-
-// Wildcard is a constant which can be used to conveniently construct an instance of WildcardPatternComponent
-func Wildcard() PatternComponent { return wildcardComponent{} }
-
-// NewPattern permits for the programmatic construction of a Pattern out of a set of PatternComponents.
-func NewPattern(components ...PatternComponent) Pattern {
+// NewPattern permits for the programmatic construction of a Pattern out of a slice of pattern components.
+// The pattern components may be one of string, types.String, or types.Wildcard.  Any other types will
+// cause a panic.
+func NewPattern(components ...any) Pattern {
 	var comps []patternComponent
 	for _, c := range components {
 		switch v := c.(type) {
-		case wildcardComponent:
+		case Wildcard:
 			if len(comps) == 0 || comps[len(comps)-1].Literal != "" {
 				comps = append(comps, patternComponent{Wildcard: true, Literal: ""})
 			}
@@ -173,14 +163,14 @@ func (p *Pattern) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf(`%w: must provide at least one pattern component`, errJSONInvalidPatternComponent)
 	}
 
-	var comps []PatternComponent
+	var comps []any
 	for _, comp := range objs {
 		switch v := comp.(type) {
 		case string:
 			if v != "Wildcard" {
 				return fmt.Errorf(`%w: invalid component string "%v"`, errJSONInvalidPatternComponent, v)
 			}
-			comps = append(comps, Wildcard())
+			comps = append(comps, Wildcard{})
 		case map[string]any:
 			if len(v) != 1 {
 				return fmt.Errorf(`%w: too many keys in literal object`, errJSONInvalidPatternComponent)

@@ -10,8 +10,8 @@ func TestPattern(t *testing.T) {
 	t.Parallel()
 	t.Run("saturate two wildcards", func(t *testing.T) {
 		t.Parallel()
-		pattern1 := NewPattern(Wildcard(), Wildcard())
-		pattern2 := NewPattern(Wildcard())
+		pattern1 := NewPattern(Wildcard{}, Wildcard{})
+		pattern2 := NewPattern(Wildcard{})
 		testutil.Equals(t, pattern1, pattern2)
 	})
 	t.Run("saturate two literals", func(t *testing.T) {
@@ -28,13 +28,7 @@ func TestPattern(t *testing.T) {
 	})
 	t.Run("MarshalCedar", func(t *testing.T) {
 		t.Parallel()
-		testutil.Equals(t, string(NewPattern(String("*foo"), Wildcard()).MarshalCedar()), `"\*foo*"`)
-	})
-
-	t.Run("isPatternComponent", func(t *testing.T) {
-		t.Parallel()
-		String("").isPatternComponent()
-		Wildcard().isPatternComponent()
+		testutil.Equals(t, string(NewPattern(String("*foo"), Wildcard{}).MarshalCedar()), `"\*foo*"`)
 	})
 }
 
@@ -47,20 +41,20 @@ func TestPatternMatch(t *testing.T) {
 	}{
 		{NewPattern(), "", true},
 		{NewPattern(), "hello", false},
-		{NewPattern(Wildcard()), "hello", true},
+		{NewPattern(Wildcard{}), "hello", true},
 		{NewPattern(String("e")), "hello", false},
-		{NewPattern(Wildcard(), String("e")), "hello", false},
-		{NewPattern(Wildcard(), String("e"), Wildcard()), "hello", true},
+		{NewPattern(Wildcard{}, String("e")), "hello", false},
+		{NewPattern(Wildcard{}, String("e"), Wildcard{}), "hello", true},
 		{NewPattern(String("hello")), "hello", true},
-		{NewPattern(String("hello"), Wildcard()), "hello", true},
-		{NewPattern(Wildcard(), String("h"), Wildcard(), String("llo"), Wildcard()), "hello", true},
-		{NewPattern(String("h"), Wildcard(), String("e"), Wildcard(), String("o")), "hello", true},
-		{NewPattern(String("h"), Wildcard(), String("e"), Wildcard(), Wildcard(), String("o")), "hello", true},
-		{NewPattern(String("h"), Wildcard(), String("z"), Wildcard(), String("o")), "hello", false},
+		{NewPattern(String("hello"), Wildcard{}), "hello", true},
+		{NewPattern(Wildcard{}, String("h"), Wildcard{}, String("llo"), Wildcard{}), "hello", true},
+		{NewPattern(String("h"), Wildcard{}, String("e"), Wildcard{}, String("o")), "hello", true},
+		{NewPattern(String("h"), Wildcard{}, String("e"), Wildcard{}, Wildcard{}, String("o")), "hello", true},
+		{NewPattern(String("h"), Wildcard{}, String("z"), Wildcard{}, String("o")), "hello", false},
 
-		{NewPattern(String("**"), Wildcard(), String("**")), "**foo**", true},
-		{NewPattern(String("**"), Wildcard(), String("**")), "**bar**", true},
-		{NewPattern(String("**"), Wildcard(), String("**")), "*bar*", false},
+		{NewPattern(String("**"), Wildcard{}, String("**")), "**foo**", true},
+		{NewPattern(String("**"), Wildcard{}, String("**")), "**bar**", true},
+		{NewPattern(String("**"), Wildcard{}, String("**")), "*bar*", false},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -85,7 +79,7 @@ func TestPatternJSON(t *testing.T) {
 			"like single wildcard",
 			`["Wildcard"]`,
 			testutil.OK,
-			NewPattern(Wildcard()),
+			NewPattern(Wildcard{}),
 			true,
 		},
 		{
@@ -99,49 +93,49 @@ func TestPatternJSON(t *testing.T) {
 			"like wildcard then literal",
 			`["Wildcard", {"Literal":"foo"}]`,
 			testutil.OK,
-			NewPattern(Wildcard(), String("foo")),
+			NewPattern(Wildcard{}, String("foo")),
 			true,
 		},
 		{
 			"like literal then wildcard",
 			`[{"Literal":"foo"}, "Wildcard"]`,
 			testutil.OK,
-			NewPattern(String("foo"), Wildcard()),
+			NewPattern(String("foo"), Wildcard{}),
 			true,
 		},
 		{
 			"like literal with asterisk then wildcard",
 			`[{"Literal":"f*oo"}, "Wildcard"]`,
 			testutil.OK,
-			NewPattern(String("f*oo"), Wildcard()),
+			NewPattern(String("f*oo"), Wildcard{}),
 			true,
 		},
 		{
 			"like literal sandwich",
 			`[{"Literal":"foo"}, "Wildcard", {"Literal":"bar"}]`,
 			testutil.OK,
-			NewPattern(String("foo"), Wildcard(), String("bar")),
+			NewPattern(String("foo"), Wildcard{}, String("bar")),
 			true,
 		},
 		{
 			"like wildcard sandwich",
 			`["Wildcard", {"Literal":"foo"}, "Wildcard"]`,
 			testutil.OK,
-			NewPattern(Wildcard(), String("foo"), Wildcard()),
+			NewPattern(Wildcard{}, String("foo"), Wildcard{}),
 			true,
 		},
 		{
 			"double wildcard",
 			`["Wildcard", "Wildcard", {"Literal":"foo"}]`,
 			testutil.OK,
-			NewPattern(Wildcard(), String("foo")),
+			NewPattern(Wildcard{}, String("foo")),
 			false,
 		},
 		{
 			"double literal",
 			`["Wildcard", {"Literal":"foo"}, {"Literal":"bar"}]`,
 			testutil.OK,
-			NewPattern(Wildcard(), String("foobar")),
+			NewPattern(Wildcard{}, String("foobar")),
 			false,
 		},
 		{
