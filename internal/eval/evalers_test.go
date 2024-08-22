@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
@@ -1439,24 +1440,24 @@ func TestVariableNode(t *testing.T) {
 	tests := []struct {
 		name     string
 		context  Context
-		variable variableName
+		variable types.String
 		result   types.Value
 	}{
 		{"principal",
 			Context{Principal: types.String("foo")},
-			variableNamePrincipal,
+			consts.Principal,
 			types.String("foo")},
 		{"action",
 			Context{Action: types.String("bar")},
-			variableNameAction,
+			consts.Action,
 			types.String("bar")},
 		{"resource",
 			Context{Resource: types.String("baz")},
-			variableNameResource,
+			consts.Resource,
 			types.String("baz")},
 		{"context",
 			Context{Context: types.String("frob")},
-			variableNameContext,
+			consts.Context,
 			types.String("frob")},
 	}
 	for _, tt := range tests {
