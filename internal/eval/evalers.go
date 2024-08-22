@@ -2,7 +2,6 @@ package eval
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/types"
@@ -935,8 +934,10 @@ func entityInOne(ctx *Context, entity types.EntityUID, parent types.EntityUID) b
 	var candidate = entity
 	for {
 		fe := ctx.Entities[candidate]
-		if slices.Contains(fe.Parents, parent) {
-			return true
+		for _, k := range fe.Parents {
+			if k == parent {
+				return true
+			}
 		}
 		for _, k := range fe.Parents {
 			if len(ctx.Entities[k].Parents) == 0 || k == entity || hasKnown(known, k) {
