@@ -18,20 +18,14 @@ func zeroValue() types.Value {
 	return nil
 }
 
-type inCacheKey struct {
-	lhs, rhs types.EntityUID
-}
-
 type Context struct {
 	Entities                    types.Entities
 	Principal, Action, Resource types.Value
 	Context                     types.Value
-
-	InCache map[inCacheKey]bool
 }
 
 func PrepContext(in *Context) *Context {
-	in.InCache = map[inCacheKey]bool{}
+	// add caches if applicable
 	return in
 }
 
@@ -924,18 +918,7 @@ func newInEval(lhs, rhs Evaler) *inEval {
 	return &inEval{lhs: lhs, rhs: rhs}
 }
 
-func entityInOne(ctx *Context, entity types.EntityUID, query types.EntityUID) bool {
-	key := inCacheKey{lhs: entity, rhs: query}
-	res, ok := ctx.InCache[key]
-	if ok {
-		return res
-	}
-	res = entityInOneDo(ctx, entity, query)
-	ctx.InCache[key] = res
-	return res
-}
-
-func entityInOneDo(ctx *Context, entity types.EntityUID, parent types.EntityUID) bool {
+func entityInOne(ctx *Context, entity types.EntityUID, parent types.EntityUID) bool {
 	if entity == parent {
 		return true
 	}
