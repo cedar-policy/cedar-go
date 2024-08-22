@@ -57,6 +57,7 @@ import (
 	"log"
 
 	cedar "github.com/cedar-policy/cedar-go"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 const policyCedar = `permit (
@@ -84,19 +85,19 @@ func main() {
 	if err := policy.UnmarshalCedar([]byte(policyCedar)); err != nil {
 		log.Fatal(err)
 	}
-	
-	ps := cedar.NewPolicySet()
-	ps.UpsertPolicy("policy0", &policy)
 
-	var entities cedar.Entities
+	ps := cedar.NewPolicySet()
+	ps.Set("policy0", &policy)
+
+	var entities types.Entities
 	if err := json.Unmarshal([]byte(entitiesJSON), &entities); err != nil {
 		log.Fatal(err)
 	}
 	req := cedar.Request{
-		Principal: cedar.EntityUID{Type: "User", ID: "alice"},
-		Action:    cedar.EntityUID{Type: "Action", ID: "view"},
-		Resource:  cedar.EntityUID{Type: "Photo", ID: "VacationPhoto94.jpg"},
-		Context:   cedar.Record{},
+		Principal: types.EntityUID{Type: "User", ID: "alice"},
+		Action:    types.EntityUID{Type: "Action", ID: "view"},
+		Resource:  types.EntityUID{Type: "Photo", ID: "VacationPhoto94.jpg"},
+		Context:   types.Record{},
 	}
 
 	ok, _ := ps.IsAuthorized(entities, req)
@@ -127,6 +128,18 @@ If you're looking to integrate Cedar into a production system, please be sure th
 
 x/exp - code in this subrepository is not subject to the Go 1
 compatibility promise.
+
+While in development (0.x.y), each tagged release may contain breaking changes.
+
+### Upgrading from 0.1.x to 0.2.x
+
+- The Cedar value types have moved from the `cedar` package to the `types` package.
+- The PolicyIDs are now `strings`, previously they were numeric.  Combining multiple parsed Cedar files
+now involves coming up with IDs for each statement in those files.  It's best to
+create an empty `NewPolicySet` then parse individual files using `NewPolicyListFromBytes` and subsequently
+use `PolicySet.Add` to add each of the policy statements.
+- The Cedar `Entity` and `Entities` types have moved from the `cedar` package to the `types` package.
+- Stronger typing is being used in many more places.
 
 ## Security
 
