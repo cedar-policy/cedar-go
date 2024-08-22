@@ -26,7 +26,7 @@ func TestPolicyToNode(t *testing.T) {
 		{
 			"permit",
 			ast.Permit(),
-			ast.True().And(ast.True().And(ast.True())),
+			ast.True(),
 		},
 		{
 			"eqs",
@@ -50,7 +50,7 @@ func TestPolicyToNode(t *testing.T) {
 				When(ast.Long(123)).
 				Unless(ast.Long(456)),
 
-			ast.True().And(ast.True().And(ast.True().And(ast.Long(123).And(ast.Not(ast.Long(456)))))),
+			ast.True().And(ast.Long(123).And(ast.Not(ast.Long(456)))),
 		},
 	}
 	for _, tt := range tests {

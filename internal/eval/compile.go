@@ -13,16 +13,29 @@ func Compile(p *ast.Policy) Evaler {
 }
 
 func policyToNode(p *ast.Policy) ast.Node {
-	nodes := make([]ast.Node, 3+len(p.Conditions))
-	nodes[0] = scopeToNode(ast.NewPrincipalNode(), p.Principal)
-	nodes[1] = scopeToNode(ast.NewActionNode(), p.Action)
-	nodes[2] = scopeToNode(ast.NewResourceNode(), p.Resource)
-	for i, c := range p.Conditions {
+	var nodes []ast.Node
+	_, principalAll := p.Principal.(ast.ScopeTypeAll)
+	_, actionAll := p.Action.(ast.ScopeTypeAll)
+	_, resourceAll := p.Resource.(ast.ScopeTypeAll)
+	if principalAll && actionAll && resourceAll {
+		nodes = append(nodes, ast.True())
+	} else {
+		if !principalAll {
+			nodes = append(nodes, scopeToNode(ast.NewPrincipalNode(), p.Principal))
+		}
+		if !actionAll {
+			nodes = append(nodes, scopeToNode(ast.NewActionNode(), p.Action))
+		}
+		if !resourceAll {
+			nodes = append(nodes, scopeToNode(ast.NewResourceNode(), p.Resource))
+		}
+	}
+	for _, c := range p.Conditions {
 		if c.Condition == ast.ConditionUnless {
-			nodes[i+3] = ast.Not(ast.NewNode(c.Body))
+			nodes = append(nodes, ast.Not(ast.NewNode(c.Body)))
 			continue
 		}
-		nodes[i+3] = ast.NewNode(c.Body)
+		nodes = append(nodes, ast.NewNode(c.Body))
 	}
 	res := nodes[len(nodes)-1]
 	for i := len(nodes) - 2; i >= 0; i-- {
