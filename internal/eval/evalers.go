@@ -918,11 +918,16 @@ func newInEval(lhs, rhs Evaler) *inEval {
 	return &inEval{lhs: lhs, rhs: rhs}
 }
 
+func hasKnown(known map[types.EntityUID]struct{}, k types.EntityUID) bool {
+	_, ok := known[k]
+	return ok
+}
+
 func entityInOne(ctx *Context, entity types.EntityUID, parent types.EntityUID) bool {
 	if entity == parent {
 		return true
 	}
-	var known []types.EntityUID // need benchmarks to compare with, maybe faster with short slices map[types.EntityUID]struct{}
+	var known map[types.EntityUID]struct{}
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
@@ -931,11 +936,14 @@ func entityInOne(ctx *Context, entity types.EntityUID, parent types.EntityUID) b
 			return true
 		}
 		for _, k := range fe.Parents {
-			if len(ctx.Entities[k].Parents) == 0 || k == entity || slices.Contains(known, k) {
+			if len(ctx.Entities[k].Parents) == 0 || k == entity || hasKnown(known, k) {
 				continue
 			}
 			todo = append(todo, k)
-			known = append(known, k)
+			if known == nil {
+				known = map[types.EntityUID]struct{}{}
+			}
+			known[k] = struct{}{}
 		}
 		if len(todo) == 0 {
 			return false
