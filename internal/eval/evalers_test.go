@@ -16,7 +16,7 @@ var errTest = fmt.Errorf("test error")
 // not a real parser
 func strEnt(v string) types.EntityUID {
 	p := strings.Split(v, "::\"")
-	return types.EntityUID{Type: types.Path(p[0]), ID: types.String(p[1][:len(p[1])-1])}
+	return types.EntityUID{Type: types.EntityType(p[0]), ID: types.String(p[1][:len(p[1])-1])}
 }
 
 func AssertValue(t *testing.T, got, want types.Value) {
@@ -1586,15 +1586,15 @@ func TestEntityIn(t *testing.T) {
 		entityMap := types.Entities{}
 		for i := 0; i < 100; i++ {
 			p := []types.EntityUID{
-				types.NewEntityUID(types.Path(fmt.Sprint(i+1)), "1"),
-				types.NewEntityUID(types.Path(fmt.Sprint(i+1)), "2"),
+				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "1"),
+				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "2"),
 			}
-			uid1 := types.NewEntityUID(types.Path(fmt.Sprint(i)), "1")
+			uid1 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "1")
 			entityMap[uid1] = types.Entity{
 				UID:     uid1,
 				Parents: p,
 			}
-			uid2 := types.NewEntityUID(types.Path(fmt.Sprint(i)), "2")
+			uid2 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "2")
 			entityMap[uid2] = types.Entity{
 				UID:     uid2,
 				Parents: p,
@@ -1611,14 +1611,14 @@ func TestIsNode(t *testing.T) {
 	tests := []struct {
 		name   string
 		lhs    Evaler
-		rhs    types.Path
+		rhs    types.EntityType
 		result types.Value
 		err    error
 	}{
-		{"happyEq", newLiteralEval(types.NewEntityUID("X", "z")), types.Path("X"), types.True, nil},
-		{"happyNeq", newLiteralEval(types.NewEntityUID("X", "z")), types.Path("Y"), types.False, nil},
-		{"badLhs", newLiteralEval(types.Long(42)), types.Path("X"), zeroValue(), ErrType},
-		{"errLhs", newErrorEval(errTest), types.Path("X"), zeroValue(), errTest},
+		{"happyEq", newLiteralEval(types.NewEntityUID("X", "z")), types.EntityType("X"), types.True, nil},
+		{"happyNeq", newLiteralEval(types.NewEntityUID("X", "z")), types.EntityType("Y"), types.False, nil},
+		{"badLhs", newLiteralEval(types.Long(42)), types.EntityType("X"), zeroValue(), ErrType},
+		{"errLhs", newErrorEval(errTest), types.EntityType("X"), zeroValue(), errTest},
 	}
 	for _, tt := range tests {
 		tt := tt

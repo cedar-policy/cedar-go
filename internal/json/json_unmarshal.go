@@ -33,9 +33,9 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 		return ast.Scope{}.In(*s.Entity), nil
 	case "is":
 		if s.In == nil {
-			return ast.Scope{}.Is(types.Path(s.EntityType)), nil
+			return ast.Scope{}.Is(types.EntityType(s.EntityType)), nil
 		}
-		return ast.Scope{}.IsIn(types.Path(s.EntityType), s.In.Entity), nil
+		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), s.In.Entity), nil
 	}
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }
@@ -101,9 +101,9 @@ func (j isJSON) ToNode() (ast.Node, error) {
 		if err != nil {
 			return ast.Node{}, fmt.Errorf("error in entity: %w", err)
 		}
-		return left.IsIn(types.Path(j.EntityType), right), nil
+		return left.IsIn(types.EntityType(j.EntityType), right), nil
 	}
-	return left.Is(types.Path(j.EntityType)), nil
+	return left.Is(types.EntityType(j.EntityType)), nil
 }
 func (j ifThenElseJSON) ToNode() (ast.Node, error) {
 	if_, err := j.If.ToNode()

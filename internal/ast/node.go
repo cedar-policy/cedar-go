@@ -76,7 +76,7 @@ func (n NodeTypeLike) isNode() {}
 
 type NodeTypeIs struct {
 	Left       IsNode
-	EntityType types.Path
+	EntityType types.EntityType
 }
 
 func (n NodeTypeIs) isNode() {}

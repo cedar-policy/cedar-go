@@ -15,12 +15,12 @@ func (p *Policy) PrincipalIn(entity types.EntityUID) *Policy {
 }
 
 // PrincipalIs replaces the principal scope condition.
-func (p *Policy) PrincipalIs(entityType types.Path) *Policy {
+func (p *Policy) PrincipalIs(entityType types.EntityType) *Policy {
 	return wrapPolicy(p.unwrap().PrincipalIs(entityType))
 }
 
 // PrincipalIsIn replaces the principal scope condition.
-func (p *Policy) PrincipalIsIn(entityType types.Path, entity types.EntityUID) *Policy {
+func (p *Policy) PrincipalIsIn(entityType types.EntityType, entity types.EntityUID) *Policy {
 	return wrapPolicy(p.unwrap().PrincipalIsIn(entityType, entity))
 }
 
@@ -50,11 +50,11 @@ func (p *Policy) ResourceIn(entity types.EntityUID) *Policy {
 }
 
 // ResourceIs replaces the resource scope condition.
-func (p *Policy) ResourceIs(entityType types.Path) *Policy {
+func (p *Policy) ResourceIs(entityType types.EntityType) *Policy {
 	return wrapPolicy(p.unwrap().ResourceIs(entityType))
 }
 
 // ResourceIsIn replaces the resource scope condition.
-func (p *Policy) ResourceIsIn(entityType types.Path, entity types.EntityUID) *Policy {
+func (p *Policy) ResourceIsIn(entityType types.EntityType, entity types.EntityUID) *Policy {
 	return wrapPolicy(p.unwrap().ResourceIsIn(entityType, entity))
 }

@@ -963,10 +963,10 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 // isEval
 type isEval struct {
 	lhs Evaler
-	rhs types.Path
+	rhs types.EntityType
 }
 
-func newIsEval(lhs Evaler, rhs types.Path) *isEval {
+func newIsEval(lhs Evaler, rhs types.EntityType) *isEval {
 	return &isEval{lhs: lhs, rhs: rhs}
 }
 

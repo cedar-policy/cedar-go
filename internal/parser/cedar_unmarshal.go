@@ -230,10 +230,10 @@ func (p *parser) entity() (types.EntityUID, error) {
 	if !t.isIdent() {
 		return res, p.errorf("expected ident")
 	}
-	return p.entityFirstPathPreread(types.Path(t.Text))
+	return p.entityFirstPathPreread(types.EntityType(t.Text))
 }
 
-func (p *parser) entityFirstPathPreread(firstPath types.Path) (types.EntityUID, error) {
+func (p *parser) entityFirstPathPreread(firstPath types.EntityType) (types.EntityUID, error) {
 	var res types.EntityUID
 	res.Type = firstPath
 	for {
@@ -243,7 +243,7 @@ func (p *parser) entityFirstPathPreread(firstPath types.Path) (types.EntityUID, 
 		t := p.advance()
 		switch {
 		case t.isIdent():
-			res.Type = types.Path(res.Type) + "::" + types.Path(t.Text)
+			res.Type = types.EntityType(res.Type) + "::" + types.EntityType(t.Text)
 		case t.isString():
 			id, err := t.stringValue()
 			if err != nil {
@@ -257,8 +257,8 @@ func (p *parser) entityFirstPathPreread(firstPath types.Path) (types.EntityUID, 
 	}
 }
 
-func (p *parser) pathFirstPathPreread(firstPath string) (types.Path, error) {
-	res := types.Path(firstPath)
+func (p *parser) pathFirstPathPreread(firstPath string) (types.EntityType, error) {
+	res := types.EntityType(firstPath)
 	for {
 		if p.peek().Text != "::" {
 			return res, nil
@@ -267,14 +267,14 @@ func (p *parser) pathFirstPathPreread(firstPath string) (types.Path, error) {
 		t := p.advance()
 		switch {
 		case t.isIdent():
-			res = types.Path(fmt.Sprintf("%v::%v", res, t.Text))
+			res = types.EntityType(fmt.Sprintf("%v::%v", res, t.Text))
 		default:
 			return res, p.errorf("unexpected token")
 		}
 	}
 }
 
-func (p *parser) path() (types.Path, error) {
+func (p *parser) path() (types.EntityType, error) {
 	t := p.advance()
 	if !t.isIdent() {
 		return "", p.errorf("expected ident")

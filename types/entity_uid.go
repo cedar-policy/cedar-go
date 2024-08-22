@@ -5,13 +5,19 @@ import (
 	"strconv"
 )
 
+// Path is a series of idents separated by ::
+type Path string
+
+// EntityType is the type portion of an EntityUID
+type EntityType Path
+
 // An EntityUID is the identifier for a principal, action, or resource.
 type EntityUID struct {
-	Type Path
+	Type EntityType
 	ID   String
 }
 
-func NewEntityUID(typ Path, id String) EntityUID {
+func NewEntityUID(typ EntityType, id String) EntityUID {
 	return EntityUID{
 		Type: typ,
 		ID:   id,
@@ -43,11 +49,11 @@ func (v *EntityUID) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if res.Entity != nil {
-		v.Type = Path(res.Entity.Type)
+		v.Type = EntityType(res.Entity.Type)
 		v.ID = String(res.Entity.ID)
 		return nil
 	} else if res.Type != nil && res.ID != nil { // require both Type and ID to parse "implicit" JSON
-		v.Type = Path(*res.Type)
+		v.Type = EntityType(*res.Type)
 		v.ID = String(*res.ID)
 		return nil
 	}
