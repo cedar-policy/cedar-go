@@ -37,7 +37,29 @@ func bake(n ast.IsNode) ast.IsNode {
 	case ast.NodeTypeIsIn:
 		return ast.NodeTypeIsIn{NodeTypeIs: ast.NodeTypeIs{Left: v.Left, EntityType: v.EntityType}, Entity: bake(v.Entity)}
 	case ast.NodeTypeExtensionCall:
-		// TODO: ip, decimal
+		switch {
+		case v.Name == "ip" && len(v.Args) == 1:
+			arg := bake(v.Args[0])
+			if v, ok := arg.(ast.NodeValue); ok {
+				if vv, ok := v.Value.(types.String); ok {
+					ip, err := types.ParseIPAddr(string(vv))
+					if err == nil {
+						return ast.NodeValue{Value: ip}
+					}
+				}
+			}
+		case v.Name == "decimal" && len(v.Args) == 1:
+			arg := bake(v.Args[0])
+			if v, ok := arg.(ast.NodeValue); ok {
+				if vv, ok := v.Value.(types.String); ok {
+					dec, err := types.ParseDecimal(string(vv))
+					if err == nil {
+						return ast.NodeValue{Value: dec}
+					}
+				}
+			}
+		}
+
 		args := make([]ast.IsNode, len(v.Args))
 		for i, arg := range v.Args {
 			args[i] = bake(arg)
