@@ -955,25 +955,35 @@ func entityInOne(ctx *Context, entity types.EntityUID, parent types.EntityUID) b
 	}
 }
 
-func entityIn(entity types.EntityUID, query map[types.EntityUID]struct{}, entityMap types.Entities) bool {
-	checked := map[types.EntityUID]struct{}{}
-	toCheck := []types.EntityUID{entity}
-	for len(toCheck) > 0 {
-		var candidate types.EntityUID
-		candidate, toCheck = toCheck[len(toCheck)-1], toCheck[:len(toCheck)-1]
-		if _, ok := checked[candidate]; ok {
-			continue
-		}
-		if _, ok := query[candidate]; ok {
-			return true
-		}
-		next, ok := entityMap[candidate]
-		if ok {
-			toCheck = append(toCheck, next.Parents...)
-		}
-		checked[candidate] = struct{}{}
+func entityInSet(ctx *Context, entity types.EntityUID, parents map[types.EntityUID]struct{}) bool {
+	if _, ok := parents[entity]; ok {
+		return true
 	}
-	return false
+	var known map[types.EntityUID]struct{}
+	var todo []types.EntityUID
+	var candidate = entity
+	for {
+		fe := ctx.Entities[candidate]
+		for _, k := range fe.Parents {
+			if _, ok := parents[k]; ok {
+				return true
+			}
+		}
+		for _, k := range fe.Parents {
+			if len(ctx.Entities[k].Parents) == 0 || k == entity || hasKnown(known, k) {
+				continue
+			}
+			todo = append(todo, k)
+			if known == nil {
+				known = map[types.EntityUID]struct{}{}
+			}
+			known[k] = struct{}{}
+		}
+		if len(todo) == 0 {
+			return false
+		}
+		candidate, todo = todo[len(todo)-1], todo[:len(todo)-1]
+	}
 }
 
 func (n *inEval) Eval(ctx *Context) (types.Value, error) {
@@ -987,11 +997,11 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 		return zeroValue(), err
 	}
 
-	query := map[types.EntityUID]struct{}{}
 	switch rhsv := rhs.(type) {
 	case types.EntityUID:
 		return types.Boolean(entityInOne(ctx, lhs, rhsv)), nil
 	case types.Set:
+		query := make(map[types.EntityUID]struct{}, len(rhsv))
 		for _, rhv := range rhsv {
 			e, err := ValueToEntity(rhv)
 			if err != nil {
@@ -999,7 +1009,7 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 			}
 			query[e] = struct{}{}
 		}
-		return types.Boolean(entityIn(lhs, query, ctx.Entities)), nil
+		return types.Boolean(entityInSet(ctx, lhs, query)), nil
 	}
 	return zeroValue(), fmt.Errorf(
 		"%w: expected one of [set, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(rhs))
