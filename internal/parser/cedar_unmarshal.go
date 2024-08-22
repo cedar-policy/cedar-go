@@ -538,13 +538,13 @@ func (p *parser) relation() (ast.Node, error) {
 func (p *parser) has(lhs ast.Node) (ast.Node, error) {
 	t := p.advance()
 	if t.isIdent() {
-		return lhs.Has(t.Text), nil
+		return lhs.Has(types.String(t.Text)), nil
 	} else if t.isString() {
 		str, err := t.stringValue()
 		if err != nil {
 			return ast.Node{}, err
 		}
-		return lhs.Has(str), nil
+		return lhs.Has(types.String(str)), nil
 	}
 	return ast.Node{}, p.errorf("expected ident or string")
 }
@@ -899,7 +899,7 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 			}
 			return knownMethod(lhs, exprs[0]), true, nil
 		} else {
-			return lhs.Access(t.Text), true, nil
+			return lhs.Access(types.String(t.Text)), true, nil
 		}
 	case "[":
 		p.advance()
@@ -914,7 +914,7 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 		if err := p.exact("]"); err != nil {
 			return ast.Node{}, false, err
 		}
-		return lhs.Access(name), true, nil
+		return lhs.Access(types.String(name)), true, nil
 	default:
 		return lhs, false, nil
 	}

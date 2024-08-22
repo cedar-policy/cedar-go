@@ -76,12 +76,12 @@ func (j unaryJSON) ToNode(f func(a ast.Node) ast.Node) (ast.Node, error) {
 	}
 	return f(arg), nil
 }
-func (j strJSON) ToNode(f func(a ast.Node, k string) ast.Node) (ast.Node, error) {
+func (j strJSON) ToNode(f func(a ast.Node, k types.String) ast.Node) (ast.Node, error) {
 	left, err := j.Left.ToNode()
 	if err != nil {
 		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
-	return f(left, j.Attr), nil
+	return f(left, types.String(j.Attr)), nil
 }
 func (j likeJSON) ToNode(f func(a ast.Node, k types.Pattern) ast.Node) (ast.Node, error) {
 	left, err := j.Left.ToNode()

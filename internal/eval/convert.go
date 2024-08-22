@@ -6,14 +6,15 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 func toEval(n ast.IsNode) Evaler {
 	switch v := n.(type) {
 	case ast.NodeTypeAccess:
-		return newAttributeAccessEval(toEval(v.Arg), string(v.Value))
+		return newAttributeAccessEval(toEval(v.Arg), v.Value)
 	case ast.NodeTypeHas:
-		return newHasEval(toEval(v.Arg), string(v.Value))
+		return newHasEval(toEval(v.Arg), v.Value)
 	case ast.NodeTypeLike:
 		return newLikeEval(toEval(v.Arg), v.Value)
 	case ast.NodeTypeIfThenElse:
@@ -61,9 +62,9 @@ func toEval(n ast.IsNode) Evaler {
 	case ast.NodeValue:
 		return newLiteralEval(v.Value)
 	case ast.NodeTypeRecord:
-		m := make(map[string]Evaler, len(v.Elements))
+		m := make(map[types.String]Evaler, len(v.Elements))
 		for _, e := range v.Elements {
-			m[string(e.Key)] = toEval(e.Value)
+			m[e.Key] = toEval(e.Value)
 		}
 		return newRecordLiteralEval(m)
 	case ast.NodeTypeSet:

@@ -1239,14 +1239,14 @@ func TestRecordLiteralNode(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name   string
-		elems  map[string]Evaler
+		elems  map[types.String]Evaler
 		result types.Value
 		err    error
 	}{
-		{"empty", map[string]Evaler{}, types.Record{}, nil},
-		{"errorNode", map[string]Evaler{"foo": newErrorEval(errTest)}, zeroValue(), errTest},
+		{"empty", map[types.String]Evaler{}, types.Record{}, nil},
+		{"errorNode", map[types.String]Evaler{"foo": newErrorEval(errTest)}, zeroValue(), errTest},
 		{"ok",
-			map[string]Evaler{
+			map[types.String]Evaler{
 				"foo": newLiteralEval(types.True),
 				"bar": newLiteralEval(types.String("baz")),
 			}, types.Record{
@@ -1271,7 +1271,7 @@ func TestAttributeAccessNode(t *testing.T) {
 	tests := []struct {
 		name      string
 		object    Evaler
-		attribute string
+		attribute types.String
 		result    types.Value
 		err       error
 	}{
@@ -1328,7 +1328,7 @@ func TestHasNode(t *testing.T) {
 	tests := []struct {
 		name      string
 		record    Evaler
-		attribute string
+		attribute types.String
 		result    types.Value
 		err       error
 	}{

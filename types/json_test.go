@@ -346,7 +346,7 @@ func TestJSONRecord(t *testing.T) {
 		t.Parallel()
 		r := Record{}
 		k := []byte{0xde, 0x01}
-		r[string(k)] = Boolean(false)
+		r[String(k)] = Boolean(false)
 		v, err := json.Marshal(r)
 		// this demonstrates that invalid keys will still result in json
 		testutil.Equals(t, string(v), `{"\ufffd\u0001":false}`)

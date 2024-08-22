@@ -132,11 +132,11 @@ func (lhs Node) ContainsAny(rhs Node) Node {
 	return wrapNode(lhs.Node.ContainsAny(rhs.Node))
 }
 
-func (lhs Node) Access(attr string) Node {
+func (lhs Node) Access(attr types.String) Node {
 	return wrapNode(lhs.Node.Access(attr))
 }
 
-func (lhs Node) Has(attr string) Node {
+func (lhs Node) Has(attr types.String) Node {
 	return wrapNode(lhs.Node.Has(attr))
 }
 

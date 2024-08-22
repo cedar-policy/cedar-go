@@ -11,7 +11,7 @@ import (
 
 // A Record is a collection of attributes. Each attribute consists of a name and
 // an associated value. Names are simple strings. Values can be of any type.
-type Record map[string]Value
+type Record map[String]Value
 
 // Equals returns true if the records are Equal.
 func (a Record) Equal(bi Value) bool {
@@ -36,7 +36,7 @@ func (v *Record) UnmarshalJSON(b []byte) error {
 	}
 	*v = Record{}
 	for kk, vv := range res {
-		(*v)[kk] = vv.Value
+		(*v)[String(kk)] = vv.Value
 	}
 	return nil
 }
@@ -86,7 +86,7 @@ func (r Record) MarshalCedar() []byte {
 			sb.WriteString(", ")
 		}
 		first = false
-		sb.WriteString(strconv.Quote(k))
+		sb.WriteString(strconv.Quote(string(k)))
 		sb.WriteString(":")
 		sb.Write(v.MarshalCedar())
 	}

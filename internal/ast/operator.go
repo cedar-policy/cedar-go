@@ -129,12 +129,12 @@ func (lhs Node) ContainsAny(rhs Node) Node {
 	return NewNode(NodeTypeContainsAny{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
-func (lhs Node) Access(attr string) Node {
-	return NewNode(NodeTypeAccess{StrOpNode: StrOpNode{Arg: lhs.v, Value: types.String(attr)}})
+func (lhs Node) Access(attr types.String) Node {
+	return NewNode(NodeTypeAccess{StrOpNode: StrOpNode{Arg: lhs.v, Value: attr}})
 }
 
-func (lhs Node) Has(attr string) Node {
-	return NewNode(NodeTypeHas{StrOpNode: StrOpNode{Arg: lhs.v, Value: types.String(attr)}})
+func (lhs Node) Has(attr types.String) Node {
+	return NewNode(NodeTypeHas{StrOpNode: StrOpNode{Arg: lhs.v, Value: attr}})
 }
 
 //  ___ ____   _       _     _

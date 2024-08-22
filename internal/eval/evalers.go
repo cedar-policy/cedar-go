@@ -771,10 +771,10 @@ func (n *containsAnyEval) Eval(ctx *Context) (types.Value, error) {
 
 // recordLiteralEval
 type recordLiteralEval struct {
-	elements map[string]Evaler
+	elements map[types.String]Evaler
 }
 
-func newRecordLiteralEval(elements map[string]Evaler) *recordLiteralEval {
+func newRecordLiteralEval(elements map[types.String]Evaler) *recordLiteralEval {
 	return &recordLiteralEval{elements: elements}
 }
 
@@ -793,10 +793,10 @@ func (n *recordLiteralEval) Eval(ctx *Context) (types.Value, error) {
 // attributeAccessEval
 type attributeAccessEval struct {
 	object    Evaler
-	attribute string
+	attribute types.String
 }
 
-func newAttributeAccessEval(record Evaler, attribute string) *attributeAccessEval {
+func newAttributeAccessEval(record Evaler, attribute types.String) *attributeAccessEval {
 	return &attributeAccessEval{object: record, attribute: attribute}
 }
 
@@ -835,10 +835,10 @@ func (n *attributeAccessEval) Eval(ctx *Context) (types.Value, error) {
 // hasEval
 type hasEval struct {
 	object    Evaler
-	attribute string
+	attribute types.String
 }
 
-func newHasEval(record Evaler, attribute string) *hasEval {
+func newHasEval(record Evaler, attribute types.String) *hasEval {
 	return &hasEval{object: record, attribute: attribute}
 }
 
