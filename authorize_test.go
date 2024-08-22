@@ -108,7 +108,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-requires-entities-success",
 			Policy: `permit(principal,action,resource) when { principal.x == 42 };`,
 			Entities: types.Entities{
-				cuzco: types.Entity{
+				cuzco: &types.Entity{
 					UID:        cuzco,
 					Attributes: types.Record{"x": types.Long(42)},
 				},
@@ -124,7 +124,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-requires-entities-fail",
 			Policy: `permit(principal,action,resource) when { principal.x == 42 };`,
 			Entities: types.Entities{
-				cuzco: types.Entity{
+				cuzco: &types.Entity{
 					UID:        cuzco,
 					Attributes: types.Record{"x": types.Long(43)},
 				},
@@ -140,7 +140,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-requires-entities-parent-success",
 			Policy: `permit(principal,action,resource) when { principal in parent::"bob" };`,
 			Entities: types.Entities{
-				cuzco: types.Entity{
+				cuzco: &types.Entity{
 					UID:     cuzco,
 					Parents: []types.EntityUID{types.NewEntityUID("parent", "bob")},
 				},
@@ -167,7 +167,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-principal-in",
 			Policy: `permit(principal in team::"osiris",action,resource);`,
 			Entities: types.Entities{
-				cuzco: types.Entity{
+				cuzco: &types.Entity{
 					UID:     cuzco,
 					Parents: []types.EntityUID{types.NewEntityUID("team", "osiris")},
 				},
@@ -194,7 +194,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-action-in",
 			Policy: `permit(principal,action in scary::"stuff",resource);`,
 			Entities: types.Entities{
-				dropTable: types.Entity{
+				dropTable: &types.Entity{
 					UID:     dropTable,
 					Parents: []types.EntityUID{types.NewEntityUID("scary", "stuff")},
 				},
@@ -210,7 +210,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-action-in-set",
 			Policy: `permit(principal,action in [scary::"stuff"],resource);`,
 			Entities: types.Entities{
-				dropTable: types.Entity{
+				dropTable: &types.Entity{
 					UID:     dropTable,
 					Parents: []types.EntityUID{types.NewEntityUID("scary", "stuff")},
 				},
@@ -303,7 +303,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-when-relations-has",
 			Policy: `permit(principal,action,resource) when { principal has name };`,
 			Entities: types.Entities{
-				cuzco: types.Entity{
+				cuzco: &types.Entity{
 					UID:        cuzco,
 					Attributes: types.Record{"name": types.String("bob")},
 				},
@@ -693,7 +693,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "when-is-in",
 			Policy: `permit(principal,action,resource) when { resource is Resource in Parent::"id" };`,
 			Entities: types.Entities{
-				types.NewEntityUID("Resource", "table"): types.Entity{
+				types.NewEntityUID("Resource", "table"): &types.Entity{
 					UID:     types.NewEntityUID("Resource", "table"),
 					Parents: []types.EntityUID{types.NewEntityUID("Parent", "id")},
 				},

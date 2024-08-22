@@ -924,7 +924,10 @@ func entityIn(entity types.EntityUID, query map[types.EntityUID]struct{}, entity
 		if _, ok := query[candidate]; ok {
 			return true
 		}
-		toCheck = append(toCheck, entityMap[candidate].Parents...)
+		next, ok := entityMap[candidate]
+		if ok {
+			toCheck = append(toCheck, next.Parents...)
+		}
 		checked[candidate] = struct{}{}
 	}
 	return false
