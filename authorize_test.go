@@ -741,7 +741,7 @@ func TestBadEval(t *testing.T) {
 	ps := NewPolicySet()
 	pol := NewPolicyFromAST(ast.Permit())
 	pol.eval = &badEvaler{}
-	ps.Set("pol", pol)
+	ps.Store("pol", pol)
 	dec, diag := ps.IsAuthorized(nil, Request{})
 	testutil.Equals(t, dec, Deny)
 	testutil.Equals(t, len(diag.Errors), 1)

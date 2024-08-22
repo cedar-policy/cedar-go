@@ -52,8 +52,8 @@ func (p PolicySet) Get(policyID PolicyID) *Policy {
 	return p.policies[policyID]
 }
 
-// Set inserts or updates a policy with the given ID.
-func (p *PolicySet) Set(policyID PolicyID, policy *Policy) {
+// Store inserts or updates a policy with the given ID.
+func (p *PolicySet) Store(policyID PolicyID, policy *Policy) {
 	p.policies[policyID] = policy
 }
 
