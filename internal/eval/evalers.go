@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -889,31 +890,22 @@ func (l *likeEval) Eval(ctx *Context) (types.Value, error) {
 	return types.Boolean(l.pattern.Match(v)), nil
 }
 
-type variableName int
-
-const (
-	variableNamePrincipal = variableName(iota)
-	variableNameAction
-	variableNameResource
-	variableNameContext
-)
-
 // variableEval
 type variableEval struct {
-	variableName variableName
+	variableName types.String
 }
 
-func newVariableEval(variableName variableName) *variableEval {
+func newVariableEval(variableName types.String) *variableEval {
 	return &variableEval{variableName: variableName}
 }
 
 func (n *variableEval) Eval(ctx *Context) (types.Value, error) {
 	switch n.variableName {
-	case variableNamePrincipal:
+	case consts.Principal:
 		return ctx.Principal, nil
-	case variableNameAction:
+	case consts.Action:
 		return ctx.Action, nil
-	case variableNameResource:
+	case consts.Resource:
 		return ctx.Resource, nil
 	default: // context
 		return ctx.Context, nil
