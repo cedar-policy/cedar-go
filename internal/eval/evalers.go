@@ -889,12 +889,14 @@ func (l *likeEval) Eval(ctx *Context) (types.Value, error) {
 	return types.Boolean(l.pattern.Match(v)), nil
 }
 
-type variableName func(ctx *Context) types.Value
+type variableName int
 
-func variableNamePrincipal(ctx *Context) types.Value { return ctx.Principal }
-func variableNameAction(ctx *Context) types.Value    { return ctx.Action }
-func variableNameResource(ctx *Context) types.Value  { return ctx.Resource }
-func variableNameContext(ctx *Context) types.Value   { return ctx.Context }
+const (
+	variableNamePrincipal = variableName(iota)
+	variableNameAction
+	variableNameResource
+	variableNameContext
+)
 
 // variableEval
 type variableEval struct {
@@ -906,7 +908,16 @@ func newVariableEval(variableName variableName) *variableEval {
 }
 
 func (n *variableEval) Eval(ctx *Context) (types.Value, error) {
-	return n.variableName(ctx), nil
+	switch n.variableName {
+	case variableNamePrincipal:
+		return ctx.Principal, nil
+	case variableNameAction:
+		return ctx.Action, nil
+	case variableNameResource:
+		return ctx.Resource, nil
+	default: // context
+		return ctx.Context, nil
+	}
 }
 
 // inEval
