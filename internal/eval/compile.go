@@ -8,6 +8,7 @@ import (
 )
 
 func Compile(p *ast.Policy) Evaler {
+	p = rebake(p)
 	node := policyToNode(p).AsIsNode()
 	return toEval(node)
 }
