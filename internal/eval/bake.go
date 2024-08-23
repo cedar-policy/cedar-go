@@ -19,7 +19,7 @@ func bakePolicy(p *ast.Policy) *ast.Policy {
 	return &p2
 }
 
-// bake takes in an ast.Node and finds all the Sets, Records, IP/Decimal extensions that can be pre-baked as values.
+// fold takes in an ast.Node and finds all the Sets, Records, IP/Decimal extensions that can be pre-baked as values.
 // It does not attempt to do any further calculation.  The returned node should serialize to JSON and Cedar
 // exactly the same as the input, with possible changes in ordering of Records.
 func bake(n ast.IsNode) ast.IsNode {

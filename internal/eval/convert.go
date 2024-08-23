@@ -22,10 +22,7 @@ func toEval(n ast.IsNode) Evaler {
 	case ast.NodeTypeIs:
 		return newIsEval(toEval(v.Left), v.EntityType)
 	case ast.NodeTypeIsIn:
-		obj := toEval(v.Left)
-		lhs := newIsEval(obj, v.EntityType)
-		rhs := newInEval(obj, toEval(v.Entity))
-		return newAndEval(lhs, rhs)
+		return newIsInEval(toEval(v.Left), v.EntityType, toEval(v.Entity))
 	case ast.NodeTypeExtensionCall:
 		if i, ok := extensions.ExtMap[v.Name]; ok {
 			if i.Args != len(v.Args) {
@@ -89,7 +86,7 @@ func toEval(n ast.IsNode) Evaler {
 	case ast.NodeTypeAnd:
 		return newAndEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeOr:
-		return newOrNode(toEval(v.Left), toEval(v.Right))
+		return newOrEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeEquals:
 		return newEqualEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeNotEquals:

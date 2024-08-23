@@ -8,7 +8,8 @@ import (
 )
 
 func Compile(p *ast.Policy) Evaler {
-	p = bakePolicy(p)
+	// p = bakePolicy(p)
+	p = foldPolicy(p)
 	node := policyToNode(p).AsIsNode()
 	return toEval(node)
 }

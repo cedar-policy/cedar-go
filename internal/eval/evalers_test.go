@@ -59,7 +59,7 @@ func TestOrNode(t *testing.T) {
 			tt := tt
 			t.Run(fmt.Sprintf("%v%v", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
-				n := newOrNode(newLiteralEval(types.Boolean(tt.lhs)), newLiteralEval(types.Boolean(tt.rhs)))
+				n := newOrEval(newLiteralEval(types.Boolean(tt.lhs)), newLiteralEval(types.Boolean(tt.rhs)))
 				v, err := n.Eval(PrepContext(&Context{}))
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
@@ -69,7 +69,7 @@ func TestOrNode(t *testing.T) {
 
 	t.Run("TrueXShortCircuit", func(t *testing.T) {
 		t.Parallel()
-		n := newOrNode(
+		n := newOrEval(
 			newLiteralEval(types.True), newLiteralEval(types.Long(1)))
 		v, err := n.Eval(PrepContext(&Context{}))
 		testutil.OK(t, err)
@@ -91,7 +91,7 @@ func TestOrNode(t *testing.T) {
 			tt := tt
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
-				n := newOrNode(tt.lhs, tt.rhs)
+				n := newOrEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(PrepContext(&Context{}))
 				testutil.ErrorIs(t, err, tt.err)
 			})

@@ -151,7 +151,7 @@ type orEval struct {
 	rhs Evaler
 }
 
-func newOrNode(lhs Evaler, rhs Evaler) *orEval {
+func newOrEval(lhs Evaler, rhs Evaler) Evaler {
 	return &orEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -187,7 +187,7 @@ type andEval struct {
 	rhs Evaler
 }
 
-func newAndEval(lhs Evaler, rhs Evaler) *andEval {
+func newAndEval(lhs Evaler, rhs Evaler) Evaler {
 	return &andEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -222,7 +222,7 @@ type notEval struct {
 	inner Evaler
 }
 
-func newNotEval(inner Evaler) *notEval {
+func newNotEval(inner Evaler) Evaler {
 	return &notEval{
 		inner: inner,
 	}
@@ -290,7 +290,7 @@ type addEval struct {
 	rhs Evaler
 }
 
-func newAddEval(lhs Evaler, rhs Evaler) *addEval {
+func newAddEval(lhs Evaler, rhs Evaler) Evaler {
 	return &addEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -319,7 +319,7 @@ type subtractEval struct {
 	rhs Evaler
 }
 
-func newSubtractEval(lhs Evaler, rhs Evaler) *subtractEval {
+func newSubtractEval(lhs Evaler, rhs Evaler) Evaler {
 	return &subtractEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -348,7 +348,7 @@ type multiplyEval struct {
 	rhs Evaler
 }
 
-func newMultiplyEval(lhs Evaler, rhs Evaler) *multiplyEval {
+func newMultiplyEval(lhs Evaler, rhs Evaler) Evaler {
 	return &multiplyEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -376,7 +376,7 @@ type negateEval struct {
 	inner Evaler
 }
 
-func newNegateEval(inner Evaler) *negateEval {
+func newNegateEval(inner Evaler) Evaler {
 	return &negateEval{
 		inner: inner,
 	}
@@ -400,7 +400,7 @@ type longLessThanEval struct {
 	rhs Evaler
 }
 
-func newLongLessThanEval(lhs Evaler, rhs Evaler) *longLessThanEval {
+func newLongLessThanEval(lhs Evaler, rhs Evaler) Evaler {
 	return &longLessThanEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -425,7 +425,7 @@ type longLessThanOrEqualEval struct {
 	rhs Evaler
 }
 
-func newLongLessThanOrEqualEval(lhs Evaler, rhs Evaler) *longLessThanOrEqualEval {
+func newLongLessThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	return &longLessThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -450,7 +450,7 @@ type longGreaterThanEval struct {
 	rhs Evaler
 }
 
-func newLongGreaterThanEval(lhs Evaler, rhs Evaler) *longGreaterThanEval {
+func newLongGreaterThanEval(lhs Evaler, rhs Evaler) Evaler {
 	return &longGreaterThanEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -475,7 +475,7 @@ type longGreaterThanOrEqualEval struct {
 	rhs Evaler
 }
 
-func newLongGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *longGreaterThanOrEqualEval {
+func newLongGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	return &longGreaterThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -625,7 +625,7 @@ type equalEval struct {
 	lhs, rhs Evaler
 }
 
-func newEqualEval(lhs, rhs Evaler) *equalEval {
+func newEqualEval(lhs, rhs Evaler) Evaler {
 	return &equalEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -649,7 +649,7 @@ type notEqualEval struct {
 	lhs, rhs Evaler
 }
 
-func newNotEqualEval(lhs, rhs Evaler) *notEqualEval {
+func newNotEqualEval(lhs, rhs Evaler) Evaler {
 	return &notEqualEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -694,7 +694,7 @@ type containsEval struct {
 	lhs, rhs Evaler
 }
 
-func newContainsEval(lhs, rhs Evaler) *containsEval {
+func newContainsEval(lhs, rhs Evaler) Evaler {
 	return &containsEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -718,7 +718,7 @@ type containsAllEval struct {
 	lhs, rhs Evaler
 }
 
-func newContainsAllEval(lhs, rhs Evaler) *containsAllEval {
+func newContainsAllEval(lhs, rhs Evaler) Evaler {
 	return &containsAllEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -749,7 +749,7 @@ type containsAnyEval struct {
 	lhs, rhs Evaler
 }
 
-func newContainsAnyEval(lhs, rhs Evaler) *containsAnyEval {
+func newContainsAnyEval(lhs, rhs Evaler) Evaler {
 	return &containsAnyEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -916,7 +916,7 @@ type inEval struct {
 	lhs, rhs Evaler
 }
 
-func newInEval(lhs, rhs Evaler) *inEval {
+func newInEval(lhs, rhs Evaler) Evaler {
 	return &inEval{lhs: lhs, rhs: rhs}
 }
 
@@ -1002,6 +1002,10 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 		return zeroValue(), err
 	}
 
+	return doInEval(ctx, lhs, rhs)
+}
+
+func doInEval(ctx *Context, lhs types.EntityUID, rhs types.Value) (types.Value, error) {
 	switch rhsv := rhs.(type) {
 	case types.EntityUID:
 		return types.Boolean(entityInOne(ctx, lhs, rhsv)), nil
@@ -1035,8 +1039,32 @@ func (n *isEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-
 	return types.Boolean(lhs.Type == n.rhs), nil
+}
+
+type isInEval struct {
+	lhs Evaler
+	is  types.EntityType
+	rhs Evaler
+}
+
+func newIsInEval(lhs Evaler, is types.EntityType, rhs Evaler) Evaler {
+	return &isInEval{lhs: lhs, is: is, rhs: rhs}
+}
+
+func (n *isInEval) Eval(ctx *Context) (types.Value, error) {
+	lhs, err := evalEntity(n.lhs, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	if lhs.Type != n.is {
+		return types.False, nil
+	}
+	rhs, err := n.rhs.Eval(ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return doInEval(ctx, lhs, rhs)
 }
 
 // decimalLiteralEval
