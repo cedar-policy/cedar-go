@@ -933,21 +933,23 @@ func entityInOne(ctx *Context, entity types.EntityUID, parent types.EntityUID) b
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
-		fe := ctx.Entities[candidate]
-		for _, k := range fe.Parents {
-			if k == parent {
-				return true
+		if fe, ok := ctx.Entities[candidate]; ok {
+			for _, k := range fe.Parents {
+				if k == parent {
+					return true
+				}
 			}
-		}
-		for _, k := range fe.Parents {
-			if len(ctx.Entities[k].Parents) == 0 || k == entity || hasKnown(known, k) {
-				continue
+			for _, k := range fe.Parents {
+				p, ok := ctx.Entities[k]
+				if !ok || len(p.Parents) == 0 || k == entity || hasKnown(known, k) {
+					continue
+				}
+				todo = append(todo, k)
+				if known == nil {
+					known = map[types.EntityUID]struct{}{}
+				}
+				known[k] = struct{}{}
 			}
-			todo = append(todo, k)
-			if known == nil {
-				known = map[types.EntityUID]struct{}{}
-			}
-			known[k] = struct{}{}
 		}
 		if len(todo) == 0 {
 			return false
@@ -964,21 +966,23 @@ func entityInSet(ctx *Context, entity types.EntityUID, parents map[types.EntityU
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
-		fe := ctx.Entities[candidate]
-		for _, k := range fe.Parents {
-			if _, ok := parents[k]; ok {
-				return true
+		if fe, ok := ctx.Entities[candidate]; ok {
+			for _, k := range fe.Parents {
+				if _, ok := parents[k]; ok {
+					return true
+				}
 			}
-		}
-		for _, k := range fe.Parents {
-			if len(ctx.Entities[k].Parents) == 0 || k == entity || hasKnown(known, k) {
-				continue
+			for _, k := range fe.Parents {
+				p, ok := ctx.Entities[k]
+				if !ok || len(p.Parents) == 0 || k == entity || hasKnown(known, k) {
+					continue
+				}
+				todo = append(todo, k)
+				if known == nil {
+					known = map[types.EntityUID]struct{}{}
+				}
+				known[k] = struct{}{}
 			}
-			todo = append(todo, k)
-			if known == nil {
-				known = map[types.EntityUID]struct{}{}
-			}
-			known[k] = struct{}{}
 		}
 		if len(todo) == 0 {
 			return false

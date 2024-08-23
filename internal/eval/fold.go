@@ -86,7 +86,7 @@ func fold(n ast.IsNode) ast.IsNode {
 				continue
 			}
 			if v, vok := elements[i].Value.(ast.NodeValue); vok {
-				record[string(pair.Key)] = v.Value
+				record[pair.Key] = v.Value
 				continue
 			}
 			ok = false
