@@ -168,43 +168,41 @@ func fold(n ast.IsNode) ast.IsNode {
 	case ast.NodeValue:
 		return n
 	case ast.NodeTypeRecord:
-		elements := make([]ast.RecordElementNode, len(v.Elements))
-		record := make(types.Record, len(v.Elements))
-		ok := true
+		elements := make([]ast.IsNode, len(v.Elements))
 		for i, pair := range v.Elements {
-			elements[i] = ast.RecordElementNode{Key: pair.Key, Value: fold(pair.Value)}
-			if !ok {
-				continue
-			}
-			if v, vok := elements[i].Value.(ast.NodeValue); vok {
-				record[pair.Key] = v.Value
-				continue
-			}
-			ok = false
+			elements[i] = pair.Value
 		}
-		if ok {
-			return ast.NodeValue{Value: record}
-		}
-		return ast.NodeTypeRecord{Elements: elements}
+		return tryFold(elements,
+			func(values []types.Value) Evaler {
+				m := make(map[types.String]Evaler, len(values))
+				for i, val := range values {
+					m[types.String(v.Elements[i].Key)] = newLiteralEval(val)
+				}
+				return newRecordLiteralEval(m)
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				el := make([]ast.RecordElementNode, len(nodes))
+				for i, val := range nodes {
+					el[i] = ast.RecordElementNode{Key: v.Elements[i].Key, Value: val}
+				}
+				return ast.NodeTypeRecord{Elements: el}
+			},
+		)
 	case ast.NodeTypeSet:
 		elements := make([]ast.IsNode, len(v.Elements))
-		set := make(types.Set, len(v.Elements))
-		ok := true
-		for i, item := range v.Elements {
-			elements[i] = fold(item)
-			if !ok {
-				continue
-			}
-			if v, vok := elements[i].(ast.NodeValue); vok {
-				set[i] = v.Value
-				continue
-			}
-			ok = false
-		}
-		if ok {
-			return ast.NodeValue{Value: set}
-		}
-		return ast.NodeTypeSet{Elements: elements}
+		copy(elements, v.Elements)
+		return tryFold(elements,
+			func(values []types.Value) Evaler {
+				el := make([]Evaler, len(values))
+				for i, v := range values {
+					el[i] = newLiteralEval(v)
+				}
+				return newSetLiteralEval(el)
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeSet{Elements: nodes}
+			},
+		)
 	case ast.NodeTypeNegate:
 		return tryFoldUnary(v.UnaryNode, newNegateEval, func(b ast.UnaryNode) ast.IsNode { return ast.NodeTypeNegate{UnaryNode: b} })
 	case ast.NodeTypeNot:
