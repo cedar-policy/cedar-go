@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -19,6 +20,7 @@ func foldPolicy(p *ast.Policy) *ast.Policy {
 	return &p2
 }
 
+// NOTE: nodes is modified in place, so be sure to send unique copy in
 func tryFold(nodes []ast.IsNode,
 	mkEval func(values []types.Value) Evaler,
 	mkNode func(nodes []ast.IsNode) ast.IsNode,
@@ -136,35 +138,47 @@ func fold(n ast.IsNode) ast.IsNode {
 		)
 
 	case ast.NodeTypeExtensionCall:
-		// TODO
-		switch {
-		case v.Name == "ip" && len(v.Args) == 1:
-			arg := fold(v.Args[0])
-			if v, ok := arg.(ast.NodeValue); ok {
-				if vv, ok := v.Value.(types.String); ok {
-					ip, err := types.ParseIPAddr(string(vv))
-					if err == nil {
-						return ast.NodeValue{Value: ip}
+		nodes := make([]ast.IsNode, len(v.Args))
+		copy(nodes, v.Args)
+		return tryFold(nodes,
+			func(values []types.Value) Evaler {
+				if i, ok := extensions.ExtMap[v.Name]; ok {
+					if i.Args != len(values) {
+						return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s)", errArity, v.Name, i.Args))
 					}
-				}
-			}
-		case v.Name == "decimal" && len(v.Args) == 1:
-			arg := fold(v.Args[0])
-			if v, ok := arg.(ast.NodeValue); ok {
-				if vv, ok := v.Value.(types.String); ok {
-					dec, err := types.ParseDecimal(string(vv))
-					if err == nil {
-						return ast.NodeValue{Value: dec}
-					}
-				}
-			}
-		}
+					switch {
+					case v.Name == "ip":
+						return newIPLiteralEval(newLiteralEval(values[0]))
+					case v.Name == "decimal":
+						return newDecimalLiteralEval(newLiteralEval(values[0]))
 
-		args := make([]ast.IsNode, len(v.Args))
-		for i, arg := range v.Args {
-			args[i] = fold(arg)
-		}
-		return ast.NodeTypeExtensionCall{Name: v.Name, Args: args}
+					case v.Name == "lessThan":
+						return newDecimalLessThanEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+					case v.Name == "lessThanOrEqual":
+						return newDecimalLessThanOrEqualEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+					case v.Name == "greaterThan":
+						return newDecimalGreaterThanEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+					case v.Name == "greaterThanOrEqual":
+						return newDecimalGreaterThanOrEqualEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+
+					case v.Name == "isIpv4":
+						return newIPTestEval(newLiteralEval(values[0]), ipTestIPv4)
+					case v.Name == "isIpv6":
+						return newIPTestEval(newLiteralEval(values[0]), ipTestIPv6)
+					case v.Name == "isLoopback":
+						return newIPTestEval(newLiteralEval(values[0]), ipTestLoopback)
+					case v.Name == "isMulticast":
+						return newIPTestEval(newLiteralEval(values[0]), ipTestMulticast)
+					case v.Name == "isInRange":
+						return newIPIsInRangeEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+					}
+				}
+				return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, v.Name))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeExtensionCall{Name: v.Name, Args: nodes}
+			},
+		)
 	case ast.NodeValue:
 		return n
 	case ast.NodeTypeRecord:
