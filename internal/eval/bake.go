@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
@@ -12,9 +13,12 @@ func bakePolicy(p *ast.Policy) *ast.Policy {
 		return p
 	}
 	p2 := *p
-	p2.Conditions = make([]ast.ConditionType, len(p.Conditions))
-	for i, c := range p.Conditions {
-		p2.Conditions[i] = ast.ConditionType{Condition: c.Condition, Body: bake(c.Body)}
+	p2.Annotations = slices.Clone(p.Annotations)
+	if p.Conditions != nil { // preserve nility for test purposes
+		p2.Conditions = make([]ast.ConditionType, len(p.Conditions))
+		for i, c := range p.Conditions {
+			p2.Conditions[i] = ast.ConditionType{Condition: c.Condition, Body: bake(c.Body)}
+		}
 	}
 	return &p2
 }
