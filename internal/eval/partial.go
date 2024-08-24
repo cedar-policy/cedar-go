@@ -10,13 +10,6 @@ import (
 
 func partialPolicy(ctx *Context, p *ast.Policy) (policy *ast.Policy, keep bool) {
 	p2 := *p
-	p2.Annotations = slices.Clone(p.Annotations)
-	if p.Conditions != nil { // preserve nility for test purposes
-		p2.Conditions = make([]ast.ConditionType, len(p.Conditions))
-		for i, c := range p.Conditions {
-			p2.Conditions[i] = ast.ConditionType{Condition: c.Condition, Body: partial(c.Body)}
-		}
-	}
 	if p2.Principal, keep = partialPrincipalScope(ctx, ctx.Principal, p2.Principal); !keep {
 		return nil, false
 	}
@@ -26,11 +19,18 @@ func partialPolicy(ctx *Context, p *ast.Policy) (policy *ast.Policy, keep bool) 
 	if p2.Resource, keep = partialResourceScope(ctx, ctx.Resource, p2.Resource); !keep {
 		return nil, false
 	}
+	if p.Conditions != nil { // preserve nility for test purposes
+		p2.Conditions = make([]ast.ConditionType, len(p.Conditions))
+		for i, c := range p.Conditions {
+			p2.Conditions[i] = ast.ConditionType{Condition: c.Condition, Body: partial(c.Body)}
+		}
+	}
+	p2.Annotations = slices.Clone(p.Annotations)
 	return &p2, true
 }
 
 func partial(v ast.IsNode) ast.IsNode {
-	return v
+	return fold(v)
 }
 
 func partialPrincipalScope(ctx *Context, ent types.Value, scope ast.IsPrincipalScopeNode) (ast.IsPrincipalScopeNode, bool) {
