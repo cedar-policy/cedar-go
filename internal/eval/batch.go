@@ -1,12 +1,8 @@
 package eval
 
 import (
-	"bytes"
-	"fmt"
-
 	publicast "github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/ast"
-	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -130,12 +126,12 @@ func batchResource(policies []batchPolicy, entityMap types.Entities, request Bat
 	}
 }
 
-func testPrintPolicy(p *ast.Policy) {
-	pp := (*parser.Policy)(p)
-	var got bytes.Buffer
-	pp.MarshalCedar(&got)
-	fmt.Println(got.String())
-}
+// func testPrintPolicy(p *ast.Policy) {
+// 	pp := (*parser.Policy)(p)
+// 	var got bytes.Buffer
+// 	pp.MarshalCedar(&got)
+// 	fmt.Println(got.String())
+// }
 
 func batchAuthz(policies []batchPolicy, ctx *Context) bool {
 	var decision bool
