@@ -134,22 +134,29 @@ func batchResource(policies []batchPolicy, entityMap types.Entities, request Bat
 // }
 
 func batchAuthz(policies []batchPolicy, ctx *Context) bool {
-	var decision bool
 	for _, p := range policies {
-		// testPrintPolicy(p.ast)
+		if p.ast.Effect != ast.EffectForbid {
+			continue
+		}
 		v, err := p.evaler.Eval(ctx)
 		if err != nil {
 			continue
 		}
-		if v, ok := v.(types.Boolean); ok {
-			if !v {
-				continue
-			}
-			if p.ast.Effect == ast.EffectForbid {
-				return false
-			}
-			decision = true
+		if v, ok := v.(types.Boolean); ok && bool(v) {
+			return false
 		}
 	}
-	return decision
+	for _, p := range policies {
+		if p.ast.Effect != ast.EffectPermit {
+			continue
+		}
+		v, err := p.evaler.Eval(ctx)
+		if err != nil {
+			continue
+		}
+		if v, ok := v.(types.Boolean); ok && bool(v) {
+			return true
+		}
+	}
+	return false
 }
