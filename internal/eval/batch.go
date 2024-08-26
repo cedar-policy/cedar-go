@@ -1,6 +1,8 @@
 package eval
 
 import (
+	"context"
+
 	publicast "github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
@@ -23,36 +25,44 @@ type batcher struct {
 	compiled bool
 	forbids  []Evaler
 	permits  []Evaler
-	ctx      *Context
+	evalCtx  *Context
 }
 
-func PubBatch(policies []*publicast.Policy, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) {
+// PubBatch will run a batch of authorization evaluations.  It will only error in case of early termination.
+func PubBatch(ctx context.Context, policies []*publicast.Policy, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) error {
 	var res batcher
 	res.policies = make([]*ast.Policy, len(policies))
 	for i, pub := range policies {
 		p := (*ast.Policy)(pub)
 		res.policies[i] = p
 	}
-	res.ctx = PrepContext(&Context{})
-	batch(&res, entityMap, request, cb)
+	res.evalCtx = PrepContext(&Context{})
+	return batch(ctx, &res, entityMap, request, cb)
 }
 
-func Batch(policies []*ast.Policy, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) {
+// Batch will run a batch of authorization evaluations.  It will only error in case of early termination.
+func Batch(ctx context.Context, policies []*ast.Policy, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) error {
 	var res batcher
 	res.policies = make([]*ast.Policy, len(policies))
 	for i, pub := range policies {
 		p := (*ast.Policy)(pub)
 		res.policies[i] = p
 	}
-	res.ctx = PrepContext(&Context{})
-	batch(&res, entityMap, request, cb)
+	res.evalCtx = PrepContext(&Context{})
+	return batch(ctx, &res, entityMap, request, cb)
 }
 
-func batch(b *batcher, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) {
+func batch(ctx context.Context, b *batcher, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) error {
 	pl, al, rl := len(request.Principals), len(request.Actions), len(request.Resources)
 	if pl == 0 || al == 0 || rl == 0 {
-		return
+		return nil
 	}
+
+	// check for context cancellation only if there is more work to be done
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	if pl == 1 && al == 1 && rl == 1 {
 		ctx := &Context{
 			Entities:  entityMap,
@@ -60,7 +70,7 @@ func batch(b *batcher, entityMap types.Entities, request BatchRequest, cb func(B
 			Action:    request.Actions[0],
 			Resource:  request.Resources[0],
 			Context:   request.Context,
-			inCache:   b.ctx.inCache,
+			inCache:   b.evalCtx.inCache,
 		}
 		ok := batchAuthz(b, ctx)
 		cb(BatchResult{
@@ -69,64 +79,73 @@ func batch(b *batcher, entityMap types.Entities, request BatchRequest, cb func(B
 			Resource:  request.Resources[0],
 			Decision:  ok,
 		})
-		return
+		return nil
 	}
 
 	// apply partial evaluation
 	if pl == 1 || al == 1 || rl == 1 {
-		ctx := &Context{Entities: entityMap, inCache: b.ctx.inCache}
+		evalCtx := &Context{Entities: entityMap, inCache: b.evalCtx.inCache}
 		if pl == 1 {
-			ctx.Principal = request.Principals[0]
+			evalCtx.Principal = request.Principals[0]
 		}
 		if al == 1 {
-			ctx.Action = request.Actions[0]
+			evalCtx.Action = request.Actions[0]
 		}
 		if rl == 1 {
-			ctx.Resource = request.Resources[0]
+			evalCtx.Resource = request.Resources[0]
 		}
 		var np []*ast.Policy
 		for _, p := range b.policies {
-			p, keep := partialPolicy(ctx, p)
+			p, keep := partialPolicy(evalCtx, p)
 			if !keep {
 				continue
 			}
 			np = append(np, p)
 		}
 		b = &batcher{
-			ctx:      b.ctx,
+			evalCtx:  b.evalCtx,
 			policies: np,
 		}
 	}
 
 	if pl > 1 && (al == 1 || pl <= al) && (rl == 1 || pl <= rl) {
-		batchPrincipal(b, entityMap, request, cb)
+		return batchPrincipal(ctx, b, entityMap, request, cb)
 	} else if al > 1 && (pl == 1 || al <= pl) && (rl == 1 || al <= rl) {
-		batchAction(b, entityMap, request, cb)
+		return batchAction(ctx, b, entityMap, request, cb)
 	} else {
-		batchResource(b, entityMap, request, cb)
+		return batchResource(ctx, b, entityMap, request, cb)
 	}
 }
 
-func batchPrincipal(b *batcher, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) {
+func batchPrincipal(ctx context.Context, b *batcher, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) error {
 	in := request.Principals
 	for i := range in {
 		request.Principals = in[i : i+1]
-		batch(b, entityMap, request, cb)
+		if err := batch(ctx, b, entityMap, request, cb); err != nil {
+			return err
+		}
 	}
+	return nil
 }
-func batchAction(b *batcher, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) {
+func batchAction(ctx context.Context, b *batcher, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) error {
 	in := request.Actions
 	for i := range in {
 		request.Actions = in[i : i+1]
-		batch(b, entityMap, request, cb)
+		if err := batch(ctx, b, entityMap, request, cb); err != nil {
+			return err
+		}
 	}
+	return nil
 }
-func batchResource(b *batcher, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) {
+func batchResource(ctx context.Context, b *batcher, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) error {
 	in := request.Resources
 	for i := range in {
 		request.Resources = in[i : i+1]
-		batch(b, entityMap, request, cb)
+		if err := batch(ctx, b, entityMap, request, cb); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // func testPrintPolicy(p *ast.Policy) {
@@ -136,11 +155,11 @@ func batchResource(b *batcher, entityMap types.Entities, request BatchRequest, c
 // 	fmt.Println(got.String())
 // }
 
-func batchAuthz(b *batcher, ctx *Context) bool {
+func batchAuthz(b *batcher, evalCtx *Context) bool {
 	batchCompile(b)
 
 	for _, p := range b.forbids {
-		v, err := p.Eval(ctx)
+		v, err := p.Eval(evalCtx)
 		if err != nil {
 			continue
 		}
@@ -149,7 +168,7 @@ func batchAuthz(b *batcher, ctx *Context) bool {
 		}
 	}
 	for _, p := range b.permits {
-		v, err := p.Eval(ctx)
+		v, err := p.Eval(evalCtx)
 		if err != nil {
 			continue
 		}

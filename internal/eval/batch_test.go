@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"context"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
@@ -112,9 +113,10 @@ func TestBatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var res []BatchResult
-			Batch([]*ast.Policy{tt.policy}, tt.entities, tt.request, func(br BatchResult) {
+			err := Batch(context.Background(), []*ast.Policy{tt.policy}, tt.entities, tt.request, func(br BatchResult) {
 				res = append(res, br)
 			})
+			testutil.OK(t, err)
 			testutil.Equals(t, res, tt.results)
 		})
 	}
