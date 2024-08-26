@@ -20,24 +20,22 @@ func partialPolicy(ctx *Context, p *ast.Policy) (policy *ast.Policy, keep bool) 
 	if p2.Resource, keep = partialResourceScope(ctx, ctx.Resource, p2.Resource); !keep {
 		return nil, false
 	}
-	if p.Conditions != nil { // preserve nility for test purposes
-		p2.Conditions = nil
-		for _, c := range p.Conditions {
-			body, keep := partial(ctx, c.Body)
-			if !keep {
-				return nil, false
-			}
-			if v, ok := body.(ast.NodeValue); ok {
-				if b, bok := v.Value.(types.Boolean); bok {
-					if bool(b) != bool(c.Condition) {
-						return nil, false
-					}
-					continue
-				}
-				return nil, false
-			}
-			p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: body})
+	p2.Conditions = nil
+	for _, c := range p.Conditions {
+		body, keep := partial(ctx, c.Body)
+		if !keep {
+			return nil, false
 		}
+		if v, ok := body.(ast.NodeValue); ok {
+			if b, bok := v.Value.(types.Boolean); bok {
+				if bool(b) != bool(c.Condition) {
+					return nil, false
+				}
+				continue
+			}
+			return nil, false
+		}
+		p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: body})
 	}
 	p2.Annotations = slices.Clone(p.Annotations)
 	return &p2, true
