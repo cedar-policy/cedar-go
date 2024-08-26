@@ -153,6 +153,38 @@ func tryPartialUnary(ctx *Context, v ast.UnaryNode, mkEval func(a Evaler) Evaler
 	)
 }
 
+func isTrue(in ast.IsNode) bool {
+	n, ok := in.(ast.NodeValue)
+	if !ok {
+		return false
+	}
+	v, ok := n.Value.(types.Boolean)
+	if !ok {
+		return false
+	}
+	return v == types.Boolean(true)
+}
+
+func isFalse(in ast.IsNode) bool {
+	n, ok := in.(ast.NodeValue)
+	if !ok {
+		return false
+	}
+	v, ok := n.Value.(types.Boolean)
+	if !ok {
+		return false
+	}
+	return v == types.Boolean(false)
+}
+
+func isValue(in ast.IsNode) (types.Value, bool) {
+	n, ok := in.(ast.NodeValue)
+	if !ok {
+		return nil, false
+	}
+	return n.Value, true
+}
+
 // partial takes in an ast.Node and finds does as much as is possible given the context
 func partial(ctx *Context, n ast.IsNode) (ast.IsNode, bool) {
 	switch v := n.(type) {
@@ -187,8 +219,20 @@ func partial(ctx *Context, n ast.IsNode) (ast.IsNode, bool) {
 			},
 		)
 	case ast.NodeTypeIfThenElse:
+		if_, iok := partial(ctx, v.If)
+		if !iok {
+			return if_, iok
+		}
+		if isTrue(if_) {
+			return partial(ctx, v.Then)
+		}
+		if isFalse(if_) {
+			return partial(ctx, v.Else)
+		}
+
+		// TODO: rework this so if_ is not parial'd a second time.
 		return tryPartial(ctx,
-			[]ast.IsNode{v.If, v.Then, v.Else},
+			[]ast.IsNode{if_, v.Then, v.Else},
 			func(values []types.Value) Evaler {
 				return newIfThenElseEval(newLiteralEval(values[0]), newLiteralEval(values[1]), newLiteralEval(values[2]))
 			},
@@ -314,9 +358,44 @@ func partial(ctx *Context, n ast.IsNode) (ast.IsNode, bool) {
 	case ast.NodeTypeIn:
 		return tryPartialBinary(ctx, v.BinaryNode, newInEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeIn{BinaryNode: b} })
 	case ast.NodeTypeAnd:
-		return tryPartialBinary(ctx, v.BinaryNode, newAndEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAnd{BinaryNode: b} })
+		left, lok := partial(ctx, v.Left)
+		if isFalse(left) || !lok {
+			return left, lok
+		}
+		right, rok := partial(ctx, v.Right)
+		if !rok {
+			return right, rok
+		}
+		lv, lok := isValue(left)
+		rv, rok := isValue(right)
+		if lok && rok {
+			res, err := newAndEval(newLiteralEval(lv), newLiteralEval(rv)).Eval(ctx)
+			if err != nil {
+				return nil, false
+			}
+			return ast.NodeValue{Value: res}, true
+		}
+		return ast.NodeTypeAnd{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, true
 	case ast.NodeTypeOr:
-		return tryPartialBinary(ctx, v.BinaryNode, newOrEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeOr{BinaryNode: b} })
+
+		left, lok := partial(ctx, v.Left)
+		if isTrue(left) || !lok {
+			return left, lok
+		}
+		right, rok := partial(ctx, v.Right)
+		if !rok {
+			return right, rok
+		}
+		lv, lok := isValue(left)
+		rv, rok := isValue(right)
+		if lok && rok {
+			res, err := newOrEval(newLiteralEval(lv), newLiteralEval(rv)).Eval(ctx)
+			if err != nil {
+				return nil, false
+			}
+			return ast.NodeValue{Value: res}, true
+		}
+		return ast.NodeTypeOr{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, true
 	case ast.NodeTypeEquals:
 		return tryPartialBinary(ctx, v.BinaryNode, newEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeEquals{BinaryNode: b} })
 	case ast.NodeTypeNotEquals:

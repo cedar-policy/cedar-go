@@ -93,12 +93,36 @@ func TestPartial(t *testing.T) {
 			nil,
 			false,
 		},
+		{"falseAnd",
+			ast.Permit().When(ast.Principal().Or(ast.False().And(ast.Context()))),
+			&Context{},
+			ast.Permit().When(ast.Principal().Or(ast.False())),
+			true,
+		},
+		{"trueOr",
+			ast.Permit().When(ast.Principal().And(ast.True().Or(ast.Context()))),
+			&Context{},
+			ast.Permit().When(ast.Principal().And(ast.True())),
+			true,
+		},
+		{"ifTrue",
+			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Principal(), ast.Context())),
+			&Context{},
+			ast.Permit().When(ast.Principal()),
+			true,
+		},
+		{"ifFalse",
+			ast.Permit().When(ast.IfThenElse(ast.False(), ast.Principal(), ast.Context())),
+			&Context{},
+			ast.Permit().When(ast.Context()),
+			true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, keep := partialPolicy(tt.ctx, tt.in)
+			out, keep := partialPolicy(PrepContext(tt.ctx), tt.in)
 			if keep {
 				testutil.Equals(t, out, tt.out)
 				// gotP := (*parser.Policy)(out)

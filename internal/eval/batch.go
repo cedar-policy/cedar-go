@@ -23,6 +23,7 @@ type batcher struct {
 	compiled bool
 	forbids  []Evaler
 	permits  []Evaler
+	ctx      *Context
 }
 
 func PubBatch(policies []*publicast.Policy, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) {
@@ -32,6 +33,7 @@ func PubBatch(policies []*publicast.Policy, entityMap types.Entities, request Ba
 		p := (*ast.Policy)(pub)
 		res.policies[i] = p
 	}
+	res.ctx = PrepContext(&Context{})
 	batch(&res, entityMap, request, cb)
 }
 
@@ -42,6 +44,7 @@ func Batch(policies []*ast.Policy, entityMap types.Entities, request BatchReques
 		p := (*ast.Policy)(pub)
 		res.policies[i] = p
 	}
+	res.ctx = PrepContext(&Context{})
 	batch(&res, entityMap, request, cb)
 }
 
@@ -56,6 +59,7 @@ func batch(b *batcher, entityMap types.Entities, request BatchRequest, cb func(B
 			Principal: request.Principals[0],
 			Action:    request.Actions[0],
 			Resource:  request.Resources[0],
+			inCache:   b.ctx.inCache,
 		}
 		ok := batchAuthz(b, ctx)
 		cb(BatchResult{
@@ -69,7 +73,7 @@ func batch(b *batcher, entityMap types.Entities, request BatchRequest, cb func(B
 
 	// apply partial evaluation
 	if pl == 1 || al == 1 || rl == 1 {
-		ctx := &Context{Entities: entityMap}
+		ctx := &Context{Entities: entityMap, inCache: b.ctx.inCache}
 		if pl == 1 {
 			ctx.Principal = request.Principals[0]
 		}
@@ -79,16 +83,18 @@ func batch(b *batcher, entityMap types.Entities, request BatchRequest, cb func(B
 		if rl == 1 {
 			ctx.Resource = request.Resources[0]
 		}
-		var nb batcher
+		var np []*ast.Policy
 		for _, p := range b.policies {
 			p, keep := partialPolicy(ctx, p)
 			if !keep {
 				continue
 			}
-			nb.policies = append(nb.policies, p)
+			np = append(np, p)
 		}
-		// fmt.Println("partial", pl, al, rl)
-		b = &nb
+		b = &batcher{
+			ctx:      b.ctx,
+			policies: np,
+		}
 	}
 
 	if pl > 1 && (al == 1 || pl <= al) && (rl == 1 || pl <= rl) {

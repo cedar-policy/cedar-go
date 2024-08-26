@@ -22,10 +22,17 @@ type Context struct {
 	Entities                    types.Entities
 	Principal, Action, Resource types.Value
 	Context                     types.Value
+
+	inCache map[inKey]bool
+}
+
+type inKey struct {
+	a, b types.EntityUID
 }
 
 func PrepContext(in *Context) *Context {
 	// add caches if applicable
+	in.inCache = map[inKey]bool{}
 	return in
 }
 
@@ -926,6 +933,15 @@ func hasKnown(known map[types.EntityUID]struct{}, k types.EntityUID) bool {
 }
 
 func entityInOne(ctx *Context, entity types.EntityUID, parent types.EntityUID) bool {
+	key := inKey{a: entity, b: parent}
+	if cached, ok := ctx.inCache[key]; ok {
+		return cached
+	}
+	result := entityInOneWork(ctx, entity, parent)
+	ctx.inCache[key] = result
+	return result
+}
+func entityInOneWork(ctx *Context, entity types.EntityUID, parent types.EntityUID) bool {
 	if entity == parent {
 		return true
 	}
