@@ -85,6 +85,27 @@ func TestBatch(t *testing.T) {
 				{Principal: p2, Action: a1, Resource: r2, Decision: false},
 			},
 		},
+
+		{"contextAccess",
+			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
+			types.Entities{},
+			BatchRequest{
+				Principals: []types.EntityUID{p1},
+				Actions:    []types.EntityUID{a1, a2},
+				Resources:  []types.EntityUID{r1, r2, r3},
+				Context: types.Record{
+					"key": types.Long(42),
+				},
+			},
+			[]BatchResult{
+				{Principal: p1, Action: a1, Resource: r1, Decision: true},
+				{Principal: p1, Action: a1, Resource: r2, Decision: true},
+				{Principal: p1, Action: a1, Resource: r3, Decision: true},
+				{Principal: p1, Action: a2, Resource: r1, Decision: true},
+				{Principal: p1, Action: a2, Resource: r2, Decision: true},
+				{Principal: p1, Action: a2, Resource: r3, Decision: true},
+			},
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

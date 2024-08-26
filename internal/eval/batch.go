@@ -59,6 +59,7 @@ func batch(b *batcher, entityMap types.Entities, request BatchRequest, cb func(B
 			Principal: request.Principals[0],
 			Action:    request.Actions[0],
 			Resource:  request.Resources[0],
+			Context:   request.Context,
 			inCache:   b.ctx.inCache,
 		}
 		ok := batchAuthz(b, ctx)
