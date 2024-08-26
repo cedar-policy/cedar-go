@@ -56,7 +56,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cedar-policy/cedar-go"
+	cedar "github.com/cedar-policy/cedar-go"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 const policyCedar = `permit (
@@ -80,20 +81,25 @@ const entitiesJSON = `[
 ]`
 
 func main() {
-	ps, err := cedar.NewPolicySet("policy.cedar", []byte(policyCedar))
-	if err != nil {
+	var policy cedar.Policy
+	if err := policy.UnmarshalCedar([]byte(policyCedar)); err != nil {
 		log.Fatal(err)
 	}
-	var entities cedar.Entities
+
+	ps := cedar.NewPolicySet()
+	ps.Store("policy0", &policy)
+
+	var entities types.Entities
 	if err := json.Unmarshal([]byte(entitiesJSON), &entities); err != nil {
 		log.Fatal(err)
 	}
 	req := cedar.Request{
-		Principal: cedar.EntityUID{Type: "User", ID: "alice"},
-		Action:    cedar.EntityUID{Type: "Action", ID: "view"},
-		Resource:  cedar.EntityUID{Type: "Photo", ID: "VacationPhoto94.jpg"},
-		Context:   cedar.Record{},
+		Principal: types.EntityUID{Type: "User", ID: "alice"},
+		Action:    types.EntityUID{Type: "Action", ID: "view"},
+		Resource:  types.EntityUID{Type: "Photo", ID: "VacationPhoto94.jpg"},
+		Context:   types.Record{},
 	}
+
 	ok, _ := ps.IsAuthorized(entities, req)
 	fmt.Println(ok)
 }
@@ -122,6 +128,30 @@ If you're looking to integrate Cedar into a production system, please be sure th
 
 x/exp - code in this subrepository is not subject to the Go 1
 compatibility promise.
+
+While in development (0.x.y), each tagged release may contain breaking changes.
+
+## Change log
+
+### New features in 0.2.x
+
+- A programmatic AST is now available in the `ast` package.
+- Policy sets can be marshaled and unmarshaled from JSON.
+- Policies can also be marshaled to Cedar text.
+
+### Upgrading from 0.1.x to 0.2.x
+
+- The Cedar value types have moved from the `cedar` package to the `types` package.
+- The PolicyIDs are now `strings`, previously they were numeric.
+- Errors and reasons use the new `PolicyID` form.
+- Combining multiple parsed Cedar files now involves coming up with IDs for each
+statement in those files.  It's best to create an empty `NewPolicySet` then
+parse individual files using `NewPolicyListFromBytes` and subsequently use
+`PolicySet.Store` to add each of the policy statements.
+- The Cedar `Entity` and `Entities` types have moved from the `cedar` package to the `types` package.
+- Stronger typing is being used in many places.
+- The `Value` method `Cedar() string` was changed to `MarshalCedar() []byte`
+
 
 ## Security
 
