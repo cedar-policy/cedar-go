@@ -304,10 +304,10 @@ func partial(ctx *Context, n ast.IsNode) (ast.IsNode, bool) {
 	case ast.NodeTypeVariable:
 		return tryPartial(ctx,
 			[]ast.IsNode{},
-			func(values []types.Value) Evaler {
+			func(_ []types.Value) Evaler {
 				return newVariableEval(v.Name)
 			},
-			func(nodes []ast.IsNode) ast.IsNode {
+			func(_ []ast.IsNode) ast.IsNode {
 				return ast.NodeTypeVariable{Name: v.Name}
 			},
 		)
