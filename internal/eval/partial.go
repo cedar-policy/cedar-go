@@ -23,7 +23,7 @@ func partialPolicy(ctx *Context, p *ast.Policy) (policy *ast.Policy, keep bool) 
 	if p.Conditions != nil { // preserve nility for test purposes
 		p2.Conditions = nil
 		for _, c := range p.Conditions {
-			body, keep := partial(c.Body)
+			body, keep := partial(ctx, c.Body)
 			if !keep {
 				return nil, false
 			}
@@ -33,9 +33,8 @@ func partialPolicy(ctx *Context, p *ast.Policy) (policy *ast.Policy, keep bool) 
 						return nil, false
 					}
 					continue
-				} else {
-					return nil, false
 				}
+				return nil, false
 			}
 			p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: body})
 		}
@@ -108,14 +107,17 @@ func partialScopeEval(ctx *Context, ent types.Value, in ast.IsScopeNode) (evaled
 }
 
 // NOTE: nodes is modified in place, so be sure to send unique copy in
-func tryPartial(nodes []ast.IsNode,
+func tryPartial(ctx *Context, nodes []ast.IsNode,
 	mkEval func(values []types.Value) Evaler,
 	mkNode func(nodes []ast.IsNode) ast.IsNode,
 ) (ast.IsNode, bool) {
 	var values []types.Value
 	ok := true
 	for i, n := range nodes {
-		n = fold(n)
+		n, keep := partial(ctx, n)
+		if !keep {
+			return nil, false
+		}
 		nodes[i] = n
 		if !ok {
 			continue
@@ -128,7 +130,10 @@ func tryPartial(nodes []ast.IsNode,
 	}
 	if ok {
 		eval := mkEval(values)
-		v, err := eval.Eval(nil)
+		v, err := eval.Eval(ctx)
+		if err == nil && v == nil {
+			return mkNode(nodes), true
+		}
 		if err == nil {
 			return ast.NodeValue{Value: v}, true
 		}
@@ -137,24 +142,24 @@ func tryPartial(nodes []ast.IsNode,
 	return mkNode(nodes), true
 }
 
-func tryPartialBinary(v ast.BinaryNode, mkEval func(a, b Evaler) Evaler, wrap func(b ast.BinaryNode) ast.IsNode) (ast.IsNode, bool) {
-	return tryPartial([]ast.IsNode{v.Left, v.Right},
+func tryPartialBinary(ctx *Context, v ast.BinaryNode, mkEval func(a, b Evaler) Evaler, wrap func(b ast.BinaryNode) ast.IsNode) (ast.IsNode, bool) {
+	return tryPartial(ctx, []ast.IsNode{v.Left, v.Right},
 		func(values []types.Value) Evaler { return mkEval(newLiteralEval(values[0]), newLiteralEval(values[1])) },
 		func(nodes []ast.IsNode) ast.IsNode { return wrap(ast.BinaryNode{Left: nodes[0], Right: nodes[1]}) },
 	)
 }
-func tryPartialUnary(v ast.UnaryNode, mkEval func(a Evaler) Evaler, wrap func(b ast.UnaryNode) ast.IsNode) (ast.IsNode, bool) {
-	return tryPartial([]ast.IsNode{v.Arg},
+func tryPartialUnary(ctx *Context, v ast.UnaryNode, mkEval func(a Evaler) Evaler, wrap func(b ast.UnaryNode) ast.IsNode) (ast.IsNode, bool) {
+	return tryPartial(ctx, []ast.IsNode{v.Arg},
 		func(values []types.Value) Evaler { return mkEval(newLiteralEval(values[0])) },
 		func(nodes []ast.IsNode) ast.IsNode { return wrap(ast.UnaryNode{Arg: nodes[0]}) },
 	)
 }
 
-// fold takes in an ast.Node and finds does as much constant folding as is possible given no PARC data.
-func partial(n ast.IsNode) (ast.IsNode, bool) {
+// partial takes in an ast.Node and finds does as much as is possible given the context
+func partial(ctx *Context, n ast.IsNode) (ast.IsNode, bool) {
 	switch v := n.(type) {
 	case ast.NodeTypeAccess:
-		return tryPartial(
+		return tryPartial(ctx,
 			[]ast.IsNode{v.Arg},
 			func(values []types.Value) Evaler {
 				return newAttributeAccessEval(newLiteralEval(values[0]), v.Value)
@@ -164,7 +169,7 @@ func partial(n ast.IsNode) (ast.IsNode, bool) {
 			},
 		)
 	case ast.NodeTypeHas:
-		return tryPartial(
+		return tryPartial(ctx,
 			[]ast.IsNode{v.Arg},
 			func(values []types.Value) Evaler {
 				return newHasEval(newLiteralEval(values[0]), v.Value)
@@ -174,7 +179,7 @@ func partial(n ast.IsNode) (ast.IsNode, bool) {
 			},
 		)
 	case ast.NodeTypeLike:
-		return tryPartial(
+		return tryPartial(ctx,
 			[]ast.IsNode{v.Arg},
 			func(values []types.Value) Evaler {
 				return newLikeEval(newLiteralEval(values[0]), v.Value)
@@ -184,7 +189,7 @@ func partial(n ast.IsNode) (ast.IsNode, bool) {
 			},
 		)
 	case ast.NodeTypeIfThenElse:
-		return tryPartial(
+		return tryPartial(ctx,
 			[]ast.IsNode{v.If, v.Then, v.Else},
 			func(values []types.Value) Evaler {
 				return newIfThenElseEval(newLiteralEval(values[0]), newLiteralEval(values[1]), newLiteralEval(values[2]))
@@ -194,7 +199,7 @@ func partial(n ast.IsNode) (ast.IsNode, bool) {
 			},
 		)
 	case ast.NodeTypeIs:
-		return tryPartial(
+		return tryPartial(ctx,
 			[]ast.IsNode{v.Left},
 			func(values []types.Value) Evaler {
 				return newIsEval(newLiteralEval(values[0]), v.EntityType)
@@ -204,7 +209,7 @@ func partial(n ast.IsNode) (ast.IsNode, bool) {
 			},
 		)
 	case ast.NodeTypeIsIn:
-		return tryPartial(
+		return tryPartial(ctx,
 			[]ast.IsNode{v.Left, v.Entity},
 			func(values []types.Value) Evaler {
 				return newIsInEval(newLiteralEval(values[0]), v.EntityType, newLiteralEval(values[1]))
@@ -217,7 +222,7 @@ func partial(n ast.IsNode) (ast.IsNode, bool) {
 	case ast.NodeTypeExtensionCall:
 		nodes := make([]ast.IsNode, len(v.Args))
 		copy(nodes, v.Args)
-		return tryPartial(nodes,
+		return tryPartial(ctx, nodes,
 			func(values []types.Value) Evaler {
 				if i, ok := extensions.ExtMap[v.Name]; ok {
 					if i.Args != len(values) {
@@ -263,7 +268,7 @@ func partial(n ast.IsNode) (ast.IsNode, bool) {
 		for i, pair := range v.Elements {
 			elements[i] = pair.Value
 		}
-		return tryPartial(elements,
+		return tryPartial(ctx, elements,
 			func(values []types.Value) Evaler {
 				m := make(map[types.String]Evaler, len(values))
 				for i, val := range values {
@@ -282,7 +287,7 @@ func partial(n ast.IsNode) (ast.IsNode, bool) {
 	case ast.NodeTypeSet:
 		elements := make([]ast.IsNode, len(v.Elements))
 		copy(elements, v.Elements)
-		return tryPartial(elements,
+		return tryPartial(ctx, elements,
 			func(values []types.Value) Evaler {
 				el := make([]Evaler, len(values))
 				for i, v := range values {
@@ -295,41 +300,49 @@ func partial(n ast.IsNode) (ast.IsNode, bool) {
 			},
 		)
 	case ast.NodeTypeNegate:
-		return tryPartialUnary(v.UnaryNode, newNegateEval, func(b ast.UnaryNode) ast.IsNode { return ast.NodeTypeNegate{UnaryNode: b} })
+		return tryPartialUnary(ctx, v.UnaryNode, newNegateEval, func(b ast.UnaryNode) ast.IsNode { return ast.NodeTypeNegate{UnaryNode: b} })
 	case ast.NodeTypeNot:
-		return tryPartialUnary(v.UnaryNode, newNotEval, func(b ast.UnaryNode) ast.IsNode { return ast.NodeTypeNot{UnaryNode: b} })
+		return tryPartialUnary(ctx, v.UnaryNode, newNotEval, func(b ast.UnaryNode) ast.IsNode { return ast.NodeTypeNot{UnaryNode: b} })
 	case ast.NodeTypeVariable:
-		return n, true
+		return tryPartial(ctx,
+			[]ast.IsNode{},
+			func(values []types.Value) Evaler {
+				return newVariableEval(v.Name)
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeVariable{Name: v.Name}
+			},
+		)
 	case ast.NodeTypeIn:
-		return tryPartialBinary(v.BinaryNode, newInEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeIn{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newInEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeIn{BinaryNode: b} })
 	case ast.NodeTypeAnd:
-		return tryPartialBinary(v.BinaryNode, newAndEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAnd{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newAndEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAnd{BinaryNode: b} })
 	case ast.NodeTypeOr:
-		return tryPartialBinary(v.BinaryNode, newOrEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeOr{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newOrEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeOr{BinaryNode: b} })
 	case ast.NodeTypeEquals:
-		return tryPartialBinary(v.BinaryNode, newEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeEquals{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeEquals{BinaryNode: b} })
 	case ast.NodeTypeNotEquals:
-		return tryPartialBinary(v.BinaryNode, newNotEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeNotEquals{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newNotEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeNotEquals{BinaryNode: b} })
 	case ast.NodeTypeGreaterThan:
-		return tryPartialBinary(v.BinaryNode, newLongGreaterThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThan{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newLongGreaterThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThan{BinaryNode: b} })
 	case ast.NodeTypeGreaterThanOrEqual:
-		return tryPartialBinary(v.BinaryNode, newLongGreaterThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThanOrEqual{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newLongGreaterThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThanOrEqual{BinaryNode: b} })
 	case ast.NodeTypeLessThan:
-		return tryPartialBinary(v.BinaryNode, newLongLessThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThan{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newLongLessThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThan{BinaryNode: b} })
 	case ast.NodeTypeLessThanOrEqual:
-		return tryPartialBinary(v.BinaryNode, newLongLessThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThanOrEqual{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newLongLessThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThanOrEqual{BinaryNode: b} })
 	case ast.NodeTypeSub:
-		return tryPartialBinary(v.BinaryNode, newSubtractEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeSub{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newSubtractEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeSub{BinaryNode: b} })
 	case ast.NodeTypeAdd:
-		return tryPartialBinary(v.BinaryNode, newAddEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAdd{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newAddEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAdd{BinaryNode: b} })
 	case ast.NodeTypeMult:
-		return tryPartialBinary(v.BinaryNode, newMultiplyEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeMult{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newMultiplyEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeMult{BinaryNode: b} })
 	case ast.NodeTypeContains:
-		return tryPartialBinary(v.BinaryNode, newContainsEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContains{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newContainsEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContains{BinaryNode: b} })
 	case ast.NodeTypeContainsAll:
-		return tryPartialBinary(v.BinaryNode, newContainsAllEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContainsAll{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newContainsAllEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContainsAll{BinaryNode: b} })
 	case ast.NodeTypeContainsAny:
-		return tryPartialBinary(v.BinaryNode, newContainsAnyEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContainsAny{BinaryNode: b} })
+		return tryPartialBinary(ctx, v.BinaryNode, newContainsAnyEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContainsAny{BinaryNode: b} })
 	default:
 		panic(fmt.Sprintf("unknown node type %T", v))
 	}

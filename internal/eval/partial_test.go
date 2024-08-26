@@ -72,7 +72,7 @@ func TestPartial(t *testing.T) {
 		{"conditionOmitTrueFolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
 			&Context{
-				Context: types.Long(41),
+				Context: types.Long(43),
 			},
 			ast.Permit(),
 			true,
@@ -80,7 +80,7 @@ func TestPartial(t *testing.T) {
 		{"conditionDropFalseFolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
 			&Context{
-				Context: types.Long(43),
+				Context: types.Long(41),
 			},
 			nil,
 			false,
@@ -96,9 +96,6 @@ func TestPartial(t *testing.T) {
 	}
 	for _, tt := range tests {
 		tt := tt
-		if tt.name != "conditionDropError" {
-			continue
-		}
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			out, keep := partialPolicy(tt.ctx, tt.in)
