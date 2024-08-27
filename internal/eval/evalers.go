@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
+	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -1173,4 +1174,41 @@ func (n *ipIsInRangeEval) Eval(ctx *Context) (types.Value, error) {
 		return zeroValue(), err
 	}
 	return types.Boolean(rhs.Contains(lhs)), nil
+}
+
+// extensionEval
+
+func newExtensionEval(name types.Path, args []Evaler) Evaler {
+	if i, ok := extensions.ExtMap[name]; ok {
+		if i.Args != len(args) {
+			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s)", errArity, name, i.Args))
+		}
+		switch {
+		case name == "ip":
+			return newIPLiteralEval(args[0])
+		case name == "decimal":
+			return newDecimalLiteralEval(args[0])
+
+		case name == "lessThan":
+			return newDecimalLessThanEval(args[0], args[1])
+		case name == "lessThanOrEqual":
+			return newDecimalLessThanOrEqualEval(args[0], args[1])
+		case name == "greaterThan":
+			return newDecimalGreaterThanEval(args[0], args[1])
+		case name == "greaterThanOrEqual":
+			return newDecimalGreaterThanOrEqualEval(args[0], args[1])
+
+		case name == "isIpv4":
+			return newIPTestEval(args[0], ipTestIPv4)
+		case name == "isIpv6":
+			return newIPTestEval(args[0], ipTestIPv6)
+		case name == "isLoopback":
+			return newIPTestEval(args[0], ipTestLoopback)
+		case name == "isMulticast":
+			return newIPTestEval(args[0], ipTestMulticast)
+		case name == "isInRange":
+			return newIPIsInRangeEval(args[0], args[1])
+		}
+	}
+	return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, name))
 }

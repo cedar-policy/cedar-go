@@ -5,7 +5,6 @@ import (
 	"slices"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
-	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -146,38 +145,11 @@ func fold(n ast.IsNode) ast.IsNode {
 		copy(nodes, v.Args)
 		return tryFold(nodes,
 			func(values []types.Value) Evaler {
-				if i, ok := extensions.ExtMap[v.Name]; ok {
-					if i.Args != len(values) {
-						return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s)", errArity, v.Name, i.Args))
-					}
-					switch {
-					case v.Name == "ip":
-						return newIPLiteralEval(newLiteralEval(values[0]))
-					case v.Name == "decimal":
-						return newDecimalLiteralEval(newLiteralEval(values[0]))
-
-					case v.Name == "lessThan":
-						return newDecimalLessThanEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
-					case v.Name == "lessThanOrEqual":
-						return newDecimalLessThanOrEqualEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
-					case v.Name == "greaterThan":
-						return newDecimalGreaterThanEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
-					case v.Name == "greaterThanOrEqual":
-						return newDecimalGreaterThanOrEqualEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
-
-					case v.Name == "isIpv4":
-						return newIPTestEval(newLiteralEval(values[0]), ipTestIPv4)
-					case v.Name == "isIpv6":
-						return newIPTestEval(newLiteralEval(values[0]), ipTestIPv6)
-					case v.Name == "isLoopback":
-						return newIPTestEval(newLiteralEval(values[0]), ipTestLoopback)
-					case v.Name == "isMulticast":
-						return newIPTestEval(newLiteralEval(values[0]), ipTestMulticast)
-					case v.Name == "isInRange":
-						return newIPIsInRangeEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
-					}
+				args := make([]Evaler, len(values))
+				for i, a := range values {
+					args[i] = newLiteralEval(a)
 				}
-				return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, v.Name))
+				return newExtensionEval(v.Name, args)
 			},
 			func(nodes []ast.IsNode) ast.IsNode {
 				return ast.NodeTypeExtensionCall{Name: v.Name, Args: nodes}

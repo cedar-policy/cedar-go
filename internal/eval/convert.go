@@ -5,7 +5,6 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/consts"
-	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -24,38 +23,11 @@ func toEval(n ast.IsNode) Evaler {
 	case ast.NodeTypeIsIn:
 		return newIsInEval(toEval(v.Left), v.EntityType, toEval(v.Entity))
 	case ast.NodeTypeExtensionCall:
-		if i, ok := extensions.ExtMap[v.Name]; ok {
-			if i.Args != len(v.Args) {
-				return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s)", errArity, v.Name, i.Args))
-			}
-			switch {
-			case v.Name == "ip":
-				return newIPLiteralEval(toEval(v.Args[0]))
-			case v.Name == "decimal":
-				return newDecimalLiteralEval(toEval(v.Args[0]))
-
-			case v.Name == "lessThan":
-				return newDecimalLessThanEval(toEval(v.Args[0]), toEval(v.Args[1]))
-			case v.Name == "lessThanOrEqual":
-				return newDecimalLessThanOrEqualEval(toEval(v.Args[0]), toEval(v.Args[1]))
-			case v.Name == "greaterThan":
-				return newDecimalGreaterThanEval(toEval(v.Args[0]), toEval(v.Args[1]))
-			case v.Name == "greaterThanOrEqual":
-				return newDecimalGreaterThanOrEqualEval(toEval(v.Args[0]), toEval(v.Args[1]))
-
-			case v.Name == "isIpv4":
-				return newIPTestEval(toEval(v.Args[0]), ipTestIPv4)
-			case v.Name == "isIpv6":
-				return newIPTestEval(toEval(v.Args[0]), ipTestIPv6)
-			case v.Name == "isLoopback":
-				return newIPTestEval(toEval(v.Args[0]), ipTestLoopback)
-			case v.Name == "isMulticast":
-				return newIPTestEval(toEval(v.Args[0]), ipTestMulticast)
-			case v.Name == "isInRange":
-				return newIPIsInRangeEval(toEval(v.Args[0]), toEval(v.Args[1]))
-			}
+		args := make([]Evaler, len(v.Args))
+		for i, a := range v.Args {
+			args[i] = toEval(a)
 		}
-		return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, v.Name))
+		return newExtensionEval(v.Name, args)
 	case ast.NodeValue:
 		return newLiteralEval(v.Value)
 	case ast.NodeTypeRecord:
