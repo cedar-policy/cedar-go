@@ -128,7 +128,7 @@ func tryPartial(ctx *Context, nodes []ast.IsNode,
 	if ok {
 		eval := mkEval(values)
 		v, err := eval.Eval(ctx)
-		if err == nil && v == nil {
+		if err == nil && v == nil { // unknown
 			return mkNode(nodes), true
 		}
 		if err == nil {
@@ -150,38 +150,6 @@ func tryPartialUnary(ctx *Context, v ast.UnaryNode, mkEval func(a Evaler) Evaler
 		func(values []types.Value) Evaler { return mkEval(newLiteralEval(values[0])) },
 		func(nodes []ast.IsNode) ast.IsNode { return wrap(ast.UnaryNode{Arg: nodes[0]}) },
 	)
-}
-
-func isTrue(in ast.IsNode) bool {
-	n, ok := in.(ast.NodeValue)
-	if !ok {
-		return false
-	}
-	v, ok := n.Value.(types.Boolean)
-	if !ok {
-		return false
-	}
-	return v == types.Boolean(true)
-}
-
-func isFalse(in ast.IsNode) bool {
-	n, ok := in.(ast.NodeValue)
-	if !ok {
-		return false
-	}
-	v, ok := n.Value.(types.Boolean)
-	if !ok {
-		return false
-	}
-	return v == types.Boolean(false)
-}
-
-func isValue(in ast.IsNode) (types.Value, bool) {
-	n, ok := in.(ast.NodeValue)
-	if !ok {
-		return nil, false
-	}
-	return n.Value, true
 }
 
 // partial takes in an ast.Node and finds does as much as is possible given the context
@@ -218,27 +186,7 @@ func partial(ctx *Context, n ast.IsNode) (ast.IsNode, bool) {
 			},
 		)
 	case ast.NodeTypeIfThenElse:
-		if_, iok := partial(ctx, v.If)
-		if !iok {
-			return if_, iok
-		}
-		if isTrue(if_) {
-			return partial(ctx, v.Then)
-		}
-		if isFalse(if_) {
-			return partial(ctx, v.Else)
-		}
-
-		// TODO: rework this so if_ is not parial'd a second time.
-		return tryPartial(ctx,
-			[]ast.IsNode{if_, v.Then, v.Else},
-			func(values []types.Value) Evaler {
-				return newIfThenElseEval(newLiteralEval(values[0]), newLiteralEval(values[1]), newLiteralEval(values[2]))
-			},
-			func(nodes []ast.IsNode) ast.IsNode {
-				return ast.NodeTypeIfThenElse{If: nodes[0], Then: nodes[1], Else: nodes[2]}
-			},
-		)
+		return partialIfThenElse(ctx, v)
 	case ast.NodeTypeIs:
 		return tryPartial(ctx,
 			[]ast.IsNode{v.Left},
@@ -330,44 +278,9 @@ func partial(ctx *Context, n ast.IsNode) (ast.IsNode, bool) {
 	case ast.NodeTypeIn:
 		return tryPartialBinary(ctx, v.BinaryNode, newInEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeIn{BinaryNode: b} })
 	case ast.NodeTypeAnd:
-		left, lok := partial(ctx, v.Left)
-		if isFalse(left) || !lok {
-			return left, lok
-		}
-		right, rok := partial(ctx, v.Right)
-		if !rok {
-			return right, rok
-		}
-		lv, lok := isValue(left)
-		rv, rok := isValue(right)
-		if lok && rok {
-			res, err := newAndEval(newLiteralEval(lv), newLiteralEval(rv)).Eval(ctx)
-			if err != nil {
-				return nil, false
-			}
-			return ast.NodeValue{Value: res}, true
-		}
-		return ast.NodeTypeAnd{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, true
+		return partialAnd(ctx, v)
 	case ast.NodeTypeOr:
-
-		left, lok := partial(ctx, v.Left)
-		if isTrue(left) || !lok {
-			return left, lok
-		}
-		right, rok := partial(ctx, v.Right)
-		if !rok {
-			return right, rok
-		}
-		lv, lok := isValue(left)
-		rv, rok := isValue(right)
-		if lok && rok {
-			res, err := newOrEval(newLiteralEval(lv), newLiteralEval(rv)).Eval(ctx)
-			if err != nil {
-				return nil, false
-			}
-			return ast.NodeValue{Value: res}, true
-		}
-		return ast.NodeTypeOr{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, true
+		return partialOr(ctx, v)
 	case ast.NodeTypeEquals:
 		return tryPartialBinary(ctx, v.BinaryNode, newEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeEquals{BinaryNode: b} })
 	case ast.NodeTypeNotEquals:
@@ -395,4 +308,98 @@ func partial(ctx *Context, n ast.IsNode) (ast.IsNode, bool) {
 	default:
 		panic(fmt.Sprintf("unknown node type %T", v))
 	}
+}
+
+func isNonBoolValue(in ast.IsNode) bool {
+	n, ok := in.(ast.NodeValue)
+	if !ok {
+		return false
+	}
+	_, ok = n.Value.(types.Boolean)
+	return !ok
+}
+
+func isTrue(in ast.IsNode) bool {
+	n, ok := in.(ast.NodeValue)
+	if !ok {
+		return false
+	}
+	v, ok := n.Value.(types.Boolean)
+	if !ok {
+		return false
+	}
+	return v == types.Boolean(true)
+}
+
+func isFalse(in ast.IsNode) bool {
+	n, ok := in.(ast.NodeValue)
+	if !ok {
+		return false
+	}
+	v, ok := n.Value.(types.Boolean)
+	if !ok {
+		return false
+	}
+	return v == types.Boolean(false)
+}
+
+func partialIfThenElse(ctx *Context, v ast.NodeTypeIfThenElse) (ast.IsNode, bool) {
+	if_, iok := partial(ctx, v.If)
+	switch {
+	case !iok:
+		return nil, false
+	case isNonBoolValue(if_):
+		return nil, false
+	case isTrue(if_):
+		return partial(ctx, v.Then)
+	case isFalse(if_):
+		return partial(ctx, v.Else)
+	}
+	then, tok := partial(ctx, v.Then)
+	if !tok {
+		then = ast.NodeTypeExtensionCall{Name: "error"}
+	}
+	else_, eok := partial(ctx, v.Else)
+	if !eok {
+		else_ = ast.NodeTypeExtensionCall{Name: "error"}
+	}
+	return ast.NodeTypeIfThenElse{If: if_, Then: then, Else: else_}, true
+}
+
+func partialAnd(ctx *Context, v ast.NodeTypeAnd) (ast.IsNode, bool) {
+	left, lok := partial(ctx, v.Left)
+	switch {
+	case !lok:
+		return nil, false
+	case isNonBoolValue(left):
+		return nil, false
+	case isFalse(left):
+		return ast.NodeValue{Value: types.False}, true
+	case isTrue(left):
+		return tryPartialBinary(ctx, ast.BinaryNode{Left: ast.NodeValue{Value: types.True}, Right: v.Right}, newAndEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAnd{BinaryNode: b} })
+	}
+	right, rok := partial(ctx, v.Right)
+	if !rok {
+		right = ast.NodeTypeExtensionCall{Name: "error"}
+	}
+	return ast.NodeTypeAnd{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, true
+}
+
+func partialOr(ctx *Context, v ast.NodeTypeOr) (ast.IsNode, bool) {
+	left, lok := partial(ctx, v.Left)
+	switch {
+	case !lok:
+		return nil, false
+	case isNonBoolValue(left):
+		return nil, false
+	case isTrue(left):
+		return ast.NodeValue{Value: types.True}, true
+	case isFalse(left):
+		return tryPartialBinary(ctx, ast.BinaryNode{Left: ast.NodeValue{Value: types.False}, Right: v.Right}, newOrEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeOr{BinaryNode: b} })
+	}
+	right, rok := partial(ctx, v.Right)
+	if !rok {
+		right = ast.NodeTypeExtensionCall{Name: "error"}
+	}
+	return ast.NodeTypeOr{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, true
 }
