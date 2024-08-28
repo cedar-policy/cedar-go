@@ -836,10 +836,10 @@ func (n *attributeAccessEval) Eval(ctx *Context) (types.Value, error) {
 		return val, nil
 	case types.Record:
 		val, ok := vv[n.attribute]
-	if !ok {
+		if !ok {
 			return zeroValue(), fmt.Errorf("record %w `%s`", errAttributeAccess, n.attribute)
-	}
-	return val, nil
+		}
+		return val, nil
 	default:
 		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
 	}
