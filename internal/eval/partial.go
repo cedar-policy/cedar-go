@@ -376,7 +376,11 @@ func partialAnd(ctx *Context, v ast.NodeTypeAnd) (ast.IsNode, bool) {
 	case isFalse(left):
 		return ast.NodeValue{Value: types.False}, true
 	case isTrue(left):
-		return tryPartialBinary(ctx, ast.BinaryNode{Left: ast.NodeValue{Value: types.True}, Right: v.Right}, newAndEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAnd{BinaryNode: b} })
+		return tryPartialBinary(ctx,
+			ast.BinaryNode{Left: ast.NodeValue{Value: types.True}, Right: v.Right},
+			newAndEval,
+			func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAnd{BinaryNode: b} },
+		)
 	}
 	right, rok := partial(ctx, v.Right)
 	if !rok {
@@ -395,7 +399,11 @@ func partialOr(ctx *Context, v ast.NodeTypeOr) (ast.IsNode, bool) {
 	case isTrue(left):
 		return ast.NodeValue{Value: types.True}, true
 	case isFalse(left):
-		return tryPartialBinary(ctx, ast.BinaryNode{Left: ast.NodeValue{Value: types.False}, Right: v.Right}, newOrEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeOr{BinaryNode: b} })
+		return tryPartialBinary(ctx,
+			ast.BinaryNode{Left: ast.NodeValue{Value: types.False}, Right: v.Right},
+			newOrEval,
+			func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeOr{BinaryNode: b} },
+		)
 	}
 	right, rok := partial(ctx, v.Right)
 	if !rok {
