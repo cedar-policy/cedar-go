@@ -819,11 +819,8 @@ func (n *attributeAccessEval) Eval(ctx *Context) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	var record types.Record
-	key := "record"
 	switch vv := v.(type) {
 	case types.EntityUID:
-		key = "`" + vv.String() + "`"
 		var unspecified types.EntityUID
 		if vv == unspecified {
 			return zeroValue(), fmt.Errorf("cannot access attribute `%s` of %w", n.attribute, errUnspecifiedEntity)
@@ -831,19 +828,21 @@ func (n *attributeAccessEval) Eval(ctx *Context) (types.Value, error) {
 		rec, ok := ctx.Entities[vv]
 		if !ok {
 			return zeroValue(), fmt.Errorf("entity `%v` %w", vv.String(), errEntityNotExist)
-		} else {
-			record = rec.Attributes
 		}
+		val, ok := rec.Attributes[n.attribute]
+		if !ok {
+			return zeroValue(), fmt.Errorf("`%s` %w `%s`", vv.String(), errAttributeAccess, n.attribute)
+		}
+		return val, nil
 	case types.Record:
-		record = vv
+		val, ok := vv[n.attribute]
+	if !ok {
+			return zeroValue(), fmt.Errorf("record %w `%s`", errAttributeAccess, n.attribute)
+	}
+	return val, nil
 	default:
 		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
 	}
-	val, ok := record[n.attribute]
-	if !ok {
-		return zeroValue(), fmt.Errorf("%s %w `%s`", key, errAttributeAccess, n.attribute)
-	}
-	return val, nil
 }
 
 // hasEval
