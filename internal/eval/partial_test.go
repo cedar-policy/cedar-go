@@ -98,7 +98,7 @@ func TestPartial(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, keep := partialPolicy(PrepContext(tt.ctx), tt.in)
+			out, _, keep := partialPolicy(PrepContext(tt.ctx), tt.in)
 			if keep {
 				testutil.Equals(t, out, tt.out)
 				// gotP := (*parser.Policy)(out)
@@ -127,33 +127,33 @@ func TestPartialIfThenElse(t *testing.T) {
 	valueB := ast.String("b")
 
 	tests := []struct {
-		name string
-		in   ast.Node
-		out  any
-		ok   bool
+		name    string
+		in      ast.Node
+		out     any
+		errTest func(testutil.TB, error)
 	}{
-		{"ifTrueAB", ast.IfThenElse(trueN, valueA, valueB), valueA, true},
-		{"ifFalseAB", ast.IfThenElse(falseN, valueA, valueB), valueB, true},
-		{"ifValueAB", ast.IfThenElse(valueN, valueA, valueB), nil, false},
-		{"ifKeepAB", ast.IfThenElse(keepN, valueA, valueB), ast.IfThenElse(keepN, valueA, valueB), true},
-		{"ifErrorAB", ast.IfThenElse(errorN, valueA, valueB), nil, false},
+		{"ifTrueAB", ast.IfThenElse(trueN, valueA, valueB), valueA, testutil.OK},
+		{"ifFalseAB", ast.IfThenElse(falseN, valueA, valueB), valueB, testutil.OK},
+		{"ifValueAB", ast.IfThenElse(valueN, valueA, valueB), nil, testutil.Error},
+		{"ifKeepAB", ast.IfThenElse(keepN, valueA, valueB), ast.IfThenElse(keepN, valueA, valueB), testutil.OK},
+		{"ifErrorAB", ast.IfThenElse(errorN, valueA, valueB), nil, testutil.Error},
 
-		{"ifTrueErrorB", ast.IfThenElse(trueN, errorN, valueB), nil, false},
-		{"ifFalseAError", ast.IfThenElse(falseN, valueA, errorN), nil, false},
-		{"ifTrueAError", ast.IfThenElse(trueN, valueA, errorN), valueA, true},
-		{"ifFalseErrorB", ast.IfThenElse(falseN, errorN, valueB), valueB, true},
+		{"ifTrueErrorB", ast.IfThenElse(trueN, errorN, valueB), nil, testutil.Error},
+		{"ifFalseAError", ast.IfThenElse(falseN, valueA, errorN), nil, testutil.Error},
+		{"ifTrueAError", ast.IfThenElse(trueN, valueA, errorN), valueA, testutil.OK},
+		{"ifFalseErrorB", ast.IfThenElse(falseN, errorN, valueB), valueB, testutil.OK},
 
-		{"ifKeepKeepKeep", ast.IfThenElse(keepN, keepN, keepN), ast.IfThenElse(keepN, keepN, keepN), true},
-		{"ifKeepErrorError", ast.IfThenElse(keepN, errorN, errorN), ast.IfThenElse(keepN, ast.ExtensionCall("error"), ast.ExtensionCall("error")), true},
+		{"ifKeepKeepKeep", ast.IfThenElse(keepN, keepN, keepN), ast.IfThenElse(keepN, keepN, keepN), testutil.OK},
+		{"ifKeepErrorError", ast.IfThenElse(keepN, errorN, errorN), ast.IfThenElse(keepN, ast.ExtensionCall("error"), ast.ExtensionCall("error")), testutil.OK},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			n, ok := tt.in.AsIsNode().(ast.NodeTypeIfThenElse)
 			testutil.Equals(t, ok, true)
-			out, ok := partialIfThenElse(&Context{}, n)
-			testutil.Equals(t, ok, tt.ok)
-			if !tt.ok && out == nil && tt.out == nil {
+			out, err := partialIfThenElse(&Context{}, n)
+			tt.errTest(t, err)
+			if err != nil {
 				return
 			}
 			nd, ok := tt.out.(ast.Node)
@@ -172,50 +172,50 @@ func TestPartialAnd(t *testing.T) {
 	_, _, _, _, _ = errorN, trueN, falseN, valueN, keepN
 
 	tests := []struct {
-		name string
-		in   ast.Node
-		out  any
-		ok   bool
+		name    string
+		in      ast.Node
+		out     any
+		errTest func(testutil.TB, error)
 	}{
 
-		{"andTrueTrue", trueN.And(trueN), ast.True(), true},
-		{"andTrueFalse", trueN.And(falseN), ast.False(), true},
-		{"andTrueValue", trueN.And(valueN), nil, false},
-		{"andTrueKeep", trueN.And(keepN), trueN.And(keepN), true},
-		{"andTrueError", trueN.And(errorN), nil, false},
+		{"andTrueTrue", trueN.And(trueN), ast.True(), testutil.OK},
+		{"andTrueFalse", trueN.And(falseN), ast.False(), testutil.OK},
+		{"andTrueValue", trueN.And(valueN), nil, testutil.Error},
+		{"andTrueKeep", trueN.And(keepN), trueN.And(keepN), testutil.OK},
+		{"andTrueError", trueN.And(errorN), nil, testutil.Error},
 
-		{"andFalseTrue", falseN.And(trueN), ast.False(), true},
-		{"andFalseFalse", falseN.And(falseN), ast.False(), true},
-		{"andFalseValue", falseN.And(valueN), ast.False(), true},
-		{"andFalseKeep", falseN.And(keepN), ast.False(), true},
-		{"andFalseError", falseN.And(errorN), ast.False(), true},
+		{"andFalseTrue", falseN.And(trueN), ast.False(), testutil.OK},
+		{"andFalseFalse", falseN.And(falseN), ast.False(), testutil.OK},
+		{"andFalseValue", falseN.And(valueN), ast.False(), testutil.OK},
+		{"andFalseKeep", falseN.And(keepN), ast.False(), testutil.OK},
+		{"andFalseError", falseN.And(errorN), ast.False(), testutil.OK},
 
-		{"andValueTrue", valueN.And(trueN), nil, false},
-		{"andValueFalse", valueN.And(falseN), nil, false},
-		{"andValueValue", valueN.And(valueN), nil, false},
-		{"andValueKeep", valueN.And(keepN), nil, false},
-		{"andValueError", valueN.And(errorN), nil, false},
+		{"andValueTrue", valueN.And(trueN), nil, testutil.Error},
+		{"andValueFalse", valueN.And(falseN), nil, testutil.Error},
+		{"andValueValue", valueN.And(valueN), nil, testutil.Error},
+		{"andValueKeep", valueN.And(keepN), nil, testutil.Error},
+		{"andValueError", valueN.And(errorN), nil, testutil.Error},
 
-		{"andKeepTrue", keepN.And(trueN), keepN.And(trueN), true},
-		{"andKeepFalse", keepN.And(falseN), keepN.And(falseN), true},
-		{"andKeepValue", keepN.And(valueN), keepN.And(valueN), true},
-		{"andKeepKeep", keepN.And(keepN), keepN.And(keepN), true},
-		{"andKeepError", keepN.And(errorN), keepN.And(ast.ExtensionCall("error")), true},
+		{"andKeepTrue", keepN.And(trueN), keepN.And(trueN), testutil.OK},
+		{"andKeepFalse", keepN.And(falseN), keepN.And(falseN), testutil.OK},
+		{"andKeepValue", keepN.And(valueN), keepN.And(valueN), testutil.OK},
+		{"andKeepKeep", keepN.And(keepN), keepN.And(keepN), testutil.OK},
+		{"andKeepError", keepN.And(errorN), keepN.And(ast.ExtensionCall("error")), testutil.OK},
 
-		{"andErrorTrue", errorN.And(trueN), nil, false},
-		{"andErrorFalse", errorN.And(falseN), nil, false},
-		{"andErrorValue", errorN.And(valueN), nil, false},
-		{"andErrorKeep", errorN.And(keepN), nil, false},
-		{"andErrorError", errorN.And(errorN), nil, false},
+		{"andErrorTrue", errorN.And(trueN), nil, testutil.Error},
+		{"andErrorFalse", errorN.And(falseN), nil, testutil.Error},
+		{"andErrorValue", errorN.And(valueN), nil, testutil.Error},
+		{"andErrorKeep", errorN.And(keepN), nil, testutil.Error},
+		{"andErrorError", errorN.And(errorN), nil, testutil.Error},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			n, ok := tt.in.AsIsNode().(ast.NodeTypeAnd)
 			testutil.Equals(t, ok, true)
-			out, ok := partialAnd(&Context{}, n)
-			testutil.Equals(t, ok, tt.ok)
-			if !tt.ok && out == nil && tt.out == nil {
+			out, err := partialAnd(&Context{}, n)
+			tt.errTest(t, err)
+			if err != nil {
 				return
 			}
 			nd, ok := tt.out.(ast.Node)
@@ -234,50 +234,50 @@ func TestPartialOr(t *testing.T) {
 	_, _, _, _, _ = errorN, trueN, falseN, valueN, keepN
 
 	tests := []struct {
-		name string
-		in   ast.Node
-		out  any
-		ok   bool
+		name    string
+		in      ast.Node
+		out     any
+		errTest func(testutil.TB, error)
 	}{
 
-		{"orTrueTrue", trueN.Or(trueN), ast.True(), true},
-		{"orTrueFalse", trueN.Or(falseN), ast.True(), true},
-		{"orTrueValue", trueN.Or(valueN), ast.True(), true},
-		{"orTrueKeep", trueN.Or(keepN), ast.True(), true},
-		{"orTrueError", trueN.Or(errorN), ast.True(), true},
+		{"orTrueTrue", trueN.Or(trueN), ast.True(), testutil.OK},
+		{"orTrueFalse", trueN.Or(falseN), ast.True(), testutil.OK},
+		{"orTrueValue", trueN.Or(valueN), ast.True(), testutil.OK},
+		{"orTrueKeep", trueN.Or(keepN), ast.True(), testutil.OK},
+		{"orTrueError", trueN.Or(errorN), ast.True(), testutil.OK},
 
-		{"orFalseTrue", falseN.Or(trueN), ast.True(), true},
-		{"orFalseFalse", falseN.Or(falseN), ast.False(), true},
-		{"orFalseValue", falseN.Or(valueN), nil, false},
-		{"orFalseKeep", falseN.Or(keepN), falseN.Or(keepN), true},
-		{"orFalseError", falseN.Or(errorN), nil, false},
+		{"orFalseTrue", falseN.Or(trueN), ast.True(), testutil.OK},
+		{"orFalseFalse", falseN.Or(falseN), ast.False(), testutil.OK},
+		{"orFalseValue", falseN.Or(valueN), nil, testutil.Error},
+		{"orFalseKeep", falseN.Or(keepN), falseN.Or(keepN), testutil.OK},
+		{"orFalseError", falseN.Or(errorN), nil, testutil.Error},
 
-		{"orValueTrue", valueN.Or(trueN), nil, false},
-		{"orValueFalse", valueN.Or(falseN), nil, false},
-		{"orValueValue", valueN.Or(valueN), nil, false},
-		{"orValueKeep", valueN.Or(keepN), nil, false},
-		{"orValueError", valueN.Or(errorN), nil, false},
+		{"orValueTrue", valueN.Or(trueN), nil, testutil.Error},
+		{"orValueFalse", valueN.Or(falseN), nil, testutil.Error},
+		{"orValueValue", valueN.Or(valueN), nil, testutil.Error},
+		{"orValueKeep", valueN.Or(keepN), nil, testutil.Error},
+		{"orValueError", valueN.Or(errorN), nil, testutil.Error},
 
-		{"orKeepTrue", keepN.Or(trueN), keepN.Or(trueN), true},
-		{"orKeepFalse", keepN.Or(falseN), keepN.Or(falseN), true},
-		{"orKeepValue", keepN.Or(valueN), keepN.Or(valueN), true},
-		{"orKeepKeep", keepN.Or(keepN), keepN.Or(keepN), true},
-		{"orKeepError", keepN.Or(errorN), keepN.Or(ast.ExtensionCall("error")), true},
+		{"orKeepTrue", keepN.Or(trueN), keepN.Or(trueN), testutil.OK},
+		{"orKeepFalse", keepN.Or(falseN), keepN.Or(falseN), testutil.OK},
+		{"orKeepValue", keepN.Or(valueN), keepN.Or(valueN), testutil.OK},
+		{"orKeepKeep", keepN.Or(keepN), keepN.Or(keepN), testutil.OK},
+		{"orKeepError", keepN.Or(errorN), keepN.Or(ast.ExtensionCall("error")), testutil.OK},
 
-		{"orErrorTrue", errorN.Or(trueN), nil, false},
-		{"orErrorFalse", errorN.Or(falseN), nil, false},
-		{"orErrorValue", errorN.Or(valueN), nil, false},
-		{"orErrorKeep", errorN.Or(keepN), nil, false},
-		{"orErrorError", errorN.Or(errorN), nil, false},
+		{"orErrorTrue", errorN.Or(trueN), nil, testutil.Error},
+		{"orErrorFalse", errorN.Or(falseN), nil, testutil.Error},
+		{"orErrorValue", errorN.Or(valueN), nil, testutil.Error},
+		{"orErrorKeep", errorN.Or(keepN), nil, testutil.Error},
+		{"orErrorError", errorN.Or(errorN), nil, testutil.Error},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			n, ok := tt.in.AsIsNode().(ast.NodeTypeOr)
 			testutil.Equals(t, ok, true)
-			out, ok := partialOr(&Context{}, n)
-			testutil.Equals(t, ok, tt.ok)
-			if !tt.ok && out == nil && tt.out == nil {
+			out, err := partialOr(&Context{}, n)
+			tt.errTest(t, err)
+			if err != nil {
 				return
 			}
 			nd, ok := tt.out.(ast.Node)

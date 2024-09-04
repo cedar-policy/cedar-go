@@ -96,7 +96,7 @@ func batch(ctx context.Context, b *batcher, entityMap types.Entities, request Ba
 		}
 		var np []*ast.Policy
 		for _, p := range b.policies {
-			p, keep := partialPolicy(evalCtx, p)
+			p, _, keep := partialPolicy(evalCtx, p)
 			if !keep {
 				continue
 			}
