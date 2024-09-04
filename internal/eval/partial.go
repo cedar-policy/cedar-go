@@ -8,36 +8,37 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func partialPolicy(ctx *Context, p *ast.Policy) (policy *ast.Policy, policyErr error, keep bool) {
+// partialPolicy itself cannot error, it can only return the error that would happen
+func partialPolicy(ctx *Context, p *ast.Policy) (policy *ast.Policy, keep bool, policyErr error) {
 	p2 := *p
 	if p2.Principal, keep = partialPrincipalScope(ctx, ctx.Principal, p2.Principal); !keep {
-		return nil, nil, false
+		return nil, false, nil
 	}
 	if p2.Action, keep = partialActionScope(ctx, ctx.Action, p2.Action); !keep {
-		return nil, nil, false
+		return nil, false, nil
 	}
 	if p2.Resource, keep = partialResourceScope(ctx, ctx.Resource, p2.Resource); !keep {
-		return nil, nil, false
+		return nil, false, nil
 	}
 	p2.Conditions = nil
 	for _, c := range p.Conditions {
 		body, err := partial(ctx, c.Body)
 		if err != nil {
-			return nil, err, false
+			return nil, false, err
 		}
 		if v, ok := body.(ast.NodeValue); ok {
 			if b, bok := v.Value.(types.Boolean); bok {
 				if bool(b) != bool(c.Condition) {
-					return nil, nil, false
+					return nil, false, nil
 				}
 				continue
 			}
-			return nil, fmt.Errorf("%w: condition expected bool", ErrType), false
+			return nil, false, fmt.Errorf("%w: condition expected bool", ErrType)
 		}
 		p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: body})
 	}
 	p2.Annotations = slices.Clone(p.Annotations)
-	return &p2, nil, true
+	return &p2, true, nil
 }
 
 func partialPrincipalScope(ctx *Context, ent types.Value, scope ast.IsPrincipalScopeNode) (ast.IsPrincipalScopeNode, bool) {

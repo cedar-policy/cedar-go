@@ -98,7 +98,7 @@ func TestPartial(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, _, keep := partialPolicy(PrepContext(tt.ctx), tt.in)
+			out, keep, _ := partialPolicy(PrepContext(tt.ctx), tt.in)
 			if keep {
 				testutil.Equals(t, out, tt.out)
 				// gotP := (*parser.Policy)(out)
