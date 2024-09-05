@@ -168,6 +168,34 @@ func TestBatch(t *testing.T) {
 				{BatchResult: BatchResult{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(43)}, Decision: false, Values: Values{"key": types.Long(43)}}},
 			},
 		},
+
+		{"ignoreContext",
+			ast.Permit().
+				When(ast.Context().Access("key").Equal(ast.Long(42))).
+				When(ast.Principal().Equal(ast.Value(p1))).
+				When(ast.Action().Equal(ast.Value(a1))).
+				When(ast.Resource().Equal(ast.Value(r2))),
+
+			types.Entities{},
+			BatchRequest{
+				Principal: p1,
+				Action:    a1,
+				Resource:  Variable("resource"),
+				Context:   Ignore(),
+				Variables: Variables{
+					"resource": []types.Value{r1, r2},
+					"key":      []types.Value{types.Long(41), types.Long(42), types.Long(43)},
+				},
+			},
+			[]BatchDiagnosticResult{
+				{BatchResult: BatchResult{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}, Decision: false, Values: Values{"resource": r1, "key": types.Long(41)}}},
+				{BatchResult: BatchResult{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}, Decision: false, Values: Values{"resource": r1, "key": types.Long(42)}}},
+				{BatchResult: BatchResult{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}, Decision: false, Values: Values{"resource": r1, "key": types.Long(43)}}},
+				{BatchResult: BatchResult{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}, Decision: true, Values: Values{"resource": r2, "key": types.Long(41)}}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
+				{BatchResult: BatchResult{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}, Decision: true, Values: Values{"resource": r2, "key": types.Long(42)}}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
+				{BatchResult: BatchResult{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}, Decision: true, Values: Values{"resource": r2, "key": types.Long(43)}}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
+			},
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

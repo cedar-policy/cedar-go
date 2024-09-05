@@ -24,10 +24,11 @@ func partialPolicy(ctx *Context, p *ast.Policy) (policy *ast.Policy, keep bool, 
 	p2.Conditions = nil
 	for _, c := range p.Conditions {
 		body, err := partial(ctx, c.Body)
-		if err != nil {
+		if errors.Is(err, errIgnore) && p.Effect == ast.EffectPermit {
+			continue
+		} else if err != nil {
 			return nil, false, err
-		}
-		if v, ok := body.(ast.NodeValue); ok {
+		} else if v, ok := body.(ast.NodeValue); ok {
 			if b, bok := v.Value.(types.Boolean); bok {
 				if bool(b) != bool(c.Condition) {
 					return nil, false, nil
@@ -83,8 +84,10 @@ func partialScopeEval(ctx *Context, ent types.Value, in ast.IsScopeNode) (evaled
 	if !ok {
 		return false, false
 	}
-	if e.Type == variableEntityType {
+	if isVariable(e) {
 		return false, false
+	} else if isIgnore(e) {
+		return true, true
 	}
 	switch t := in.(type) {
 	case ast.ScopeTypeAll:
@@ -109,6 +112,7 @@ func partialScopeEval(ctx *Context, ent types.Value, in ast.IsScopeNode) (evaled
 }
 
 var errVariable = fmt.Errorf("variable")
+var errIgnore = fmt.Errorf("ignore")
 
 // NOTE: nodes is modified in place, so be sure to send unique copy in
 func tryPartial(ctx *Context, nodes []ast.IsNode,
@@ -122,8 +126,7 @@ func tryPartial(ctx *Context, nodes []ast.IsNode,
 		if errors.Is(err, errVariable) {
 			ok = false
 			continue
-		}
-		if err != nil {
+		} else if err != nil {
 			return nil, err
 		}
 		nodes[i] = n
@@ -142,11 +145,10 @@ func tryPartial(ctx *Context, nodes []ast.IsNode,
 		if err != nil {
 			return nil, err
 		}
-		if v == nil { // unknown (old)
-			return mkNode(nodes), nil
-		}
-		if ent, ok := v.(types.EntityUID); ok && ent.Type == variableEntityType { // unknown (new)
+		if isVariable(v) { // unknown (new)
 			return mkNode(nodes), errVariable
+		} else if isIgnore(v) { // ignore
+			return nil, errIgnore
 		}
 		return ast.NodeValue{Value: v}, nil
 	}
@@ -360,6 +362,8 @@ func isFalse(in ast.IsNode) bool {
 func partialIfThenElse(ctx *Context, v ast.NodeTypeIfThenElse) (ast.IsNode, error) {
 	if_, ifErr := partial(ctx, v.If)
 	switch {
+	case errors.Is(ifErr, errVariable):
+		break
 	case ifErr != nil:
 		return nil, ifErr
 	case isNonBoolValue(if_):
@@ -370,11 +374,15 @@ func partialIfThenElse(ctx *Context, v ast.NodeTypeIfThenElse) (ast.IsNode, erro
 		return partial(ctx, v.Else)
 	}
 	then, thenErr := partial(ctx, v.Then)
-	if thenErr != nil {
+	if errors.Is(thenErr, errIgnore) {
+		return nil, thenErr
+	} else if thenErr != nil && !errors.Is(thenErr, errVariable) {
 		then = ast.NodeTypeExtensionCall{Name: "error"}
 	}
 	else_, elseErr := partial(ctx, v.Else)
-	if elseErr != nil {
+	if errors.Is(elseErr, errIgnore) {
+		return nil, elseErr
+	} else if elseErr != nil && !errors.Is(elseErr, errVariable) {
 		else_ = ast.NodeTypeExtensionCall{Name: "error"}
 	}
 	return ast.NodeTypeIfThenElse{If: if_, Then: then, Else: else_}, nil
@@ -383,6 +391,8 @@ func partialIfThenElse(ctx *Context, v ast.NodeTypeIfThenElse) (ast.IsNode, erro
 func partialAnd(ctx *Context, v ast.NodeTypeAnd) (ast.IsNode, error) {
 	left, leftErr := partial(ctx, v.Left)
 	switch {
+	case errors.Is(leftErr, errVariable):
+		break
 	case leftErr != nil:
 		return nil, leftErr
 	case isNonBoolValue(left):
@@ -397,7 +407,9 @@ func partialAnd(ctx *Context, v ast.NodeTypeAnd) (ast.IsNode, error) {
 		)
 	}
 	right, rightErr := partial(ctx, v.Right)
-	if rightErr != nil {
+	if errors.Is(rightErr, errIgnore) {
+		return nil, rightErr
+	} else if rightErr != nil && !errors.Is(rightErr, errVariable) {
 		right = ast.NodeTypeExtensionCall{Name: "error"}
 	}
 	return ast.NodeTypeAnd{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, nil
@@ -406,6 +418,8 @@ func partialAnd(ctx *Context, v ast.NodeTypeAnd) (ast.IsNode, error) {
 func partialOr(ctx *Context, v ast.NodeTypeOr) (ast.IsNode, error) {
 	left, leftErr := partial(ctx, v.Left)
 	switch {
+	case errors.Is(leftErr, errVariable):
+		break
 	case leftErr != nil:
 		return nil, leftErr
 	case isNonBoolValue(left):
@@ -420,7 +434,9 @@ func partialOr(ctx *Context, v ast.NodeTypeOr) (ast.IsNode, error) {
 		)
 	}
 	right, rightErr := partial(ctx, v.Right)
-	if rightErr != nil {
+	if errors.Is(rightErr, errIgnore) {
+		return nil, rightErr
+	} else if rightErr != nil && !errors.Is(rightErr, errVariable) {
 		right = ast.NodeTypeExtensionCall{Name: "error"}
 	}
 	return ast.NodeTypeOr{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, nil

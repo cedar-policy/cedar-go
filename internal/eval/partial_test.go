@@ -65,7 +65,7 @@ func TestPartial(t *testing.T) {
 		},
 		{"conditionKeepUnfolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
-			&Context{},
+			&Context{Context: Variable("context")},
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
 			true,
 		},
@@ -101,6 +101,83 @@ func TestPartial(t *testing.T) {
 				},
 			},
 			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
+			true,
+		},
+
+		{"ignorePermitContext",
+			ast.Permit().When(ast.Context().Equal(ast.Long(42))),
+			&Context{
+				Context: Ignore(),
+			},
+			ast.Permit(),
+			true,
+		},
+		{"ignoreForbidContext",
+			ast.Forbid().When(ast.Context().Equal(ast.Long(42))),
+			&Context{
+				Context: Ignore(),
+			},
+			nil,
+			false,
+		},
+		{"ignorePermitScope",
+			ast.Permit().PrincipalEq(types.NewEntityUID("T", "42")),
+			&Context{
+				Principal: Ignore(),
+			},
+			ast.Permit(),
+			true,
+		},
+		{"ignoreForbidScope",
+			ast.Forbid().PrincipalEq(types.NewEntityUID("T", "42")),
+			&Context{
+				Principal: Ignore(),
+			},
+			ast.Forbid(),
+			true,
+		},
+		{"ignoreAnd",
+			ast.Permit().When(ast.Context().Access("variable").And(ast.Context().Access("ignore").Equal(ast.Long(42)))),
+			&Context{
+				Context: types.Record{
+					"ignore":   Ignore(),
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit(),
+			true,
+		},
+		{"ignoreOr",
+			ast.Permit().When(ast.Context().Access("variable").Or(ast.Context().Access("ignore").Equal(ast.Long(42)))),
+			&Context{
+				Context: types.Record{
+					"ignore":   Ignore(),
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit(),
+			true,
+		},
+		{"ignoreIfThen",
+			ast.Permit().When(ast.IfThenElse(ast.Context().Access("variable"), ast.Context().Access("ignore").Equal(ast.Long(42)), ast.True())),
+			&Context{
+				Context: types.Record{
+					"ignore":   Ignore(),
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit(),
+			true,
+		},
+		{"ignoreIfElse",
+			ast.Permit().When(ast.IfThenElse(ast.Context().Access("variable"), ast.True(), ast.Context().Access("ignore").Equal(ast.Long(42)))),
+			&Context{
+				Context: types.Record{
+					"ignore":   Ignore(),
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit(),
 			true,
 		},
 	}
@@ -161,7 +238,9 @@ func TestPartialIfThenElse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			n, ok := tt.in.AsIsNode().(ast.NodeTypeIfThenElse)
 			testutil.Equals(t, ok, true)
-			out, err := partialIfThenElse(&Context{}, n)
+			out, err := partialIfThenElse(&Context{
+				Context: Variable("context"),
+			}, n)
 			tt.errTest(t, err)
 			if err != nil {
 				return
@@ -223,7 +302,9 @@ func TestPartialAnd(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			n, ok := tt.in.AsIsNode().(ast.NodeTypeAnd)
 			testutil.Equals(t, ok, true)
-			out, err := partialAnd(&Context{}, n)
+			out, err := partialAnd(&Context{
+				Context: Variable("context"),
+			}, n)
 			tt.errTest(t, err)
 			if err != nil {
 				return
@@ -285,7 +366,9 @@ func TestPartialOr(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			n, ok := tt.in.AsIsNode().(ast.NodeTypeOr)
 			testutil.Equals(t, ok, true)
-			out, err := partialOr(&Context{}, n)
+			out, err := partialOr(&Context{
+				Context: Variable("context"),
+			}, n)
 			tt.errTest(t, err)
 			if err != nil {
 				return

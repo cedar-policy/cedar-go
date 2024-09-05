@@ -2,6 +2,7 @@ package eval
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"slices"
 	"strconv"
@@ -39,6 +40,31 @@ const variableEntityType = "__cedar::variable"
 
 func Variable(v types.String) types.Value {
 	return types.NewEntityUID(variableEntityType, v)
+}
+
+const ignoreEntityType = "__cedar::ignore"
+
+func Ignore() types.Value {
+	return types.NewEntityUID(ignoreEntityType, "")
+}
+
+func isVariable(v types.Value) bool {
+	if ent, ok := v.(types.EntityUID); ok && ent.Type == variableEntityType {
+		return true
+	}
+	return false
+}
+func isIgnore(v types.Value) bool {
+	if ent, ok := v.(types.EntityUID); ok && ent.Type == ignoreEntityType {
+		return true
+	}
+	return false
+}
+
+const unknownEntityType = "__cedar::unknown"
+
+func unknownEntity() types.EntityUID {
+	return types.NewEntityUID(unknownEntityType, "")
 }
 
 type BatchResult struct {
@@ -107,6 +133,16 @@ func Batch(ctx context.Context, policies []*ast.Policy, entityMap types.Entities
 	for i, p := range policies {
 		be.policies[i] = idPolicy{PolicyID: strconv.Itoa(i), Policy: p}
 	}
+	switch {
+	case request.Principal == nil:
+		return fmt.Errorf("batch missing principal")
+	case request.Action == nil:
+		return fmt.Errorf("batch missing action")
+	case request.Resource == nil:
+		return fmt.Errorf("batch missing resource")
+	case request.Context == nil:
+		return fmt.Errorf("batch missing context")
+	}
 	be.evalCtx = PrepContext(&Context{})
 	state := batchRequestState{
 		Principal: request.Principal,
@@ -154,6 +190,22 @@ func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, req
 		evalCtx:  be.evalCtx,
 		policies: np,
 		options:  be.options,
+	}
+
+	// if no more partial evaluation, fill in ignores with defaults
+	if len(request.Variables) == 1 {
+		if isIgnore(request.Principal) {
+			request.Principal = unknownEntity()
+		}
+		if isIgnore(request.Action) {
+			request.Action = unknownEntity()
+		}
+		if isIgnore(request.Resource) {
+			request.Resource = unknownEntity()
+		}
+		if isIgnore(request.Context) {
+			request.Context = types.Record{}
+		}
 	}
 
 	// then loop the current unknowns
