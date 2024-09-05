@@ -97,10 +97,17 @@ func (p *Policy) Effect() Effect {
 
 // A Position describes an arbitrary source position including the file, line, and column location.
 type Position struct {
-	Filename string // optional name of the source file for the enclosing policy, "" if the source is unknown or not a named file
-	Offset   int    // byte offset, starting at 0
-	Line     int    // line number, starting at 1
-	Column   int    // column number, starting at 1 (character count per line)
+	// Filename is the optional name of the source file for the enclosing policy, "" if the source is unknown or not a named file
+	Filename string `json:"filename"`
+
+	// Offset is the byte offset, starting at 0
+	Offset int `json:"offset"`
+
+	// Line is the line number, starting at 1
+	Line int `json:"line"`
+
+	// Column is the column number, starting at 1 (character count per line)
+	Column int `json:"column"`
 }
 
 // Position retrieves the position of this policy.

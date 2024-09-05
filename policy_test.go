@@ -108,3 +108,21 @@ func TestUnmarshalCedarPolicyErr(t *testing.T) {
 	err := p.UnmarshalCedar([]byte("!@#$"))
 	testutil.Error(t, err)
 }
+
+func TestPositionJSON(t *testing.T) {
+	t.Parallel()
+	p := cedar.Position{Filename: "foo.cedar", Offset: 1, Line: 2, Column: 3}
+
+	marshaled, err := json.MarshalIndent(p, "", "\t")
+	testutil.OK(t, err)
+
+	var want bytes.Buffer
+	_ = json.Indent(&want, []byte(`{ "filename": "foo.cedar", "offset": 1, "line": 2, "column": 3 }`), "", "\t")
+
+	testutil.Equals(t, string(marshaled), want.String())
+
+	var unmarshaled cedar.Position
+	testutil.OK(t, json.Unmarshal(want.Bytes(), &unmarshaled))
+
+	testutil.Equals(t, unmarshaled, p)
+}
