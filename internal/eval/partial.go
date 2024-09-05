@@ -363,7 +363,6 @@ func partialIfThenElse(ctx *Context, v ast.NodeTypeIfThenElse) (ast.IsNode, erro
 	if_, ifErr := partial(ctx, v.If)
 	switch {
 	case errors.Is(ifErr, errVariable):
-		break
 	case ifErr != nil:
 		return nil, ifErr
 	case isNonBoolValue(if_):
@@ -392,7 +391,6 @@ func partialAnd(ctx *Context, v ast.NodeTypeAnd) (ast.IsNode, error) {
 	left, leftErr := partial(ctx, v.Left)
 	switch {
 	case errors.Is(leftErr, errVariable):
-		break
 	case leftErr != nil:
 		return nil, leftErr
 	case isNonBoolValue(left):
@@ -419,7 +417,6 @@ func partialOr(ctx *Context, v ast.NodeTypeOr) (ast.IsNode, error) {
 	left, leftErr := partial(ctx, v.Left)
 	switch {
 	case errors.Is(leftErr, errVariable):
-		break
 	case leftErr != nil:
 		return nil, leftErr
 	case isNonBoolValue(left):
