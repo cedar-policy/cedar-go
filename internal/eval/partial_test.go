@@ -93,6 +93,16 @@ func TestPartial(t *testing.T) {
 			nil,
 			false,
 		},
+		{"contextVariableAccess",
+			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
+			&Context{
+				Context: types.Record{
+					"key": Variable("var"),
+				},
+			},
+			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
+			true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

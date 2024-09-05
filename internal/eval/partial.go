@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
@@ -82,6 +83,9 @@ func partialScopeEval(ctx *Context, ent types.Value, in ast.IsScopeNode) (evaled
 	if !ok {
 		return false, false
 	}
+	if e.Type == variableEntityType {
+		return false, false
+	}
 	switch t := in.(type) {
 	case ast.ScopeTypeAll:
 		return true, true
@@ -104,6 +108,8 @@ func partialScopeEval(ctx *Context, ent types.Value, in ast.IsScopeNode) (evaled
 	}
 }
 
+var errVariable = fmt.Errorf("variable")
+
 // NOTE: nodes is modified in place, so be sure to send unique copy in
 func tryPartial(ctx *Context, nodes []ast.IsNode,
 	mkEval func(values []types.Value) Evaler,
@@ -113,6 +119,10 @@ func tryPartial(ctx *Context, nodes []ast.IsNode,
 	ok := true
 	for i, n := range nodes {
 		n, err := partial(ctx, n)
+		if errors.Is(err, errVariable) {
+			ok = false
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -132,8 +142,11 @@ func tryPartial(ctx *Context, nodes []ast.IsNode,
 		if err != nil {
 			return nil, err
 		}
-		if v == nil { // unknown
+		if v == nil { // unknown (old)
 			return mkNode(nodes), nil
+		}
+		if ent, ok := v.(types.EntityUID); ok && ent.Type == variableEntityType { // unknown (new)
+			return mkNode(nodes), errVariable
 		}
 		return ast.NodeValue{Value: v}, nil
 	}
