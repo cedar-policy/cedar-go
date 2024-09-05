@@ -4,6 +4,7 @@ import (
 	"context"
 	"maps"
 	"slices"
+	"strconv"
 
 	publicast "github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/ast"
@@ -50,22 +51,62 @@ type BatchResult struct {
 }
 type Values map[types.String]types.Value
 
-func PubBatch(ctx context.Context, policies []*publicast.Policy, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) error {
+type batchOptions struct {
+	authz func(be *batchEvaler, entityMap types.Entities, req batchRequestState) error
+}
+
+type BatchOption func(*batchOptions)
+
+func WithCallback(cb func(BatchResult)) BatchOption {
+	return func(bo *batchOptions) {
+		bo.authz = func(be *batchEvaler, entityMap types.Entities, req batchRequestState) error {
+			return basicAuthzWithCallback(be, entityMap, req, cb)
+		}
+	}
+}
+
+type BatchDiagnosticResult struct {
+	// TODO: reshape to use main package diagnostic info, use policyID, etc
+	// TODO: consider if errors are worth capturing
+	BatchResult
+	Diagnostic Diagnostic
+}
+
+type Diagnostic struct {
+	Reasons []string
+}
+
+func WithDiagnosticCallback(cb func(BatchDiagnosticResult)) BatchOption {
+	return func(bo *batchOptions) {
+		bo.authz = func(be *batchEvaler, entityMap types.Entities, req batchRequestState) error {
+			return diagnosticAuthzWithCallback(be, entityMap, req, cb)
+		}
+
+	}
+}
+
+func PubBatch(ctx context.Context, policies []*publicast.Policy, entityMap types.Entities, request BatchRequest, opts ...BatchOption) error {
 	pol2 := make([]*ast.Policy, len(policies))
 	for i, pub := range policies {
 		p := (*ast.Policy)(pub)
 		pol2[i] = p
 	}
-	return Batch(ctx, pol2, entityMap, request, cb)
+	return Batch(ctx, pol2, entityMap, request, opts...)
 }
 
 // Batch will run a batch of authorization evaluations.
 // It will error in case of early termination.
 // It will error in case any of PARC are an incorrect type at eval type.
 // The result passed to the callback must be used immediately and not modified.
-func Batch(ctx context.Context, policies []*ast.Policy, entityMap types.Entities, request BatchRequest, cb func(BatchResult)) error {
+func Batch(ctx context.Context, policies []*ast.Policy, entityMap types.Entities, request BatchRequest, opts ...BatchOption) error {
 	var be batchEvaler
-	be.policies = policies
+	for _, o := range opts {
+		o(&be.options)
+	}
+	be.policies = make([]idPolicy, len(policies))
+	for i, p := range policies {
+		be.policies[i] = idPolicy{PolicyID: strconv.Itoa(i), Policy: p}
+	}
 	be.evalCtx = PrepContext(&Context{})
 	state := batchRequestState{
 		Principal: request.Principal,
@@ -80,63 +121,39 @@ func Batch(ctx context.Context, policies []*ast.Policy, entityMap types.Entities
 	slices.SortFunc(state.Variables, func(a, b variableItem) int {
 		return len(a.Values) - len(b.Values)
 	})
-	return doBatch(ctx, &be, entityMap, state, cb)
+	return doBatch(ctx, &be, entityMap, state)
 }
 
-func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, request batchRequestState, cb func(BatchResult)) error {
+func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, request batchRequestState) error {
 	// check for context cancellation only if there is more work to be done
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 
 	if len(request.Variables) == 0 {
-		var res BatchResult
-		var err error
-		if res.Principal, err = ValueToEntity(request.Principal); err != nil {
-			return err
-		}
-		if res.Action, err = ValueToEntity(request.Action); err != nil {
-			return err
-		}
-		if res.Resource, err = ValueToEntity(request.Resource); err != nil {
-			return err
-		}
-		if res.Context, err = ValueToRecord(request.Context); err != nil {
-			return err
-		}
-		ctx := &Context{
-			Entities:  entityMap,
-			Principal: request.Principal,
-			Action:    request.Action,
-			Resource:  request.Resource,
-			Context:   request.Context,
-			inCache:   be.evalCtx.inCache,
-		}
-		res.Decision = batchAuthz(be, ctx)
-		res.Values = request.Values
-		cb(res)
-		return nil
+		return be.options.authz(be, entityMap, request)
 	}
 
 	// else, partial eval what we have so far
-	var np []*ast.Policy
+	var np []idPolicy
 	for _, p := range be.policies {
-		p, keep, _ := partialPolicy(&Context{
+		part, keep, _ := partialPolicy(&Context{
 			Entities:  entityMap,
 			inCache:   be.evalCtx.inCache,
 			Principal: request.Principal,
 			Action:    request.Action,
 			Resource:  request.Resource,
 			Context:   request.Context,
-		}, p)
+		}, p.Policy)
 		if !keep {
 			continue
 		}
-		np = append(np, p)
+		np = append(np, idPolicy{PolicyID: p.PolicyID, Policy: part})
 	}
 	be = &batchEvaler{
 		evalCtx:  be.evalCtx,
 		policies: np,
+		options:  be.options,
 	}
 
 	// then loop the current unknowns
@@ -168,7 +185,7 @@ func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, req
 		if chContext {
 			child.Context, _ = cloneSub(request.Context, u.Key, v)
 		}
-		if err := doBatch(ctx, be, entityMap, child, cb); err != nil {
+		if err := doBatch(ctx, be, entityMap, child); err != nil {
 			return err
 		}
 	}
@@ -176,12 +193,104 @@ func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, req
 	return nil
 }
 
+type idEvaler struct {
+	PolicyID string
+	Evaler   Evaler
+}
+
+type idPolicy struct {
+	PolicyID string
+	Policy   *ast.Policy
+}
+
 type batchEvaler struct {
-	policies []*ast.Policy
+	policies []idPolicy
 	compiled bool
-	forbids  []Evaler
-	permits  []Evaler
+	forbids  []idEvaler
+	permits  []idEvaler
 	evalCtx  *Context
+	options  batchOptions
+}
+
+func buildResultContext(be *batchEvaler, entityMap types.Entities, request batchRequestState) (BatchResult, *Context, error) {
+	var res BatchResult
+	var err error
+	if res.Principal, err = ValueToEntity(request.Principal); err != nil {
+		return BatchResult{}, nil, err
+	}
+	if res.Action, err = ValueToEntity(request.Action); err != nil {
+		return BatchResult{}, nil, err
+	}
+	if res.Resource, err = ValueToEntity(request.Resource); err != nil {
+		return BatchResult{}, nil, err
+	}
+	if res.Context, err = ValueToRecord(request.Context); err != nil {
+		return BatchResult{}, nil, err
+	}
+	res.Values = request.Values
+	ctx := &Context{
+		Entities:  entityMap,
+		Principal: request.Principal,
+		Action:    request.Action,
+		Resource:  request.Resource,
+		Context:   request.Context,
+		inCache:   be.evalCtx.inCache,
+	}
+	return res, ctx, nil
+}
+
+func basicAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request batchRequestState, cb func(BatchResult)) error {
+	res, ctx, err := buildResultContext(be, entityMap, request)
+	if err != nil {
+		return err
+	}
+	res.Decision = batchAuthz(be, ctx)
+	cb(res)
+	return nil
+}
+
+func diagnosticAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request batchRequestState, cb func(BatchDiagnosticResult)) error {
+	res, ctx, err := buildResultContext(be, entityMap, request)
+	if err != nil {
+		return err
+	}
+	diagRes := BatchDiagnosticResult{
+		BatchResult: res,
+	}
+	diagRes.Decision, diagRes.Diagnostic = diagnosticAuthz(be, ctx)
+	cb(diagRes)
+	return nil
+}
+
+func diagnosticAuthz(b *batchEvaler, evalCtx *Context) (bool, Diagnostic) {
+	batchCompile(b)
+	var d Diagnostic
+
+	for _, p := range b.forbids {
+		v, err := p.Evaler.Eval(evalCtx)
+		if err != nil {
+			continue
+		}
+		if v, ok := v.(types.Boolean); ok && bool(v) {
+			d.Reasons = append(d.Reasons, p.PolicyID)
+		}
+	}
+	if len(d.Reasons) > 0 {
+		return false, d
+	}
+	for _, p := range b.permits {
+		v, err := p.Evaler.Eval(evalCtx)
+		if err != nil {
+			continue
+		}
+		if v, ok := v.(types.Boolean); ok && bool(v) {
+			d.Reasons = append(d.Reasons, p.PolicyID)
+		}
+	}
+	if len(d.Reasons) > 0 {
+		return true, d
+	}
+	return false, d
 }
 
 // func testPrintPolicy(p *ast.Policy) {
@@ -195,7 +304,7 @@ func batchAuthz(b *batchEvaler, evalCtx *Context) bool {
 	batchCompile(b)
 
 	for _, p := range b.forbids {
-		v, err := p.Eval(evalCtx)
+		v, err := p.Evaler.Eval(evalCtx)
 		if err != nil {
 			continue
 		}
@@ -204,7 +313,7 @@ func batchAuthz(b *batchEvaler, evalCtx *Context) bool {
 		}
 	}
 	for _, p := range b.permits {
-		v, err := p.Eval(evalCtx)
+		v, err := p.Evaler.Eval(evalCtx)
 		if err != nil {
 			continue
 		}
@@ -220,10 +329,11 @@ func batchCompile(b *batchEvaler) {
 		return
 	}
 	for _, p := range b.policies {
-		if p.Effect == ast.EffectPermit {
-			b.permits = append(b.permits, Compile(p))
+		idEval := idEvaler{PolicyID: p.PolicyID, Evaler: Compile(p.Policy)}
+		if p.Policy.Effect == ast.EffectPermit {
+			b.permits = append(b.permits, idEval)
 		} else {
-			b.forbids = append(b.forbids, Compile(p))
+			b.forbids = append(b.forbids, idEval)
 		}
 	}
 	b.compiled = true
