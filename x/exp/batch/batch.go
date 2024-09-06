@@ -13,7 +13,7 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-type BatchRequest struct {
+type Request struct {
 	Principal types.Value
 	Action    types.Value
 	Resource  types.Value
@@ -43,7 +43,7 @@ func unknownEntity() types.EntityUID {
 	return types.NewEntityUID(unknownEntityType, "")
 }
 
-type BatchResult struct {
+type Result struct {
 	Principal types.EntityUID
 	Action    types.EntityUID
 	Resource  types.EntityUID
@@ -57,9 +57,9 @@ type batchOptions struct {
 	authz func(be *batchEvaler, entityMap types.Entities, req batchRequestState) error
 }
 
-type BatchOption func(*batchOptions)
+type Option func(*batchOptions)
 
-func WithCallback(cb func(BatchResult)) BatchOption {
+func WithCallback(cb func(Result)) Option {
 	return func(bo *batchOptions) {
 		bo.authz = func(be *batchEvaler, entityMap types.Entities, req batchRequestState) error {
 			return basicAuthzWithCallback(be, entityMap, req, cb)
@@ -67,10 +67,10 @@ func WithCallback(cb func(BatchResult)) BatchOption {
 	}
 }
 
-type BatchDiagnosticResult struct {
+type DiagnosticResult struct {
 	// TODO: reshape to use main package diagnostic info, use policyID, etc
 	// TODO: consider if errors are worth capturing
-	BatchResult
+	Result
 	Diagnostic Diagnostic
 }
 
@@ -78,7 +78,7 @@ type Diagnostic struct {
 	Reasons []string
 }
 
-func WithDiagnosticCallback(cb func(BatchDiagnosticResult)) BatchOption {
+func WithDiagnosticCallback(cb func(DiagnosticResult)) Option {
 	return func(bo *batchOptions) {
 		bo.authz = func(be *batchEvaler, entityMap types.Entities, req batchRequestState) error {
 			return diagnosticAuthzWithCallback(be, entityMap, req, cb)
@@ -87,20 +87,20 @@ func WithDiagnosticCallback(cb func(BatchDiagnosticResult)) BatchOption {
 	}
 }
 
-func PubBatch(ctx context.Context, policies []*publicast.Policy, entityMap types.Entities, request BatchRequest, opts ...BatchOption) error {
+func PubAuthorize(ctx context.Context, policies []*publicast.Policy, entityMap types.Entities, request Request, opts ...Option) error {
 	pol2 := make([]*ast.Policy, len(policies))
 	for i, pub := range policies {
 		p := (*ast.Policy)(pub)
 		pol2[i] = p
 	}
-	return Batch(ctx, pol2, entityMap, request, opts...)
+	return Authorize(ctx, pol2, entityMap, request, opts...)
 }
 
-// Batch will run a batch of authorization evaluations.
+// Authorize will run a batch of authorization evaluations.
 // It will error in case of early termination.
 // It will error in case any of PARC are an incorrect type at eval type.
 // The result passed to the callback must be used immediately and not modified.
-func Batch(ctx context.Context, policies []*ast.Policy, entityMap types.Entities, request BatchRequest, opts ...BatchOption) error {
+func Authorize(ctx context.Context, policies []*ast.Policy, entityMap types.Entities, request Request, opts ...Option) error {
 	var be batchEvaler
 	for _, o := range opts {
 		o(&be.options)
@@ -239,20 +239,20 @@ type batchEvaler struct {
 	options  batchOptions
 }
 
-func buildResultEnv(be *batchEvaler, entityMap types.Entities, request batchRequestState) (BatchResult, *eval.Env, error) {
-	var res BatchResult
+func buildResultEnv(be *batchEvaler, entityMap types.Entities, request batchRequestState) (Result, *eval.Env, error) {
+	var res Result
 	var err error
 	if res.Principal, err = eval.ValueToEntity(request.Principal); err != nil {
-		return BatchResult{}, nil, err
+		return Result{}, nil, err
 	}
 	if res.Action, err = eval.ValueToEntity(request.Action); err != nil {
-		return BatchResult{}, nil, err
+		return Result{}, nil, err
 	}
 	if res.Resource, err = eval.ValueToEntity(request.Resource); err != nil {
-		return BatchResult{}, nil, err
+		return Result{}, nil, err
 	}
 	if res.Context, err = eval.ValueToRecord(request.Context); err != nil {
-		return BatchResult{}, nil, err
+		return Result{}, nil, err
 	}
 	res.Values = request.Values
 	env := eval.InitEnvWithCacheFrom(&eval.Env{
@@ -265,7 +265,7 @@ func buildResultEnv(be *batchEvaler, entityMap types.Entities, request batchRequ
 	return res, env, nil
 }
 
-func basicAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request batchRequestState, cb func(BatchResult)) error {
+func basicAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request batchRequestState, cb func(Result)) error {
 	res, env, err := buildResultEnv(be, entityMap, request)
 	if err != nil {
 		return err
@@ -275,13 +275,13 @@ func basicAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request b
 	return nil
 }
 
-func diagnosticAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request batchRequestState, cb func(BatchDiagnosticResult)) error {
+func diagnosticAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request batchRequestState, cb func(DiagnosticResult)) error {
 	res, env, err := buildResultEnv(be, entityMap, request)
 	if err != nil {
 		return err
 	}
-	diagRes := BatchDiagnosticResult{
-		BatchResult: res,
+	diagRes := DiagnosticResult{
+		Result: res,
 	}
 	diagRes.Decision, diagRes.Diagnostic = diagnosticAuthz(be, env)
 	cb(diagRes)
