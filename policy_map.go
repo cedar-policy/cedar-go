@@ -10,10 +10,10 @@ import (
 
 	internalast "github.com/cedar-policy/cedar-go/internal/ast"
 	internaljson "github.com/cedar-policy/cedar-go/internal/json"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
-// PolicyID is a string identifier for the policy within the PolicySet
-type PolicyID string
+type PolicyID = types.PolicyID
 
 // PolicyMap is a map of policy IDs to policy
 type PolicyMap map[PolicyID]*Policy
