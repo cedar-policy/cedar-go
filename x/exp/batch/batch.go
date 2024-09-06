@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"strconv"
 
-	publicast "github.com/cedar-policy/cedar-go/ast"
+	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/types"
@@ -54,26 +53,20 @@ type Result struct {
 
 type Callback func(Result)
 
-func PubAuthorize(ctx context.Context, policies []*publicast.Policy, entityMap types.Entities, request Request, cb Callback) error {
-	pol2 := make([]*ast.Policy, len(policies))
-	for i, pub := range policies {
-		p := (*ast.Policy)(pub)
-		pol2[i] = p
-	}
-	return Authorize(ctx, pol2, entityMap, request, cb)
-}
-
 // Authorize will run a batch of authorization evaluations.
 // It will error in case of early termination.
 // It will error in case any of PARC are an incorrect type at eval type.
 // The result passed to the callback must be used / cloned immediately and not modified.
-func Authorize(ctx context.Context, policies []*ast.Policy, entityMap types.Entities, request Request, cb Callback) error {
+func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback) error {
 	var be batchEvaler
-	be.policies = make([]idPolicy, len(policies))
-	be.callback = cb
-	for i, p := range policies {
-		be.policies[i] = idPolicy{PolicyID: types.PolicyID(strconv.Itoa(i)), Policy: p}
+	pm := ps.Map()
+	be.policies = make([]idPolicy, len(pm))
+	i := 0
+	for k, p := range pm {
+		be.policies[i] = idPolicy{PolicyID: k, Policy: (*ast.Policy)(p.AST())}
+		i++
 	}
+	be.callback = cb
 	switch {
 	case request.Principal == nil:
 		return fmt.Errorf("batch missing principal")
@@ -188,6 +181,8 @@ func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, req
 type idEvaler struct {
 	PolicyID types.PolicyID
 	Evaler   eval.BoolEvaler
+	Effect   types.Effect
+	Position types.Position
 }
 
 type idPolicy struct {
@@ -198,80 +193,76 @@ type idPolicy struct {
 type batchEvaler struct {
 	policies []idPolicy
 	compiled bool
-	forbids  []idEvaler
-	permits  []idEvaler
+	// policySet *cedar.PolicySet
+	evalers  []*idEvaler
 	env      *eval.Env
 	callback Callback
 }
 
-func buildResultEnv(be *batchEvaler, entityMap types.Entities, request batchRequestState) (Result, *eval.Env, error) {
+func diagnosticAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request batchRequestState) error {
 	var res Result
 	var err error
 	if res.Request.Principal, err = eval.ValueToEntity(request.Principal); err != nil {
-		return Result{}, nil, err
+		return err
 	}
 	if res.Request.Action, err = eval.ValueToEntity(request.Action); err != nil {
-		return Result{}, nil, err
+		return err
 	}
 	if res.Request.Resource, err = eval.ValueToEntity(request.Resource); err != nil {
-		return Result{}, nil, err
+		return err
 	}
 	if res.Request.Context, err = eval.ValueToRecord(request.Context); err != nil {
-		return Result{}, nil, err
+		return err
 	}
 	res.Values = request.Values
-	env := eval.InitEnvWithCacheFrom(&eval.Env{
+	batchCompile(be)
+	// TODO: is there a way to share a cache across requests when using cedar.PolicySet?
+	// res.Decision, res.Diagnostic = be.policySet.IsAuthorized(entityMap, res.Request)
+	res.Decision, res.Diagnostic = isAuthorized(be.env, be.evalers, entityMap, request)
+	be.callback(res)
+	return nil
+}
+
+func isAuthorized(parent *eval.Env, ps []*idEvaler, entityMap types.Entities, request batchRequestState) (types.Decision, types.Diagnostic) {
+	c := eval.InitEnvWithCacheFrom(&eval.Env{
 		Entities:  entityMap,
 		Principal: request.Principal,
 		Action:    request.Action,
 		Resource:  request.Resource,
 		Context:   request.Context,
-	}, be.env)
-	return res, env, nil
-}
-
-func diagnosticAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request batchRequestState) error {
-	res, env, err := buildResultEnv(be, entityMap, request)
-	if err != nil {
-		return err
-	}
-	res.Decision, res.Diagnostic = diagnosticAuthz(be, env)
-	be.callback(res)
-	return nil
-}
-
-func diagnosticAuthz(b *batchEvaler, env *eval.Env) (types.Decision, types.Diagnostic) {
-	batchCompile(b)
-	var d types.Diagnostic
-
-	for _, p := range b.forbids {
-		v, err := p.Evaler.Eval(env)
+	}, parent)
+	var diag types.Diagnostic
+	var forbids []types.DiagnosticReason
+	var permits []types.DiagnosticReason
+	// Don't try to short circuit this.
+	// - Even though single forbid means forbid
+	// - All policy should be run to collect errors
+	// - For permit, all permits must be run to collect annotations
+	// - For forbid, forbids must be run to collect annotations
+	for _, po := range ps {
+		result, err := po.Evaler.Eval(c)
 		if err != nil {
-			// TODO: errors
+			diag.Errors = append(diag.Errors, types.DiagnosticError{PolicyID: po.PolicyID, Position: po.Position, Message: err.Error()})
 			continue
 		}
-		if v {
-			d.Reasons = append(d.Reasons, types.DiagnosticReason{PolicyID: p.PolicyID}) // TODO: position
-		}
-	}
-	if len(d.Reasons) > 0 {
-		return false, d
-	}
-	for _, p := range b.permits {
-		v, err := p.Evaler.Eval(env)
-		if err != nil {
-			// TODO: errors
+		if !result {
 			continue
 		}
-		if v {
-			d.Reasons = append(d.Reasons, types.DiagnosticReason{PolicyID: p.PolicyID}) // TODO: position
+		if po.Effect == types.Forbid {
+			forbids = append(forbids, types.DiagnosticReason{PolicyID: po.PolicyID, Position: po.Position})
+		} else {
+			permits = append(permits, types.DiagnosticReason{PolicyID: po.PolicyID, Position: po.Position})
 		}
 	}
-	// TODO: errors from policies that were partial'ed out
-	if len(d.Reasons) > 0 {
-		return true, d
+	if len(forbids) > 0 {
+		diag.Reasons = forbids
+		return types.Deny, diag
 	}
-	return false, d
+	if len(permits) > 0 {
+		diag.Reasons = permits
+		return types.Allow, diag
+	}
+	return types.Deny, diag
 }
 
 // func testPrintPolicy(p *ast.Policy) {
@@ -285,13 +276,13 @@ func batchCompile(b *batchEvaler) {
 	if b.compiled {
 		return
 	}
-	for _, p := range b.policies {
-		idEval := idEvaler{PolicyID: p.PolicyID, Evaler: eval.Compile(p.Policy)}
-		if p.Policy.Effect == ast.EffectPermit {
-			b.permits = append(b.permits, idEval)
-		} else {
-			b.forbids = append(b.forbids, idEval)
-		}
+	// b.policySet = cedar.NewPolicySet() // TODO: pre-set size?
+	// for _, p := range b.policies {
+	// 	b.policySet.Store(p.PolicyID, cedar.NewPolicyFromAST((*publicast.Policy)(p.Policy)))
+	// }
+	b.evalers = make([]*idEvaler, len(b.policies))
+	for i, p := range b.policies {
+		b.evalers[i] = &idEvaler{PolicyID: p.PolicyID, Evaler: eval.Compile(p.Policy), Effect: types.Effect(p.Policy.Effect), Position: types.Position(p.Policy.Position)}
 	}
 	b.compiled = true
 }

@@ -101,3 +101,9 @@ func (p *Policy) Position() Position {
 func (p *Policy) SetFilename(fileName string) {
 	p.ast.Position.Filename = fileName
 }
+
+// AST retrieves the AST of this policy.  Do not modify the AST, as the
+// compiled policy will no longer be in sync with the AST.
+func (p *Policy) AST() *ast.Policy {
+	return (*ast.Policy)(p.ast)
+}

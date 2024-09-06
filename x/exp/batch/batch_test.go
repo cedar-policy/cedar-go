@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go"
+	publicast "github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -203,7 +205,10 @@ func TestBatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			var res []Result
-			err := Authorize(context.Background(), []*ast.Policy{tt.policy}, tt.entities, tt.request, func(br Result) {
+			ps := cedar.NewPolicySet()
+			ps.Store("0", cedar.NewPolicyFromAST((*publicast.Policy)(tt.policy)))
+
+			err := Authorize(context.Background(), ps, tt.entities, tt.request, func(br Result) {
 				br.Request.Context = maps.Clone(br.Request.Context)
 				br.Values = maps.Clone(br.Values)
 				res = append(res, br)
