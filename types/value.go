@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+var ErrDatetime = fmt.Errorf("error parsing datetime value")
 var ErrDecimal = fmt.Errorf("error parsing decimal value")
 var ErrIP = fmt.Errorf("error parsing ip value")
 

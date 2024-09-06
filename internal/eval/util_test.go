@@ -119,6 +119,26 @@ func TestUtil(t *testing.T) {
 
 	})
 
+	t.Run("Datetime", func(t *testing.T) {
+		t.Parallel()
+		t.Run("roundTrip", func(t *testing.T) {
+			t.Parallel()
+			dv, err := types.ParseDatetime("2024-07-15T09:00:00Z")
+			testutil.OK(t, err)
+			v, err := ValueToDatetime(dv)
+			testutil.OK(t, err)
+			testutil.FatalIf(t, !v.Equal(dv), "got %v want %v", v, dv)
+		})
+
+		t.Run("toDatetimeOnNonDatetime", func(t *testing.T) {
+			t.Parallel()
+			v, err := ValueToDatetime(types.Boolean(true))
+			testutil.ErrorIs(t, err, ErrType)
+			testutil.Equals(t, v, types.Datetime{})
+		})
+
+	})
+
 	t.Run("Decimal", func(t *testing.T) {
 		t.Parallel()
 		t.Run("roundTrip", func(t *testing.T) {
@@ -161,6 +181,7 @@ func TestTypeName(t *testing.T) {
 	}{
 
 		{"boolean", types.Boolean(true), "bool"},
+		{"datetime", types.UnsafeDatetime(42), "datetime"},
 		{"decimal", types.UnsafeDecimal(42), "decimal"},
 		{"entityUID", types.NewEntityUID("T", "42"), "(entity of type `T`)"},
 		{"ip", types.IPAddr{}, "IP"},

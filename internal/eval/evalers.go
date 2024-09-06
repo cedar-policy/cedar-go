@@ -22,7 +22,7 @@ func zeroValue() types.Value {
 type Env struct {
 	Entities                    types.Entities
 	Principal, Action, Resource types.Value
-	Context                     types.Value
+	Env                         types.Value
 
 	inCache map[inKey]bool
 }
@@ -74,6 +74,18 @@ func evalLong(n Evaler, env *Env) (types.Long, error) {
 	return l, nil
 }
 
+func evalLesser(n Evaler, env *Env) (types.Lesser, error) {
+	v, err := n.Eval(env)
+	if err != nil {
+		return nil, err
+	}
+	l, ok := v.(types.Lesser)
+	if !ok {
+		return nil, fmt.Errorf("%w: expected comparable value, got %v", ErrType, TypeName(v))
+	}
+	return l, nil
+}
+
 func evalString(n Evaler, env *Env) (types.String, error) {
 	v, err := n.Eval(env)
 	if err != nil {
@@ -108,6 +120,18 @@ func evalEntity(n Evaler, env *Env) (types.EntityUID, error) {
 		return types.EntityUID{}, err
 	}
 	return e, nil
+}
+
+func evalDatetime(n Evaler, env *Env) (types.Datetime, error) {
+	v, err := n.Eval(env)
+	if err != nil {
+		return types.Datetime{}, err
+	}
+	d, err := ValueToDatetime(v)
+	if err != nil {
+		return types.Datetime{}, err
+	}
+	return d, nil
 }
 
 func evalDecimal(n Evaler, env *Env) (types.Decimal, error) {
@@ -920,7 +944,7 @@ func (n *variableEval) Eval(env *Env) (types.Value, error) {
 	case consts.Resource:
 		return env.Resource, nil
 	default: // context
-		return env.Context, nil
+		return env.Env, nil
 	}
 }
 
@@ -1112,6 +1136,29 @@ func (n *decimalLiteralEval) Eval(env *Env) (types.Value, error) {
 	return d, nil
 }
 
+// datetimeLiteralEval
+type datetimeLiteralEval struct {
+	literal Evaler
+}
+
+func newDatetimeLiteralEval(literal Evaler) *datetimeLiteralEval {
+	return &datetimeLiteralEval{literal: literal}
+}
+
+func (n *datetimeLiteralEval) Eval(env *Env) (types.Value, error) {
+	literal, err := evalString(n.literal, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	d, err := types.ParseDatetime(string(literal))
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	return d, nil
+}
+
 type ipLiteralEval struct {
 	literal Evaler
 }
@@ -1218,7 +1265,130 @@ func newExtensionEval(name types.Path, args []Evaler) Evaler {
 			return newIPTestEval(args[0], ipTestMulticast)
 		case name == "isInRange":
 			return newIPIsInRangeEval(args[0], args[1])
+
+		case name == "toDate":
+			return newToDateEval(args[0])
 		}
 	}
 	return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, name))
+}
+
+// virtualLessThanEval struct
+type virtualLessThanEval struct {
+	lhs Evaler
+	rhs Evaler
+}
+
+func newVirtualLessThanEval(lhs Evaler, rhs Evaler) *virtualLessThanEval {
+	return &virtualLessThanEval{
+		lhs: lhs,
+		rhs: rhs,
+	}
+}
+
+func (n *virtualLessThanEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLesser(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	rhs, err := evalLesser(n.rhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Boolean(lhs.Less(rhs)), nil
+}
+
+var _ Evaler = &virtualLessThanEval{}
+
+// virtualGreaterThanEval struct
+type virtualGreaterThanEval struct {
+	lhs Evaler
+	rhs Evaler
+}
+
+func newVirtualGreaterThanEval(lhs Evaler, rhs Evaler) *virtualGreaterThanEval {
+	return &virtualGreaterThanEval{
+		lhs: lhs,
+		rhs: rhs,
+	}
+}
+
+func (n *virtualGreaterThanEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLesser(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	rhs, err := evalLesser(n.rhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Boolean(!lhs.LessEqual(rhs)), nil
+}
+
+// virtualLessEqualThanEval struct
+type virtualLessThanOrEqualEval struct {
+	lhs Evaler
+	rhs Evaler
+}
+
+func newVirtualLessThanOrEqualEval(lhs Evaler, rhs Evaler) *virtualLessThanOrEqualEval {
+	return &virtualLessThanOrEqualEval{
+		lhs: lhs,
+		rhs: rhs,
+	}
+}
+
+func (n *virtualLessThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLesser(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	rhs, err := evalLesser(n.rhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Boolean(lhs.LessEqual(rhs)), nil
+}
+
+// virtualGreaterEqualThanEval struct
+type virtualGreaterThanOrEqualEval struct {
+	lhs Evaler
+	rhs Evaler
+}
+
+func newVirtualGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *virtualGreaterThanOrEqualEval {
+	return &virtualGreaterThanOrEqualEval{
+		lhs: lhs,
+		rhs: rhs,
+	}
+}
+
+func (n *virtualGreaterThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLesser(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	rhs, err := evalLesser(n.rhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Boolean(!lhs.Less(rhs)), nil
+}
+
+const millisPerDay = int64(1000 * 60 * 60 * 24)
+
+type toDateEval struct {
+	lhs Evaler
+}
+
+func newToDateEval(lhs Evaler) *toDateEval {
+	return &toDateEval{lhs: lhs}
+}
+
+func (n *toDateEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDatetime(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Datetime{Value: lhs.Value - (lhs.Value % millisPerDay)}, nil
 }

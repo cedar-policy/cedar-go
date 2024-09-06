@@ -17,6 +17,11 @@ func mustDecimalValue(v string) Decimal {
 	return r
 }
 
+func mustDatetimeValue(v string) Datetime {
+	r, _ := ParseDatetime(v)
+	return r
+}
+
 func mustIPValue(v string) IPAddr {
 	r, _ := ParseIPAddr(v)
 	return r
@@ -49,6 +54,7 @@ func TestJSON_Value(t *testing.T) {
 		{"explicitIP", `{ "__extn": { "fn": "ip", "arg": "222.222.222.7" } }`, mustIPValue("222.222.222.7"), nil},
 		{"explicitSubnet", `{ "__extn": { "fn": "ip", "arg": "192.168.0.0/16" } }`, mustIPValue("192.168.0.0/16"), nil},
 		{"explicitDecimal", `{ "__extn": { "fn": "decimal", "arg": "33.57" } }`, mustDecimalValue("33.57"), nil},
+		{"explicitDatetime", `{ "__extn": { "fn": "datetime", "arg": "1970-01-01T00:00:01Z" } }`, mustDatetimeValue("1970-01-01T00:00:01Z"), nil},
 		{"invalidExtension", `{ "__extn": { "fn": "asdf", "arg": "blah" } }`, zeroValue(), errJSONInvalidExtn},
 		{"badIP", `{ "__extn": { "fn": "ip", "arg": "bad" } }`, zeroValue(), ErrIP},
 		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), ErrDecimal},
@@ -255,6 +261,84 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			},
 			in:        `{ }`,
 			wantValue: Decimal{},
+			wantErr:   errJSONExtNotFound,
+		},
+
+		{
+			name: "datetime",
+			f: func(b []byte) (Value, error) {
+				var res Datetime
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `{ "__extn": { "fn": "datetime", "arg": "1970-01-01T00:00:01Z" } }`,
+			wantValue: mustDatetimeValue("1970-01-01T00:00:01Z"),
+			wantErr:   nil,
+		},
+		{
+			name: "datetime/implicit",
+			f: func(b []byte) (Value, error) {
+				var res Datetime
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `"1970-01-01T00:00:01Z"`,
+			wantValue: mustDatetimeValue("1970-01-01T00:00:01Z"),
+			wantErr:   nil,
+		},
+		{
+			name: "datetime/implicit/badJSON",
+			f: func(b []byte) (Value, error) {
+				var res Datetime
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `"bad`,
+			wantValue: Datetime{},
+			wantErr:   errJSONDecode,
+		},
+		{
+			name: "datetime/badArg",
+			f: func(b []byte) (Value, error) {
+				var res Datetime
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `{ "__extn": { "fn": "datetime", "arg": "bad" } }`,
+			wantValue: Datetime{},
+			wantErr:   ErrDatetime,
+		},
+		{
+			name: "datetime/badJSON",
+			f: func(b []byte) (Value, error) {
+				var res Datetime
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `bad`,
+			wantValue: Datetime{},
+			wantErr:   errJSONDecode,
+		},
+		{
+			name: "datetime/badFn",
+			f: func(b []byte) (Value, error) {
+				var res Datetime
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `{ "__extn": { "fn": "bad", "arg": "1970-01-01T00:00:01Z" } }`,
+			wantValue: Datetime{},
+			wantErr:   errJSONExtFnMatch,
+		},
+		{
+			name: "datetime/ExtNotFound",
+			f: func(b []byte) (Value, error) {
+				var res Datetime
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `{ }`,
+			wantValue: Datetime{},
 			wantErr:   errJSONExtNotFound,
 		},
 	}
