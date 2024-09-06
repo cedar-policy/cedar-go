@@ -39,12 +39,12 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			[]Result{
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}, Decision: true, Values: Values{"action": a1, "resource": r1}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}, Decision: true, Values: Values{"action": a1, "resource": r2}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a1, Resource: r3, Context: types.Record{}, Decision: true, Values: Values{"action": a1, "resource": r3}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a2, Resource: r1, Context: types.Record{}, Decision: true, Values: Values{"action": a2, "resource": r1}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a2, Resource: r2, Context: types.Record{}, Decision: true, Values: Values{"action": a2, "resource": r2}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a2, Resource: r3, Context: types.Record{}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: true, Values: Values{"action": a1, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"action": a1, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r3, Context: types.Record{}}, Decision: true, Values: Values{"action": a1, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r1, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r3, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
 
@@ -62,12 +62,12 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			[]Result{
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}, Decision: false, Values: Values{"action": a1, "resource": r1}},
-				{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}, Decision: false, Values: Values{"action": a1, "resource": r2}},
-				{Principal: p1, Action: a1, Resource: r3, Context: types.Record{}, Decision: false, Values: Values{"action": a1, "resource": r3}},
-				{Principal: p1, Action: a2, Resource: r1, Context: types.Record{}, Decision: false, Values: Values{"action": a2, "resource": r1}},
-				{Principal: p1, Action: a2, Resource: r2, Context: types.Record{}, Decision: false, Values: Values{"action": a2, "resource": r2}},
-				{Principal: p1, Action: a2, Resource: r3, Context: types.Record{}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"action": a1, "resource": r1}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: false, Values: Values{"action": a1, "resource": r2}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r3, Context: types.Record{}}, Decision: false, Values: Values{"action": a1, "resource": r3}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"action": a2, "resource": r1}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r2, Context: types.Record{}}, Decision: false, Values: Values{"action": a2, "resource": r2}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r3, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
 
@@ -98,10 +98,10 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			[]Result{
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}, Decision: true, Values: Values{"principal": p1, "resource": r1}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}, Decision: true, Values: Values{"principal": p1, "resource": r2}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p2, Action: a1, Resource: r1, Context: types.Record{}, Decision: false, Values: Values{"principal": p2, "resource": r1}},
-				{Principal: p2, Action: a1, Resource: r2, Context: types.Record{}, Decision: false, Values: Values{"principal": p2, "resource": r2}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: true, Values: Values{"principal": p1, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"principal": p1, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p2, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"principal": p2, "resource": r1}},
+				{Request: types.Request{Principal: p2, Action: a1, Resource: r2, Context: types.Record{}}, Decision: false, Values: Values{"principal": p2, "resource": r2}},
 			},
 		},
 
@@ -121,12 +121,12 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			[]Result{
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(42)}, Decision: true, Values: Values{"action": a1, "resource": r1}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a1, Resource: r2, Context: types.Record{"key": types.Long(42)}, Decision: true, Values: Values{"action": a1, "resource": r2}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a1, Resource: r3, Context: types.Record{"key": types.Long(42)}, Decision: true, Values: Values{"action": a1, "resource": r3}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a2, Resource: r1, Context: types.Record{"key": types.Long(42)}, Decision: true, Values: Values{"action": a2, "resource": r1}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a2, Resource: r2, Context: types.Record{"key": types.Long(42)}, Decision: true, Values: Values{"action": a2, "resource": r2}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a2, Resource: r3, Context: types.Record{"key": types.Long(42)}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a1, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a1, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r3, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a1, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r1, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a2, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r2, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a2, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r3, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
 
@@ -143,9 +143,9 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			[]Result{
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(41)}, Decision: false, Values: Values{"context": types.Record{"key": types.Long(41)}}},
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(42)}, Decision: true, Values: Values{"context": types.Record{"key": types.Long(42)}}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(43)}, Decision: false, Values: Values{"context": types.Record{"key": types.Long(43)}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(41)}}, Decision: false, Values: Values{"context": types.Record{"key": types.Long(41)}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"context": types.Record{"key": types.Long(42)}}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(43)}}, Decision: false, Values: Values{"context": types.Record{"key": types.Long(43)}}},
 			},
 		},
 
@@ -164,9 +164,9 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			[]Result{
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(41)}, Decision: false, Values: Values{"key": types.Long(41)}},
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(42)}, Decision: true, Values: Values{"key": types.Long(42)}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(43)}, Decision: false, Values: Values{"key": types.Long(43)}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(41)}}, Decision: false, Values: Values{"key": types.Long(41)}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"key": types.Long(42)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(43)}}, Decision: false, Values: Values{"key": types.Long(43)}},
 			},
 		},
 
@@ -189,12 +189,12 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			[]Result{
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}, Decision: false, Values: Values{"resource": r1, "key": types.Long(41)}},
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}, Decision: false, Values: Values{"resource": r1, "key": types.Long(42)}},
-				{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}, Decision: false, Values: Values{"resource": r1, "key": types.Long(43)}},
-				{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}, Decision: true, Values: Values{"resource": r2, "key": types.Long(41)}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}, Decision: true, Values: Values{"resource": r2, "key": types.Long(42)}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
-				{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}, Decision: true, Values: Values{"resource": r2, "key": types.Long(43)}, Diagnostic: Diagnostic{Reasons: []string{"0"}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"resource": r1, "key": types.Long(41)}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"resource": r1, "key": types.Long(42)}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"resource": r1, "key": types.Long(43)}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"resource": r2, "key": types.Long(41)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"resource": r2, "key": types.Long(42)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"resource": r2, "key": types.Long(43)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
 	}
@@ -204,7 +204,7 @@ func TestBatch(t *testing.T) {
 
 			var res []Result
 			err := Authorize(context.Background(), []*ast.Policy{tt.policy}, tt.entities, tt.request, func(br Result) {
-				br.Context = maps.Clone(br.Context)
+				br.Request.Context = maps.Clone(br.Request.Context)
 				br.Values = maps.Clone(br.Values)
 				res = append(res, br)
 			})

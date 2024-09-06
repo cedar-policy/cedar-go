@@ -46,19 +46,10 @@ func unknownEntity() types.EntityUID {
 type Values map[types.String]types.Value
 
 type Result struct {
-	// TODO: reshape to use main package diagnostic info, use policyID, etc
-	// TODO: consider if errors are worth capturing
-	Principal  types.EntityUID
-	Action     types.EntityUID
-	Resource   types.EntityUID
-	Context    types.Record
-	Decision   bool
+	Request    types.Request
 	Values     Values
-	Diagnostic Diagnostic
-}
-
-type Diagnostic struct {
-	Reasons []string
+	Decision   types.Decision
+	Diagnostic types.Diagnostic
 }
 
 type Callback func(Result)
@@ -75,13 +66,13 @@ func PubAuthorize(ctx context.Context, policies []*publicast.Policy, entityMap t
 // Authorize will run a batch of authorization evaluations.
 // It will error in case of early termination.
 // It will error in case any of PARC are an incorrect type at eval type.
-// The result passed to the callback must be used immediately and not modified.
+// The result passed to the callback must be used / cloned immediately and not modified.
 func Authorize(ctx context.Context, policies []*ast.Policy, entityMap types.Entities, request Request, cb Callback) error {
 	var be batchEvaler
 	be.policies = make([]idPolicy, len(policies))
 	be.callback = cb
 	for i, p := range policies {
-		be.policies[i] = idPolicy{PolicyID: strconv.Itoa(i), Policy: p}
+		be.policies[i] = idPolicy{PolicyID: types.PolicyID(strconv.Itoa(i)), Policy: p}
 	}
 	switch {
 	case request.Principal == nil:
@@ -195,12 +186,12 @@ func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, req
 }
 
 type idEvaler struct {
-	PolicyID string
+	PolicyID types.PolicyID
 	Evaler   eval.BoolEvaler
 }
 
 type idPolicy struct {
-	PolicyID string
+	PolicyID types.PolicyID
 	Policy   *ast.Policy
 }
 
@@ -216,16 +207,16 @@ type batchEvaler struct {
 func buildResultEnv(be *batchEvaler, entityMap types.Entities, request batchRequestState) (Result, *eval.Env, error) {
 	var res Result
 	var err error
-	if res.Principal, err = eval.ValueToEntity(request.Principal); err != nil {
+	if res.Request.Principal, err = eval.ValueToEntity(request.Principal); err != nil {
 		return Result{}, nil, err
 	}
-	if res.Action, err = eval.ValueToEntity(request.Action); err != nil {
+	if res.Request.Action, err = eval.ValueToEntity(request.Action); err != nil {
 		return Result{}, nil, err
 	}
-	if res.Resource, err = eval.ValueToEntity(request.Resource); err != nil {
+	if res.Request.Resource, err = eval.ValueToEntity(request.Resource); err != nil {
 		return Result{}, nil, err
 	}
-	if res.Context, err = eval.ValueToRecord(request.Context); err != nil {
+	if res.Request.Context, err = eval.ValueToRecord(request.Context); err != nil {
 		return Result{}, nil, err
 	}
 	res.Values = request.Values
@@ -249,17 +240,18 @@ func diagnosticAuthzWithCallback(be *batchEvaler, entityMap types.Entities, requ
 	return nil
 }
 
-func diagnosticAuthz(b *batchEvaler, env *eval.Env) (bool, Diagnostic) {
+func diagnosticAuthz(b *batchEvaler, env *eval.Env) (types.Decision, types.Diagnostic) {
 	batchCompile(b)
-	var d Diagnostic
+	var d types.Diagnostic
 
 	for _, p := range b.forbids {
 		v, err := p.Evaler.Eval(env)
 		if err != nil {
+			// TODO: errors
 			continue
 		}
 		if v {
-			d.Reasons = append(d.Reasons, p.PolicyID)
+			d.Reasons = append(d.Reasons, types.DiagnosticReason{PolicyID: p.PolicyID}) // TODO: position
 		}
 	}
 	if len(d.Reasons) > 0 {
@@ -268,12 +260,14 @@ func diagnosticAuthz(b *batchEvaler, env *eval.Env) (bool, Diagnostic) {
 	for _, p := range b.permits {
 		v, err := p.Evaler.Eval(env)
 		if err != nil {
+			// TODO: errors
 			continue
 		}
 		if v {
-			d.Reasons = append(d.Reasons, p.PolicyID)
+			d.Reasons = append(d.Reasons, types.DiagnosticReason{PolicyID: p.PolicyID}) // TODO: position
 		}
 	}
+	// TODO: errors from policies that were partial'ed out
 	if len(d.Reasons) > 0 {
 		return true, d
 	}
