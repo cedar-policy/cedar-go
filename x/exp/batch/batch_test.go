@@ -9,7 +9,6 @@ import (
 	"github.com/cedar-policy/cedar-go"
 	publicast "github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/ast"
-	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -32,8 +31,8 @@ func TestBatch(t *testing.T) {
 			types.Entities{},
 			Request{
 				Principal: p1,
-				Action:    eval.Variable("action"),
-				Resource:  eval.Variable("resource"),
+				Action:    Variable("action"),
+				Resource:  Variable("resource"),
 				Context:   types.Record{},
 				Variables: Variables{
 					"action":   []types.Value{a1, a2},
@@ -55,8 +54,8 @@ func TestBatch(t *testing.T) {
 			types.Entities{},
 			Request{
 				Principal: p1,
-				Action:    eval.Variable("action"),
-				Resource:  eval.Variable("resource"),
+				Action:    Variable("action"),
+				Resource:  Variable("resource"),
 				Context:   types.Record{},
 				Variables: Variables{
 					"action":   []types.Value{a1, a2},
@@ -90,9 +89,9 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			Request{
-				Principal: eval.Variable("principal"),
+				Principal: Variable("principal"),
 				Action:    a1,
-				Resource:  eval.Variable("resource"),
+				Resource:  Variable("resource"),
 				Context:   types.Record{},
 				Variables: Variables{
 					"principal": []types.Value{p1, p2},
@@ -112,8 +111,8 @@ func TestBatch(t *testing.T) {
 			types.Entities{},
 			Request{
 				Principal: p1,
-				Action:    eval.Variable("action"),
-				Resource:  eval.Variable("resource"),
+				Action:    Variable("action"),
+				Resource:  Variable("resource"),
 				Context: types.Record{
 					"key": types.Long(42),
 				},
@@ -139,7 +138,7 @@ func TestBatch(t *testing.T) {
 				Principal: p1,
 				Action:    a1,
 				Resource:  r1,
-				Context:   eval.Variable("context"),
+				Context:   Variable("context"),
 				Variables: Variables{
 					"context": []types.Value{types.Record{"key": types.Long(41)}, types.Record{"key": types.Long(42)}, types.Record{"key": types.Long(43)}},
 				},
@@ -159,7 +158,7 @@ func TestBatch(t *testing.T) {
 				Action:    a1,
 				Resource:  r1,
 				Context: types.Record{
-					"key": eval.Variable("key"),
+					"key": Variable("key"),
 				},
 				Variables: Variables{
 					"key": []types.Value{types.Long(41), types.Long(42), types.Long(43)},
@@ -183,8 +182,8 @@ func TestBatch(t *testing.T) {
 			Request{
 				Principal: p1,
 				Action:    a1,
-				Resource:  eval.Variable("resource"),
-				Context:   eval.Ignore(),
+				Resource:  Variable("resource"),
+				Context:   Ignore(),
 				Variables: Variables{
 					"resource": []types.Value{r1, r2},
 					"key":      []types.Value{types.Long(41), types.Long(42), types.Long(43)},

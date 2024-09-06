@@ -12,6 +12,9 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
+func Ignore() types.Value                    { return eval.Ignore() }
+func Variable(name types.String) types.Value { return eval.Variable(name) }
+
 type Request struct {
 	Principal types.Value
 	Action    types.Value
