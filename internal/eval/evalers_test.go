@@ -946,6 +946,193 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 	}
 }
 
+// hack: newVirtualLessThanEval and friends aren't func(Evaler, Evaler) Evaler, but we can turn them into it with generics.
+func makeEvaler[T Evaler](fn func(Evaler, Evaler) T) func(Evaler, Evaler) Evaler {
+	return func(lhs Evaler, rhs Evaler) Evaler {
+		return fn(lhs, rhs)
+	}
+}
+
+// toEvaler lifts a Value or error into an Evaler
+func toEvaler(x any) Evaler {
+	switch v := x.(type) {
+	case types.Value:
+		return newLiteralEval(v)
+	case error:
+		return newErrorEval(v)
+	default:
+		panic(fmt.Sprintf("can't convert %T into Evaler", v))
+	}
+}
+
+func TestVirtualComparisonNodes(t *testing.T) {
+	t.Parallel()
+
+	var (
+		zero       = types.Long(0)
+		neg1       = types.Long(-1)
+		pos1       = types.Long(1)
+		zeroDate   = types.UnsafeDatetime(0)
+		futureDate = types.UnsafeDatetime(1)
+		pastDate   = types.UnsafeDatetime(-1)
+	)
+
+	type test struct {
+		lhs, rhs any
+		result   bool
+		wantErr  error
+	}
+	type testNode struct {
+		name   string
+		evaler func(Evaler, Evaler) Evaler
+		table  []test
+	}
+
+	tests := []testNode{
+		{name: "<",
+			evaler: makeEvaler(newVirtualLessThanEval),
+			table: []test{
+				{neg1, neg1, false, nil},
+				{neg1, zero, true, nil},
+				{neg1, pos1, true, nil},
+				{zero, neg1, false, nil},
+				{zero, zero, false, nil},
+				{zero, pos1, true, nil},
+				{pos1, neg1, false, nil},
+				{pos1, zero, false, nil},
+				{pos1, pos1, false, nil},
+
+				// Datetime
+				{pastDate, pastDate, false, nil},
+				{pastDate, zeroDate, true, nil},
+				{pastDate, futureDate, true, nil},
+				{zeroDate, pastDate, false, nil},
+				{zeroDate, zeroDate, false, nil},
+				{zeroDate, futureDate, true, nil},
+				{futureDate, pastDate, false, nil},
+				{futureDate, zeroDate, false, nil},
+				{futureDate, futureDate, false, nil},
+
+				// Errors
+				{errTest, neg1, false, errTest},
+				{neg1, errTest, false, errTest},
+				{types.True, neg1, false, ErrType},
+				{neg1, types.False, false, ErrType},
+			},
+		},
+		{name: "<=",
+			evaler: makeEvaler(newVirtualLessThanOrEqualEval),
+			table: []test{
+				{neg1, neg1, true, nil},
+				{neg1, zero, true, nil},
+				{neg1, pos1, true, nil},
+				{zero, neg1, false, nil},
+				{zero, zero, true, nil},
+				{zero, pos1, true, nil},
+				{pos1, neg1, false, nil},
+				{pos1, zero, false, nil},
+				{pos1, pos1, true, nil},
+
+				// Datetime
+				{pastDate, pastDate, true, nil},
+				{pastDate, zeroDate, true, nil},
+				{pastDate, futureDate, true, nil},
+				{zeroDate, pastDate, false, nil},
+				{zeroDate, zeroDate, true, nil},
+				{zeroDate, futureDate, true, nil},
+				{futureDate, pastDate, false, nil},
+				{futureDate, zeroDate, false, nil},
+				{futureDate, futureDate, true, nil},
+
+				// Errors
+				{errTest, neg1, false, errTest},
+				{neg1, errTest, false, errTest},
+				{types.True, neg1, false, ErrType},
+				{neg1, types.False, false, ErrType},
+			},
+		},
+		{name: ">",
+			evaler: makeEvaler(newVirtualGreaterThanEval),
+			table: []test{
+				{neg1, neg1, false, nil},
+				{neg1, zero, false, nil},
+				{neg1, pos1, false, nil},
+				{zero, neg1, true, nil},
+				{zero, zero, false, nil},
+				{zero, pos1, false, nil},
+				{pos1, neg1, true, nil},
+				{pos1, zero, true, nil},
+				{pos1, pos1, false, nil},
+
+				// Datetime
+				{pastDate, pastDate, false, nil},
+				{pastDate, zeroDate, false, nil},
+				{pastDate, futureDate, false, nil},
+				{zeroDate, pastDate, true, nil},
+				{zeroDate, zeroDate, false, nil},
+				{zeroDate, futureDate, false, nil},
+				{futureDate, pastDate, true, nil},
+				{futureDate, zeroDate, true, nil},
+				{futureDate, futureDate, false, nil},
+
+				// Errors
+				{errTest, neg1, false, errTest},
+				{neg1, errTest, false, errTest},
+				{types.True, neg1, false, ErrType},
+				{neg1, types.False, false, ErrType},
+			},
+		},
+		{name: ">=",
+			evaler: makeEvaler(newVirtualGreaterThanOrEqualEval),
+			table: []test{
+				{neg1, neg1, true, nil},
+				{neg1, zero, false, nil},
+				{neg1, pos1, false, nil},
+				{zero, neg1, true, nil},
+				{zero, zero, true, nil},
+				{zero, pos1, false, nil},
+				{pos1, neg1, true, nil},
+				{pos1, zero, true, nil},
+				{pos1, pos1, true, nil},
+
+				// Datetime
+				{pastDate, pastDate, true, nil},
+				{pastDate, zeroDate, false, nil},
+				{pastDate, futureDate, false, nil},
+				{zeroDate, pastDate, true, nil},
+				{zeroDate, zeroDate, true, nil},
+				{zeroDate, futureDate, false, nil},
+				{futureDate, pastDate, true, nil},
+				{futureDate, zeroDate, true, nil},
+				{futureDate, futureDate, true, nil},
+
+				// Errors
+				{errTest, neg1, false, errTest},
+				{neg1, errTest, false, errTest},
+				{types.True, neg1, false, ErrType},
+				{neg1, types.False, false, ErrType},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		for _, tt := range tc.table {
+			t.Run(fmt.Sprintf("%v_%s_%v", tt.lhs, tc.name, tt.rhs), func(t *testing.T) {
+				t.Parallel()
+				n := tc.evaler(toEvaler(tt.lhs), toEvaler(tt.rhs))
+				v, err := n.Eval(&Context{})
+				if tt.wantErr == nil {
+					testutil.OK(t, err)
+					AssertBoolValue(t, v, tt.result)
+				} else {
+					testutil.ErrorIs(t, err, tt.wantErr)
+				}
+			})
+		}
+	}
+}
+
 func TestIfThenElseNode(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

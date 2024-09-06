@@ -13,6 +13,16 @@ func (a Long) Equal(bi Value) bool {
 	return ok && a == b
 }
 
+func (a Long) Less(bi Value) bool {
+	b, ok := bi.(Long)
+	return ok && a < b
+}
+
+func (a Long) LessEqual(bi Value) bool {
+	b, ok := bi.(Long)
+	return ok && a <= b
+}
+
 // ExplicitMarshalJSON marshals the Long into JSON.
 func (v Long) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
 

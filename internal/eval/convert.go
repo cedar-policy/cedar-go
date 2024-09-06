@@ -36,6 +36,8 @@ func toEval(n ast.IsNode) Evaler {
 				return newIPLiteralEval(toEval(v.Args[0]))
 			case v.Name == "decimal":
 				return newDecimalLiteralEval(toEval(v.Args[0]))
+			case v.Name == "datetime":
+				return newDatetimeLiteralEval(toEval(v.Args[0]))
 
 			case v.Name == "lessThan":
 				return newDecimalLessThanEval(toEval(v.Args[0]), toEval(v.Args[1]))
@@ -56,6 +58,9 @@ func toEval(n ast.IsNode) Evaler {
 				return newIPTestEval(toEval(v.Args[0]), ipTestMulticast)
 			case v.Name == "isInRange":
 				return newIPIsInRangeEval(toEval(v.Args[0]), toEval(v.Args[1]))
+
+			case v.Name == "toDate":
+				return newToDateEval(toEval(v.Args[0]))
 			}
 		}
 		return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, v.Name))
@@ -101,13 +106,13 @@ func toEval(n ast.IsNode) Evaler {
 	case ast.NodeTypeNotEquals:
 		return newNotEqualEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeGreaterThan:
-		return newLongGreaterThanEval(toEval(v.Left), toEval(v.Right))
+		return newVirtualGreaterThanEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeGreaterThanOrEqual:
-		return newLongGreaterThanOrEqualEval(toEval(v.Left), toEval(v.Right))
+		return newVirtualGreaterThanOrEqualEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeLessThan:
-		return newLongLessThanEval(toEval(v.Left), toEval(v.Right))
+		return newVirtualLessThanEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeLessThanOrEqual:
-		return newLongLessThanOrEqualEval(toEval(v.Left), toEval(v.Right))
+		return newVirtualLessThanOrEqualEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeSub:
 		return newSubtractEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeAdd:

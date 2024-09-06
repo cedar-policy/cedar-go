@@ -534,6 +534,33 @@ func TestIsAuthorized(t *testing.T) {
 			DiagErr:   1,
 		},
 		{
+			Name: "permit-when-datetime",
+			Policy: `permit(principal,action,resource) when {
+				datetime("1970-01-01T09:08:07Z") < (datetime("1970-02-01")) &&
+				datetime("1970-01-01T09:08:07Z") <= (datetime("1970-02-01")) &&
+				datetime("1970-01-01T09:08:07Z") > (datetime("1970-01-01")) &&
+				datetime("1970-01-01T09:08:07Z") >= (datetime("1970-01-01")) &&
+        datetime("1970-01-01T09:08:07Z").toDate() == datetime("1970-01-01")};`,
+			Entities:  types.Entities{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  types.NewEntityUID("table", "whatever"),
+			Context:   types.Record{},
+			Want:      true,
+			DiagErr:   0,
+		},
+		{
+			Name:      "permit-when-datetime-fun-wrong-arity",
+			Policy:    `permit(principal,action,resource) when { datetime("1970-01-01", "UTC") };`,
+			Entities:  types.Entities{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  types.NewEntityUID("table", "whatever"),
+			Context:   types.Record{},
+			Want:      false,
+			DiagErr:   1,
+		},
+		{
 			Name: "permit-when-ip",
 			Policy: `permit(principal,action,resource) when {
 				ip("1.2.3.4").isIpv4() &&

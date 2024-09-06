@@ -210,6 +210,18 @@ func TestToEval(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			"datetime",
+			ast.ExtensionCall("datetime", ast.String("1970-01-01T00:00:00.001Z")),
+			types.UnsafeDatetime(1),
+			testutil.OK,
+		},
+		{
+			"toDate",
+			ast.ExtensionCall("toDate", ast.Value(types.UnsafeDatetime(1))),
+			types.UnsafeDatetime(0),
+			testutil.OK,
+		},
+		{
 			"lessThan",
 			ast.ExtensionCall("lessThan", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),
 			types.True,

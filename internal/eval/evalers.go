@@ -51,6 +51,18 @@ func evalLong(n Evaler, ctx *Context) (types.Long, error) {
 	return l, nil
 }
 
+func evalLesser(n Evaler, ctx *Context) (types.Lesser, error) {
+	v, err := n.Eval(ctx)
+	if err != nil {
+		return nil, err
+	}
+	l, ok := v.(types.Lesser)
+	if !ok {
+		return nil, fmt.Errorf("%w: expected comparable value, got %v", ErrType, TypeName(v))
+	}
+	return l, nil
+}
+
 func evalString(n Evaler, ctx *Context) (types.String, error) {
 	v, err := n.Eval(ctx)
 	if err != nil {
@@ -85,6 +97,18 @@ func evalEntity(n Evaler, ctx *Context) (types.EntityUID, error) {
 		return types.EntityUID{}, err
 	}
 	return e, nil
+}
+
+func evalDatetime(n Evaler, ctx *Context) (types.Datetime, error) {
+	v, err := n.Eval(ctx)
+	if err != nil {
+		return types.Datetime{}, err
+	}
+	d, err := ValueToDatetime(v)
+	if err != nil {
+		return types.Datetime{}, err
+	}
+	return d, nil
 }
 
 func evalDecimal(n Evaler, ctx *Context) (types.Decimal, error) {
@@ -1005,6 +1029,29 @@ func (n *decimalLiteralEval) Eval(ctx *Context) (types.Value, error) {
 	return d, nil
 }
 
+// datetimeLiteralEval
+type datetimeLiteralEval struct {
+	literal Evaler
+}
+
+func newDatetimeLiteralEval(literal Evaler) *datetimeLiteralEval {
+	return &datetimeLiteralEval{literal: literal}
+}
+
+func (n *datetimeLiteralEval) Eval(ctx *Context) (types.Value, error) {
+	literal, err := evalString(n.literal, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	d, err := types.ParseDatetime(string(literal))
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	return d, nil
+}
+
 type ipLiteralEval struct {
 	literal Evaler
 }
@@ -1072,4 +1119,124 @@ func (n *ipIsInRangeEval) Eval(ctx *Context) (types.Value, error) {
 		return zeroValue(), err
 	}
 	return types.Boolean(rhs.Contains(lhs)), nil
+}
+
+// virtualLessThanEval struct
+type virtualLessThanEval struct {
+	lhs Evaler
+	rhs Evaler
+}
+
+func newVirtualLessThanEval(lhs Evaler, rhs Evaler) *virtualLessThanEval {
+	return &virtualLessThanEval{
+		lhs: lhs,
+		rhs: rhs,
+	}
+}
+
+func (n *virtualLessThanEval) Eval(ctx *Context) (types.Value, error) {
+	lhs, err := evalLesser(n.lhs, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	rhs, err := evalLesser(n.rhs, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Boolean(lhs.Less(rhs)), nil
+}
+
+var _ Evaler = &virtualLessThanEval{}
+
+// virtualGreaterThanEval struct
+type virtualGreaterThanEval struct {
+	lhs Evaler
+	rhs Evaler
+}
+
+func newVirtualGreaterThanEval(lhs Evaler, rhs Evaler) *virtualGreaterThanEval {
+	return &virtualGreaterThanEval{
+		lhs: lhs,
+		rhs: rhs,
+	}
+}
+
+func (n *virtualGreaterThanEval) Eval(ctx *Context) (types.Value, error) {
+	lhs, err := evalLesser(n.lhs, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	rhs, err := evalLesser(n.rhs, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Boolean(!lhs.LessEqual(rhs)), nil
+}
+
+// virtualLessEqualThanEval struct
+type virtualLessThanOrEqualEval struct {
+	lhs Evaler
+	rhs Evaler
+}
+
+func newVirtualLessThanOrEqualEval(lhs Evaler, rhs Evaler) *virtualLessThanOrEqualEval {
+	return &virtualLessThanOrEqualEval{
+		lhs: lhs,
+		rhs: rhs,
+	}
+}
+
+func (n *virtualLessThanOrEqualEval) Eval(ctx *Context) (types.Value, error) {
+	lhs, err := evalLesser(n.lhs, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	rhs, err := evalLesser(n.rhs, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Boolean(lhs.LessEqual(rhs)), nil
+}
+
+// virtualGreaterEqualThanEval struct
+type virtualGreaterThanOrEqualEval struct {
+	lhs Evaler
+	rhs Evaler
+}
+
+func newVirtualGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *virtualGreaterThanOrEqualEval {
+	return &virtualGreaterThanOrEqualEval{
+		lhs: lhs,
+		rhs: rhs,
+	}
+}
+
+func (n *virtualGreaterThanOrEqualEval) Eval(ctx *Context) (types.Value, error) {
+	lhs, err := evalLesser(n.lhs, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	rhs, err := evalLesser(n.rhs, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Boolean(!lhs.Less(rhs)), nil
+}
+
+const millisPerDay = int64(1000 * 60 * 60 * 24)
+
+type toDateEval struct {
+	lhs Evaler
+}
+
+func newToDateEval(lhs Evaler) *toDateEval {
+	return &toDateEval{lhs: lhs}
+}
+
+func (n *toDateEval) Eval(ctx *Context) (types.Value, error) {
+	lhs, err := evalDatetime(n.lhs, ctx)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Datetime{Value: lhs.Value - (lhs.Value % millisPerDay)}, nil
 }

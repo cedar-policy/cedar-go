@@ -8,8 +8,9 @@ type extInfo struct {
 }
 
 var ExtMap = map[types.Path]extInfo{
-	"ip":      {Args: 1, IsMethod: false},
-	"decimal": {Args: 1, IsMethod: false},
+	"ip":       {Args: 1, IsMethod: false},
+	"decimal":  {Args: 1, IsMethod: false},
+	"datetime": {Args: 1, IsMethod: false},
 
 	"lessThan":           {Args: 2, IsMethod: true},
 	"lessThanOrEqual":    {Args: 2, IsMethod: true},
@@ -21,6 +22,8 @@ var ExtMap = map[types.Path]extInfo{
 	"isLoopback":  {Args: 1, IsMethod: true},
 	"isMulticast": {Args: 1, IsMethod: true},
 	"isInRange":   {Args: 2, IsMethod: true},
+
+	"toDate": {Args: 1, IsMethod: true},
 }
 
 func init() {
