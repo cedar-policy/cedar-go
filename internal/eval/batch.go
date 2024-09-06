@@ -247,7 +247,7 @@ func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, req
 
 type idEvaler struct {
 	PolicyID string
-	Evaler   Evaler
+	Evaler   BoolEvaler
 }
 
 type idPolicy struct {
@@ -323,7 +323,7 @@ func diagnosticAuthz(b *batchEvaler, evalCtx *Context) (bool, Diagnostic) {
 		if err != nil {
 			continue
 		}
-		if v, ok := v.(types.Boolean); ok && bool(v) {
+		if v {
 			d.Reasons = append(d.Reasons, p.PolicyID)
 		}
 	}
@@ -335,7 +335,7 @@ func diagnosticAuthz(b *batchEvaler, evalCtx *Context) (bool, Diagnostic) {
 		if err != nil {
 			continue
 		}
-		if v, ok := v.(types.Boolean); ok && bool(v) {
+		if v {
 			d.Reasons = append(d.Reasons, p.PolicyID)
 		}
 	}
@@ -360,7 +360,7 @@ func batchAuthz(b *batchEvaler, evalCtx *Context) bool {
 		if err != nil {
 			continue
 		}
-		if v, ok := v.(types.Boolean); ok && bool(v) {
+		if v {
 			return false
 		}
 	}
@@ -369,7 +369,7 @@ func batchAuthz(b *batchEvaler, evalCtx *Context) bool {
 		if err != nil {
 			continue
 		}
-		if v, ok := v.(types.Boolean); ok && bool(v) {
+		if v {
 			return true
 		}
 	}

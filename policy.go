@@ -13,7 +13,7 @@ import (
 
 // A Policy is the parsed form of a single Cedar language policy statement.
 type Policy struct {
-	eval eval.Evaler // determines if a policy matches a request.
+	eval eval.BoolEvaler // determines if a policy matches a request.
 	ast  *internalast.Policy
 }
 

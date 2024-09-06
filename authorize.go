@@ -90,13 +90,7 @@ func (p PolicySet) IsAuthorized(entityMap types.Entities, req Request) (Decision
 			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position(), Message: err.Error()})
 			continue
 		}
-		vb, err := eval.ValueToBool(v)
-		if err != nil {
-			// should never happen, maybe remove this case
-			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position(), Message: err.Error()})
-			continue
-		}
-		if !vb {
+		if !v {
 			continue
 		}
 		if po.Effect() == Forbid {

@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
@@ -13,7 +14,36 @@ func TestCompile(t *testing.T) {
 	e := Compile(ast.Permit())
 	res, err := e.Eval(nil)
 	testutil.OK(t, err)
-	testutil.Equals(t, res, types.Value(types.True))
+	testutil.Equals(t, res, types.True)
+}
+
+func TestBoolEvaler(t *testing.T) {
+	t.Parallel()
+	t.Run("Happy", func(t *testing.T) {
+		t.Parallel()
+		b := BoolEvaler{eval: newLiteralEval(types.True)}
+		v, err := b.Eval(nil)
+		testutil.OK(t, err)
+		testutil.Equals(t, v, true)
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		t.Parallel()
+		errWant := fmt.Errorf("error")
+		b := BoolEvaler{eval: newErrorEval(errWant)}
+		v, err := b.Eval(nil)
+		testutil.ErrorIs(t, err, errWant)
+		testutil.Equals(t, v, false)
+	})
+
+	t.Run("NonBool", func(t *testing.T) {
+		t.Parallel()
+		b := BoolEvaler{eval: newLiteralEval(types.String("bad"))}
+		v, err := b.Eval(nil)
+		testutil.ErrorIs(t, err, ErrType)
+		testutil.Equals(t, v, false)
+	})
+
 }
 
 func TestPolicyToNode(t *testing.T) {

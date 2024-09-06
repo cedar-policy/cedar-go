@@ -7,10 +7,26 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func Compile(p *ast.Policy) Evaler {
+type BoolEvaler struct {
+	eval Evaler
+}
+
+func (e *BoolEvaler) Eval(c *Context) (types.Boolean, error) {
+	v, err := e.eval.Eval(c)
+	if err != nil {
+		return false, err
+	}
+	vb, err := ValueToBool(v)
+	if err != nil {
+		return false, err
+	}
+	return vb, nil
+}
+
+func Compile(p *ast.Policy) BoolEvaler {
 	p = foldPolicy(p)
 	node := policyToNode(p).AsIsNode()
-	return toEval(node)
+	return BoolEvaler{eval: toEval(node)}
 }
 
 func policyToNode(p *ast.Policy) ast.Node {
