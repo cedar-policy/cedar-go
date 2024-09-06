@@ -171,7 +171,6 @@ func ParseDatetime(s string) (Datetime, error) {
 		}
 	}
 
-	fmt.Printf("WE'RE HERE: %s\n", s[i:length])
 
 	if i >= length {
 		return Datetime{}, fmt.Errorf("%w: expected timezone indicator", ErrDatetime)
