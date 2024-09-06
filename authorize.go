@@ -75,36 +75,35 @@ func (p PolicySet) IsAuthorized(entityMap types.Entities, req Request) (Decision
 		Context:   req.Context,
 	})
 	var diag Diagnostic
-	var gotForbid bool
-	var forbidReasons []Reason
-	var gotPermit bool
-	var permitReasons []Reason
+	var forbids []Reason
+	var permits []Reason
 	// Don't try to short circuit this.
 	// - Even though single forbid means forbid
 	// - All policy should be run to collect errors
 	// - For permit, all permits must be run to collect annotations
 	// - For forbid, forbids must be run to collect annotations
 	for id, po := range p.policies {
-		v, err := po.eval.Eval(c)
+		result, err := po.eval.Eval(c)
 		if err != nil {
 			diag.Errors = append(diag.Errors, Error{PolicyID: id, Position: po.Position(), Message: err.Error()})
 			continue
 		}
-		if !v {
+		if !result {
 			continue
 		}
 		if po.Effect() == Forbid {
-			forbidReasons = append(forbidReasons, Reason{PolicyID: id, Position: po.Position()})
-			gotForbid = true
+			forbids = append(forbids, Reason{PolicyID: id, Position: po.Position()})
 		} else {
-			permitReasons = append(permitReasons, Reason{PolicyID: id, Position: po.Position()})
-			gotPermit = true
+			permits = append(permits, Reason{PolicyID: id, Position: po.Position()})
 		}
 	}
-	if gotForbid {
-		diag.Reasons = forbidReasons
-	} else if gotPermit {
-		diag.Reasons = permitReasons
+	if len(forbids) > 0 {
+		diag.Reasons = forbids
+		return Deny, diag
 	}
-	return Decision(gotPermit && !gotForbid), diag
+	if len(permits) > 0 {
+		diag.Reasons = permits
+		return Allow, diag
+	}
+	return Deny, diag
 }
