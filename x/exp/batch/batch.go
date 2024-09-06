@@ -1,4 +1,4 @@
-package eval
+package batch
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	publicast "github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -35,31 +36,6 @@ type variableItem struct {
 }
 
 type Variables map[types.String][]types.Value
-
-const variableEntityType = "__cedar::variable"
-
-func Variable(v types.String) types.Value {
-	return types.NewEntityUID(variableEntityType, v)
-}
-
-const ignoreEntityType = "__cedar::ignore"
-
-func Ignore() types.Value {
-	return types.NewEntityUID(ignoreEntityType, "")
-}
-
-func isVariable(v types.Value) bool {
-	if ent, ok := v.(types.EntityUID); ok && ent.Type == variableEntityType {
-		return true
-	}
-	return false
-}
-func isIgnore(v types.Value) bool {
-	if ent, ok := v.(types.EntityUID); ok && ent.Type == ignoreEntityType {
-		return true
-	}
-	return false
-}
 
 const unknownEntityType = "__cedar::unknown"
 
@@ -143,7 +119,7 @@ func Batch(ctx context.Context, policies []*ast.Policy, entityMap types.Entities
 	case request.Context == nil:
 		return fmt.Errorf("batch missing context")
 	}
-	be.evalCtx = PrepContext(&Context{})
+	be.evalCtx = eval.PrepContext(&eval.Context{})
 	state := batchRequestState{
 		Principal: request.Principal,
 		Action:    request.Action,
@@ -173,14 +149,13 @@ func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, req
 	// else, partial eval what we have so far
 	var np []idPolicy
 	for _, p := range be.policies {
-		part, keep, _ := partialPolicy(&Context{
+		part, keep, _ := eval.PartialPolicy(eval.PrepContextWithCacheFrom(&eval.Context{
 			Entities:  entityMap,
-			inCache:   be.evalCtx.inCache,
 			Principal: request.Principal,
 			Action:    request.Action,
 			Resource:  request.Resource,
 			Context:   request.Context,
-		}, p.Policy)
+		}, be.evalCtx), p.Policy)
 		if !keep {
 			continue
 		}
@@ -194,16 +169,16 @@ func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, req
 
 	// if no more partial evaluation, fill in ignores with defaults
 	if len(request.Variables) == 1 {
-		if isIgnore(request.Principal) {
+		if eval.IsIgnore(request.Principal) {
 			request.Principal = unknownEntity()
 		}
-		if isIgnore(request.Action) {
+		if eval.IsIgnore(request.Action) {
 			request.Action = unknownEntity()
 		}
-		if isIgnore(request.Resource) {
+		if eval.IsIgnore(request.Resource) {
 			request.Resource = unknownEntity()
 		}
-		if isIgnore(request.Context) {
+		if eval.IsIgnore(request.Context) {
 			request.Context = types.Record{}
 		}
 	}
@@ -247,7 +222,7 @@ func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, req
 
 type idEvaler struct {
 	PolicyID string
-	Evaler   BoolEvaler
+	Evaler   eval.BoolEvaler
 }
 
 type idPolicy struct {
@@ -260,34 +235,33 @@ type batchEvaler struct {
 	compiled bool
 	forbids  []idEvaler
 	permits  []idEvaler
-	evalCtx  *Context
+	evalCtx  *eval.Context
 	options  batchOptions
 }
 
-func buildResultContext(be *batchEvaler, entityMap types.Entities, request batchRequestState) (BatchResult, *Context, error) {
+func buildResultContext(be *batchEvaler, entityMap types.Entities, request batchRequestState) (BatchResult, *eval.Context, error) {
 	var res BatchResult
 	var err error
-	if res.Principal, err = ValueToEntity(request.Principal); err != nil {
+	if res.Principal, err = eval.ValueToEntity(request.Principal); err != nil {
 		return BatchResult{}, nil, err
 	}
-	if res.Action, err = ValueToEntity(request.Action); err != nil {
+	if res.Action, err = eval.ValueToEntity(request.Action); err != nil {
 		return BatchResult{}, nil, err
 	}
-	if res.Resource, err = ValueToEntity(request.Resource); err != nil {
+	if res.Resource, err = eval.ValueToEntity(request.Resource); err != nil {
 		return BatchResult{}, nil, err
 	}
-	if res.Context, err = ValueToRecord(request.Context); err != nil {
+	if res.Context, err = eval.ValueToRecord(request.Context); err != nil {
 		return BatchResult{}, nil, err
 	}
 	res.Values = request.Values
-	ctx := &Context{
+	ctx := eval.PrepContextWithCacheFrom(&eval.Context{
 		Entities:  entityMap,
 		Principal: request.Principal,
 		Action:    request.Action,
 		Resource:  request.Resource,
 		Context:   request.Context,
-		inCache:   be.evalCtx.inCache,
-	}
+	}, be.evalCtx)
 	return res, ctx, nil
 }
 
@@ -314,7 +288,7 @@ func diagnosticAuthzWithCallback(be *batchEvaler, entityMap types.Entities, requ
 	return nil
 }
 
-func diagnosticAuthz(b *batchEvaler, evalCtx *Context) (bool, Diagnostic) {
+func diagnosticAuthz(b *batchEvaler, evalCtx *eval.Context) (bool, Diagnostic) {
 	batchCompile(b)
 	var d Diagnostic
 
@@ -352,7 +326,7 @@ func diagnosticAuthz(b *batchEvaler, evalCtx *Context) (bool, Diagnostic) {
 // 	fmt.Println(got.String())
 // }
 
-func batchAuthz(b *batchEvaler, evalCtx *Context) bool {
+func batchAuthz(b *batchEvaler, evalCtx *eval.Context) bool {
 	batchCompile(b)
 
 	for _, p := range b.forbids {
@@ -381,7 +355,7 @@ func batchCompile(b *batchEvaler) {
 		return
 	}
 	for _, p := range b.policies {
-		idEval := idEvaler{PolicyID: p.PolicyID, Evaler: Compile(p.Policy)}
+		idEval := idEvaler{PolicyID: p.PolicyID, Evaler: eval.Compile(p.Policy)}
 		if p.Policy.Effect == ast.EffectPermit {
 			b.permits = append(b.permits, idEval)
 		} else {
@@ -396,7 +370,7 @@ func batchCompile(b *batchEvaler) {
 func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) {
 	switch t := r.(type) {
 	case types.EntityUID:
-		if t.Type == variableEntityType && t.ID == k {
+		if key, ok := eval.ToVariable(t); ok && key == k {
 			return v, true
 		}
 	case types.Record:

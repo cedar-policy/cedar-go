@@ -9,8 +9,41 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-// partialPolicy itself cannot error, it can only return the error that would happen
-func partialPolicy(ctx *Context, p *ast.Policy) (policy *ast.Policy, keep bool, policyErr error) {
+const variableEntityType = "__cedar::variable"
+
+func Variable(v types.String) types.Value {
+	return types.NewEntityUID(variableEntityType, v)
+}
+
+const ignoreEntityType = "__cedar::ignore"
+
+func Ignore() types.Value {
+	return types.NewEntityUID(ignoreEntityType, "")
+}
+
+func IsVariable(v types.Value) bool {
+	if ent, ok := v.(types.EntityUID); ok && ent.Type == variableEntityType {
+		return true
+	}
+	return false
+}
+
+func ToVariable(ent types.EntityUID) (types.String, bool) {
+	if ent.Type == variableEntityType {
+		return ent.ID, true
+	}
+	return "", false
+}
+
+func IsIgnore(v types.Value) bool {
+	if ent, ok := v.(types.EntityUID); ok && ent.Type == ignoreEntityType {
+		return true
+	}
+	return false
+}
+
+// PartialPolicy itself cannot error, it can only return the error that would happen
+func PartialPolicy(ctx *Context, p *ast.Policy) (policy *ast.Policy, keep bool, policyErr error) {
 	p2 := *p
 	if p2.Principal, keep = partialPrincipalScope(ctx, ctx.Principal, p2.Principal); !keep {
 		return nil, false, nil
@@ -84,9 +117,9 @@ func partialScopeEval(ctx *Context, ent types.Value, in ast.IsScopeNode) (evaled
 	if !ok {
 		return false, false
 	}
-	if isVariable(e) {
+	if IsVariable(e) {
 		return false, false
-	} else if isIgnore(e) {
+	} else if IsIgnore(e) {
 		return true, true
 	}
 	switch t := in.(type) {
@@ -145,9 +178,9 @@ func tryPartial(ctx *Context, nodes []ast.IsNode,
 		if err != nil {
 			return nil, err
 		}
-		if isVariable(v) { // unknown (new)
+		if IsVariable(v) { // unknown (new)
 			return mkNode(nodes), errVariable
-		} else if isIgnore(v) { // ignore
+		} else if IsIgnore(v) { // ignore
 			return nil, errIgnore
 		}
 		return ast.NodeValue{Value: v}, nil

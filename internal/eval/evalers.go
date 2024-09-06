@@ -37,6 +37,11 @@ func PrepContext(in *Context) *Context {
 	return in
 }
 
+func PrepContextWithCacheFrom(in *Context, parent *Context) *Context {
+	in.inCache = parent.inCache
+	return in
+}
+
 type Evaler interface {
 	Eval(*Context) (types.Value, error)
 }
