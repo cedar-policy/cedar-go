@@ -8,6 +8,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -56,8 +57,8 @@ type Variables map[types.String][]types.Value
 
 const unknownEntityType = "__cedar::unknown"
 
-func unknownEntity() types.EntityUID {
-	return types.NewEntityUID(unknownEntityType, "")
+func unknownEntity(v types.String) types.EntityUID {
+	return types.NewEntityUID(unknownEntityType, v)
 }
 
 type Values map[types.String]types.Value
@@ -140,13 +141,13 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 	// if no more partial evaluation, fill in ignores with defaults
 	if len(be.Variables) == 1 {
 		if eval.IsIgnore(be.env.Principal) {
-			be.env.Principal = unknownEntity()
+			be.env.Principal = unknownEntity(consts.Principal)
 		}
 		if eval.IsIgnore(be.env.Action) {
-			be.env.Action = unknownEntity()
+			be.env.Action = unknownEntity(consts.Action)
 		}
 		if eval.IsIgnore(be.env.Resource) {
-			be.env.Resource = unknownEntity()
+			be.env.Resource = unknownEntity(consts.Resource)
 		}
 		if eval.IsIgnore(be.env.Context) {
 			be.env.Context = types.Record{}
