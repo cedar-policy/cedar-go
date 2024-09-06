@@ -119,7 +119,7 @@ func Batch(ctx context.Context, policies []*ast.Policy, entityMap types.Entities
 	case request.Context == nil:
 		return fmt.Errorf("batch missing context")
 	}
-	be.evalCtx = eval.PrepContext(&eval.Context{})
+	be.env = eval.NewEnv()
 	state := batchRequestState{
 		Principal: request.Principal,
 		Action:    request.Action,
@@ -149,20 +149,20 @@ func doBatch(ctx context.Context, be *batchEvaler, entityMap types.Entities, req
 	// else, partial eval what we have so far
 	var np []idPolicy
 	for _, p := range be.policies {
-		part, keep, _ := eval.PartialPolicy(eval.PrepContextWithCacheFrom(&eval.Context{
+		part, keep, _ := eval.PartialPolicy(eval.InitEnvWithCacheFrom(&eval.Env{
 			Entities:  entityMap,
 			Principal: request.Principal,
 			Action:    request.Action,
 			Resource:  request.Resource,
 			Context:   request.Context,
-		}, be.evalCtx), p.Policy)
+		}, be.env), p.Policy)
 		if !keep {
 			continue
 		}
 		np = append(np, idPolicy{PolicyID: p.PolicyID, Policy: part})
 	}
 	be = &batchEvaler{
-		evalCtx:  be.evalCtx,
+		env:      be.env,
 		policies: np,
 		options:  be.options,
 	}
@@ -235,11 +235,11 @@ type batchEvaler struct {
 	compiled bool
 	forbids  []idEvaler
 	permits  []idEvaler
-	evalCtx  *eval.Context
+	env      *eval.Env
 	options  batchOptions
 }
 
-func buildResultContext(be *batchEvaler, entityMap types.Entities, request batchRequestState) (BatchResult, *eval.Context, error) {
+func buildResultEnv(be *batchEvaler, entityMap types.Entities, request batchRequestState) (BatchResult, *eval.Env, error) {
 	var res BatchResult
 	var err error
 	if res.Principal, err = eval.ValueToEntity(request.Principal); err != nil {
@@ -255,45 +255,45 @@ func buildResultContext(be *batchEvaler, entityMap types.Entities, request batch
 		return BatchResult{}, nil, err
 	}
 	res.Values = request.Values
-	ctx := eval.PrepContextWithCacheFrom(&eval.Context{
+	env := eval.InitEnvWithCacheFrom(&eval.Env{
 		Entities:  entityMap,
 		Principal: request.Principal,
 		Action:    request.Action,
 		Resource:  request.Resource,
 		Context:   request.Context,
-	}, be.evalCtx)
-	return res, ctx, nil
+	}, be.env)
+	return res, env, nil
 }
 
 func basicAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request batchRequestState, cb func(BatchResult)) error {
-	res, ctx, err := buildResultContext(be, entityMap, request)
+	res, env, err := buildResultEnv(be, entityMap, request)
 	if err != nil {
 		return err
 	}
-	res.Decision = batchAuthz(be, ctx)
+	res.Decision = batchAuthz(be, env)
 	cb(res)
 	return nil
 }
 
 func diagnosticAuthzWithCallback(be *batchEvaler, entityMap types.Entities, request batchRequestState, cb func(BatchDiagnosticResult)) error {
-	res, ctx, err := buildResultContext(be, entityMap, request)
+	res, env, err := buildResultEnv(be, entityMap, request)
 	if err != nil {
 		return err
 	}
 	diagRes := BatchDiagnosticResult{
 		BatchResult: res,
 	}
-	diagRes.Decision, diagRes.Diagnostic = diagnosticAuthz(be, ctx)
+	diagRes.Decision, diagRes.Diagnostic = diagnosticAuthz(be, env)
 	cb(diagRes)
 	return nil
 }
 
-func diagnosticAuthz(b *batchEvaler, evalCtx *eval.Context) (bool, Diagnostic) {
+func diagnosticAuthz(b *batchEvaler, env *eval.Env) (bool, Diagnostic) {
 	batchCompile(b)
 	var d Diagnostic
 
 	for _, p := range b.forbids {
-		v, err := p.Evaler.Eval(evalCtx)
+		v, err := p.Evaler.Eval(env)
 		if err != nil {
 			continue
 		}
@@ -305,7 +305,7 @@ func diagnosticAuthz(b *batchEvaler, evalCtx *eval.Context) (bool, Diagnostic) {
 		return false, d
 	}
 	for _, p := range b.permits {
-		v, err := p.Evaler.Eval(evalCtx)
+		v, err := p.Evaler.Eval(env)
 		if err != nil {
 			continue
 		}
@@ -326,11 +326,11 @@ func diagnosticAuthz(b *batchEvaler, evalCtx *eval.Context) (bool, Diagnostic) {
 // 	fmt.Println(got.String())
 // }
 
-func batchAuthz(b *batchEvaler, evalCtx *eval.Context) bool {
+func batchAuthz(b *batchEvaler, env *eval.Env) bool {
 	batchCompile(b)
 
 	for _, p := range b.forbids {
-		v, err := p.Evaler.Eval(evalCtx)
+		v, err := p.Evaler.Eval(env)
 		if err != nil {
 			continue
 		}
@@ -339,7 +339,7 @@ func batchAuthz(b *batchEvaler, evalCtx *eval.Context) bool {
 		}
 	}
 	for _, p := range b.permits {
-		v, err := p.Evaler.Eval(evalCtx)
+		v, err := p.Evaler.Eval(env)
 		if err != nil {
 			continue
 		}
