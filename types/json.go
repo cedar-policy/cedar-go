@@ -68,6 +68,13 @@ func UnmarshalJSON(b []byte, v *Value) error {
 				}
 				*v = val
 				return nil
+			case "datetime":
+				val, err := ParseDatetime(res.Extn.Arg)
+				if err != nil {
+					return err
+				}
+				*v = val
+				return nil
 			default:
 				return errJSONInvalidExtn
 			}

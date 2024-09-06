@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -245,8 +246,34 @@ func (a Datetime) String() string {
 	return time.UnixMilli(a.Value).UTC().Format("2006-01-02T15:04:05.000Z")
 }
 
-func (a Datetime) UnmarshalJSON(b []byte) error {
-	// TODO
+func (a *Datetime) UnmarshalJSON(b []byte) error {
+	var arg string
+	if len(b) > 0 && b[0] == '"' {
+		if err := json.Unmarshal(b, &arg); err != nil {
+			return errors.Join(errJSONDecode, err)
+		}
+	} else {
+		// NOTE: cedar supports two other forms, for now we're only supporting the smallest implicit and explicit form.
+		// The following are not supported:
+		// "datetime(\"1970-01-01T00:00:00Z\")"
+		// {"fn":"datetime","arg":"1970-01-01T00:00:00Z"}
+		var res extValueJSON
+		if err := json.Unmarshal(b, &res); err != nil {
+			return errors.Join(errJSONDecode, err)
+		}
+		if res.Extn == nil {
+			return errJSONExtNotFound
+		}
+		if res.Extn.Fn != "datetime" {
+			return errJSONExtFnMatch
+		}
+		arg = res.Extn.Arg
+	}
+	aa, err := ParseDatetime(arg)
+	if err != nil {
+		return err
+	}
+	*a = aa
 	return nil
 }
 

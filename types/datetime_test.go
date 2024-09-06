@@ -45,7 +45,6 @@ func TestDatetime(t *testing.T) {
 			t.Run(fmt.Sprintf("%d_%s->%s", ti, tt.in, tt.out), func(t *testing.T) {
 				t.Parallel()
 				d, err := types.ParseDatetime(tt.in)
-				fmt.Println(d, d.Value)
 				testutil.OK(t, err)
 				testutil.Equals(t, d.String(), tt.out)
 			})
