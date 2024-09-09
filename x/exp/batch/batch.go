@@ -26,9 +26,8 @@ type Request struct {
 
 type idEvaler struct {
 	PolicyID types.PolicyID
+	Policy   *ast.Policy
 	Evaler   eval.BoolEvaler
-	Effect   types.Effect
-	Position types.Position
 }
 
 type idPolicy struct {
@@ -42,7 +41,6 @@ type batchEvaler struct {
 
 	policies []idPolicy
 	compiled bool
-	// policySet *cedar.PolicySet
 	evalers  []*idEvaler
 	env      *eval.Env
 	callback Callback
@@ -204,8 +202,6 @@ func diagnosticAuthzWithCallback(be *batchEvaler) error {
 	}
 	res.Values = be.Values
 	batchCompile(be)
-	// TODO: is there a way to share a cache across requests when using cedar.PolicySet?
-	// res.Decision, res.Diagnostic = be.policySet.IsAuthorized(entityMap, res.Request)
 	res.Decision, res.Diagnostic = isAuthorized(be.evalers, be.env)
 	be.callback(res)
 	return nil
@@ -223,16 +219,16 @@ func isAuthorized(ps []*idEvaler, env *eval.Env) (types.Decision, types.Diagnost
 	for _, po := range ps {
 		result, err := po.Evaler.Eval(env)
 		if err != nil {
-			diag.Errors = append(diag.Errors, types.DiagnosticError{PolicyID: po.PolicyID, Position: po.Position, Message: err.Error()})
+			diag.Errors = append(diag.Errors, types.DiagnosticError{PolicyID: po.PolicyID, Position: types.Position(po.Policy.Position), Message: err.Error()})
 			continue
 		}
 		if !result {
 			continue
 		}
-		if po.Effect == types.Forbid {
-			forbids = append(forbids, types.DiagnosticReason{PolicyID: po.PolicyID, Position: po.Position})
+		if po.Policy.Effect == ast.EffectPermit {
+			permits = append(permits, types.DiagnosticReason{PolicyID: po.PolicyID, Position: types.Position(po.Policy.Position)})
 		} else {
-			permits = append(permits, types.DiagnosticReason{PolicyID: po.PolicyID, Position: po.Position})
+			forbids = append(forbids, types.DiagnosticReason{PolicyID: po.PolicyID, Position: types.Position(po.Policy.Position)})
 		}
 	}
 	if len(forbids) > 0 {
@@ -257,13 +253,9 @@ func batchCompile(be *batchEvaler) {
 	if be.compiled {
 		return
 	}
-	// b.policySet = cedar.NewPolicySet() // TODO: pre-set size?
-	// for _, p := range b.policies {
-	// 	b.policySet.Store(p.PolicyID, cedar.NewPolicyFromAST((*publicast.Policy)(p.Policy)))
-	// }
 	be.evalers = make([]*idEvaler, len(be.policies))
 	for i, p := range be.policies {
-		be.evalers[i] = &idEvaler{PolicyID: p.PolicyID, Evaler: eval.Compile(p.Policy), Effect: types.Effect(p.Policy.Effect), Position: types.Position(p.Policy.Position)}
+		be.evalers[i] = &idEvaler{PolicyID: p.PolicyID, Policy: p.Policy, Evaler: eval.Compile(p.Policy)}
 	}
 	be.compiled = true
 }
