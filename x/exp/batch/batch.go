@@ -112,11 +112,11 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entitie
 }
 
 func doBatch(ctx context.Context, be *batchEvaler) error {
-	// check for context cancellation only if there is more work to be done
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 
+	// if no variables, authorize
 	if len(be.Variables) == 0 {
 		return diagnosticAuthzWithCallback(be)
 	}
@@ -153,7 +153,7 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 	}
 	loopEnv := *be.env
 
-	// then loop the current unknowns
+	// then loop the current variable
 	u := be.Variables[0]
 	_, chPrincipal := cloneSub(be.env.Principal, u.Key, nil)
 	_, chAction := cloneSub(be.env.Action, u.Key, nil)
@@ -161,7 +161,6 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 	_, chContext := cloneSub(be.env.Context, u.Key, nil)
 	be.Variables = be.Variables[1:]
 	be.Values = maps.Clone(be.Values)
-
 	for _, v := range u.Values {
 		*be.env = loopEnv
 		be.Values[u.Key] = v

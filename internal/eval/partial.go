@@ -42,7 +42,8 @@ func IsIgnore(v types.Value) bool {
 	return false
 }
 
-// PartialPolicy itself cannot error, it can only return the error that would happen
+// PartialPolicy returns a partially evaluated version of the policy and a boolean indicating if the policy should be kept.
+// (Policies that can be determined to evaluated to false are not kept.)
 func PartialPolicy(env *Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
 	p2 := *p
 	if p2.Principal, keep = partialPrincipalScope(env, env.Principal, p2.Principal); !keep {
@@ -186,9 +187,9 @@ func tryPartial(env *Env, nodes []ast.IsNode,
 		if err != nil {
 			return nil, err
 		}
-		if IsVariable(v) { // unknown (new)
+		if IsVariable(v) {
 			return mkNode(nodes), errVariable
-		} else if IsIgnore(v) { // ignore
+		} else if IsIgnore(v) {
 			return nil, errIgnore
 		}
 		return ast.NodeValue{Value: v}, nil
