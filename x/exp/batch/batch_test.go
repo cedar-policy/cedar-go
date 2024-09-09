@@ -258,7 +258,7 @@ func TestBatchErrors(t *testing.T) {
 		t.Parallel()
 		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
 			Principal: Variable("bananas"),
-		}, func(r Result) {},
+		}, func(_ Result) {},
 		)
 		testutil.ErrorIs(t, err, errUnboundVariable)
 	})
