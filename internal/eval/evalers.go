@@ -872,10 +872,7 @@ func (n *hasEval) Eval(env *Env) (types.Value, error) {
 	var record types.Record
 	switch vv := v.(type) {
 	case types.EntityUID:
-		rec, ok := env.Entities[vv]
-		if !ok {
-			record = types.Record{}
-		} else {
+		if rec, ok := env.Entities[vv]; ok {
 			record = rec.Attributes
 		}
 	case types.Record:
@@ -905,10 +902,7 @@ func (n *partialHasEval) Eval(env *Env) (types.Value, error) {
 	var record types.Record
 	switch vv := v.(type) {
 	case types.EntityUID:
-		rec, ok := env.Entities[vv]
-		if !ok {
-			record = types.Record{}
-		} else {
+		if rec, ok := env.Entities[vv]; ok {
 			record = rec.Attributes
 		}
 	case types.Record:
