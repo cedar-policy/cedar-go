@@ -887,6 +887,42 @@ func (n *hasEval) Eval(env *Env) (types.Value, error) {
 	return types.Boolean(ok), nil
 }
 
+// partialHasEval
+type partialHasEval struct {
+	object    Evaler
+	attribute types.String
+}
+
+func newPartialHasEval(record Evaler, attribute types.String) *partialHasEval {
+	return &partialHasEval{object: record, attribute: attribute}
+}
+
+func (n *partialHasEval) Eval(env *Env) (types.Value, error) {
+	v, err := n.object.Eval(env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	var record types.Record
+	switch vv := v.(type) {
+	case types.EntityUID:
+		rec, ok := env.Entities[vv]
+		if !ok {
+			record = types.Record{}
+		} else {
+			record = rec.Attributes
+		}
+	case types.Record:
+		record = vv
+	default:
+		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
+	}
+	v, ok := record[n.attribute]
+	if IsIgnore(v) {
+		return nil, errIgnore
+	}
+	return types.Boolean(ok), nil
+}
+
 // likeEval
 type likeEval struct {
 	lhs     Evaler

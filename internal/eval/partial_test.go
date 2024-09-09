@@ -180,6 +180,28 @@ func TestPartial(t *testing.T) {
 			ast.Permit(),
 			true,
 		},
+		{"ignoreHas",
+			ast.Permit().When(ast.Context().Has("ignore")),
+			&Env{
+				Context: types.Record{
+					"ignore":   Ignore(),
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit(),
+			true,
+		},
+		{"ignoreHasNot",
+			ast.Permit().When(ast.Not(ast.Context().Has("ignore"))),
+			&Env{
+				Context: types.Record{
+					"ignore":   Ignore(),
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit(),
+			true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

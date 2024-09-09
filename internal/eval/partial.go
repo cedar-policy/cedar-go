@@ -218,7 +218,7 @@ func partial(env *Env, n ast.IsNode) (ast.IsNode, error) {
 		return tryPartial(env,
 			[]ast.IsNode{v.Arg},
 			func(values []types.Value) Evaler {
-				return newHasEval(newLiteralEval(values[0]), v.Value)
+				return newPartialHasEval(newLiteralEval(values[0]), v.Value)
 			},
 			func(nodes []ast.IsNode) ast.IsNode {
 				return ast.NodeTypeHas{StrOpNode: ast.StrOpNode{Arg: nodes[0], Value: v.Value}}
