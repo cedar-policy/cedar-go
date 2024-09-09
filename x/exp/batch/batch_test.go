@@ -251,3 +251,15 @@ func TestBatch(t *testing.T) {
 		})
 	}
 }
+
+func TestBatchErrors(t *testing.T) {
+	t.Parallel()
+	t.Run("unboundVariables", func(t *testing.T) {
+		t.Parallel()
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: Variable("bananas"),
+		}, func(r Result) {},
+		)
+		testutil.ErrorIs(t, err, errUnboundVariable)
+	})
+}

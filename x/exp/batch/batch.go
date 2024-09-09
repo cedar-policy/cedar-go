@@ -70,12 +70,24 @@ type Result struct {
 
 type Callback func(Result)
 
+var errUnboundVariable = fmt.Errorf("unbound variable")
+
 // Authorize will run a batch of authorization evaluations.
 // It will error in case of early termination.
 // It will error in case any of PARC are an incorrect type at eval type.
 // The result passed to the callback must be used / cloned immediately and not modified.
 func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback) error {
 	var be batchEvaler
+	var found []types.String
+	found = findVariables(request.Principal, found)
+	found = findVariables(request.Action, found)
+	found = findVariables(request.Resource, found)
+	found = findVariables(request.Context, found)
+	for _, key := range found {
+		if _, ok := request.Variables[key]; !ok {
+			return fmt.Errorf("%w: %v", errUnboundVariable, key)
+		}
+	}
 	pm := ps.Map()
 	be.policies = make([]idPolicy, len(pm))
 	i := 0
@@ -293,4 +305,24 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 		return t, cloned
 	}
 	return r, false
+}
+
+func findVariables(r types.Value, found []types.String) []types.String {
+	switch t := r.(type) {
+	case types.EntityUID:
+		if key, ok := eval.ToVariable(t); ok {
+			if !slices.Contains(found, key) {
+				found = append(found, key)
+			}
+		}
+	case types.Record:
+		for _, vv := range t {
+			found = findVariables(vv, found)
+		}
+	case types.Set:
+		for _, vv := range t {
+			found = findVariables(vv, found)
+		}
+	}
+	return found
 }
