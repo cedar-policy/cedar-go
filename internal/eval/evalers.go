@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
@@ -147,6 +148,25 @@ func newErrorEval(err error) *errorEval {
 
 func (n *errorEval) Eval(_ *Env) (types.Value, error) {
 	return zeroValue(), n.err
+}
+
+// partialErrorEval
+type partialErrorEval struct {
+	arg Evaler
+}
+
+func newPartialErrorEval(err Evaler) *partialErrorEval {
+	return &partialErrorEval{
+		arg: err,
+	}
+}
+
+func (n *partialErrorEval) Eval(env *Env) (types.Value, error) {
+	v, err := evalString(n.arg, env)
+	if err != nil {
+		return nil, err
+	}
+	return zeroValue(), errors.New(string(v))
 }
 
 // literalEval
@@ -1217,6 +1237,11 @@ func (n *ipIsInRangeEval) Eval(env *Env) (types.Value, error) {
 // extensionEval
 
 func newExtensionEval(name types.Path, args []Evaler) Evaler {
+	// error is not part of the cedar spec, so leaving it out of the list of extensions that can be parsed, etc
+	if name == "error" && len(args) == 1 {
+		return newPartialErrorEval(args[0])
+	}
+
 	if i, ok := extensions.ExtMap[name]; ok {
 		if i.Args != len(args) {
 			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s)", errArity, name, i.Args))

@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
@@ -54,14 +55,14 @@ func TestPartial(t *testing.T) {
 		{"conditionDropError",
 			ast.Permit().When(ast.Long(42).GreaterThan(ast.String("bananas"))),
 			&Env{},
-			nil,
-			false,
+			ast.Permit().When(ast.NewNode(extError(errors.New("type error: expected long, got string")))),
+			true,
 		},
 		{"conditionDropTypeError",
 			ast.Permit().When(ast.Long(42)),
 			&Env{},
-			nil,
-			false,
+			ast.Permit().When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
+			true,
 		},
 		{"conditionKeepUnfolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
@@ -90,8 +91,8 @@ func TestPartial(t *testing.T) {
 			&Env{
 				Context: types.String("bananas"),
 			},
-			nil,
-			false,
+			ast.Permit().When(ast.NewNode(extError(errors.New("type error: expected long, got string")))),
+			true,
 		},
 		{"contextVariableAccess",
 			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
@@ -202,12 +203,62 @@ func TestPartial(t *testing.T) {
 			ast.Permit(),
 			true,
 		},
+		{"errorShortCircuit",
+			ast.Permit().When(ast.True()).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
+			&Env{
+				Context: types.Record{
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit().When(ast.NewNode(extError(errors.New("type error: expected long, got string")))),
+			true,
+		},
+		{"errorShortCircuitKept",
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
+			&Env{
+				Context: types.Record{
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(extError(errors.New("type error: expected long, got string")))),
+			true,
+		},
+		{"errorConditionShortCircuit",
+			ast.Permit().When(ast.True()).When(ast.String("test")).When(ast.Context().Access("variable")),
+			&Env{
+				Context: types.Record{
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit().When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
+			true,
+		},
+		{"errorConditionShortCircuitKept",
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test")).When(ast.Context().Access("variable")),
+			&Env{
+				Context: types.Record{
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
+			true,
+		},
+		{"errorConditionShortCircuitKeptDeeper",
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test")).When(ast.Context().Access("variable")),
+			&Env{
+				Context: types.Record{
+					"variable": Variable("variable"),
+				},
+			},
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
+			true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, keep, _ := PartialPolicy(InitEnv(tt.env), tt.in)
+			out, keep := PartialPolicy(InitEnv(tt.env), tt.in)
 			if keep {
 				testutil.Equals(t, out, tt.out)
 				// gotP := (*parser.Policy)(out)
@@ -253,7 +304,7 @@ func TestPartialIfThenElse(t *testing.T) {
 		{"ifFalseErrorB", ast.IfThenElse(falseN, errorN, valueB), valueB, testutil.OK},
 
 		{"ifKeepKeepKeep", ast.IfThenElse(keepN, keepN, keepN), ast.IfThenElse(keepN, keepN, keepN), testutil.OK},
-		{"ifKeepErrorError", ast.IfThenElse(keepN, errorN, errorN), ast.IfThenElse(keepN, ast.ExtensionCall("error"), ast.ExtensionCall("error")), testutil.OK},
+		{"ifKeepErrorError", ast.IfThenElse(keepN, errorN, errorN), ast.IfThenElse(keepN, ast.ExtensionCall("error", ast.String("type error: expected long, got string")), ast.ExtensionCall("error", ast.String("type error: expected long, got string"))), testutil.OK},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -311,7 +362,7 @@ func TestPartialAnd(t *testing.T) {
 		{"andKeepFalse", keepN.And(falseN), keepN.And(falseN), testutil.OK},
 		{"andKeepValue", keepN.And(valueN), keepN.And(valueN), testutil.OK},
 		{"andKeepKeep", keepN.And(keepN), keepN.And(keepN), testutil.OK},
-		{"andKeepError", keepN.And(errorN), keepN.And(ast.ExtensionCall("error")), testutil.OK},
+		{"andKeepError", keepN.And(errorN), keepN.And(ast.ExtensionCall("error", ast.String("type error: expected long, got string"))), testutil.OK},
 
 		{"andErrorTrue", errorN.And(trueN), nil, testutil.Error},
 		{"andErrorFalse", errorN.And(falseN), nil, testutil.Error},
@@ -375,7 +426,7 @@ func TestPartialOr(t *testing.T) {
 		{"orKeepFalse", keepN.Or(falseN), keepN.Or(falseN), testutil.OK},
 		{"orKeepValue", keepN.Or(valueN), keepN.Or(valueN), testutil.OK},
 		{"orKeepKeep", keepN.Or(keepN), keepN.Or(keepN), testutil.OK},
-		{"orKeepError", keepN.Or(errorN), keepN.Or(ast.ExtensionCall("error")), testutil.OK},
+		{"orKeepError", keepN.Or(errorN), keepN.Or(ast.ExtensionCall("error", ast.String("type error: expected long, got string"))), testutil.OK},
 
 		{"orErrorTrue", errorN.Or(trueN), nil, testutil.Error},
 		{"orErrorFalse", errorN.Or(falseN), nil, testutil.Error},

@@ -128,7 +128,7 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 	// else, partial eval what we have so far
 	var np []idPolicy
 	for _, p := range be.policies {
-		part, keep, _ := eval.PartialPolicy(be.env, p.Policy)
+		part, keep := eval.PartialPolicy(be.env, p.Policy)
 		if !keep {
 			continue
 		}

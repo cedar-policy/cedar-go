@@ -43,37 +43,45 @@ func IsIgnore(v types.Value) bool {
 }
 
 // PartialPolicy itself cannot error, it can only return the error that would happen
-func PartialPolicy(env *Env, p *ast.Policy) (policy *ast.Policy, keep bool, policyErr error) {
+func PartialPolicy(env *Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
 	p2 := *p
 	if p2.Principal, keep = partialPrincipalScope(env, env.Principal, p2.Principal); !keep {
-		return nil, false, nil
+		return nil, false
 	}
 	if p2.Action, keep = partialActionScope(env, env.Action, p2.Action); !keep {
-		return nil, false, nil
+		return nil, false
 	}
 	if p2.Resource, keep = partialResourceScope(env, env.Resource, p2.Resource); !keep {
-		return nil, false, nil
+		return nil, false
 	}
+	p2.Annotations = slices.Clone(p.Annotations)
 	p2.Conditions = nil
 	for _, c := range p.Conditions {
 		body, err := partial(env, c.Body)
-		if errors.Is(err, errIgnore) && p.Effect == ast.EffectPermit {
+		if errors.Is(err, errVariable) {
+			p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: c.Body})
 			continue
+		} else if errors.Is(err, errIgnore) && p.Effect == ast.EffectPermit {
+			continue
+		} else if errors.Is(err, errIgnore) && p.Effect == ast.EffectForbid {
+			return nil, false
 		} else if err != nil {
-			return nil, false, err
+			p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: extError(err)})
+			return &p2, true
 		} else if v, ok := body.(ast.NodeValue); ok {
 			if b, bok := v.Value.(types.Boolean); bok {
 				if bool(b) != bool(c.Condition) {
-					return nil, false, nil
+					return nil, false
 				}
 				continue
 			}
-			return nil, false, fmt.Errorf("%w: condition expected bool", ErrType)
+			err := fmt.Errorf("%w: condition expected bool", ErrType)
+			p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: extError(err)})
+			return &p2, true
 		}
 		p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: body})
 	}
-	p2.Annotations = slices.Clone(p.Annotations)
-	return &p2, true, nil
+	return &p2, true
 }
 
 func partialPrincipalScope(env *Env, ent types.Value, scope ast.IsPrincipalScopeNode) (ast.IsPrincipalScopeNode, bool) {
@@ -409,13 +417,13 @@ func partialIfThenElse(env *Env, v ast.NodeTypeIfThenElse) (ast.IsNode, error) {
 	if errors.Is(thenErr, errIgnore) {
 		return nil, thenErr
 	} else if thenErr != nil && !errors.Is(thenErr, errVariable) {
-		then = ast.NodeTypeExtensionCall{Name: "error"}
+		then = extError(thenErr)
 	}
 	else_, elseErr := partial(env, v.Else)
 	if errors.Is(elseErr, errIgnore) {
 		return nil, elseErr
 	} else if elseErr != nil && !errors.Is(elseErr, errVariable) {
-		else_ = ast.NodeTypeExtensionCall{Name: "error"}
+		else_ = extError(elseErr)
 	}
 	return ast.NodeTypeIfThenElse{If: if_, Then: then, Else: else_}, nil
 }
@@ -441,7 +449,7 @@ func partialAnd(env *Env, v ast.NodeTypeAnd) (ast.IsNode, error) {
 	if errors.Is(rightErr, errIgnore) {
 		return nil, rightErr
 	} else if rightErr != nil && !errors.Is(rightErr, errVariable) {
-		right = ast.NodeTypeExtensionCall{Name: "error"}
+		right = extError(rightErr)
 	}
 	return ast.NodeTypeAnd{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, nil
 }
@@ -467,7 +475,11 @@ func partialOr(env *Env, v ast.NodeTypeOr) (ast.IsNode, error) {
 	if errors.Is(rightErr, errIgnore) {
 		return nil, rightErr
 	} else if rightErr != nil && !errors.Is(rightErr, errVariable) {
-		right = ast.NodeTypeExtensionCall{Name: "error"}
+		right = extError(rightErr)
 	}
 	return ast.NodeTypeOr{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, nil
+}
+
+func extError(err error) ast.NodeTypeExtensionCall {
+	return ast.NodeTypeExtensionCall{Name: "error", Args: []ast.IsNode{ast.NodeValue{Value: types.String(err.Error())}}}
 }

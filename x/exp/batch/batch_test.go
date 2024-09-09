@@ -198,6 +198,33 @@ func TestBatch(t *testing.T) {
 				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"resource": r2, "key": types.Long(43)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
+
+		{"errors",
+			ast.Permit().
+				When(ast.String("test").LessThan(ast.Long(42))),
+			types.Entities{},
+			Request{
+				Principal: Variable("principal"),
+				Action:    Variable("action"),
+				Resource:  Variable("resource"),
+				Context:   types.Record{},
+				Variables: Variables{
+					"principal": []types.Value{p1},
+					"action":    []types.Value{a1},
+					"resource":  []types.Value{r1},
+				},
+			},
+			[]Result{
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false,
+					Values: Values{"principal": p1, "action": a1, "resource": r1},
+					Diagnostic: types.Diagnostic{
+						Errors: []types.DiagnosticError{
+							{PolicyID: "0", Message: "type error: expected long, got string"},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -219,7 +246,7 @@ func TestBatch(t *testing.T) {
 				for _, b := range res {
 					found = found || reflect.DeepEqual(a, b)
 				}
-				testutil.Equals(t, found, true)
+				testutil.FatalIf(t, !found, "missing result: %+v, from: %+v", a, res)
 			}
 		})
 	}
