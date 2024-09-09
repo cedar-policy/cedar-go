@@ -1,4 +1,4 @@
-package cedar
+package cedar_test
 
 import (
 	"archive/tar"
@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -149,7 +150,7 @@ func TestCorpus(t *testing.T) {
 				t.Fatal("error reading policy content", err)
 			}
 
-			policySet, err := NewPolicySetFromBytes("policy.cedar", policyContent)
+			policySet, err := cedar.NewPolicySetFromBytes("policy.cedar", policyContent)
 			if err != nil {
 				t.Fatal("error parsing policy set", err)
 			}
@@ -159,7 +160,7 @@ func TestCorpus(t *testing.T) {
 					t.Parallel()
 					ok, diag := policySet.IsAuthorized(
 						entities,
-						Request{
+						cedar.Request{
 							Principal: types.EntityUID(request.Principal),
 							Action:    types.EntityUID(request.Action),
 							Resource:  types.EntityUID(request.Resource),
@@ -195,10 +196,10 @@ func TestCorpusRelated(t *testing.T) {
 	tests := []struct {
 		name     string
 		policy   string
-		request  Request
-		decision Decision
-		reasons  []PolicyID
-		errors   []PolicyID
+		request  cedar.Request
+		decision cedar.Decision
+		reasons  []cedar.PolicyID
+		errors   []cedar.PolicyID
 	}{
 		{
 			"0cb1ad7042508e708f1999284b634ed0f334bc00",
@@ -209,10 +210,10 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			(true && (((!870985681610) == principal) == principal)) && principal
 		};`,
-			Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
-			Deny,
+			cedar.Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
+			cedar.Deny,
 			nil,
-			[]PolicyID{"policy0"},
+			[]cedar.PolicyID{"policy0"},
 		},
 
 		{
@@ -224,10 +225,10 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			(((!870985681610) == principal) == principal)
 		};`,
-			Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
-			Deny,
+			cedar.Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
+			cedar.Deny,
 			nil,
-			[]PolicyID{"policy0"},
+			[]cedar.PolicyID{"policy0"},
 		},
 		{
 			"0cb1ad7042508e708f1999284b634ed0f334bc00/partial2",
@@ -238,10 +239,10 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			((!870985681610) == principal)
 		};`,
-			Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
-			Deny,
+			cedar.Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
+			cedar.Deny,
 			nil,
-			[]PolicyID{"policy0"},
+			[]cedar.PolicyID{"policy0"},
 		},
 
 		{
@@ -253,10 +254,10 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			(!870985681610)
 		};`,
-			Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
-			Deny,
+			cedar.Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
+			cedar.Deny,
 			nil,
-			[]PolicyID{"policy0"},
+			[]cedar.PolicyID{"policy0"},
 		},
 
 		{
@@ -268,10 +269,10 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			((!42) == principal)
 		};`,
-			Request{},
-			Deny,
+			cedar.Request{},
+			cedar.Deny,
 			nil,
-			[]PolicyID{"policy0"},
+			[]cedar.PolicyID{"policy0"},
 		},
 
 		{
@@ -283,10 +284,10 @@ func TestCorpusRelated(t *testing.T) {
 			) when {
 				(!42 == principal)
 			};`,
-			Request{},
-			Deny,
+			cedar.Request{},
+			cedar.Deny,
 			nil,
-			[]PolicyID{"policy0"},
+			[]cedar.PolicyID{"policy0"},
 		},
 
 		{"48d0ba6537a3efe02112ba0f5a3daabdcad27b04",
@@ -297,10 +298,10 @@ func TestCorpusRelated(t *testing.T) {
 			  ) when {
 				true && ((if (principal in action) then (ip("")) else (if true then (ip("6b6b:f00::32ff:ffff:6368/00")) else (ip("7265:6c69:706d:6f43:5f74:6f70:7374:6f68")))).isMulticast())
 			  };`,
-			Request{Principal: types.NewEntityUID("a", "\u0000\b\u0011\u0000R"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\b\u0011\u0000R")},
-			Deny,
+			cedar.Request{Principal: types.NewEntityUID("a", "\u0000\b\u0011\u0000R"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\b\u0011\u0000R")},
+			cedar.Deny,
 			nil,
-			[]PolicyID{"policy0"},
+			[]cedar.PolicyID{"policy0"},
 		},
 
 		{"48d0ba6537a3efe02112ba0f5a3daabdcad27b04/simplified",
@@ -311,10 +312,10 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			true && ip("6b6b:f00::32ff:ffff:6368/00").isMulticast()
 		  };`,
-			Request{},
-			Deny,
+			cedar.Request{},
+			cedar.Deny,
 			nil,
-			[]PolicyID{"policy0"},
+			[]cedar.PolicyID{"policy0"},
 		},
 
 		{name: "e91da4e6af5c73e27f5fb610d723dfa21635d10b",
@@ -325,26 +326,26 @@ func TestCorpusRelated(t *testing.T) {
 			  ) when {
 				true && (([ip("c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5/68")].containsAll([ip("c5c5:c5c5:c5c5:c5c5:c5c5:5cc5:c5c5:c5c5/68")])) || ((ip("")) == (ip(""))))
 			  };`,
-			request:  Request{Principal: types.NewEntityUID("a", "\u0000\u0000(W\u0000\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "")},
-			decision: Deny,
+			request:  cedar.Request{Principal: types.NewEntityUID("a", "\u0000\u0000(W\u0000\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "")},
+			decision: cedar.Deny,
 			reasons:  nil,
-			errors:   []PolicyID{"policy0"},
+			errors:   []cedar.PolicyID{"policy0"},
 		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			policy, err := NewPolicySetFromBytes("", []byte(tt.policy))
+			policy, err := cedar.NewPolicySetFromBytes("", []byte(tt.policy))
 			testutil.OK(t, err)
 			ok, diag := policy.IsAuthorized(types.Entities{}, tt.request)
 			testutil.Equals(t, ok, tt.decision)
-			var reasons []PolicyID
+			var reasons []cedar.PolicyID
 			for _, n := range diag.Reasons {
 				reasons = append(reasons, n.PolicyID)
 			}
 			testutil.Equals(t, reasons, tt.reasons)
-			var errors []PolicyID
+			var errors []cedar.PolicyID
 			for _, n := range diag.Errors {
 				errors = append(errors, n.PolicyID)
 			}
