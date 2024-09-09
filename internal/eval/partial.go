@@ -59,7 +59,7 @@ func PartialPolicy(env *Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
 	for _, c := range p.Conditions {
 		body, err := partial(env, c.Body)
 		if errors.Is(err, errVariable) {
-			p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: c.Body})
+			p2.Conditions = append(p2.Conditions, c)
 			continue
 		} else if errors.Is(err, errIgnore) && p.Effect == ast.EffectPermit {
 			continue
