@@ -73,6 +73,8 @@ type Callback func(Result)
 
 var errUnboundVariable = fmt.Errorf("unbound variable")
 var errUnusedVariable = fmt.Errorf("unused variable")
+var errMissingPart = fmt.Errorf("missing part")
+var errInvalidPart = fmt.Errorf("invalid part")
 
 type Option struct {
 	ignoreForbid bool
@@ -124,13 +126,13 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entitie
 	be.callback = cb
 	switch {
 	case request.Principal == nil:
-		return fmt.Errorf("batch missing principal")
+		return fmt.Errorf("%w: principal", errMissingPart)
 	case request.Action == nil:
-		return fmt.Errorf("batch missing action")
+		return fmt.Errorf("%w: action", errMissingPart)
 	case request.Resource == nil:
-		return fmt.Errorf("batch missing resource")
+		return fmt.Errorf("%w: resource", errMissingPart)
 	case request.Context == nil:
-		return fmt.Errorf("batch missing context")
+		return fmt.Errorf("%w: context", errMissingPart)
 	}
 	be.env = eval.InitEnv(&eval.Env{
 		Entities:  entityMap,
@@ -244,16 +246,16 @@ func diagnosticAuthzWithCallback(be *batchEvaler) error {
 	var res Result
 	var err error
 	if res.Request.Principal, err = eval.ValueToEntity(be.env.Principal); err != nil {
-		return err
+		return fmt.Errorf("%w: %w", errInvalidPart, err)
 	}
 	if res.Request.Action, err = eval.ValueToEntity(be.env.Action); err != nil {
-		return err
+		return fmt.Errorf("%w: %w", errInvalidPart, err)
 	}
 	if res.Request.Resource, err = eval.ValueToEntity(be.env.Resource); err != nil {
-		return err
+		return fmt.Errorf("%w: %w", errInvalidPart, err)
 	}
 	if res.Request.Context, err = eval.ValueToRecord(be.env.Context); err != nil {
-		return err
+		return fmt.Errorf("%w: %w", errInvalidPart, err)
 	}
 	res.Values = be.Values
 	batchCompile(be)

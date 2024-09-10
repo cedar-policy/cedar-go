@@ -281,6 +281,126 @@ func TestBatchErrors(t *testing.T) {
 		testutil.Equals(t, total, 0)
 
 	})
+
+	t.Run("missingPrincipal", func(t *testing.T) {
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: nil,
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  types.NewEntityUID("Resource", "resource"),
+			Context:   types.Record{},
+		}, func(_ Result) {},
+		)
+		testutil.ErrorIs(t, err, errMissingPart)
+	})
+	t.Run("missingAction", func(t *testing.T) {
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: types.NewEntityUID("Principal", "principal"),
+			Action:    nil,
+			Resource:  types.NewEntityUID("Resource", "resource"),
+			Context:   types.Record{},
+		}, func(_ Result) {},
+		)
+		testutil.ErrorIs(t, err, errMissingPart)
+	})
+	t.Run("missingPrincipal", func(t *testing.T) {
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: types.NewEntityUID("Principal", "principal"),
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  nil,
+			Context:   types.Record{},
+		}, func(_ Result) {},
+		)
+		testutil.ErrorIs(t, err, errMissingPart)
+	})
+	t.Run("missingPrincipal", func(t *testing.T) {
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: types.NewEntityUID("Principal", "principal"),
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  types.NewEntityUID("Resource", "resource"),
+			Context:   nil,
+		}, func(_ Result) {},
+		)
+		testutil.ErrorIs(t, err, errMissingPart)
+	})
+
+	t.Run("contextCancelled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		err := Authorize(ctx, cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: types.NewEntityUID("Principal", "principal"),
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  types.NewEntityUID("Resource", "resource"),
+			Context:   types.Record{},
+		}, func(_ Result) {},
+		)
+		testutil.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("lateContextCancelled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		var total int
+		err := Authorize(ctx, cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: types.NewEntityUID("Principal", "principal"),
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  Variable("resource"),
+			Context:   types.Record{},
+			Variables: Variables{
+				"resource": []types.Value{
+					types.NewEntityUID("Resource", "1"),
+					types.NewEntityUID("Resource", "2"),
+					types.NewEntityUID("Resource", "3"),
+				},
+			},
+		}, func(_ Result) {
+			total++
+			cancel()
+		},
+		)
+		testutil.ErrorIs(t, err, context.Canceled)
+		testutil.Equals(t, total, 1)
+	})
+
+	t.Run("invalidPrincipal", func(t *testing.T) {
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: types.String("invalid"),
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  types.NewEntityUID("Resource", "resource"),
+			Context:   types.Record{},
+		}, func(_ Result) {},
+		)
+		testutil.ErrorIs(t, err, errInvalidPart)
+	})
+	t.Run("invalidAction", func(t *testing.T) {
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: types.NewEntityUID("Principal", "principal"),
+			Action:    types.String("invalid"),
+			Resource:  types.NewEntityUID("Resource", "resource"),
+			Context:   types.Record{},
+		}, func(_ Result) {},
+		)
+		testutil.ErrorIs(t, err, errInvalidPart)
+	})
+	t.Run("invalidPrincipal", func(t *testing.T) {
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: types.NewEntityUID("Principal", "principal"),
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  types.String("invalid"),
+			Context:   types.Record{},
+		}, func(_ Result) {},
+		)
+		testutil.ErrorIs(t, err, errInvalidPart)
+	})
+	t.Run("invalidPrincipal", func(t *testing.T) {
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: types.NewEntityUID("Principal", "principal"),
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  types.NewEntityUID("Resource", "resource"),
+			Context:   types.String("invalid"),
+		}, func(_ Result) {},
+		)
+		testutil.ErrorIs(t, err, errInvalidPart)
+	})
+
 }
 
 func TestIgnoreUseCases(t *testing.T) {
@@ -510,6 +630,84 @@ func TestIgnoreUseCases(t *testing.T) {
 			slices.Sort(reasons)
 			slices.Sort(tt.Reasons)
 			testutil.Equals(t, reasons, tt.Reasons)
+		})
+	}
+}
+
+func TestCloneSub(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		in    types.Value
+		key   types.String
+		value types.Value
+		out   types.Value
+		match bool
+	}{
+		{
+			"variable",
+			Variable("bananas"), "bananas", types.String("hello"),
+			types.String("hello"), true,
+		},
+		{
+			"record",
+			types.Record{"key": Variable("bananas")}, "bananas", types.String("hello"),
+			types.Record{"key": types.String("hello")}, true,
+		},
+		{
+			"set",
+			types.Set{Variable("bananas")}, "bananas", types.String("hello"),
+			types.Set{types.String("hello")}, true,
+		},
+		{
+			"recordNoChange",
+			types.Record{"key": Variable("asdf")}, "bananas", types.String("hello"),
+			types.Record{"key": Variable("asdf")}, false,
+		},
+		{
+			"setNoChange",
+			types.Set{Variable("asdf")}, "bananas", types.String("hello"),
+			types.Set{Variable("asdf")}, false,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out, match := cloneSub(tt.in, tt.key, tt.value)
+			testutil.Equals(t, out, tt.out)
+			testutil.Equals(t, match, tt.match)
+			if !tt.match {
+				// assert that the effort of cloning was not done at all
+				testutil.Equals(t,
+					reflect.ValueOf(tt.in).Pointer(),
+					reflect.ValueOf(out).Pointer(),
+				)
+			}
+		})
+	}
+}
+
+func TestFindVariables(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   types.Value
+		out  []types.String
+	}{
+		{"record", types.Record{"key": Variable("bananas")}, []types.String{"bananas"}},
+		{"set", types.Set{Variable("bananas")}, []types.String{"bananas"}},
+		{"dupes", types.Set{Variable("bananas"), Variable("bananas")}, []types.String{"bananas"}},
+		{"none", types.String("test"), nil},
+		{"multi", types.Set{Variable("bananas"), Variable("test")}, []types.String{"bananas", "test"}},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := findVariables(tt.in, nil)
+			testutil.Equals(t, out, tt.out)
 		})
 	}
 
