@@ -265,94 +265,227 @@ func TestBatchErrors(t *testing.T) {
 	})
 }
 
-func TestUseCases(t *testing.T) {
+func TestIgnoreUseCases(t *testing.T) {
 	t.Parallel()
 
 	doc := `
-	// policy0
+	@id("bob0")
 	permit (
 		principal == Principal::"bob",
 		action == Action::"access",
 		resource == Resource::"prod"
 	)
-		when { context.device == "good" }
+		when { context has device && context.device == "good" }
 	;
 
-	// policy1
+	@id("bob1")
 	permit (
 		principal == Principal::"bob",
 		action == Action::"access",
 		resource == Resource::"prod"
 	)
-		when { context.onCall == true }
+		when { context has onCall && context.onCall == true }
 	;
 
-	// policy2
+	@id("bob2")
 	forbid (
 		principal == Principal::"bob",
 		action == Action::"access",
 		resource == Resource::"prod"
 	)
-		when { context.device == "bad" }
+		when { !(context has device) || context.device == "bad" }
 	;
 
-	// policy3
+	@id("bob3")
 	forbid (
 		principal == Principal::"bob",
 		action == Action::"access",
 		resource == Resource::"prod"
 	)
-		when { context.location == "unknown" }
+		when { !(context has location) || context.location == "unknown" }
+	;
+
+	@id("bob4")
+	permit (
+		principal == Principal::"bob",
+		action == Action::"write",
+		resource == Resource::"mitm"
+	);
+
+	@id("bob5-condition")
+	permit (
+		principal,
+		action == Action::"write",
+		resource == Resource::"mitm"
+	)
+		when { principal == Principal::"bob" }
+	;
+
+	@id("alice0")
+	permit (
+		principal == Principal::"alice",
+		action == Action::"access",
+		resource == Resource::"prod"
+	)
+		when { context has device && context.device == "good" }
+	;
+
+	@id("alice1")
+	permit (
+		principal == Principal::"alice",
+		action == Action::"drop",
+		resource == Resource::"prod"
+	)
+		when { context has device && context.device == "good" }
+	;
+
+	@id("eve0")
+	permit (
+		principal == Principal::"eve",
+		action == Action::"drop",
+		resource == Resource::"mitm"
+	)
+		when { context has device && context.device == "good" }
 	;
 	`
 
-	ps, err := cedar.NewPolicySetFromBytes("policy.cedar", []byte(doc))
+	ps := cedar.NewPolicySet()
+	pp, err := cedar.NewPolicyListFromBytes("policy.cedar", []byte(doc))
 	testutil.OK(t, err)
-	t.Run("when-could-bob-access-prod", func(t *testing.T) {
-		var got []types.PolicyID
-		err := Authorize(context.Background(), ps, types.Entities{}, Request{
-			Principal: types.NewEntityUID("Principal", "bob"),
-			Action:    types.NewEntityUID("Action", "access"),
-			Resource:  types.NewEntityUID("Resource", "prod"),
-			Context:   Ignore(),
-		}, func(r Result) {
-			for _, v := range r.Diagnostic.Reasons {
-				got = append(got, v.PolicyID)
-			}
-		},
-		)
-		testutil.OK(t, err)
-		want := []types.PolicyID{
-			"policy0",
-			"policy1",
-		}
-		slices.Sort(got)
-		slices.Sort(want)
-		testutil.Equals(t, got, want)
-	})
+	for _, p := range pp {
+		pid := types.PolicyID(p.Annotations()["id"])
+		testutil.FatalIf(t, ps.Get(pid) != nil, "policy already exists: %v", pid)
+		ps.Store(pid, p)
+	}
 
-	t.Run("when-could-bob-not-access-prod", func(t *testing.T) {
-		t.Parallel()
-		var got []types.PolicyID
-		err := Authorize(context.Background(), ps, types.Entities{}, Request{
-			Principal: types.NewEntityUID("Principal", "bob"),
-			Action:    types.NewEntityUID("Action", "access"),
-			Resource:  types.NewEntityUID("Resource", "prod"),
-			Context:   Ignore(),
-		}, func(r Result) {
-			for _, v := range r.Diagnostic.Reasons {
-				got = append(got, v.PolicyID)
-			}
+	tests := []struct {
+		Name     string
+		Request  Request
+		Options  []Option
+		Total    int
+		Decision types.Decision
+		Reasons  []types.PolicyID
+	}{
+		{"when-could-bob-access-prod-ignoring-context",
+			Request{
+				Principal: types.NewEntityUID("Principal", "bob"),
+				Action:    types.NewEntityUID("Action", "access"),
+				Resource:  types.NewEntityUID("Resource", "prod"),
+				Context:   Ignore(),
+			},
+			nil,
+			1,
+			types.Allow,
+			[]types.PolicyID{"bob0", "bob1"},
 		},
-			WithIgnoreForbid(),
-		)
-		testutil.OK(t, err)
-		want := []types.PolicyID{
-			"policy2",
-			"policy3",
-		}
-		slices.Sort(got)
-		slices.Sort(want)
-		testutil.Equals(t, got, want)
-	})
+		{"when-could-bob-not-access-prod-ignoring-context",
+			Request{
+				Principal: types.NewEntityUID("Principal", "bob"),
+				Action:    types.NewEntityUID("Action", "access"),
+				Resource:  types.NewEntityUID("Resource", "prod"),
+				Context:   Ignore(),
+			},
+			[]Option{WithIgnoreForbid()},
+			1,
+			types.Deny,
+			[]types.PolicyID{"bob2", "bob3"},
+		},
+		{"can-anyone-access-prod-ignoring-context",
+			Request{
+				Principal: Ignore(),
+				Action:    types.NewEntityUID("Action", "access"),
+				Resource:  types.NewEntityUID("Resource", "prod"),
+				Context:   Ignore(),
+			},
+			nil,
+			1,
+			types.Allow,
+			[]types.PolicyID{"bob0", "bob1", "alice0"},
+		},
+		{"can-anyone-drop-prod-ignoring-context",
+			Request{
+				Principal: Ignore(),
+				Action:    types.NewEntityUID("Action", "drop"),
+				Resource:  types.NewEntityUID("Resource", "prod"),
+				Context:   Ignore(),
+			},
+			nil,
+			1,
+			types.Allow,
+			[]types.PolicyID{"alice1"},
+		},
+		{"what-policies-permit-against-prod",
+			Request{
+				Principal: Ignore(),
+				Action:    Ignore(),
+				Resource:  types.NewEntityUID("Resource", "prod"),
+				Context:   Ignore(),
+			},
+			nil,
+			1,
+			types.Allow,
+			[]types.PolicyID{"bob0", "bob1", "alice0", "alice1"},
+		},
+		{"what-policies-forbid-against-prod",
+			Request{
+				Principal: Ignore(),
+				Action:    Ignore(),
+				Resource:  types.NewEntityUID("Resource", "prod"),
+				Context:   Ignore(),
+			},
+			[]Option{WithIgnoreForbid()},
+			1,
+			types.Deny,
+			[]types.PolicyID{"bob2", "bob3"},
+		},
+		{"what-permit-policies-relate-to-drops",
+			Request{
+				Principal: Ignore(),
+				Action:    types.NewEntityUID("Action", "drop"),
+				Resource:  Ignore(),
+				Context:   Ignore(),
+			},
+			nil,
+			1,
+			types.Allow,
+			[]types.PolicyID{"alice1", "eve0"},
+		},
+		{"what-permit-policies-relate-to-bob",
+			Request{
+				Principal: types.NewEntityUID("Principal", "bob"),
+				Action:    Ignore(),
+				Resource:  Ignore(),
+				Context:   Ignore(),
+			},
+			nil,
+			1,
+			types.Allow,
+			[]types.PolicyID{"bob0", "bob1", "bob4", "bob5-condition"},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
+
+			var reasons []types.PolicyID
+			var total int
+			err := Authorize(context.Background(), ps, types.Entities{}, tt.Request, func(r Result) {
+				total++
+				testutil.Equals(t, r.Decision, tt.Decision)
+				for _, v := range r.Diagnostic.Reasons {
+					if !slices.Contains(reasons, v.PolicyID) {
+						reasons = append(reasons, v.PolicyID)
+					}
+				}
+			}, tt.Options...)
+			testutil.OK(t, err)
+			testutil.Equals(t, total, tt.Total)
+			slices.Sort(reasons)
+			slices.Sort(tt.Reasons)
+			testutil.Equals(t, reasons, tt.Reasons)
+		})
+	}
+
 }
