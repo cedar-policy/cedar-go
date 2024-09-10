@@ -1293,6 +1293,11 @@ func TestAttributeAccessNode(t *testing.T) {
 			"knownAttr",
 			types.Long(42),
 			nil},
+		{"UnknownAttributeOnEntity",
+			newLiteralEval(types.NewEntityUID("knownType", "knownID")),
+			"unknownAttr",
+			zeroValue(),
+			errAttributeAccess},
 		{"UnknownEntity",
 			newLiteralEval(types.NewEntityUID("unknownType", "unknownID")),
 			"unknownAttr",
@@ -1729,6 +1734,146 @@ func TestInNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newInEval(tt.lhs, tt.rhs)
+			entityMap := types.Entities{}
+			for k, p := range tt.parents {
+				var ps []types.EntityUID
+				for _, pp := range p {
+					ps = append(ps, strEnt(pp))
+				}
+				uid := strEnt(k)
+				entityMap[uid] = &types.Entity{
+					UID:     uid,
+					Parents: ps,
+				}
+			}
+			ec := InitEnv(&Env{Entities: entityMap})
+			v, err := n.Eval(ec)
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestIsInNode(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		lhs     Evaler
+		is      types.EntityType
+		rhs     Evaler
+		parents map[string][]string
+		result  types.Value
+		err     error
+	}{
+		{
+			"LhsError",
+			newErrorEval(errTest),
+			"human",
+			newLiteralEval(types.Set{}),
+			map[string][]string{},
+			zeroValue(),
+			errTest,
+		},
+		{
+			"LhsTypeError",
+			newLiteralEval(types.String("foo")),
+			"human",
+			newLiteralEval(types.Set{}),
+			map[string][]string{},
+			zeroValue(),
+			ErrType,
+		},
+		{
+			"RhsError",
+			newLiteralEval(types.NewEntityUID("human", "joe")),
+			"human",
+			newErrorEval(errTest),
+			map[string][]string{},
+			zeroValue(),
+			errTest,
+		},
+		{
+			"RhsTypeError1",
+			newLiteralEval(types.NewEntityUID("human", "joe")),
+			"human",
+			newLiteralEval(types.String("foo")),
+			map[string][]string{},
+			zeroValue(),
+			ErrType,
+		},
+		{
+			"RhsTypeError2",
+			newLiteralEval(types.NewEntityUID("human", "joe")),
+			"human",
+			newLiteralEval(types.Set{
+				types.String("foo"),
+			}),
+			map[string][]string{},
+			zeroValue(),
+			ErrType,
+		},
+		{
+			"Reflexive1",
+			newLiteralEval(types.NewEntityUID("human", "joe")),
+			"human",
+			newLiteralEval(types.NewEntityUID("human", "joe")),
+			map[string][]string{},
+			types.True,
+			nil,
+		},
+		{
+			"Reflexive2",
+			newLiteralEval(types.NewEntityUID("human", "joe")),
+			"human",
+			newLiteralEval(types.Set{
+				types.NewEntityUID("human", "joe"),
+			}),
+			map[string][]string{},
+			types.True,
+			nil,
+		},
+		{
+			"BasicTrue",
+			newLiteralEval(types.NewEntityUID("human", "joe")),
+			"human",
+			newLiteralEval(types.NewEntityUID("kingdom", "animal")),
+			map[string][]string{
+				`human::"joe"`:     {`species::"human"`},
+				`species::"human"`: {`kingdom::"animal"`},
+			},
+			types.True,
+			nil,
+		},
+		{
+			"BasicFalse",
+			newLiteralEval(types.NewEntityUID("human", "joe")),
+			"human",
+			newLiteralEval(types.NewEntityUID("kingdom", "plant")),
+			map[string][]string{
+				`human::"joe"`:     {`species::"human"`},
+				`species::"human"`: {`kingdom::"animal"`},
+			},
+			types.False,
+			nil,
+		},
+		{
+			"wrongType",
+			newLiteralEval(types.NewEntityUID("human", "joe")),
+			"bananas",
+			newLiteralEval(types.NewEntityUID("kingdom", "animal")),
+			map[string][]string{
+				`human::"joe"`:     {`species::"human"`},
+				`species::"human"`: {`kingdom::"animal"`},
+			},
+			types.False,
+			nil,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newIsInEval(tt.lhs, tt.is, tt.rhs)
 			entityMap := types.Entities{}
 			for k, p := range tt.parents {
 				var ps []types.EntityUID

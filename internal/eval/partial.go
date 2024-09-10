@@ -485,3 +485,55 @@ func partialOr(env *Env, v ast.NodeTypeOr) (ast.IsNode, error) {
 func extError(err error) ast.NodeTypeExtensionCall {
 	return ast.NodeTypeExtensionCall{Name: "error", Args: []ast.IsNode{ast.NodeValue{Value: types.String(err.Error())}}}
 }
+
+// partialHasEval
+type partialHasEval struct {
+	object    Evaler
+	attribute types.String
+}
+
+func newPartialHasEval(record Evaler, attribute types.String) *partialHasEval {
+	return &partialHasEval{object: record, attribute: attribute}
+}
+
+func (n *partialHasEval) Eval(env *Env) (types.Value, error) {
+	v, err := n.object.Eval(env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	var record types.Record
+	switch vv := v.(type) {
+	case types.EntityUID:
+		if rec, ok := env.Entities[vv]; ok {
+			record = rec.Attributes
+		}
+	case types.Record:
+		record = vv
+	default:
+		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
+	}
+	v, ok := record[n.attribute]
+	if IsIgnore(v) {
+		return nil, errIgnore
+	}
+	return types.Boolean(ok), nil
+}
+
+// partialErrorEval
+type partialErrorEval struct {
+	arg Evaler
+}
+
+func newPartialErrorEval(err Evaler) *partialErrorEval {
+	return &partialErrorEval{
+		arg: err,
+	}
+}
+
+func (n *partialErrorEval) Eval(env *Env) (types.Value, error) {
+	v, err := evalString(n.arg, env)
+	if err != nil {
+		return nil, err
+	}
+	return zeroValue(), errors.New(string(v))
+}
