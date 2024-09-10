@@ -255,6 +255,14 @@ func TestPartialPolicy(t *testing.T) {
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 			true,
 		},
+		{"keepDeepVariables",
+			ast.Permit().When(ast.True().Equal(ast.False().Equal(ast.Context()))),
+			&Env{
+				Context: Variable("context"),
+			},
+			ast.Permit().When(ast.True().Equal(ast.False().Equal(ast.Context()))),
+			true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
