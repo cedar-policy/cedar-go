@@ -2,6 +2,7 @@ package eval
 
 import (
 	"errors"
+	"fmt"
 	"net/netip"
 	"testing"
 
@@ -1026,4 +1027,84 @@ func TestPartialPanic(t *testing.T) {
 	testutil.Panic(t, func() {
 		partial(NewEnv(), nil)
 	})
+}
+
+func TestPartialErrorEval(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		env  Env
+		in   Evaler
+		out  types.Value
+		err  func(testutil.TB, error)
+	}{
+		{"happy",
+			Env{},
+			newPartialErrorEval(newLiteralEval(types.String("err"))),
+			nil, testutil.Error,
+		},
+
+		{"err",
+			Env{},
+			newPartialErrorEval(newLiteralEval(types.Long(42))),
+			nil, testutil.Error,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out, err := tt.in.Eval(InitEnv(&tt.env))
+			testutil.Equals(t, out, tt.out)
+			tt.err(t, err)
+		})
+	}
+}
+
+func TestPartialHasEval(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		env  Env
+		in   Evaler
+		out  types.Value
+		err  func(testutil.TB, error)
+	}{
+		{"happy",
+			Env{},
+			newPartialHasEval(newLiteralEval(types.Record{"key": types.Long(42)}), "key"),
+			types.True, testutil.OK,
+		},
+		{"badArg",
+			Env{},
+			newPartialHasEval(newErrorEval(fmt.Errorf("err")), "key"),
+			nil, testutil.Error,
+		},
+		{"badType",
+			Env{},
+			newPartialHasEval(newLiteralEval(types.String("test")), "key"),
+			nil, testutil.Error,
+		},
+		{"entity",
+			Env{Entities: types.Entities{
+				types.NewEntityUID("T", "1"): &types.Entity{
+					UID:        types.NewEntityUID("T", "1"),
+					Attributes: types.Record{"key": types.Long(42)},
+				},
+			}},
+			newPartialHasEval(newLiteralEval(types.NewEntityUID("T", "1")), "key"),
+			types.True, testutil.OK,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out, err := tt.in.Eval(InitEnv(&tt.env))
+			testutil.Equals(t, out, tt.out)
+			tt.err(t, err)
+		})
+	}
 }
