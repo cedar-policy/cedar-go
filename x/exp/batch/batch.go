@@ -85,8 +85,16 @@ func WithIgnoreForbid() Option {
 }
 
 // Authorize will run a batch of authorization evaluations.
-// It will error in case of early termination.
-// It will error in case any of PARC are an incorrect type at eval type.
+//
+// All the request parts (PARC) must be specified, but you can
+// specify Variable or Ignore.  Varibles can be enumerated
+// using the Variables.  
+//
+//   - It will error in case of early termination.
+//   - It will error in case any of PARC are an incorrect type at eval type.
+//   - It will error in case there are unbound variables.
+//   - It will error in case there are unused variables.
+//
 // The result passed to the callback must be used / cloned immediately and not modified.
 func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback, opts ...Option) error {
 	be := &batchEvaler{}
