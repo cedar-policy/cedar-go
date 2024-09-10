@@ -2,6 +2,7 @@ package eval
 
 import (
 	"errors"
+	"net/netip"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
@@ -9,7 +10,7 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func TestPartial(t *testing.T) {
+func TestPartialPolicy(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name string
@@ -451,4 +452,578 @@ func TestPartialOr(t *testing.T) {
 			testutil.Equals(t, out, nd.AsIsNode())
 		})
 	}
+}
+
+func errNode(msg string) ast.Node {
+	return ast.NewNode(extError(errors.New(msg)))
+}
+
+func errorIs(want error) func(testutil.TB, error) {
+	return func(t testutil.TB, got error) {
+		testutil.ErrorIs(t, got, want)
+	}
+}
+
+func TestPartialBasic(t *testing.T) {
+	t.Parallel()
+	nul := ast.NewNode(nil)
+	tests := []struct {
+		name string
+		in   ast.Node
+		out  ast.Node
+		err  func(testutil.TB, error)
+	}{
+		{
+			"variablePrincipalKeep",
+			ast.Principal(),
+			ast.Principal(),
+			errorIs(errVariable),
+		},
+		{
+			"variableActionKeep",
+			ast.Action(),
+			ast.Action(),
+			errorIs(errVariable),
+		},
+		{
+			"variableResourceKeep",
+			ast.Resource(),
+			ast.Resource(),
+			errorIs(errVariable),
+		},
+		{
+			"variableContextKeep",
+			ast.Context(),
+			ast.Context(),
+			errorIs(errVariable),
+		},
+		{
+			"valueTrueKeep",
+			ast.True(),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"valueFalseKeep",
+			ast.False(),
+			ast.False(),
+			testutil.OK,
+		},
+		{
+			"valueStringKeep",
+			ast.String("cedar"),
+			ast.String("cedar"),
+			testutil.OK,
+		},
+		{
+			"valueLongKeep",
+			ast.Long(42),
+			ast.Long(42),
+			testutil.OK,
+		},
+		{
+			"valueSetNodesKeep",
+			ast.Set(ast.Long(42), ast.Long(43), ast.Context()),
+			ast.Set(ast.Long(42), ast.Long(43), ast.Context()),
+			testutil.OK,
+		},
+		{
+			"valueSetNodesFold",
+			ast.Set(ast.Long(42), ast.Long(43)),
+			ast.Value(types.Set{types.Long(42), types.Long(43)}),
+			testutil.OK,
+		},
+		{
+			"valueSetNodesError",
+			ast.Set(errNode("err")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"valueRecordElementsKeep",
+			ast.Record(ast.Pairs{{Key: "key", Value: ast.Context()}}),
+			ast.Record(ast.Pairs{{Key: "key", Value: ast.Context()}}),
+			testutil.OK,
+		},
+		{
+			"valueRecordElementsFold",
+			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(42)}}),
+			ast.Value(types.Record{"key": types.Long(42)}),
+			testutil.OK,
+		},
+		{
+			"valueRecordElementsError",
+			ast.Record(ast.Pairs{{Key: "key", Value: errNode("err")}}),
+			nul,
+			testutil.Error,
+		},
+		{
+			"valueEntityUIDKeep",
+			ast.EntityUID("T", "42"),
+			ast.EntityUID("T", "42"),
+			testutil.OK,
+		},
+		{
+			"valueIPAddrKeep",
+			ast.IPAddr(netip.MustParsePrefix("127.0.0.1/16")),
+			ast.IPAddr(netip.MustParsePrefix("127.0.0.1/16")),
+			testutil.OK,
+		},
+		{
+			"opEqualsKeep",
+			ast.Long(42).Equal(ast.Context()),
+			ast.Long(42).Equal(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opEqualsFold",
+			ast.Long(42).Equal(ast.Long(43)),
+			ast.False(),
+			testutil.OK,
+		},
+		{
+			"opEqualsError",
+			ast.Long(42).Equal(errNode("err")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opNotEqualsKeep",
+			ast.Long(42).NotEqual(ast.Context()),
+			ast.Long(42).NotEqual(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opNotEqualsFold",
+			ast.Long(42).NotEqual(ast.Long(43)),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opNotEqualsError",
+			ast.Long(42).NotEqual(errNode("err")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opLessThanKeep",
+			ast.Long(42).LessThan(ast.Context()),
+			ast.Long(42).LessThan(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opLessThanFold",
+			ast.Long(42).LessThan(ast.Long(43)),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opLessThanError",
+			ast.Long(42).LessThan(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opLessThanOrEqualKeep",
+			ast.Long(42).LessThanOrEqual(ast.Context()),
+			ast.Long(42).LessThanOrEqual(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opLessThanOrEqualFold",
+			ast.Long(42).LessThanOrEqual(ast.Long(43)),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opLessThanOrEqualError",
+			ast.Long(42).LessThanOrEqual(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opGreaterThanKeep",
+			ast.Long(42).GreaterThan(ast.Context()),
+			ast.Long(42).GreaterThan(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opGreaterThanFold",
+			ast.Long(42).GreaterThan(ast.Long(43)),
+			ast.False(),
+			testutil.OK,
+		},
+		{
+			"opGreaterThanError",
+			ast.Long(42).GreaterThan(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opGreaterThanOrEqualKeep",
+			ast.Long(42).GreaterThanOrEqual(ast.Context()),
+			ast.Long(42).GreaterThanOrEqual(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opGreaterThanOrEqualFold",
+			ast.Long(42).GreaterThanOrEqual(ast.Long(43)),
+			ast.False(),
+			testutil.OK,
+		},
+		{
+			"opGreaterThanOrEqualError",
+			ast.Long(42).GreaterThanOrEqual(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opLessThanExtKeep",
+			ast.Value(types.UnsafeDecimal(42)).DecimalLessThan(ast.Context()),
+			ast.Value(types.UnsafeDecimal(42)).DecimalLessThan(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opLessThanExtFold",
+			ast.Value(types.UnsafeDecimal(42)).DecimalLessThan(ast.Value(types.UnsafeDecimal(43))),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opLessThanExtError",
+			ast.Value(types.UnsafeDecimal(42)).DecimalLessThan(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opLikeKeep",
+			ast.Context().Like(types.NewPattern(types.Wildcard{})),
+			ast.Context().Like(types.NewPattern(types.Wildcard{})),
+			testutil.OK,
+		},
+		{
+			"opLikeFold",
+			ast.String("test").Like(types.NewPattern(types.Wildcard{})),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opLikeError",
+			ast.Long(42).Like(types.NewPattern(types.Wildcard{})),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opAndKeep",
+			ast.True().And(ast.Context()),
+			ast.True().And(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opAndFold",
+			ast.True().And(ast.True()),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opAndError",
+			ast.True().And(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opOrKeep",
+			ast.False().Or(ast.Context()),
+			ast.False().Or(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opOrFold",
+			ast.False().Or(ast.True()),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opOrError",
+			ast.False().Or(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opNotKeep",
+			ast.Not(ast.Context()),
+			ast.Not(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opNotFold",
+			ast.Not(ast.True()),
+			ast.False(),
+			testutil.OK,
+		},
+		{
+			"opNotError",
+			ast.Not(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opIfKeep",
+			ast.IfThenElse(ast.Context(), ast.Long(42), ast.Long(43)),
+			ast.IfThenElse(ast.Context(), ast.Long(42), ast.Long(43)),
+			testutil.OK,
+		},
+		{
+			"opIfFold",
+			ast.IfThenElse(ast.True(), ast.Long(42), ast.Long(43)),
+			ast.Long(42),
+			testutil.OK,
+		},
+		{
+			"opIfError",
+			ast.IfThenElse(ast.String("test"), ast.Long(42), ast.Long(43)),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opPlusKeep",
+			ast.Long(42).Add(ast.Context()),
+			ast.Long(42).Add(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opPlusFold",
+			ast.Long(42).Add(ast.Long(43)),
+			ast.Long(85),
+			testutil.OK,
+		},
+		{
+			"opPlusError",
+			ast.Long(42).Add(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opMinusKeep",
+			ast.Long(42).Subtract(ast.Context()),
+			ast.Long(42).Subtract(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opMinusFold",
+			ast.Long(42).Subtract(ast.Long(43)),
+			ast.Long(-1),
+			testutil.OK,
+		},
+		{
+			"opMinusError",
+			ast.Long(42).Subtract(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opTimesKeep",
+			ast.Long(42).Multiply(ast.Context()),
+			ast.Long(42).Multiply(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opTimesFold",
+			ast.Long(42).Multiply(ast.Long(43)),
+			ast.Long(1806),
+			testutil.OK,
+		},
+		{
+			"opTimesError",
+			ast.Long(42).Multiply(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opNegateKeep",
+			ast.Negate(ast.Context()),
+			ast.Negate(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opNegateFold",
+			ast.Negate(ast.Long(42)),
+			ast.Long(-42),
+			testutil.OK,
+		},
+		{
+			"opNegateError",
+			ast.Negate(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opInKeep",
+			ast.EntityUID("T", "1").In(ast.Context()),
+			ast.EntityUID("T", "1").In(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opInFold",
+			ast.EntityUID("T", "1").In(ast.EntityUID("T", "1")),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opInError",
+			ast.EntityUID("T", "1").In(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opIsKeep",
+			ast.Principal().Is(types.EntityType("T")),
+			ast.Principal().Is(types.EntityType("T")),
+			testutil.OK,
+		},
+		{
+			"opIsFold",
+			ast.EntityUID("T", "1").Is(types.EntityType("T")),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opIsError",
+			ast.String("test").Is(types.EntityType("T")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opIsInKeep",
+			ast.Principal().IsIn(types.EntityType("T"), ast.Context()),
+			ast.Principal().IsIn(types.EntityType("T"), ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opIsInFold",
+			ast.EntityUID("T", "1").IsIn(types.EntityType("T"), ast.EntityUID("T", "1")),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opIsInError",
+			ast.EntityUID("T", "1").IsIn(types.EntityType("T"), ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opContainsKeep",
+			ast.Set(ast.Long(42)).Contains(ast.Context()),
+			ast.Value(types.Set{types.Long(42)}).Contains(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opContainsFold",
+			ast.Set(ast.Long(42)).Contains(ast.Long(43)),
+			ast.False(),
+			testutil.OK,
+		},
+		{
+			"opContainsError",
+			ast.String("test").Contains(ast.Long(43)),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opContainsAllKeep",
+			ast.Set(ast.Long(42)).ContainsAll(ast.Context()),
+			ast.Value(types.Set{types.Long(42)}).ContainsAll(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opContainsAllFold",
+			ast.Set(ast.Long(42)).ContainsAll(ast.Set(ast.Long(43))),
+			ast.False(),
+			testutil.OK,
+		},
+		{
+			"opContainsAllError",
+			ast.Set(ast.Long(42)).ContainsAll(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opContainsAnyKeep",
+			ast.Set(ast.Long(42)).ContainsAny(ast.Context()),
+			ast.Value(types.Set{types.Long(42)}).ContainsAny(ast.Context()),
+			testutil.OK,
+		},
+		{
+			"opContainsAnyFold",
+			ast.Set(ast.Long(42)).ContainsAny(ast.Set(ast.Long(43))),
+			ast.False(),
+			testutil.OK,
+		},
+		{
+			"opContainsAnyError",
+			ast.Set(ast.Long(42)).ContainsAny(ast.String("test")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opAccessKeep",
+			ast.Context().Access("key"),
+			ast.Context().Access("key"),
+			testutil.OK,
+		},
+		{
+			"opAccessFold",
+			ast.Value(types.Record{"key": types.Long(42)}).Access("key"),
+			ast.Long(42),
+			testutil.OK,
+		},
+		{
+			"opAccessError",
+			ast.String("test").Access("key"),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opHasKeep",
+			ast.Context().Has("key"),
+			ast.Context().Has("key"),
+			testutil.OK,
+		},
+		{
+			"opHasFold",
+			ast.Value(types.Record{"key": types.Long(42)}).Has("key"),
+			ast.True(),
+			testutil.OK,
+		},
+		{
+			"opHasError",
+			ast.String("test").Has("key"),
+			nul,
+			testutil.Error,
+		},
+		/*
+		 */
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out, err := partial(InitEnv(&Env{
+				Principal: Variable("principal"),
+				Action:    Variable("action"),
+				Resource:  Variable("resource"),
+				Context:   Variable("context"),
+			}), tt.in.AsIsNode())
+			tt.err(t, err)
+			testutil.Equals(t, out, tt.out.AsIsNode())
+		})
+	}
+}
+
+func TestPartialPanic(t *testing.T) {
+	t.Parallel()
+	testutil.Panic(t, func() {
+		partial(NewEnv(), nil)
+	})
 }
