@@ -347,6 +347,13 @@ func TestIgnoreUseCases(t *testing.T) {
 	)
 		when { context has device && context.device == "good" }
 	;
+
+	@id("spy0")
+	permit (
+		principal in Roles::"spy",
+		action == Action::"drop",
+		resource == Resource::"prod"
+	);
 	`
 
 	ps := cedar.NewPolicySet()
@@ -412,7 +419,7 @@ func TestIgnoreUseCases(t *testing.T) {
 			nil,
 			1,
 			types.Allow,
-			[]types.PolicyID{"alice1"},
+			[]types.PolicyID{"alice1", "spy0"},
 		},
 		{"what-policies-permit-against-prod",
 			Request{
@@ -424,7 +431,7 @@ func TestIgnoreUseCases(t *testing.T) {
 			nil,
 			1,
 			types.Allow,
-			[]types.PolicyID{"bob0", "bob1", "alice0", "alice1"},
+			[]types.PolicyID{"bob0", "bob1", "alice0", "alice1", "spy0"},
 		},
 		{"what-policies-forbid-against-prod",
 			Request{
@@ -448,7 +455,7 @@ func TestIgnoreUseCases(t *testing.T) {
 			nil,
 			1,
 			types.Allow,
-			[]types.PolicyID{"alice1", "eve0"},
+			[]types.PolicyID{"alice1", "eve0", "spy0"},
 		},
 		{"what-permit-policies-relate-to-bob",
 			Request{
