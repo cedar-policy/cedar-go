@@ -2050,3 +2050,29 @@ func TestCedarString(t *testing.T) {
 		})
 	}
 }
+
+func TestCache(t *testing.T) {
+	t.Parallel()
+	env := NewEnv()
+	e1Eval := newLiteralEval(types.NewEntityUID("T", "1"))
+	e2Eval := newLiteralEval(types.NewEntityUID("T", "2"))
+	var res types.Value
+	var err error
+	res, err = newInEval(e1Eval, e1Eval).Eval(env)
+	testutil.OK(t, err)
+	testutil.Equals(t, res, types.Value(types.True))
+
+	res, err = newInEval(e1Eval, e2Eval).Eval(env)
+	testutil.OK(t, err)
+	testutil.Equals(t, res, types.Value(types.False))
+
+	env = InitEnvWithCacheFrom(&Env{}, env)
+	res, err = newInEval(e1Eval, e1Eval).Eval(env)
+	testutil.OK(t, err)
+	testutil.Equals(t, res, types.Value(types.True))
+
+	res, err = newInEval(e1Eval, e2Eval).Eval(env)
+	testutil.OK(t, err)
+	testutil.Equals(t, res, types.Value(types.False))
+
+}
