@@ -1173,3 +1173,65 @@ func TestIsNonBoolValue(t *testing.T) {
 		})
 	}
 }
+
+func TestIsVariable(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   types.Value
+		out  bool
+	}{
+		{"happy", Variable("test"), true},
+		{"sad", types.String("test"), false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := IsVariable(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
+
+func TestIsIgnore(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   types.Value
+		out  bool
+	}{
+		{"happy", Ignore(), true},
+		{"sad", types.String("test"), false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := IsIgnore(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
+
+func TestToVariable(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   types.EntityUID
+		key  types.String
+		out  bool
+	}{
+		{"happy", types.NewEntityUID(variableEntityType, "test"), "test", true},
+		{"sad", types.NewEntityUID("X", "1"), "", false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			key, out := ToVariable(tt.in)
+			testutil.Equals(t, key, tt.key)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
