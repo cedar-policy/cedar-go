@@ -44,7 +44,7 @@ func IsIgnore(v types.Value) bool {
 
 // PartialPolicy returns a partially evaluated version of the policy and a boolean indicating if the policy should be kept.
 // (Policies that can be determined to evaluated to false are not kept.)
-func PartialPolicy(env *Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
+func PartialPolicy(bias types.Effect, env *Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
 	p2 := *p
 	if p2.Principal, keep = partialPrincipalScope(env, env.Principal, p2.Principal); !keep {
 		return nil, false
@@ -62,9 +62,10 @@ func PartialPolicy(env *Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
 		if errors.Is(err, errVariable) {
 			p2.Conditions = append(p2.Conditions, c)
 			continue
-		} else if errors.Is(err, errIgnore) && p.Effect == ast.EffectPermit {
-			continue
-		} else if errors.Is(err, errIgnore) && p.Effect == ast.EffectForbid {
+		} else if errors.Is(err, errIgnore) {
+			if types.Effect(p.Effect) == bias {
+				continue
+			}
 			return nil, false
 		} else if err != nil {
 			p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: extError(err)})

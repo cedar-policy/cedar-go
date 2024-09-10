@@ -4,6 +4,7 @@ import (
 	"context"
 	"maps"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go"
@@ -261,5 +262,97 @@ func TestBatchErrors(t *testing.T) {
 		}, func(_ Result) {},
 		)
 		testutil.ErrorIs(t, err, errUnboundVariable)
+	})
+}
+
+func TestUseCases(t *testing.T) {
+	t.Parallel()
+
+	doc := `
+	// policy0
+	permit (
+		principal == Principal::"bob",
+		action == Action::"access",
+		resource == Resource::"prod"
+	)
+		when { context.device == "good" }
+	;
+
+	// policy1
+	permit (
+		principal == Principal::"bob",
+		action == Action::"access",
+		resource == Resource::"prod"
+	)
+		when { context.onCall == true }
+	;
+
+	// policy2
+	forbid (
+		principal == Principal::"bob",
+		action == Action::"access",
+		resource == Resource::"prod"
+	)
+		when { context.device == "bad" }
+	;
+
+	// policy3
+	forbid (
+		principal == Principal::"bob",
+		action == Action::"access",
+		resource == Resource::"prod"
+	)
+		when { context.location == "unknown" }
+	;
+	`
+
+	ps, err := cedar.NewPolicySetFromBytes("policy.cedar", []byte(doc))
+	testutil.OK(t, err)
+	t.Run("when-could-bob-access-prod", func(t *testing.T) {
+		var got []types.PolicyID
+		err := Authorize(context.Background(), ps, types.Entities{}, Request{
+			Principal: types.NewEntityUID("Principal", "bob"),
+			Action:    types.NewEntityUID("Action", "access"),
+			Resource:  types.NewEntityUID("Resource", "prod"),
+			Context:   Ignore(),
+		}, func(r Result) {
+			for _, v := range r.Diagnostic.Reasons {
+				got = append(got, v.PolicyID)
+			}
+		},
+		)
+		testutil.OK(t, err)
+		want := []types.PolicyID{
+			"policy0",
+			"policy1",
+		}
+		slices.Sort(got)
+		slices.Sort(want)
+		testutil.Equals(t, got, want)
+	})
+
+	t.Run("when-could-bob-not-access-prod", func(t *testing.T) {
+		t.Parallel()
+		var got []types.PolicyID
+		err := Authorize(context.Background(), ps, types.Entities{}, Request{
+			Principal: types.NewEntityUID("Principal", "bob"),
+			Action:    types.NewEntityUID("Action", "access"),
+			Resource:  types.NewEntityUID("Resource", "prod"),
+			Context:   Ignore(),
+		}, func(r Result) {
+			for _, v := range r.Diagnostic.Reasons {
+				got = append(got, v.PolicyID)
+			}
+		},
+			WithIgnoreForbid(),
+		)
+		testutil.OK(t, err)
+		want := []types.PolicyID{
+			"policy2",
+			"policy3",
+		}
+		slices.Sort(got)
+		slices.Sort(want)
+		testutil.Equals(t, got, want)
 	})
 }

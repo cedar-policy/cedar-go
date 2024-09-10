@@ -36,8 +36,9 @@ type idPolicy struct {
 }
 
 type batchEvaler struct {
-	Variables []variableItem
-	Values    Values
+	Variables  []variableItem
+	Values     Values
+	ignoreBias types.Effect
 
 	policies []idPolicy
 	compiled bool
@@ -72,12 +73,26 @@ type Callback func(Result)
 
 var errUnboundVariable = fmt.Errorf("unbound variable")
 
+type Option struct {
+	ignoreForbid bool
+}
+
+func WithIgnoreForbid() Option {
+	return Option{ignoreForbid: true}
+}
+
 // Authorize will run a batch of authorization evaluations.
 // It will error in case of early termination.
 // It will error in case any of PARC are an incorrect type at eval type.
 // The result passed to the callback must be used / cloned immediately and not modified.
-func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback) error {
-	var be batchEvaler
+func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback, opts ...Option) error {
+	be := &batchEvaler{}
+	be.ignoreBias = types.Permit
+	for _, opt := range opts {
+		if opt.ignoreForbid {
+			be.ignoreBias = types.Forbid
+		}
+	}
 	var found []types.String
 	found = findVariables(request.Principal, found)
 	found = findVariables(request.Action, found)
@@ -120,7 +135,43 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entitie
 	slices.SortFunc(be.Variables, func(a, b variableItem) int {
 		return len(a.Values) - len(b.Values)
 	})
-	return doBatch(ctx, &be)
+
+	// resolve ignores if no variables exist
+	if len(be.Variables) == 0 {
+		doPartial(be)
+		fixIgnores(be)
+	}
+
+	return doBatch(ctx, be)
+}
+
+func doPartial(be *batchEvaler) {
+	var np []idPolicy
+	for _, p := range be.policies {
+		part, keep := eval.PartialPolicy(be.ignoreBias, be.env, p.Policy)
+		if !keep {
+			continue
+		}
+		np = append(np, idPolicy{PolicyID: p.PolicyID, Policy: part})
+	}
+	be.compiled = false
+	be.policies = np
+	be.evalers = nil
+}
+
+func fixIgnores(be *batchEvaler) {
+	if eval.IsIgnore(be.env.Principal) {
+		be.env.Principal = unknownEntity(consts.Principal)
+	}
+	if eval.IsIgnore(be.env.Action) {
+		be.env.Action = unknownEntity(consts.Action)
+	}
+	if eval.IsIgnore(be.env.Resource) {
+		be.env.Resource = unknownEntity(consts.Resource)
+	}
+	if eval.IsIgnore(be.env.Context) {
+		be.env.Context = types.Record{}
+	}
 }
 
 func doBatch(ctx context.Context, be *batchEvaler) error {
@@ -133,39 +184,19 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 		return diagnosticAuthzWithCallback(be)
 	}
 
+	// save previous state
 	prevState := *be
 
 	// else, partial eval what we have so far
-	var np []idPolicy
-	for _, p := range be.policies {
-		part, keep := eval.PartialPolicy(be.env, p.Policy)
-		if !keep {
-			continue
-		}
-		np = append(np, idPolicy{PolicyID: p.PolicyID, Policy: part})
-	}
-	be.compiled = false
-	be.policies = np
-	be.evalers = nil
+	doPartial(be)
 
 	// if no more partial evaluation, fill in ignores with defaults
 	if len(be.Variables) == 1 {
-		if eval.IsIgnore(be.env.Principal) {
-			be.env.Principal = unknownEntity(consts.Principal)
-		}
-		if eval.IsIgnore(be.env.Action) {
-			be.env.Action = unknownEntity(consts.Action)
-		}
-		if eval.IsIgnore(be.env.Resource) {
-			be.env.Resource = unknownEntity(consts.Resource)
-		}
-		if eval.IsIgnore(be.env.Context) {
-			be.env.Context = types.Record{}
-		}
+		fixIgnores(be)
 	}
-	loopEnv := *be.env
 
 	// then loop the current variable
+	loopEnv := *be.env
 	u := be.Variables[0]
 	_, chPrincipal := cloneSub(be.env.Principal, u.Key, nil)
 	_, chAction := cloneSub(be.env.Action, u.Key, nil)
@@ -192,6 +223,8 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 			return err
 		}
 	}
+
+	// restore previous state
 	*be = prevState
 	return nil
 }
