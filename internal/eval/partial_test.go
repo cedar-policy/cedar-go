@@ -11,6 +11,152 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
+func TestPartialScopeEval(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name   string
+		env    Env
+		ent    types.Value
+		in     ast.IsScopeNode
+		evaled bool
+		result bool
+	}{
+		{
+			"notEntity",
+			Env{},
+			types.String("test"),
+			ast.ScopeTypeAll{},
+			false, false,
+		},
+
+		{
+			"isVariable",
+			Env{},
+			Variable("principal"),
+			ast.ScopeTypeEq{},
+			false, false,
+		},
+
+		{
+			"isIgnore",
+			Env{},
+			Ignore(),
+			ast.ScopeTypeEq{},
+			true, true,
+		},
+
+		{
+			"scopeTypeAll",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeAll{},
+			true, true,
+		},
+
+		{
+			"scopeTypeEq",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeEq{Entity: types.NewEntityUID("T", "1")},
+			true, true,
+		},
+		{
+			"scopeTypeEq/fail",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeEq{Entity: types.NewEntityUID("FAIL", "1")},
+			true, false,
+		},
+
+		{
+			"scopeTypeIn",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeIn{Entity: types.NewEntityUID("T", "1")},
+			true, true,
+		},
+		{
+			"scopeTypeIn/fail",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeIn{Entity: types.NewEntityUID("T", "FAIL")},
+			true, false,
+		},
+
+		{
+			"scopeTypeInSet",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeInSet{Entities: []types.EntityUID{types.NewEntityUID("T", "1")}},
+			true, true,
+		},
+
+		{
+			"scopeTypeInSet/fail",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeInSet{Entities: []types.EntityUID{types.NewEntityUID("T", "FAIL")}},
+			true, false,
+		},
+
+		{
+			"scopeTypeIs",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeIs{Type: "T"},
+			true, true,
+		},
+
+		{
+			"scopeTypeIs/fail",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeIs{Type: "FAIL"},
+			true, false,
+		},
+
+		{
+			"scopeTypeIsIn",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeIsIn{Type: "T", Entity: types.NewEntityUID("T", "1")},
+			true, true,
+		},
+		{
+			"scopeTypeIsIn/failIs",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeIsIn{Type: "FAIL", Entity: types.NewEntityUID("T", "1")},
+			true, false,
+		},
+		{
+			"scopeTypeIsIn/failIn",
+			Env{},
+			types.NewEntityUID("T", "1"),
+			ast.ScopeTypeIsIn{Type: "T", Entity: types.NewEntityUID("T", "FAIL")},
+			true, false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			evaled, result := partialScopeEval(InitEnv(&tt.env), tt.ent, tt.in)
+			testutil.Equals(t, evaled, tt.evaled)
+			testutil.Equals(t, result, tt.result)
+		})
+	}
+
+}
+
+func TestPartialScopeEvalPanic(t *testing.T) {
+	t.Parallel()
+	testutil.Panic(t, func() {
+		partialScopeEval(NewEnv(), types.NewEntityUID("T", "1"), nil)
+	})
+}
+
 func TestPartialPolicy(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -38,6 +184,38 @@ func TestPartialPolicy(t *testing.T) {
 			ast.Permit().PrincipalEq(types.NewEntityUID("Account", "42")),
 			&Env{
 				Principal: types.NewEntityUID("Account", "Other"),
+			},
+			nil,
+			false,
+		},
+		{"actionEqual",
+			ast.Permit().ActionEq(types.NewEntityUID("Action", "42")),
+			&Env{
+				Action: types.NewEntityUID("Action", "42"),
+			},
+			ast.Permit(),
+			true,
+		},
+		{"actionNotEqual",
+			ast.Permit().ActionEq(types.NewEntityUID("Action", "42")),
+			&Env{
+				Action: types.NewEntityUID("Action", "Other"),
+			},
+			nil,
+			false,
+		},
+		{"resourceEqual",
+			ast.Permit().ResourceEq(types.NewEntityUID("Resource", "42")),
+			&Env{
+				Resource: types.NewEntityUID("Resource", "42"),
+			},
+			ast.Permit(),
+			true,
+		},
+		{"resourceNotEqual",
+			ast.Permit().ResourceEq(types.NewEntityUID("Resource", "42")),
+			&Env{
+				Resource: types.NewEntityUID("Resource", "Other"),
 			},
 			nil,
 			false,
