@@ -1108,3 +1108,68 @@ func TestPartialHasEval(t *testing.T) {
 		})
 	}
 }
+
+func TestIsTrue(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   ast.IsNode
+		out  bool
+	}{
+		{"happy", ast.True().AsIsNode(), true},
+		{"false", ast.False().AsIsNode(), false},
+		{"notBoolean", ast.String("test").AsIsNode(), false},
+		{"notValue", ast.Context().AsIsNode(), false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := isTrue(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
+
+func TestIsFalse(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   ast.IsNode
+		out  bool
+	}{
+		{"happy", ast.False().AsIsNode(), true},
+		{"true", ast.True().AsIsNode(), false},
+		{"notBoolean", ast.String("test").AsIsNode(), false},
+		{"notValue", ast.Context().AsIsNode(), false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := isFalse(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
+
+func TestIsNonBoolValue(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   ast.IsNode
+		out  bool
+	}{
+		{"happy", ast.String("test").AsIsNode(), true},
+		{"true", ast.True().AsIsNode(), false},
+		{"notValue", ast.Context().AsIsNode(), false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := isNonBoolValue(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
