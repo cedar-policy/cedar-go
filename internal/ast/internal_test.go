@@ -39,3 +39,12 @@ func TestIsScope(t *testing.T) {
 	ActionScopeNode{}.isActionScope()
 	ResourceScopeNode{}.isResourceScope()
 }
+
+func TestStripNodes(t *testing.T) {
+	t.Parallel()
+	t.Run("preserveNil", func(t *testing.T) {
+		t.Parallel()
+		out := stripNodes(nil)
+		testutil.Equals(t, out, nil)
+	})
+}
