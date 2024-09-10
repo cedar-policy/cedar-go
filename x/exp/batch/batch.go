@@ -72,6 +72,7 @@ type Result struct {
 type Callback func(Result)
 
 var errUnboundVariable = fmt.Errorf("unbound variable")
+var errUnusedVariable = fmt.Errorf("unused variable")
 
 type Option struct {
 	ignoreForbid bool
@@ -101,6 +102,16 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entitie
 	for _, key := range found {
 		if _, ok := request.Variables[key]; !ok {
 			return fmt.Errorf("%w: %v", errUnboundVariable, key)
+		}
+	}
+	for k := range request.Variables {
+		if !slices.Contains(found, k) {
+			return fmt.Errorf("%w: %v", errUnusedVariable, k)
+		}
+	}
+	for _, vs := range request.Variables {
+		if len(vs) == 0 {
+			return nil
 		}
 	}
 	pm := ps.Map()

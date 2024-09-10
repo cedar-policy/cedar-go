@@ -187,16 +187,11 @@ func TestBatch(t *testing.T) {
 				Context:   Ignore(),
 				Variables: Variables{
 					"resource": []types.Value{r1, r2},
-					"key":      []types.Value{types.Long(41), types.Long(42), types.Long(43)},
 				},
 			},
 			[]Result{
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"resource": r1, "key": types.Long(41)}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"resource": r1, "key": types.Long(42)}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"resource": r1, "key": types.Long(43)}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"resource": r2, "key": types.Long(41)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"resource": r2, "key": types.Long(42)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"resource": r2, "key": types.Long(43)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"resource": r1}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
 
@@ -262,6 +257,29 @@ func TestBatchErrors(t *testing.T) {
 		}, func(_ Result) {},
 		)
 		testutil.ErrorIs(t, err, errUnboundVariable)
+	})
+	t.Run("unusedVariables", func(t *testing.T) {
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Variables: Variables{
+				"bananas": []types.Value{types.String("test")},
+			},
+		}, func(_ Result) {},
+		)
+		testutil.ErrorIs(t, err, errUnusedVariable)
+	})
+
+	t.Run("nothingTodoNotError", func(t *testing.T) {
+		var total int
+		err := Authorize(context.Background(), cedar.NewPolicySet(), types.Entities{}, Request{
+			Principal: Variable("bananas"),
+			Variables: Variables{
+				"bananas": nil,
+			},
+		}, func(_ Result) { total++ },
+		)
+		testutil.OK(t, err)
+		testutil.Equals(t, total, 0)
+
 	})
 }
 
