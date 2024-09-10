@@ -91,6 +91,7 @@ func (fdm TarFileMap) GetFileData(path string) ([]byte, error) {
 	return content, nil
 }
 
+//nolint:revive // due to test cognitive complexity
 func TestCorpus(t *testing.T) {
 	t.Parallel()
 
