@@ -133,7 +133,6 @@ func fold(n ast.IsNode) ast.IsNode {
 			[]ast.IsNode{v.Left, v.Entity},
 			func(_ []types.Value) Evaler {
 				return newErrorEval(fmt.Errorf("fold.IsIn.EntityUID"))
-				// return newIsInEval(newLiteralEval(values[0]), v.EntityType, newLiteralEval(values[1]))
 			},
 			func(nodes []ast.IsNode) ast.IsNode {
 				return ast.NodeTypeIsIn{NodeTypeIs: ast.NodeTypeIs{Left: nodes[0], EntityType: v.EntityType}, Entity: nodes[1]}
@@ -200,12 +199,10 @@ func fold(n ast.IsNode) ast.IsNode {
 	case ast.NodeTypeVariable:
 		return n
 	case ast.NodeTypeIn:
-		// return tryFoldBinary(v.BinaryNode, newInEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeIn{BinaryNode: b} })
 		return tryFold(
 			[]ast.IsNode{v.Left, v.Right},
 			func(_ []types.Value) Evaler {
 				return newErrorEval(fmt.Errorf("fold.In.EntityUID"))
-				// return newInEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
 			},
 			func(nodes []ast.IsNode) ast.IsNode {
 				return ast.NodeTypeIn{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
