@@ -22,6 +22,11 @@ func mustDatetimeValue(v string) Datetime {
 	return r
 }
 
+func mustDurationValue(v string) Duration {
+	r, _ := ParseDuration(v)
+	return r
+}
+
 func mustIPValue(v string) IPAddr {
 	r, _ := ParseIPAddr(v)
 	return r
@@ -55,6 +60,7 @@ func TestJSON_Value(t *testing.T) {
 		{"explicitSubnet", `{ "__extn": { "fn": "ip", "arg": "192.168.0.0/16" } }`, mustIPValue("192.168.0.0/16"), nil},
 		{"explicitDecimal", `{ "__extn": { "fn": "decimal", "arg": "33.57" } }`, mustDecimalValue("33.57"), nil},
 		{"explicitDatetime", `{ "__extn": { "fn": "datetime", "arg": "1970-01-01T00:00:01Z" } }`, mustDatetimeValue("1970-01-01T00:00:01Z"), nil},
+		{"explicitDuration", `{ "__extn": { "fn": "duration", "arg": "1d12h30m30s500ms" } }`, mustDurationValue("1d12h30m30s500ms"), nil},
 		{"invalidExtension", `{ "__extn": { "fn": "asdf", "arg": "blah" } }`, zeroValue(), errJSONInvalidExtn},
 		{"badIP", `{ "__extn": { "fn": "ip", "arg": "bad" } }`, zeroValue(), ErrIP},
 		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), ErrDecimal},

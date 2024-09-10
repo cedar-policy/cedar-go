@@ -75,6 +75,13 @@ func UnmarshalJSON(b []byte, v *Value) error {
 				}
 				*v = val
 				return nil
+			case "duration":
+				val, err := ParseDuration(res.Extn.Arg)
+				if err != nil {
+					return err
+				}
+				*v = val
+				return nil
 			default:
 				return errJSONInvalidExtn
 			}

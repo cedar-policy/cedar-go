@@ -128,6 +128,6 @@ type nodeJSON struct {
 	// Record
 	Record recordJSON `json:"Record,omitempty"`
 
-	// Any other method: decimal, datetime, ip, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
+	// Any other method: decimal, datetime, duration, ip, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange, toDate, toTime, toDays, toHours, toMinutes, toSeconds, toMilliseconds, offset, durationSince
 	ExtensionCall extensionJSON `json:"-"`
 }

@@ -97,6 +97,14 @@ func ValueToDecimal(v types.Value) (types.Decimal, error) {
 	return d, nil
 }
 
+func ValueToDuration(v types.Value) (types.Duration, error) {
+	d, ok := v.(types.Duration)
+	if !ok {
+		return types.Duration{}, fmt.Errorf("%w: expected duration, got %v", ErrType, TypeName(v))
+	}
+	return d, nil
+}
+
 func ValueToIP(v types.Value) (types.IPAddr, error) {
 	i, ok := v.(types.IPAddr)
 	if !ok {

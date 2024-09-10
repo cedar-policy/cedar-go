@@ -22,7 +22,7 @@ func zeroValue() types.Value {
 type Env struct {
 	Entities                    types.Entities
 	Principal, Action, Resource types.Value
-	Env                         types.Value
+	Context                     types.Value
 
 	inCache map[inKey]bool
 }
@@ -146,8 +146,21 @@ func evalDecimal(n Evaler, env *Env) (types.Decimal, error) {
 	return d, nil
 }
 
+func evalDuration(n Evaler, env *Env) (types.Duration, error) {
+	v, err := n.Eval(env)
+	if err != nil {
+		return types.Duration{}, err
+	}
+	d, err := ValueToDuration(v)
+	if err != nil {
+		return types.Duration{}, err
+	}
+	return d, nil
+}
+
 func evalIP(n Evaler, env *Env) (types.IPAddr, error) {
 	v, err := n.Eval(env)
+
 	if err != nil {
 		return types.IPAddr{}, err
 	}
@@ -944,7 +957,7 @@ func (n *variableEval) Eval(env *Env) (types.Value, error) {
 	case consts.Resource:
 		return env.Resource, nil
 	default: // context
-		return env.Env, nil
+		return env.Context, nil
 	}
 }
 
@@ -1159,6 +1172,28 @@ func (n *datetimeLiteralEval) Eval(env *Env) (types.Value, error) {
 	return d, nil
 }
 
+type durationLiteralEval struct {
+	literal Evaler
+}
+
+func newDurationLiteralEval(literal Evaler) *durationLiteralEval {
+	return &durationLiteralEval{literal: literal}
+}
+
+func (n *durationLiteralEval) Eval(env *Env) (types.Value, error) {
+	literal, err := evalString(n.literal, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	d, err := types.ParseDuration(string(literal))
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	return d, nil
+}
+
 type ipLiteralEval struct {
 	literal Evaler
 }
@@ -1241,10 +1276,14 @@ func newExtensionEval(name types.Path, args []Evaler) Evaler {
 			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s)", errArity, name, i.Args))
 		}
 		switch {
-		case name == "ip":
-			return newIPLiteralEval(args[0])
+		case name == "datetime":
+			return newDatetimeLiteralEval(args[0])
 		case name == "decimal":
 			return newDecimalLiteralEval(args[0])
+		case name == "duration":
+			return newDurationLiteralEval(args[0])
+		case name == "ip":
+			return newIPLiteralEval(args[0])
 
 		case name == "lessThan":
 			return newDecimalLessThanEval(args[0], args[1])
@@ -1268,6 +1307,23 @@ func newExtensionEval(name types.Path, args []Evaler) Evaler {
 
 		case name == "toDate":
 			return newToDateEval(args[0])
+		case name == "toTime":
+			return newToTimeEval(args[0])
+		case name == "toMilliseconds":
+			return newToMillisecondsEval(args[0])
+		case name == "toSeconds":
+			return newToSecondsEval(args[0])
+		case name == "toMinutes":
+			return newToMinutesEval(args[0])
+		case name == "toHours":
+			return newToHoursEval(args[0])
+		case name == "toDays":
+			return newToDaysEval(args[0])
+
+		case name == "offset":
+			return newOffsetEval(args[0], args[1])
+		case name == "durationSince":
+			return newDurationSinceEval(args[0], args[1])
 		}
 	}
 	return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, name))
@@ -1391,4 +1447,142 @@ func (n *toDateEval) Eval(env *Env) (types.Value, error) {
 		return zeroValue(), err
 	}
 	return types.Datetime{Value: lhs.Value - (lhs.Value % millisPerDay)}, nil
+}
+
+type toTimeEval struct {
+	lhs Evaler
+}
+
+func newToTimeEval(lhs Evaler) *toTimeEval {
+	return &toTimeEval{lhs: lhs}
+}
+
+func (n *toTimeEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDatetime(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Duration{Value: lhs.Value % millisPerDay}, nil
+}
+
+type toMillisecondsEval struct {
+	lhs Evaler
+}
+
+func newToMillisecondsEval(lhs Evaler) *toMillisecondsEval {
+	return &toMillisecondsEval{lhs: lhs}
+}
+
+func (n *toMillisecondsEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDuration(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Long(lhs.Value), nil
+}
+
+type toSecondsEval struct {
+	lhs Evaler
+}
+
+func newToSecondsEval(lhs Evaler) *toSecondsEval {
+	return &toSecondsEval{lhs: lhs}
+}
+
+func (n *toSecondsEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDuration(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Long(lhs.Value / 1000), nil
+}
+
+type toMinutesEval struct {
+	lhs Evaler
+}
+
+func newToMinutesEval(lhs Evaler) *toMinutesEval {
+	return &toMinutesEval{lhs: lhs}
+}
+
+func (n *toMinutesEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDuration(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Long(lhs.Value / 1000 / 60), nil
+}
+
+type toHoursEval struct {
+	lhs Evaler
+}
+
+func newToHoursEval(lhs Evaler) *toHoursEval {
+	return &toHoursEval{lhs: lhs}
+}
+
+func (n *toHoursEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDuration(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Long(lhs.Value / 1000 / 60 / 60), nil
+}
+
+type toDaysEval struct {
+	lhs Evaler
+}
+
+func newToDaysEval(lhs Evaler) *toDaysEval {
+	return &toDaysEval{lhs: lhs}
+}
+
+func (n *toDaysEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDuration(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Long(lhs.Value / 1000 / 60 / 60 / 24), nil
+}
+
+type offsetEval struct {
+	lhs Evaler
+	rhs Evaler
+}
+
+func newOffsetEval(lhs Evaler, rhs Evaler) *offsetEval {
+	return &offsetEval{lhs: lhs, rhs: rhs}
+}
+
+func (n *offsetEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDatetime(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	rhs, err := evalDuration(n.rhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Datetime{Value: lhs.Value + rhs.Value}, nil
+}
+
+type durationSinceEval struct {
+	lhs Evaler
+	rhs Evaler
+}
+
+func newDurationSinceEval(lhs Evaler, rhs Evaler) *durationSinceEval {
+	return &durationSinceEval{lhs: lhs, rhs: rhs}
+}
+
+func (n *durationSinceEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDatetime(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	rhs, err := evalDatetime(n.rhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Duration{Value: lhs.Value - rhs.Value}, nil
 }

@@ -970,12 +970,15 @@ func TestVirtualComparisonNodes(t *testing.T) {
 	t.Parallel()
 
 	var (
-		zero       = types.Long(0)
-		neg1       = types.Long(-1)
-		pos1       = types.Long(1)
-		zeroDate   = types.UnsafeDatetime(0)
-		futureDate = types.UnsafeDatetime(1)
-		pastDate   = types.UnsafeDatetime(-1)
+		zero         = types.Long(0)
+		neg1         = types.Long(-1)
+		pos1         = types.Long(1)
+		zeroDate     = types.UnsafeDatetime(0)
+		futureDate   = types.UnsafeDatetime(1)
+		pastDate     = types.UnsafeDatetime(-1)
+		zeroDuration = types.UnsafeDuration(0)
+		negDuration  = types.UnsafeDuration(-1)
+		posDuration  = types.UnsafeDuration(1)
 	)
 
 	type test struct {
@@ -1014,6 +1017,17 @@ func TestVirtualComparisonNodes(t *testing.T) {
 				{futureDate, zeroDate, false, nil},
 				{futureDate, futureDate, false, nil},
 
+				// Duration
+				{negDuration, negDuration, false, nil},
+				{negDuration, zeroDuration, true, nil},
+				{negDuration, posDuration, true, nil},
+				{zeroDuration, negDuration, false, nil},
+				{zeroDuration, zeroDuration, false, nil},
+				{zeroDuration, posDuration, true, nil},
+				{posDuration, negDuration, false, nil},
+				{posDuration, zeroDuration, false, nil},
+				{posDuration, posDuration, false, nil},
+
 				// Errors
 				{errTest, neg1, false, errTest},
 				{neg1, errTest, false, errTest},
@@ -1044,6 +1058,17 @@ func TestVirtualComparisonNodes(t *testing.T) {
 				{futureDate, pastDate, false, nil},
 				{futureDate, zeroDate, false, nil},
 				{futureDate, futureDate, true, nil},
+
+				// Duration
+				{negDuration, negDuration, true, nil},
+				{negDuration, zeroDuration, true, nil},
+				{negDuration, posDuration, true, nil},
+				{zeroDuration, negDuration, false, nil},
+				{zeroDuration, zeroDuration, true, nil},
+				{zeroDuration, posDuration, true, nil},
+				{posDuration, negDuration, false, nil},
+				{posDuration, zeroDuration, false, nil},
+				{posDuration, posDuration, true, nil},
 
 				// Errors
 				{errTest, neg1, false, errTest},
@@ -1076,6 +1101,17 @@ func TestVirtualComparisonNodes(t *testing.T) {
 				{futureDate, zeroDate, true, nil},
 				{futureDate, futureDate, false, nil},
 
+				// Duration
+				{negDuration, negDuration, false, nil},
+				{negDuration, zeroDuration, false, nil},
+				{negDuration, posDuration, false, nil},
+				{zeroDuration, negDuration, true, nil},
+				{zeroDuration, zeroDuration, false, nil},
+				{zeroDuration, posDuration, false, nil},
+				{posDuration, negDuration, true, nil},
+				{posDuration, zeroDuration, true, nil},
+				{posDuration, posDuration, false, nil},
+
 				// Errors
 				{errTest, neg1, false, errTest},
 				{neg1, errTest, false, errTest},
@@ -1107,6 +1143,17 @@ func TestVirtualComparisonNodes(t *testing.T) {
 				{futureDate, zeroDate, true, nil},
 				{futureDate, futureDate, true, nil},
 
+				// Duration
+				{negDuration, negDuration, true, nil},
+				{negDuration, zeroDuration, false, nil},
+				{negDuration, posDuration, false, nil},
+				{zeroDuration, negDuration, true, nil},
+				{zeroDuration, zeroDuration, true, nil},
+				{zeroDuration, posDuration, false, nil},
+				{posDuration, negDuration, true, nil},
+				{posDuration, zeroDuration, true, nil},
+				{posDuration, posDuration, true, nil},
+
 				// Errors
 				{errTest, neg1, false, errTest},
 				{neg1, errTest, false, errTest},
@@ -1122,7 +1169,7 @@ func TestVirtualComparisonNodes(t *testing.T) {
 			t.Run(fmt.Sprintf("%v_%s_%v", tt.lhs, tc.name, tt.rhs), func(t *testing.T) {
 				t.Parallel()
 				n := tc.evaler(toEvaler(tt.lhs), toEvaler(tt.rhs))
-				v, err := n.Eval(&Context{})
+				v, err := n.Eval(&Env{})
 				if tt.wantErr == nil {
 					testutil.OK(t, err)
 					AssertBoolValue(t, v, tt.result)
@@ -2225,6 +2272,7 @@ func TestCedarString(t *testing.T) {
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
 		{"decimal", types.UnsafeDecimal(1234.5678), `1234.5678`, `decimal("1234.5678")`},
+		{"duration", types.UnsafeDuration(1), `1ms`, `duration("1ms")`},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2261,5 +2309,247 @@ func TestCache(t *testing.T) {
 	res, err = newInEval(e1Eval, e2Eval).Eval(env)
 	testutil.OK(t, err)
 	testutil.Equals(t, res, types.Value(types.False))
+}
 
+func TestDatetimeToDate(t *testing.T) {
+	t.Parallel()
+	aTime, err := types.ParseDatetime("1970-01-02T10:00:00Z")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(aTime), types.UnsafeDatetime(24 * 60 * 60 * 1000), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToDateEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDatetimeDurationSince(t *testing.T) {
+	t.Parallel()
+	aTime, err := types.ParseDatetime("1970-01-02T00:00:00Z")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(aTime), types.UnsafeDuration(24 * 60 * 60 * 1000), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newDurationSinceEval(tt.arg, newLiteralEval(types.UnsafeDatetime(0)))
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDatetimeOffset(t *testing.T) {
+	t.Parallel()
+	aTime, err := types.ParseDatetime("1970-01-01T00:00:00Z")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(aTime), types.UnsafeDatetime(24 * 60 * 60 * 1000), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newOffsetEval(tt.arg, newLiteralEval(types.UnsafeDuration(24*60*60*1000)))
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDatetimeToTime(t *testing.T) {
+	t.Parallel()
+	aTime, err := types.ParseDatetime("1970-01-01T10:00:00Z")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(aTime), types.UnsafeDuration(10 * 60 * 60 * 1000), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToTimeEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationToMilliseconds(t *testing.T) {
+	t.Parallel()
+	oneDay, err := types.ParseDuration("1d")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(oneDay), types.Long(24 * 60 * 60 * 1000), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToMillisecondsEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationToSeconds(t *testing.T) {
+	t.Parallel()
+	oneDay, err := types.ParseDuration("1d")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(oneDay), types.Long(24 * 60 * 60), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToSecondsEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationToMinutes(t *testing.T) {
+	t.Parallel()
+	oneDay, err := types.ParseDuration("1d")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(oneDay), types.Long(24 * 60), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToMinutesEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationToHours(t *testing.T) {
+	t.Parallel()
+	oneDay, err := types.ParseDuration("1d")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(oneDay), types.Long(24), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToHoursEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationToDays(t *testing.T) {
+	t.Parallel()
+	oneDay, err := types.ParseDuration("1d")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(oneDay), types.Long(1), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToDaysEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
 }

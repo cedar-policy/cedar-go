@@ -216,11 +216,66 @@ func TestToEval(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			"duration",
+			ast.ExtensionCall("duration", ast.String("1ms")),
+			types.UnsafeDuration(1),
+			testutil.OK,
+		},
+		{
 			"toDate",
 			ast.ExtensionCall("toDate", ast.Value(types.UnsafeDatetime(1))),
 			types.UnsafeDatetime(0),
 			testutil.OK,
 		},
+		{
+			"toTime",
+			ast.ExtensionCall("toTime", ast.Value(types.UnsafeDatetime(1))),
+			types.UnsafeDuration(1),
+			testutil.OK,
+		},
+		{
+			"toDays",
+			ast.ExtensionCall("toDays", ast.Value(types.UnsafeDuration(0))),
+			types.Long(0),
+			testutil.OK,
+		},
+		{
+			"toHours",
+			ast.ExtensionCall("toHours", ast.Value(types.UnsafeDuration(0))),
+			types.Long(0),
+			testutil.OK,
+		},
+		{
+			"toMinutes",
+			ast.ExtensionCall("toMinutes", ast.Value(types.UnsafeDuration(0))),
+			types.Long(0),
+			testutil.OK,
+		},
+		{
+			"toSeconds",
+			ast.ExtensionCall("toSeconds", ast.Value(types.UnsafeDuration(0))),
+			types.Long(0),
+			testutil.OK,
+		},
+		{
+			"toMilliseconds",
+			ast.ExtensionCall("toMilliseconds", ast.Value(types.UnsafeDuration(0))),
+			types.Long(0),
+			testutil.OK,
+		},
+		{
+			"offset",
+			ast.ExtensionCall("offset", ast.Value(types.UnsafeDatetime(0)), ast.Value(types.UnsafeDuration(1))),
+			types.UnsafeDatetime(1),
+			testutil.OK,
+		},
+		{
+			"durationSince",
+			ast.ExtensionCall("durationSince", ast.Value(types.UnsafeDatetime(1)), ast.Value(types.UnsafeDatetime(1))),
+			types.UnsafeDuration(0),
+			testutil.OK,
+		},
+
 		{
 			"lessThan",
 			ast.ExtensionCall("lessThan", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),
