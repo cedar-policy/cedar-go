@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/batch"
 )
 
 // jsonEntity is not part of entityValue as I can find
@@ -167,6 +169,56 @@ func TestCorpus(t *testing.T) {
 							Context:   request.Context,
 						})
 
+					if ok != (request.Decision == "allow") {
+						t.Fatalf("got %v want %v", ok, request.Decision)
+					}
+					var errors []string
+					for _, n := range diag.Errors {
+						errors = append(errors, string(n.PolicyID))
+					}
+					if !slices.Equal(errors, request.Errors) {
+						t.Errorf("errors got %v want %v", errors, request.Errors)
+					}
+					var reasons []string
+					for _, n := range diag.Reasons {
+						reasons = append(reasons, string(n.PolicyID))
+					}
+					if !slices.Equal(reasons, request.Reasons) {
+						t.Errorf("reasons got %v want %v", reasons, request.Reasons)
+					}
+				})
+
+				t.Run(request.Desc+"/batch", func(t *testing.T) {
+					t.Parallel()
+					ctx := context.Background()
+					var res batch.Result
+					var total int
+					principal := types.EntityUID(request.Principal)
+					action := types.EntityUID(request.Action)
+					resource := types.EntityUID(request.Resource)
+					context := request.Context
+					batch.Authorize(ctx, policySet, entities, batch.Request{
+						Principal: batch.Variable("principal"),
+						Action:    batch.Variable("action"),
+						Resource:  batch.Variable("resource"),
+						Context:   batch.Variable("context"),
+						Variables: batch.Variables{
+							"principal": []types.Value{principal},
+							"action":    []types.Value{action},
+							"resource":  []types.Value{resource},
+							"context":   []types.Value{context},
+						},
+					}, func(r batch.Result) {
+						res = r
+						total++
+					})
+					testutil.Equals(t, total, 1)
+					testutil.Equals(t, res.Request.Principal, principal)
+					testutil.Equals(t, res.Request.Action, action)
+					testutil.Equals(t, res.Request.Resource, resource)
+					testutil.Equals(t, res.Request.Context, context)
+
+					ok, diag := res.Decision, res.Diagnostic
 					if ok != (request.Decision == "allow") {
 						t.Fatalf("got %v want %v", ok, request.Decision)
 					}
