@@ -403,7 +403,7 @@ func TestBatchErrors(t *testing.T) {
 
 }
 
-func TestIgnoreUseCases(t *testing.T) {
+func TestIgnoreReasons(t *testing.T) {
 	t.Parallel()
 
 	doc := `
@@ -492,6 +492,7 @@ func TestIgnoreUseCases(t *testing.T) {
 		action == Action::"drop",
 		resource == Resource::"prod"
 	);
+
 	`
 
 	ps := cedar.NewPolicySet()
@@ -506,7 +507,6 @@ func TestIgnoreUseCases(t *testing.T) {
 	tests := []struct {
 		Name     string
 		Request  Request
-		Options  []Option
 		Total    int
 		Decision types.Decision
 		Reasons  []types.PolicyID
@@ -518,19 +518,20 @@ func TestIgnoreUseCases(t *testing.T) {
 				Resource:  types.NewEntityUID("Resource", "prod"),
 				Context:   Ignore(),
 			},
-			[]Option{WithIgnorePermit()},
 			1,
 			types.Allow,
 			[]types.PolicyID{"bob0", "bob1"},
 		},
-		{"when-could-bob-not-access-prod-ignoring-context",
+		{"bob-is-forbidden",
 			Request{
 				Principal: types.NewEntityUID("Principal", "bob"),
 				Action:    types.NewEntityUID("Action", "access"),
 				Resource:  types.NewEntityUID("Resource", "prod"),
-				Context:   Ignore(),
+				Context: types.Record{
+					"location": types.String("unknown"),
+					"device":   types.String("bad"),
+				},
 			},
-			[]Option{WithIgnoreForbid()},
 			1,
 			types.Deny,
 			[]types.PolicyID{"bob2", "bob3"},
@@ -542,7 +543,6 @@ func TestIgnoreUseCases(t *testing.T) {
 				Resource:  types.NewEntityUID("Resource", "prod"),
 				Context:   Ignore(),
 			},
-			[]Option{WithIgnorePermit()},
 			1,
 			types.Allow,
 			[]types.PolicyID{"bob0", "bob1", "alice0"},
@@ -554,34 +554,9 @@ func TestIgnoreUseCases(t *testing.T) {
 				Resource:  types.NewEntityUID("Resource", "prod"),
 				Context:   Ignore(),
 			},
-			[]Option{WithIgnorePermit()},
 			1,
 			types.Allow,
 			[]types.PolicyID{"alice1", "spy0"},
-		},
-		{"what-policies-permit-against-prod",
-			Request{
-				Principal: Ignore(),
-				Action:    Ignore(),
-				Resource:  types.NewEntityUID("Resource", "prod"),
-				Context:   Ignore(),
-			},
-			[]Option{WithIgnorePermit()},
-			1,
-			types.Allow,
-			[]types.PolicyID{"bob0", "bob1", "alice0", "alice1", "spy0"},
-		},
-		{"what-policies-forbid-against-prod",
-			Request{
-				Principal: Ignore(),
-				Action:    Ignore(),
-				Resource:  types.NewEntityUID("Resource", "prod"),
-				Context:   Ignore(),
-			},
-			[]Option{WithIgnoreForbid()},
-			1,
-			types.Deny,
-			[]types.PolicyID{"bob2", "bob3"},
 		},
 		{"what-permit-policies-relate-to-drops",
 			Request{
@@ -590,7 +565,6 @@ func TestIgnoreUseCases(t *testing.T) {
 				Resource:  Ignore(),
 				Context:   Ignore(),
 			},
-			[]Option{WithIgnorePermit()},
 			1,
 			types.Allow,
 			[]types.PolicyID{"alice1", "eve0", "spy0"},
@@ -602,7 +576,6 @@ func TestIgnoreUseCases(t *testing.T) {
 				Resource:  Ignore(),
 				Context:   Ignore(),
 			},
-			[]Option{WithIgnorePermit()},
 			1,
 			types.Allow,
 			[]types.PolicyID{"bob0", "bob1", "bob4", "bob5-condition"},
@@ -624,7 +597,7 @@ func TestIgnoreUseCases(t *testing.T) {
 						reasons = append(reasons, v.PolicyID)
 					}
 				}
-			}, tt.Options...)
+			})
 			testutil.OK(t, err)
 			testutil.Equals(t, total, tt.Total)
 			slices.Sort(reasons)

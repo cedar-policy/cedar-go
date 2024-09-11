@@ -14,7 +14,6 @@ import (
 )
 
 // Ignore returns a value that should be ignored during batch evaluation.
-// The documentation for [WithIgnorePermit] and [WithIgnoreForbid] explain the exact behavior.
 func Ignore() types.Value { return eval.Ignore() }
 
 // Variable returns a named variable that is populated during batch evaluation.
@@ -57,28 +56,6 @@ type Option struct {
 	ignorePermit bool
 }
 
-// WithIgnoreForbid set the behavior of ignore to bias towards a deny decision.
-// e.g. it best answers the question "When ignoring context could this request be denied?"
-//
-//  1. When a Forbid Policy Condition refers to an ignored value, the Condition is dropped from the Policy.
-//  2. When a Permit Policy Condition refers to an ignored value, the Policy is dropped.
-//  3. When a Scope clause refers to an ignored value, that scope clause is set to match any.
-func WithIgnoreForbid() Option {
-	return Option{ignoreForbid: true}
-}
-
-// WithIgnorePermit set the behavior of ignore to bias towards an allow decision.
-// e.g. it better answers the question "When ignoring context could this request be allowed?"
-//
-//  1. When a Permit Policy Condition refers to an ignored value, the Condition is dropped from the Policy.
-//  2. When a Forbid Policy Condition refers to an ignored value, the Policy is dropped.
-//  3. When a Scope clause refers to an ignored value, that scope clause is set to match any.
-//
-// This is the default behavior.
-func WithIgnorePermit() Option {
-	return Option{ignorePermit: true}
-}
-
 type idEvaler struct {
 	PolicyID types.PolicyID
 	Policy   *ast.Policy
@@ -91,9 +68,8 @@ type idPolicy struct {
 }
 
 type batchEvaler struct {
-	Variables  []variableItem
-	Values     Values
-	ignoreBias types.Effect
+	Variables []variableItem
+	Values    Values
 
 	policies []idPolicy
 	compiled bool
@@ -121,26 +97,25 @@ var errInvalidPart = fmt.Errorf("invalid part")
 // Authorize will run a batch of authorization evaluations.
 //
 // All the request parts (PARC) must be specified, but you can
-// specify Variable or Ignore.  Varibles can be enumerated
+// specify [Variable] or [Ignore].  Varibles can be enumerated
 // using the Variables.
 //
-//   - It will error in case of early termination.
+// Using [Ignore] you can ask questions like "When ignoring context could this request be allowed?"
+//
+//  1. When a Permit Policy Condition refers to an ignored value, the Condition is dropped from the Policy.
+//  2. When a Forbid Policy Condition refers to an ignored value, the Policy is dropped.
+//  3. When a Scope clause refers to an ignored value, that scope clause is set to match any.
+//
+// Errors may be returned for a variety of reasons:
+//
+//   - It will error in case of a context error.
 //   - It will error in case any of PARC are an incorrect type at authorization.
 //   - It will error in case there are unbound variables.
 //   - It will error in case there are unused variables.
 //
 // The result passed to the callback must be used / cloned immediately and not modified.
-func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback, opts ...Option) error {
+func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback) error {
 	be := &batchEvaler{}
-	be.ignoreBias = types.Permit
-	for _, opt := range opts {
-		if opt.ignoreForbid {
-			be.ignoreBias = types.Forbid
-		}
-		if opt.ignorePermit {
-			be.ignoreBias = types.Permit
-		}
-	}
 	var found []types.String
 	found = findVariables(request.Principal, found)
 	found = findVariables(request.Action, found)
@@ -206,7 +181,7 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entitie
 func doPartial(be *batchEvaler) {
 	var np []idPolicy
 	for _, p := range be.policies {
-		part, keep := eval.PartialPolicy(be.ignoreBias, be.env, p.Policy)
+		part, keep := eval.PartialPolicy(be.env, p.Policy)
 		if !keep {
 			continue
 		}

@@ -446,7 +446,7 @@ func TestPartialPolicy(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, keep := PartialPolicy(types.Permit, InitEnv(tt.env), tt.in)
+			out, keep := PartialPolicy(InitEnv(tt.env), tt.in)
 			if keep {
 				testutil.Equals(t, out, tt.out)
 				// gotP := (*parser.Policy)(out)
