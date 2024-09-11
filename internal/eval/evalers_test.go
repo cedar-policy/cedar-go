@@ -1481,6 +1481,28 @@ func TestContainsAnyNode(t *testing.T) {
 			})
 		}
 	}
+
+	t.Run("not quadratic", func(t *testing.T) {
+		t.Parallel()
+
+		// Make two totally disjoint sets to force a worst case search
+		setSize := 200000
+		set1 := make([]types.Value, setSize)
+		set2 := make([]types.Value, setSize)
+
+		for i := 0; i < setSize; i++ {
+			set1[i] = types.Long(i)
+			set2[i] = types.Long(setSize + i)
+		}
+
+		n := newContainsAnyEval(newLiteralEval(types.Set(set1)), newLiteralEval(types.Set(set2)))
+
+		// This call would take several minutes if the evaluation of ContainsAny was quadratic
+		val, err := n.Eval(NewEnv())
+
+		testutil.OK(t, err)
+		testutil.Equals(t, val.(types.Boolean), types.False)
+	})
 }
 
 func TestRecordLiteralNode(t *testing.T) {
