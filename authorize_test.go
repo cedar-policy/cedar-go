@@ -702,6 +702,22 @@ func TestIsAuthorized(t *testing.T) {
 			Want:      true,
 			DiagErr:   0,
 		},
+		{
+			Name:   "rfc-57", // https://github.com/cedar-policy/rfcs/blob/main/text/0057-general-multiplication.md
+			Policy: `permit(principal, action, resource) when { context.foo * principal.bar >= 100 };`,
+			Entities: types.Entities{
+				types.NewEntityUID("Principal", "1"): &types.Entity{
+					UID:        types.NewEntityUID("Principal", "1"),
+					Attributes: types.Record{"bar": types.Long(42)},
+				},
+			},
+			Principal: types.NewEntityUID("Principal", "1"),
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  types.NewEntityUID("Resource", "resource"),
+			Context:   types.Record{"foo": types.Long(43)},
+			Want:      true,
+			DiagErr:   0,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
