@@ -125,7 +125,7 @@ var errInvalidPart = fmt.Errorf("invalid part")
 // using the Variables.
 //
 //   - It will error in case of early termination.
-//   - It will error in case any of PARC are an incorrect type at eval type.
+//   - It will error in case any of PARC are an incorrect type at authorization.
 //   - It will error in case there are unbound variables.
 //   - It will error in case there are unused variables.
 //
