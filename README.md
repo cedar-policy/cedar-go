@@ -133,6 +133,11 @@ While in development (0.x.y), each tagged release may contain breaking changes.
 
 ## Change log
 
+### New features in 0.4.x
+
+- General performance improvements to the evaluator
+- An experimental batch evaluator has been added to `x/exp/batch`
+
 ### New features in 0.2.x
 
 - A programmatic AST is now available in the `ast` package.
