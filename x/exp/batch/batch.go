@@ -13,15 +13,61 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func Ignore() types.Value                    { return eval.Ignore() }
+// Ignore returns a value that should be ignored during batch evaluation.
+func Ignore() types.Value { return eval.Ignore() }
+
+// Variable returns a named variable that is populated during batch evaluation.
 func Variable(name types.String) types.Value { return eval.Variable(name) }
 
+// Request defines the PARC and map of Variables to batch evaluate.
 type Request struct {
 	Principal types.Value
 	Action    types.Value
 	Resource  types.Value
 	Context   types.Value
 	Variables Variables
+}
+
+// Variables is a map of String to slice of Value.
+type Variables map[types.String][]types.Value
+
+// Values is a map of String to Value.  This structure is part of the result and
+// reveals the current variable substitutions.
+type Values map[types.String]types.Value
+
+// Result is the result of a single batched authorization.  It includes a
+// specific Request, the Values that were substituted, and the resulting
+// Decision and Diagnostics.
+type Result struct {
+	Request    types.Request
+	Values     Values
+	Decision   types.Decision
+	Diagnostic types.Diagnostic
+}
+
+// Callback is a function that is called for each single batch authorization with
+// a Result.
+type Callback func(Result)
+
+// Option is an option to be passed to the Authorize function.  It should be created
+// by one of the WithOption style factories.
+type Option struct {
+	ignoreForbid bool
+	ignorePermit bool
+}
+
+// WithIgnoreForbid set the behavior of ignore to bias towards a deny decision.
+// e.g. it best answers the question "When ignoring context could this request be denied?"
+func WithIgnoreForbid() Option {
+	return Option{ignoreForbid: true}
+}
+
+// WithIgnoreForbid set the behavior of ignore to bias towards an allow decision.
+// e.g. it better answers the question "When ignoring context could this request be allowed?"
+//
+// This is the default behavior.
+func WithIgnorePermit() Option {
+	return Option{ignorePermit: true}
 }
 
 type idEvaler struct {
@@ -52,43 +98,22 @@ type variableItem struct {
 	Values []types.Value
 }
 
-type Variables map[types.String][]types.Value
-
 const unknownEntityType = "__cedar::unknown"
 
 func unknownEntity(v types.String) types.EntityUID {
 	return types.NewEntityUID(unknownEntityType, v)
 }
 
-type Values map[types.String]types.Value
-
-type Result struct {
-	Request    types.Request
-	Values     Values
-	Decision   types.Decision
-	Diagnostic types.Diagnostic
-}
-
-type Callback func(Result)
-
 var errUnboundVariable = fmt.Errorf("unbound variable")
 var errUnusedVariable = fmt.Errorf("unused variable")
 var errMissingPart = fmt.Errorf("missing part")
 var errInvalidPart = fmt.Errorf("invalid part")
 
-type Option struct {
-	ignoreForbid bool
-}
-
-func WithIgnoreForbid() Option {
-	return Option{ignoreForbid: true}
-}
-
 // Authorize will run a batch of authorization evaluations.
 //
 // All the request parts (PARC) must be specified, but you can
 // specify Variable or Ignore.  Varibles can be enumerated
-// using the Variables.  
+// using the Variables.
 //
 //   - It will error in case of early termination.
 //   - It will error in case any of PARC are an incorrect type at eval type.
@@ -102,6 +127,9 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entitie
 	for _, opt := range opts {
 		if opt.ignoreForbid {
 			be.ignoreBias = types.Forbid
+		}
+		if opt.ignorePermit {
+			be.ignoreBias = types.Permit
 		}
 	}
 	var found []types.String
