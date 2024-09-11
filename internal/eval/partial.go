@@ -482,8 +482,10 @@ func partialOr(env *Env, v ast.NodeTypeOr) (ast.IsNode, error) {
 	return ast.NodeTypeOr{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, nil
 }
 
+const partialErrorName = "__cedar::partialError"
+
 func extError(err error) ast.NodeTypeExtensionCall {
-	return ast.NodeTypeExtensionCall{Name: "error", Args: []ast.IsNode{ast.NodeValue{Value: types.String(err.Error())}}}
+	return ast.NodeTypeExtensionCall{Name: partialErrorName, Args: []ast.IsNode{ast.NodeValue{Value: types.String(err.Error())}}}
 }
 
 // partialHasEval

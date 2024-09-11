@@ -492,7 +492,7 @@ func TestPartialIfThenElse(t *testing.T) {
 		{"ifFalseErrorB", ast.IfThenElse(falseN, errorN, valueB), valueB, testutil.OK},
 
 		{"ifKeepKeepKeep", ast.IfThenElse(keepN, keepN, keepN), ast.IfThenElse(keepN, keepN, keepN), testutil.OK},
-		{"ifKeepErrorError", ast.IfThenElse(keepN, errorN, errorN), ast.IfThenElse(keepN, ast.ExtensionCall("error", ast.String("type error: expected long, got string")), ast.ExtensionCall("error", ast.String("type error: expected long, got string"))), testutil.OK},
+		{"ifKeepErrorError", ast.IfThenElse(keepN, errorN, errorN), ast.IfThenElse(keepN, ast.ExtensionCall(partialErrorName, ast.String("type error: expected long, got string")), ast.ExtensionCall(partialErrorName, ast.String("type error: expected long, got string"))), testutil.OK},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -550,7 +550,7 @@ func TestPartialAnd(t *testing.T) {
 		{"andKeepFalse", keepN.And(falseN), keepN.And(falseN), testutil.OK},
 		{"andKeepValue", keepN.And(valueN), keepN.And(valueN), testutil.OK},
 		{"andKeepKeep", keepN.And(keepN), keepN.And(keepN), testutil.OK},
-		{"andKeepError", keepN.And(errorN), keepN.And(ast.ExtensionCall("error", ast.String("type error: expected long, got string"))), testutil.OK},
+		{"andKeepError", keepN.And(errorN), keepN.And(ast.ExtensionCall(partialErrorName, ast.String("type error: expected long, got string"))), testutil.OK},
 
 		{"andErrorTrue", errorN.And(trueN), nil, testutil.Error},
 		{"andErrorFalse", errorN.And(falseN), nil, testutil.Error},
@@ -614,7 +614,7 @@ func TestPartialOr(t *testing.T) {
 		{"orKeepFalse", keepN.Or(falseN), keepN.Or(falseN), testutil.OK},
 		{"orKeepValue", keepN.Or(valueN), keepN.Or(valueN), testutil.OK},
 		{"orKeepKeep", keepN.Or(keepN), keepN.Or(keepN), testutil.OK},
-		{"orKeepError", keepN.Or(errorN), keepN.Or(ast.ExtensionCall("error", ast.String("type error: expected long, got string"))), testutil.OK},
+		{"orKeepError", keepN.Or(errorN), keepN.Or(ast.ExtensionCall(partialErrorName, ast.String("type error: expected long, got string"))), testutil.OK},
 
 		{"orErrorTrue", errorN.Or(trueN), nil, testutil.Error},
 		{"orErrorFalse", errorN.Or(falseN), nil, testutil.Error},

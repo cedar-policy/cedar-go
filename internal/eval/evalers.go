@@ -1185,7 +1185,7 @@ func (n *ipIsInRangeEval) Eval(env *Env) (types.Value, error) {
 
 func newExtensionEval(name types.Path, args []Evaler) Evaler {
 	// error is not part of the cedar spec, so leaving it out of the list of extensions that can be parsed, etc
-	if name == "error" && len(args) == 1 {
+	if name == partialErrorName && len(args) == 1 {
 		return newPartialErrorEval(args[0])
 	}
 
