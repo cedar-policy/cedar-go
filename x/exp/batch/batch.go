@@ -49,13 +49,6 @@ type Result struct {
 // a Result.
 type Callback func(Result)
 
-// Option is an option to be passed to the Authorize function.  It should be created
-// by one of the WithOption style factories.
-type Option struct {
-	ignoreForbid bool
-	ignorePermit bool
-}
-
 type idEvaler struct {
 	PolicyID types.PolicyID
 	Policy   *ast.Policy
