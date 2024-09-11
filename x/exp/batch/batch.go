@@ -58,12 +58,20 @@ type Option struct {
 
 // WithIgnoreForbid set the behavior of ignore to bias towards a deny decision.
 // e.g. it best answers the question "When ignoring context could this request be denied?"
+//
+//  1. When a Permit Policy Condition refers to an ignored value, the Condition is dropped from the Policy.
+//  2. When a Forbid Policy Condition refers to an ignored value, the Policy is dropped.
+//  3. When a Scope clause refers to an ignored value, that scope clause is set to match any.
 func WithIgnoreForbid() Option {
 	return Option{ignoreForbid: true}
 }
 
 // WithIgnoreForbid set the behavior of ignore to bias towards an allow decision.
 // e.g. it better answers the question "When ignoring context could this request be allowed?"
+//
+//  1. When a Forbid Policy Condition refers to an ignored value, the Condition is dropped from the Policy.
+//  2. When a Permit Policy Condition refers to an ignored value, the Policy is dropped.
+//  3. When a Scope clause refers to an ignored value, that scope clause is set to match any.
 //
 // This is the default behavior.
 func WithIgnorePermit() Option {
