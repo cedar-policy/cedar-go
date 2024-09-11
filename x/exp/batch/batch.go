@@ -14,6 +14,7 @@ import (
 )
 
 // Ignore returns a value that should be ignored during batch evaluation.
+// The documentation for [WithIgnorePermit] and [WithIgnoreForbid] explain the exact behavior.
 func Ignore() types.Value { return eval.Ignore() }
 
 // Variable returns a named variable that is populated during batch evaluation.
