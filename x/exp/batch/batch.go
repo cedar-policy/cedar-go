@@ -177,6 +177,9 @@ func doPartial(be *batchEvaler) {
 	be.evalers = nil
 }
 
+// fixIgnores replaces the Ignore PAR (which may not be EntityUID's in the future) with
+// EntityUID's so that the conversion to Result is successful.  An ignored context is
+// replaced with a nil Record for the same reason.
 func fixIgnores(be *batchEvaler) {
 	if eval.IsIgnore(be.env.Principal) {
 		be.env.Principal = unknownEntity(consts.Principal)
@@ -188,7 +191,8 @@ func fixIgnores(be *batchEvaler) {
 		be.env.Resource = unknownEntity(consts.Resource)
 	}
 	if eval.IsIgnore(be.env.Context) {
-		be.env.Context = types.Record{}
+		var nilRecord types.Record
+		be.env.Context = nilRecord
 	}
 }
 

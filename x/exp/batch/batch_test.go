@@ -190,8 +190,8 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			[]Result{
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"resource": r1}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: nil}, Decision: false, Values: Values{"resource": r1}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: nil}, Decision: true, Values: Values{"resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
 
