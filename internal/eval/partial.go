@@ -123,14 +123,14 @@ func partialResourceScope(env *Env, ent types.Value, scope ast.IsResourceScopeNo
 }
 
 func partialScopeEval(env *Env, ent types.Value, in ast.IsScopeNode) (evaled bool, result bool) {
+	if IsVariable(ent) {
+		return false, false
+	} else if IsIgnore(ent) {
+		return true, true
+	}
 	e, ok := ent.(types.EntityUID)
 	if !ok {
 		return false, false
-	}
-	if IsVariable(e) {
-		return false, false
-	} else if IsIgnore(e) {
-		return true, true
 	}
 	switch t := in.(type) {
 	case ast.ScopeTypeAll:
