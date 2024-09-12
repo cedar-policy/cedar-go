@@ -119,7 +119,7 @@ type NodeTypeExtensionCall struct {
 func (n NodeTypeExtensionCall) isNode() {}
 
 func stripNodes(args []Node) []IsNode {
-	if len(args) == 0 {
+	if args == nil {
 		return nil
 	}
 	res := make([]IsNode, len(args))

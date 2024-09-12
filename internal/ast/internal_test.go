@@ -47,4 +47,9 @@ func TestStripNodes(t *testing.T) {
 		out := stripNodes(nil)
 		testutil.Equals(t, out, nil)
 	})
+	t.Run("preserveNonNil", func(t *testing.T) {
+		t.Parallel()
+		out := stripNodes([]Node{})
+		testutil.Equals(t, out, []IsNode{})
+	})
 }
