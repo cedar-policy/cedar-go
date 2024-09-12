@@ -65,7 +65,7 @@ func TestUtil(t *testing.T) {
 		t.Parallel()
 		t.Run("roundTrip", func(t *testing.T) {
 			t.Parallel()
-			v := types.Set{types.Boolean(true), types.Long(1)}
+			v := types.NewSet([]types.Value{types.Boolean(true), types.Long(1)})
 			slice, err := ValueToSet(v)
 			testutil.OK(t, err)
 			v2 := slice
@@ -76,7 +76,7 @@ func TestUtil(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToSet(types.Boolean(true))
 			testutil.ErrorIs(t, err, ErrType)
-			testutil.Equals(t, v, nil)
+			testutil.Equals(t, v.Len(), 0)
 		})
 	})
 
@@ -188,7 +188,7 @@ func TestTypeName(t *testing.T) {
 		{"ip", types.IPAddr{}, "IP"},
 		{"long", types.Long(42), "long"},
 		{"record", types.Record{}, "record"},
-		{"set", types.Set{}, "set"},
+		{"set", types.NewSet([]types.Value{}), "set"},
 		{"string", types.String("test"), "string"},
 		{"nil", nil, "unknown type"},
 	}

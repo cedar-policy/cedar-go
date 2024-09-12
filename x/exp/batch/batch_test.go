@@ -629,8 +629,8 @@ func TestCloneSub(t *testing.T) {
 		},
 		{
 			"set",
-			types.Set{Variable("bananas")}, "bananas", types.String("hello"),
-			types.Set{types.String("hello")}, true,
+			types.NewSet([]types.Value{Variable("bananas")}), "bananas", types.String("hello"),
+			types.NewSet([]types.Value{types.String("hello")}), true,
 		},
 		{
 			"recordNoChange",
@@ -639,8 +639,8 @@ func TestCloneSub(t *testing.T) {
 		},
 		{
 			"setNoChange",
-			types.Set{Variable("asdf")}, "bananas", types.String("hello"),
-			types.Set{Variable("asdf")}, false,
+			types.NewSet([]types.Value{Variable("asdf")}), "bananas", types.String("hello"),
+			types.NewSet([]types.Value{Variable("asdf")}), false,
 		},
 	}
 	for _, tt := range tests {
@@ -650,13 +650,6 @@ func TestCloneSub(t *testing.T) {
 			out, match := cloneSub(tt.in, tt.key, tt.value)
 			testutil.Equals(t, out, tt.out)
 			testutil.Equals(t, match, tt.match)
-			if !tt.match {
-				// assert that the effort of cloning was not done at all
-				testutil.Equals(t,
-					reflect.ValueOf(tt.in).Pointer(),
-					reflect.ValueOf(out).Pointer(),
-				)
-			}
 		})
 	}
 }
@@ -669,10 +662,10 @@ func TestFindVariables(t *testing.T) {
 		out  map[types.String]struct{}
 	}{
 		{"record", types.Record{"key": Variable("bananas")}, map[types.String]struct{}{"bananas": {}}},
-		{"set", types.Set{Variable("bananas")}, map[types.String]struct{}{"bananas": {}}},
-		{"dupes", types.Set{Variable("bananas"), Variable("bananas")}, map[types.String]struct{}{"bananas": {}}},
+		{"set", types.NewSet([]types.Value{Variable("bananas")}), map[types.String]struct{}{"bananas": {}}},
+		{"dupes", types.NewSet([]types.Value{Variable("bananas"), Variable("bananas")}), map[types.String]struct{}{"bananas": {}}},
 		{"none", types.String("test"), map[types.String]struct{}{}},
-		{"multi", types.Set{Variable("bananas"), Variable("test")}, map[types.String]struct{}{"bananas": {}, "test": {}}},
+		{"multi", types.NewSet([]types.Value{Variable("bananas"), Variable("test")}), map[types.String]struct{}{"bananas": {}, "test": {}}},
 	}
 
 	for _, tt := range tests {

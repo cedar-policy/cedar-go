@@ -21,7 +21,7 @@ func TestFoldNode(t *testing.T) {
 		},
 		{"set-bake",
 			ast.Set(ast.True()),
-			ast.Value(types.Set{types.True}),
+			ast.Value(types.NewSet([]types.Value{types.True})),
 		},
 		{"record-fold",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(6).Multiply(ast.Long(7))}}),
@@ -29,7 +29,7 @@ func TestFoldNode(t *testing.T) {
 		},
 		{"set-fold",
 			ast.Set(ast.Long(6).Multiply(ast.Long(7))),
-			ast.Value(types.Set{types.Long(42)}),
+			ast.Value(types.NewSet([]types.Value{types.Long(42)})),
 		},
 		{"record-blocked",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(6).Multiply(ast.Context())}}),
@@ -205,7 +205,7 @@ func TestFoldPolicy(t *testing.T) {
 		{
 			"valueSetNodes",
 			ast.Permit().When(ast.Set(ast.Long(42), ast.Long(43))),
-			ast.Permit().When(ast.Value(types.Set{types.Long(42), types.Long(43)})),
+			ast.Permit().When(ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43)}))),
 		},
 		{
 			"valueRecordElements",

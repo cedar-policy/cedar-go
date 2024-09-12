@@ -66,7 +66,7 @@ func TestJSON_Value(t *testing.T) {
 		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), ErrDecimal},
 		{"badDatetime", `{ "__extn": { "fn": "datetime", "arg": "bad" } }`, zeroValue(), ErrDatetime},
 		{"badDuration", `{ "__extn": { "fn": "duration", "arg": "bad" } }`, zeroValue(), ErrDuration},
-		{"set", `[42]`, Set{Long(42)}, nil},
+		{"set", `[42]`, NewSet([]Value{Long(42)}), nil},
 		{"record", `{"a":"b"}`, Record{"a": String("b")}, nil},
 		{"bool", `false`, Boolean(false), nil},
 	}
@@ -547,12 +547,12 @@ func TestJSONMarshal(t *testing.T) {
 		{"recordWithExt", Record{
 			"ip": mustIPValue("222.222.222.7"),
 		}, `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`, `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`},
-		{"set", Set{
+		{"set", NewSet([]Value{
 			String("av"),
 			String("cv"),
 			String("bv"),
-		}, `["av","cv","bv"]`, `["av","cv","bv"]`},
-		{"setWithExt", Set{mustIPValue("222.222.222.7")},
+		}), `["av","cv","bv"]`, `["av","cv","bv"]`},
+		{"setWithExt", NewSet([]Value{mustIPValue("222.222.222.7")}),
 			`[{"__extn":{"fn":"ip","arg":"222.222.222.7"}}]`, `[{"__extn":{"fn":"ip","arg":"222.222.222.7"}}]`},
 		{"entity", EntityUID{"User", "alice"}, `{"__entity":{"type":"User","id":"alice"}}`, `{"type":"User","id":"alice"}`},
 		{"ip", mustIPValue("222.222.222.7"), `{"__extn":{"fn":"ip","arg":"222.222.222.7"}}`, `"222.222.222.7"`},
@@ -578,7 +578,7 @@ func (j *jsonErr) String() string                       { return "" }
 func (j *jsonErr) MarshalCedar() []byte                 { return nil }
 func (j *jsonErr) Equal(Value) bool                     { return false }
 func (j *jsonErr) ExplicitMarshalJSON() ([]byte, error) { return nil, fmt.Errorf("jsonErr") }
-func (j *jsonErr) deepClone() Value                     { return nil }
+func (j *jsonErr) deepClone() Value                     { return j }
 
 func TestJSONSet(t *testing.T) {
 	t.Parallel()
@@ -590,7 +590,7 @@ func TestJSONSet(t *testing.T) {
 	})
 	t.Run("MarshalErr", func(t *testing.T) {
 		t.Parallel()
-		s := Set{&jsonErr{}}
+		s := NewSet([]Value{&jsonErr{}})
 		_, err := json.Marshal(s)
 		testutil.Error(t, err)
 	})

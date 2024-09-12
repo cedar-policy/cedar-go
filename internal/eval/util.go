@@ -60,7 +60,7 @@ func ValueToString(v types.Value) (types.String, error) {
 func ValueToSet(v types.Value) (types.Set, error) {
 	sv, ok := v.(types.Set)
 	if !ok {
-		return nil, fmt.Errorf("%w: expected set, got %v", ErrType, TypeName(v))
+		return types.Set{}, fmt.Errorf("%w: expected set, got %v", ErrType, TypeName(v))
 	}
 	return sv, nil
 }

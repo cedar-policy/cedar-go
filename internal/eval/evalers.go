@@ -102,11 +102,11 @@ func evalString(n Evaler, env *Env) (types.String, error) {
 func evalSet(n Evaler, env *Env) (types.Set, error) {
 	v, err := n.Eval(env)
 	if err != nil {
-		return nil, err
+		return types.Set{}, err
 	}
 	s, err := ValueToSet(v)
 	if err != nil {
-		return nil, err
+		return types.Set{}, err
 	}
 	return s, nil
 }
@@ -733,15 +733,15 @@ func newSetLiteralEval(elements []Evaler) *setLiteralEval {
 }
 
 func (n *setLiteralEval) Eval(env *Env) (types.Value, error) {
-	var vals types.Set
-	for _, e := range n.elements {
+	vals := make([]types.Value, len(n.elements))
+	for i, e := range n.elements {
 		v, err := e.Eval(env)
 		if err != nil {
 			return zeroValue(), err
 		}
-		vals = append(vals, v)
+		vals[i] = v
 	}
-	return vals, nil
+	return types.NewSet(vals), nil
 }
 
 // containsEval
@@ -790,12 +790,13 @@ func (n *containsAllEval) Eval(env *Env) (types.Value, error) {
 		return zeroValue(), err
 	}
 	result := true
-	for _, e := range rhs {
+	rhs.Iterate(func(e types.Value) bool {
 		if !lhs.Contains(e) {
 			result = false
-			break
+			return false
 		}
-	}
+		return true
+	})
 	return types.Boolean(result), nil
 }
 
@@ -821,12 +822,13 @@ func (n *containsAnyEval) Eval(env *Env) (types.Value, error) {
 		return zeroValue(), err
 	}
 	result := false
-	for _, e := range rhs {
+	rhs.Iterate(func(e types.Value) bool {
 		if lhs.Contains(e) {
 			result = true
-			break
+			return false
 		}
-	}
+		return true
+	})
 	return types.Boolean(result), nil
 }
 
@@ -1070,13 +1072,18 @@ func doInEval(env *Env, lhs types.EntityUID, rhs types.Value) (types.Value, erro
 	case types.EntityUID:
 		return types.Boolean(entityInOne(env, lhs, rhsv)), nil
 	case types.Set:
-		query := make(map[types.EntityUID]struct{}, len(rhsv))
-		for _, rhv := range rhsv {
-			e, err := ValueToEntity(rhv)
-			if err != nil {
-				return zeroValue(), err
+		query := make(map[types.EntityUID]struct{}, rhsv.Len())
+		var err error
+		rhsv.Iterate(func(rhv types.Value) bool {
+			var e types.EntityUID
+			if e, err = ValueToEntity(rhv); err != nil {
+				return false
 			}
 			query[e] = struct{}{}
+			return true
+		})
+		if err != nil {
+			return zeroValue(), err
 		}
 		return types.Boolean(entityInSet(env, lhs, query)), nil
 	}

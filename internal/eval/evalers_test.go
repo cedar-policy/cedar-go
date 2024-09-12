@@ -1285,25 +1285,25 @@ func TestSetLiteralNode(t *testing.T) {
 		result types.Value
 		err    error
 	}{
-		{"empty", []Evaler{}, types.Set{}, nil},
+		{"empty", []Evaler{}, types.NewSet([]types.Value{}), nil},
 		{"errorNode", []Evaler{newErrorEval(errTest)}, zeroValue(), errTest},
 		{"nested",
 			[]Evaler{
 				newLiteralEval(types.True),
-				newLiteralEval(types.Set{
+				newLiteralEval(types.NewSet([]types.Value{
+					types.False,
+					types.Long(1),
+				})),
+				newLiteralEval(types.Long(10)),
+			},
+			types.NewSet([]types.Value{
+				types.True,
+				types.NewSet([]types.Value{
 					types.False,
 					types.Long(1),
 				}),
-				newLiteralEval(types.Long(10)),
-			},
-			types.Set{
-				types.True,
-				types.Set{
-					types.False,
-					types.Long(1),
-				},
 				types.Long(10),
-			},
+			}),
 			nil},
 	}
 	for _, tt := range tests {
@@ -1328,7 +1328,7 @@ func TestContainsNode(t *testing.T) {
 		}{
 			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
 			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Long(0)), ErrType},
-			{"RhsError", newLiteralEval(types.Set{}), newErrorEval(errTest), errTest},
+			{"RhsError", newLiteralEval(types.NewSet([]types.Value{})), newErrorEval(errTest), errTest},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1342,9 +1342,9 @@ func TestContainsNode(t *testing.T) {
 		}
 	}
 	{
-		empty := types.Set{}
-		trueAndOne := types.Set{types.True, types.Long(1)}
-		nested := types.Set{trueAndOne, types.False, types.Long(2)}
+		empty := types.NewSet([]types.Value{})
+		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
+		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
 
 		tests := []struct {
 			name     string
@@ -1380,10 +1380,10 @@ func TestContainsAllNode(t *testing.T) {
 			lhs, rhs Evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Set{}), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Set{}), ErrType},
-			{"RhsError", newLiteralEval(types.Set{}), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.Set{}), newLiteralEval(types.Long(0)), ErrType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.NewSet([]types.Value{})), errTest},
+			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.NewSet([]types.Value{})), ErrType},
+			{"RhsError", newLiteralEval(types.NewSet([]types.Value{})), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.NewSet([]types.Value{})), newLiteralEval(types.Long(0)), ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1397,10 +1397,10 @@ func TestContainsAllNode(t *testing.T) {
 		}
 	}
 	{
-		empty := types.Set{}
-		trueOnly := types.Set{types.True}
-		trueAndOne := types.Set{types.True, types.Long(1)}
-		nested := types.Set{trueAndOne, types.False, types.Long(2)}
+		empty := types.NewSet([]types.Value{})
+		trueOnly := types.NewSet([]types.Value{types.True})
+		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
+		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
 
 		tests := []struct {
 			name     string
@@ -1434,10 +1434,10 @@ func TestContainsAnyNode(t *testing.T) {
 			lhs, rhs Evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Set{}), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Set{}), ErrType},
-			{"RhsError", newLiteralEval(types.Set{}), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.Set{}), newLiteralEval(types.Long(0)), ErrType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.NewSet([]types.Value{})), errTest},
+			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.NewSet([]types.Value{})), ErrType},
+			{"RhsError", newLiteralEval(types.NewSet([]types.Value{})), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.NewSet([]types.Value{})), newLiteralEval(types.Long(0)), ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1451,11 +1451,11 @@ func TestContainsAnyNode(t *testing.T) {
 		}
 	}
 	{
-		empty := types.Set{}
-		trueOnly := types.Set{types.True}
-		trueAndOne := types.Set{types.True, types.Long(1)}
-		trueAndTwo := types.Set{types.True, types.Long(2)}
-		nested := types.Set{trueAndOne, types.False, types.Long(2)}
+		empty := types.NewSet([]types.Value{})
+		trueOnly := types.NewSet([]types.Value{types.True})
+		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
+		trueAndTwo := types.NewSet([]types.Value{types.True, types.Long(2)})
+		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
 
 		tests := []struct {
 			name     string
@@ -1495,7 +1495,7 @@ func TestContainsAnyNode(t *testing.T) {
 			set2[i] = types.Long(setSize + i)
 		}
 
-		n := newContainsAnyEval(newLiteralEval(types.Set(set1)), newLiteralEval(types.Set(set2)))
+		n := newContainsAnyEval(newLiteralEval(types.NewSet(set1)), newLiteralEval(types.NewSet(set2)))
 
 		// This call would take several minutes if the evaluation of ContainsAny was quadratic
 		val, err := n.Eval(NewEnv())
@@ -1918,7 +1918,7 @@ func TestInNode(t *testing.T) {
 		{
 			"LhsError",
 			newErrorEval(errTest),
-			newLiteralEval(types.Set{}),
+			newLiteralEval(types.NewSet([]types.Value{})),
 			map[string][]string{},
 			zeroValue(),
 			errTest,
@@ -1926,7 +1926,7 @@ func TestInNode(t *testing.T) {
 		{
 			"LhsTypeError",
 			newLiteralEval(types.String("foo")),
-			newLiteralEval(types.Set{}),
+			newLiteralEval(types.NewSet([]types.Value{})),
 			map[string][]string{},
 			zeroValue(),
 			ErrType,
@@ -1950,9 +1950,9 @@ func TestInNode(t *testing.T) {
 		{
 			"RhsTypeError2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
-			newLiteralEval(types.Set{
+			newLiteralEval(types.NewSet([]types.Value{
 				types.String("foo"),
-			}),
+			})),
 			map[string][]string{},
 			zeroValue(),
 			ErrType,
@@ -1968,9 +1968,9 @@ func TestInNode(t *testing.T) {
 		{
 			"Reflexive2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
-			newLiteralEval(types.Set{
+			newLiteralEval(types.NewSet([]types.Value{
 				types.NewEntityUID("human", "joe"),
-			}),
+			})),
 			map[string][]string{},
 			types.True,
 			nil,
@@ -2038,7 +2038,7 @@ func TestIsInNode(t *testing.T) {
 			"LhsError",
 			newErrorEval(errTest),
 			"human",
-			newLiteralEval(types.Set{}),
+			newLiteralEval(types.NewSet([]types.Value{})),
 			map[string][]string{},
 			zeroValue(),
 			errTest,
@@ -2047,7 +2047,7 @@ func TestIsInNode(t *testing.T) {
 			"LhsTypeError",
 			newLiteralEval(types.String("foo")),
 			"human",
-			newLiteralEval(types.Set{}),
+			newLiteralEval(types.NewSet([]types.Value{})),
 			map[string][]string{},
 			zeroValue(),
 			ErrType,
@@ -2074,9 +2074,9 @@ func TestIsInNode(t *testing.T) {
 			"RhsTypeError2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
 			"human",
-			newLiteralEval(types.Set{
+			newLiteralEval(types.NewSet([]types.Value{
 				types.String("foo"),
-			}),
+			})),
 			map[string][]string{},
 			zeroValue(),
 			ErrType,
@@ -2094,9 +2094,9 @@ func TestIsInNode(t *testing.T) {
 			"Reflexive2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
 			"human",
-			newLiteralEval(types.Set{
+			newLiteralEval(types.NewSet([]types.Value{
 				types.NewEntityUID("human", "joe"),
-			}),
+			})),
 			map[string][]string{},
 			types.True,
 			nil,
@@ -2303,7 +2303,7 @@ func TestCedarString(t *testing.T) {
 		{"number", types.Long(42), `42`, `42`},
 		{"bool", types.True, `true`, `true`},
 		{"record", types.Record{"a": types.Long(42), "b": types.Long(43)}, `{"a":42, "b":43}`, `{"a":42, "b":43}`},
-		{"set", types.Set{types.Long(42), types.Long(43)}, `[42, 43]`, `[42, 43]`},
+		{"set", types.NewSet([]types.Value{types.Long(42), types.Long(43)}), `[42, 43]`, `[42, 43]`},
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
 		{"decimal", types.UnsafeDecimal(1234.5678), `1234.5678`, `decimal("1234.5678")`},

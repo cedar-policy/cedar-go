@@ -47,12 +47,13 @@ func TestDeepClone(t *testing.T) {
 	})
 	t.Run("Set", func(t *testing.T) {
 		t.Parallel()
-		a := Set{Long(42)}
+		slice := []Value{Long(42)}
+		a := NewSet(slice)
 		b := a.deepClone()
 		testutil.Equals(t, Value(a), b)
-		a[0] = String("bananas")
-		testutil.Equals(t, a, Set{String("bananas")})
-		testutil.Equals(t, b, Value(Set{Long(42)}))
+		slice[0] = String("bananas")
+		testutil.Equals(t, a, NewSet([]Value{Long(42)}))
+		testutil.Equals(t, b, Value(NewSet([]Value{Long(42)})))
 	})
 	t.Run("NilSet", func(t *testing.T) {
 		t.Parallel()

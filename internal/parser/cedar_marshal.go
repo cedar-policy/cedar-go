@@ -38,11 +38,11 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 	case ast.ScopeTypeIn:
 		return ast.NewNode(varNode).In(ast.Value(t.Entity))
 	case ast.ScopeTypeInSet:
-		set := make(types.Set, len(t.Entities))
+		set := make([]types.Value, len(t.Entities))
 		for i, e := range t.Entities {
 			set[i] = e
 		}
-		return ast.NewNode(varNode).In(ast.Value(set))
+		return ast.NewNode(varNode).In(ast.Value(types.NewSet(set)))
 	case ast.ScopeTypeIs:
 		return ast.NewNode(varNode).Is(t.Type)
 
