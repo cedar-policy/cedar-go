@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"slices"
 	"strings"
 	"testing"
 
@@ -42,14 +41,14 @@ type corpusTest struct {
 	ShouldValidate bool   `json:"shouldValidate"`
 	Entities       string `json:"entities"`
 	Requests       []struct {
-		Desc      string         `json:"description"`
-		Principal jsonEntity     `json:"principal"`
-		Action    jsonEntity     `json:"action"`
-		Resource  jsonEntity     `json:"resource"`
-		Context   types.Record   `json:"context"`
-		Decision  types.Decision `json:"decision"`
-		Reasons   []string       `json:"reason"`
-		Errors    []string       `json:"errors"`
+		Desc      string           `json:"description"`
+		Principal jsonEntity       `json:"principal"`
+		Action    jsonEntity       `json:"action"`
+		Resource  jsonEntity       `json:"resource"`
+		Context   types.Record     `json:"context"`
+		Decision  types.Decision   `json:"decision"`
+		Reasons   []types.PolicyID `json:"reason"`
+		Errors    []types.PolicyID `json:"errors"`
 	} `json:"requests"`
 }
 
@@ -159,6 +158,13 @@ func TestCorpus(t *testing.T) {
 			}
 
 			for _, request := range tt.Requests {
+				if len(request.Reasons) == 0 && request.Reasons != nil {
+					request.Reasons = nil
+				}
+				if len(request.Errors) == 0 && request.Errors != nil {
+					request.Errors = nil
+				}
+
 				t.Run(request.Desc, func(t *testing.T) {
 					t.Parallel()
 					ok, diag := policySet.IsAuthorized(
@@ -171,20 +177,16 @@ func TestCorpus(t *testing.T) {
 						})
 
 					testutil.Equals(t, ok, request.Decision)
-					var errors []string
+					var errors []types.PolicyID
 					for _, n := range diag.Errors {
-						errors = append(errors, string(n.PolicyID))
+						errors = append(errors, n.PolicyID)
 					}
-					if !slices.Equal(errors, request.Errors) {
-						t.Errorf("errors got %v want %v", errors, request.Errors)
-					}
-					var reasons []string
+					testutil.Equals(t, errors, request.Errors)
+					var reasons []types.PolicyID
 					for _, n := range diag.Reasons {
-						reasons = append(reasons, string(n.PolicyID))
+						reasons = append(reasons, n.PolicyID)
 					}
-					if !slices.Equal(reasons, request.Reasons) {
-						t.Errorf("reasons got %v want %v", reasons, request.Reasons)
-					}
+					testutil.Equals(t, reasons, request.Reasons)
 				})
 
 				t.Run(request.Desc+"/batch", func(t *testing.T) {
@@ -219,20 +221,16 @@ func TestCorpus(t *testing.T) {
 
 					ok, diag := res.Decision, res.Diagnostic
 					testutil.Equals(t, ok, request.Decision)
-					var errors []string
+					var errors []types.PolicyID
 					for _, n := range diag.Errors {
-						errors = append(errors, string(n.PolicyID))
+						errors = append(errors, n.PolicyID)
 					}
-					if !slices.Equal(errors, request.Errors) {
-						t.Errorf("errors got %v want %v", errors, request.Errors)
-					}
-					var reasons []string
+					testutil.Equals(t, errors, request.Errors)
+					var reasons []types.PolicyID
 					for _, n := range diag.Reasons {
-						reasons = append(reasons, string(n.PolicyID))
+						reasons = append(reasons, n.PolicyID)
 					}
-					if !slices.Equal(reasons, request.Reasons) {
-						t.Errorf("reasons got %v want %v", reasons, request.Reasons)
-					}
+					testutil.Equals(t, reasons, request.Reasons)
 				})
 			}
 		})
