@@ -40,20 +40,20 @@ func tryFold(nodes []ast.IsNode,
 	mkNode func(nodes []ast.IsNode) ast.IsNode,
 ) ast.IsNode {
 	var values []types.Value
-	ok := true
+	allFolded := true
 	for i, n := range nodes {
 		n = fold(n)
 		nodes[i] = n
-		if !ok {
+		if !allFolded {
 			continue
 		}
 		if v, vok := n.(ast.NodeValue); vok {
 			values = append(values, v.Value)
 			continue
 		}
-		ok = false
+		allFolded = false
 	}
-	if ok {
+	if allFolded {
 		eval := mkEval(values)
 		v, err := eval.Eval(nil)
 		if err == nil {
