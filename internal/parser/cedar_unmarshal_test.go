@@ -557,7 +557,7 @@ func TestParseApproximateErrors(t *testing.T) {
 		{"reservedKeywordAsHas", `permit (principal, action, resource) when { {} has false }`, "expected ident or string"},
 		{"reservedKeywordAsEntityType", `permit (principal == false::"42", action, resource)`, "expected ident"},
 		{"reservedKeywordAsAttributeAccess", `permit (principal, action, resource) when { context.false }`, "expected ident"},
-		{"reservedKeywordAsAnnotation", `@false() permit (principal, action, resource)`, "expected ident"},
+		{"invalidPrimary", `permit (principal, action, resource) when { foobar }`, "invalid primary"},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -587,6 +587,100 @@ func TestPolicySliceErrors(t *testing.T) {
 			var pol parser.PolicySlice
 			err := pol.UnmarshalCedar([]byte(tt.in))
 			testutil.FatalIf(t, !strings.Contains(err.Error(), tt.outErrSubstring), "got %v want %v", err.Error(), tt.outErrSubstring)
+		})
+	}
+}
+
+func TestReservedNamesInEntityPath(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   string
+		out  *ast.Policy
+		err  func(testutil.TB, error)
+	}{
+		{"action", `permit (principal, action, resource) when { action::"test" };`,
+			ast.Permit().When(ast.EntityUID("action", "test")), testutil.OK}, // Rust: OK
+		{"context", `permit (principal, action, resource) when { context::"test" };`,
+			ast.Permit().When(ast.EntityUID("context", "test")), testutil.OK}, // Rust: OK
+		{"else", `permit (principal, action, resource) when { else::"test" };`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"false", `permit (principal, action, resource) when { false::"test" };`,
+			nil, testutil.Error}, // Rust: unexpected token
+		{"forbid", `permit (principal, action, resource) when { forbid::"test" };`,
+			ast.Permit().When(ast.EntityUID("forbid", "test")), testutil.OK}, // Rust: OK
+		{"has", `permit (principal, action, resource) when { has::"test" };`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"if", `permit (principal, action, resource) when { if::"test" };`,
+			nil, testutil.Error}, // Rust: unexpected token
+		{"in", `permit (principal, action, resource) when { in::"test" };`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"is", `permit (principal, action, resource) when { is::"test" };`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"like", `permit (principal, action, resource) when { like::"test" };`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"permit", `permit (principal, action, resource) when { permit::"test" };`,
+			ast.Permit().When(ast.EntityUID("permit", "test")), testutil.OK}, // Rust: OK
+		{"principal", `permit (principal, action, resource) when { principal::"test" };`,
+			ast.Permit().When(ast.EntityUID("principal", "test")), testutil.OK}, // Rust: OK
+		{"resource", `permit (principal, action, resource) when { resource::"test" };`,
+			ast.Permit().When(ast.EntityUID("resource", "test")), testutil.OK}, // Rust: OK
+		{"then", `permit (principal, action, resource) when { then::"test" };`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"true", `permit (principal, action, resource) when { true::"test" };`,
+			nil, testutil.Error}, // Rust: unexpected token
+		{"unless", `permit (principal, action, resource) when { unless::"test" };`,
+			ast.Permit().When(ast.EntityUID("unless", "test")), testutil.OK}, // Rust: OK
+		{"when", `permit (principal, action, resource) when { when::"test" };`,
+			ast.Permit().When(ast.EntityUID("when", "test")), testutil.OK}, // Rust: OK
+
+		{"scope/action", `permit (principal == action::"test", action, resource);`,
+			ast.Permit().PrincipalEq(types.NewEntityUID("action", "test")), testutil.OK}, // Rust: OK
+		{"scope/context", `permit (principal == context::"test", action, resource);`,
+			ast.Permit().PrincipalEq(types.NewEntityUID("context", "test")), testutil.OK}, // Rust: OK
+		{"scope/else", `permit (principal == else::"test", action, resource);`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"scope/false", `permit (principal == false::"test", action, resource);`,
+			nil, testutil.Error}, // Rust: unexpected token
+		{"scope/forbid", `permit (principal == forbid::"test", action, resource);`,
+			ast.Permit().PrincipalEq(types.NewEntityUID("forbid", "test")), testutil.OK}, // Rust: OK
+		{"scope/has", `permit (principal == has::"test", action, resource);`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"scope/if", `permit (principal == if::"test", action, resource);`,
+			nil, testutil.Error}, // Rust: unexpected token
+		{"scope/in", `permit (principal == in::"test", action, resource);`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"scope/is", `permit (principal == is::"test", action, resource);`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"scope/like", `permit (principal == like::"test", action, resource);`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"scope/permit", `permit (principal == permit::"test", action, resource);`,
+			ast.Permit().PrincipalEq(types.NewEntityUID("permit", "test")), testutil.OK}, // Rust: OK
+		{"scope/principal", `permit (principal == principal::"test", action, resource);`,
+			ast.Permit().PrincipalEq(types.NewEntityUID("principal", "test")), testutil.OK}, // Rust: OK
+		{"scope/resource", `permit (principal == resource::"test", action, resource);`,
+			ast.Permit().PrincipalEq(types.NewEntityUID("resource", "test")), testutil.OK}, // Rust: OK
+		{"scope/then", `permit (principal == then::"test", action, resource);`,
+			nil, testutil.Error}, // Rust: this identifier is reserved and cannot be used
+		{"scope/true", `permit (principal == true::"test", action, resource);`,
+			nil, testutil.Error}, // Rust: unexpected token
+		{"scope/unless", `permit (principal == unless::"test", action, resource);`,
+			ast.Permit().PrincipalEq(types.NewEntityUID("unless", "test")), testutil.OK}, // Rust: OK
+		{"scope/when", `permit (principal == when::"test", action, resource);`,
+			ast.Permit().PrincipalEq(types.NewEntityUID("when", "test")), testutil.OK}, // Rust: OK
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var out parser.Policy
+			err := out.UnmarshalCedar([]byte(tt.in))
+			out.Position = ast.Position{}
+			tt.err(t, err)
+			if err == nil {
+				testutil.Equals(t, &out, (*parser.Policy)(tt.out))
+			}
 		})
 	}
 }

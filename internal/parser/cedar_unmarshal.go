@@ -704,16 +704,25 @@ func (p *parser) primary() (ast.Node, error) {
 		res = ast.True()
 	case t.Text == "false":
 		res = ast.False()
-	case t.Text == consts.Principal:
-		res = ast.Principal()
-	case t.Text == consts.Action:
-		res = ast.Action()
-	case t.Text == consts.Resource:
-		res = ast.Resource()
-	case t.Text == consts.Context:
-		res = ast.Context()
 	case t.isIdent():
-		return p.entityOrExtFun(t.Text)
+		// There's an ambiguity here between VAR, Entity, and ExtFun - all of which can start with an Ident. We need to
+		// look ahead one token to resolve it.
+		next := p.peek()
+		if next.Text == "::" || next.Text == "(" {
+			return p.entityOrExtFun(t.Text)
+		}
+		switch {
+		case t.Text == consts.Principal:
+			res = ast.Principal()
+		case t.Text == consts.Action:
+			res = ast.Action()
+		case t.Text == consts.Resource:
+			res = ast.Resource()
+		case t.Text == consts.Context:
+			res = ast.Context()
+		default:
+			return res, p.errorf("invalid primary")
+		}
 	case t.Text == "(":
 		expr, err := p.expression()
 		if err != nil {
