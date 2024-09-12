@@ -50,23 +50,17 @@ type Result struct {
 type Callback func(Result)
 
 type idEvaler struct {
-	PolicyID types.PolicyID
-	Policy   *ast.Policy
-	Evaler   eval.BoolEvaler
-}
-
-type idPolicy struct {
-	PolicyID types.PolicyID
-	Policy   *ast.Policy
+	Policy *ast.Policy
+	Evaler eval.BoolEvaler
 }
 
 type batchEvaler struct {
 	Variables []variableItem
 	Values    Values
 
-	policies []idPolicy
+	policies map[types.PolicyID]*ast.Policy
 	compiled bool
-	evalers  []*idEvaler
+	evalers  map[types.PolicyID]*idEvaler
 	env      *eval.Env
 	callback Callback
 }
@@ -130,11 +124,9 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entitie
 		}
 	}
 	pm := ps.Map()
-	be.policies = make([]idPolicy, len(pm))
-	i := 0
+	be.policies = make(map[types.PolicyID]*ast.Policy, len(pm))
 	for k, p := range pm {
-		be.policies[i] = idPolicy{PolicyID: k, Policy: (*ast.Policy)(p.AST())}
-		i++
+		be.policies[k] = (*ast.Policy)(p.AST())
 	}
 	be.callback = cb
 	switch {
@@ -172,13 +164,13 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entitie
 }
 
 func doPartial(be *batchEvaler) {
-	var np []idPolicy
-	for _, p := range be.policies {
-		part, keep := eval.PartialPolicy(be.env, p.Policy)
+	np := map[types.PolicyID]*ast.Policy{}
+	for k, p := range be.policies {
+		part, keep := eval.PartialPolicy(be.env, p)
 		if !keep {
 			continue
 		}
-		np = append(np, idPolicy{PolicyID: p.PolicyID, Policy: part})
+		np[k] = part
 	}
 	be.compiled = false
 	be.policies = np
@@ -277,7 +269,7 @@ func diagnosticAuthzWithCallback(be *batchEvaler) error {
 	return nil
 }
 
-func isAuthorized(ps []*idEvaler, env *eval.Env) (types.Decision, types.Diagnostic) {
+func isAuthorized(ps map[types.PolicyID]*idEvaler, env *eval.Env) (types.Decision, types.Diagnostic) {
 	var diag types.Diagnostic
 	var forbids []types.DiagnosticReason
 	var permits []types.DiagnosticReason
@@ -286,19 +278,19 @@ func isAuthorized(ps []*idEvaler, env *eval.Env) (types.Decision, types.Diagnost
 	// - All policy should be run to collect errors
 	// - For permit, all permits must be run to collect annotations
 	// - For forbid, forbids must be run to collect annotations
-	for _, po := range ps {
+	for pid, po := range ps {
 		result, err := po.Evaler.Eval(env)
 		if err != nil {
-			diag.Errors = append(diag.Errors, types.DiagnosticError{PolicyID: po.PolicyID, Position: types.Position(po.Policy.Position), Message: err.Error()})
+			diag.Errors = append(diag.Errors, types.DiagnosticError{PolicyID: pid, Position: types.Position(po.Policy.Position), Message: err.Error()})
 			continue
 		}
 		if !result {
 			continue
 		}
 		if po.Policy.Effect == ast.EffectPermit {
-			permits = append(permits, types.DiagnosticReason{PolicyID: po.PolicyID, Position: types.Position(po.Policy.Position)})
+			permits = append(permits, types.DiagnosticReason{PolicyID: pid, Position: types.Position(po.Policy.Position)})
 		} else {
-			forbids = append(forbids, types.DiagnosticReason{PolicyID: po.PolicyID, Position: types.Position(po.Policy.Position)})
+			forbids = append(forbids, types.DiagnosticReason{PolicyID: pid, Position: types.Position(po.Policy.Position)})
 		}
 	}
 	if len(forbids) > 0 {
@@ -323,9 +315,9 @@ func batchCompile(be *batchEvaler) {
 	if be.compiled {
 		return
 	}
-	be.evalers = make([]*idEvaler, len(be.policies))
-	for i, p := range be.policies {
-		be.evalers[i] = &idEvaler{PolicyID: p.PolicyID, Policy: p.Policy, Evaler: eval.Compile(p.Policy)}
+	be.evalers = make(map[types.PolicyID]*idEvaler, len(be.policies))
+	for k, p := range be.policies {
+		be.evalers[k] = &idEvaler{Policy: p, Evaler: eval.Compile(p)}
 	}
 	be.compiled = true
 }
