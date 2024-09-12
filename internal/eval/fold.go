@@ -11,11 +11,11 @@ import (
 // foldPolicy takes in a given policy and attempts as much constant folding as possible.
 // It is not given any environment (entities, parc) so any references of those sort will
 // stop the folding.  The kinds of things that this will fold:
-// 
-//  - 1+1 -> 2
-//  - [1,2,3].contains(2) -> true
-//  - a nodes set [1,2,3] -> a value node of the set [1,2,3]
-//  - an extension call to Decimal("42") -> a value node of the Decimal("42")
+//
+//   - 1+1 -> 2
+//   - [1,2,3].contains(2) -> true
+//   - a nodes set [1,2,3] -> a value node of the set [1,2,3]
+//   - an extension call to Decimal("42") -> a value node of the Decimal("42")
 //
 // Expressions that will cause errors are not folded, for example, `Decimal("hello")` will
 // remain as an extension call and not be folded into a Decimal value.
