@@ -43,7 +43,7 @@ func IsIgnore(v types.Value) bool {
 }
 
 // PartialPolicy returns a partially evaluated version of the policy and a boolean indicating if the policy should be kept.
-// (Policies that can be determined to evaluated to false are not kept.)
+// (Policies that are determined to evaluate to false are not kept.)
 func PartialPolicy(env *Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
 	p2 := *p
 	if p2.Principal, keep = partialPrincipalScope(env, env.Principal, p2.Principal); !keep {
