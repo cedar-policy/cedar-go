@@ -304,13 +304,6 @@ func isAuthorized(ps map[types.PolicyID]*idEvaler, env *eval.Env) (types.Decisio
 	return types.Deny, diag
 }
 
-// func testPrintPolicy(p *ast.Policy) {
-// 	pp := (*parser.Policy)(p)
-// 	var got bytes.Buffer
-// 	pp.MarshalCedar(&got)
-// 	fmt.Println(got.String())
-// }
-
 func batchCompile(be *batchEvaler) {
 	if be.compiled {
 		return
