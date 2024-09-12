@@ -109,18 +109,18 @@ var errInvalidPart = fmt.Errorf("invalid part")
 // The result passed to the callback must be used / cloned immediately and not modified.
 func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback) error {
 	be := &batchEvaler{}
-	var found []types.String
-	found = findVariables(request.Principal, found)
-	found = findVariables(request.Action, found)
-	found = findVariables(request.Resource, found)
-	found = findVariables(request.Context, found)
-	for _, key := range found {
+	found := map[types.String]struct{}{}
+	findVariables(found, request.Principal)
+	findVariables(found, request.Action)
+	findVariables(found, request.Resource)
+	findVariables(found, request.Context)
+	for key := range found {
 		if _, ok := request.Variables[key]; !ok {
 			return fmt.Errorf("%w: %v", errUnboundVariable, key)
 		}
 	}
 	for k := range request.Variables {
-		if !slices.Contains(found, k) {
+		if _, ok := found[k]; !ok {
 			return fmt.Errorf("%w: %v", errUnusedVariable, k)
 		}
 	}
@@ -366,22 +366,19 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 	return r, false
 }
 
-func findVariables(r types.Value, found []types.String) []types.String {
+func findVariables(found map[types.String]struct{}, r types.Value) {
 	switch t := r.(type) {
 	case types.EntityUID:
 		if key, ok := eval.ToVariable(t); ok {
-			if !slices.Contains(found, key) {
-				found = append(found, key)
-			}
+			found[key] = struct{}{}
 		}
 	case types.Record:
 		for _, vv := range t {
-			found = findVariables(vv, found)
+			findVariables(found, vv)
 		}
 	case types.Set:
 		for _, vv := range t {
-			found = findVariables(vv, found)
+			findVariables(found, vv)
 		}
 	}
-	return found
 }

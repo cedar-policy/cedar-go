@@ -666,20 +666,21 @@ func TestFindVariables(t *testing.T) {
 	tests := []struct {
 		name string
 		in   types.Value
-		out  []types.String
+		out  map[types.String]struct{}
 	}{
-		{"record", types.Record{"key": Variable("bananas")}, []types.String{"bananas"}},
-		{"set", types.Set{Variable("bananas")}, []types.String{"bananas"}},
-		{"dupes", types.Set{Variable("bananas"), Variable("bananas")}, []types.String{"bananas"}},
-		{"none", types.String("test"), nil},
-		{"multi", types.Set{Variable("bananas"), Variable("test")}, []types.String{"bananas", "test"}},
+		{"record", types.Record{"key": Variable("bananas")}, map[types.String]struct{}{"bananas": {}}},
+		{"set", types.Set{Variable("bananas")}, map[types.String]struct{}{"bananas": {}}},
+		{"dupes", types.Set{Variable("bananas"), Variable("bananas")}, map[types.String]struct{}{"bananas": {}}},
+		{"none", types.String("test"), map[types.String]struct{}{}},
+		{"multi", types.Set{Variable("bananas"), Variable("test")}, map[types.String]struct{}{"bananas": {}, "test": {}}},
 	}
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out := findVariables(tt.in, nil)
+			out := map[types.String]struct{}{}
+			findVariables(out, tt.in)
 			testutil.Equals(t, out, tt.out)
 		})
 	}
