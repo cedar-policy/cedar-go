@@ -101,7 +101,7 @@ var errInvalidPart = fmt.Errorf("invalid part")
 //
 // Errors may be returned for a variety of reasons:
 //
-//   - It will error in case of a context error.
+//   - It will error in case of a context.Context error (e.g. cancellation).
 //   - It will error in case any of PARC are an incorrect type at authorization.
 //   - It will error in case there are unbound variables.
 //   - It will error in case there are unused variables.
