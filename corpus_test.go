@@ -42,14 +42,14 @@ type corpusTest struct {
 	ShouldValidate bool   `json:"shouldValidate"`
 	Entities       string `json:"entities"`
 	Requests       []struct {
-		Desc      string       `json:"description"`
-		Principal jsonEntity   `json:"principal"`
-		Action    jsonEntity   `json:"action"`
-		Resource  jsonEntity   `json:"resource"`
-		Context   types.Record `json:"context"`
-		Decision  string       `json:"decision"`
-		Reasons   []string     `json:"reason"`
-		Errors    []string     `json:"errors"`
+		Desc      string         `json:"description"`
+		Principal jsonEntity     `json:"principal"`
+		Action    jsonEntity     `json:"action"`
+		Resource  jsonEntity     `json:"resource"`
+		Context   types.Record   `json:"context"`
+		Decision  types.Decision `json:"decision"`
+		Reasons   []string       `json:"reason"`
+		Errors    []string       `json:"errors"`
 	} `json:"requests"`
 }
 
@@ -170,9 +170,7 @@ func TestCorpus(t *testing.T) {
 							Context:   request.Context,
 						})
 
-					if ok != (request.Decision == "allow") {
-						t.Fatalf("got %v want %v", ok, request.Decision)
-					}
+					testutil.Equals(t, ok, request.Decision)
 					var errors []string
 					for _, n := range diag.Errors {
 						errors = append(errors, string(n.PolicyID))
@@ -220,9 +218,7 @@ func TestCorpus(t *testing.T) {
 					testutil.Equals(t, res.Request.Context, context)
 
 					ok, diag := res.Decision, res.Diagnostic
-					if ok != (request.Decision == "allow") {
-						t.Fatalf("got %v want %v", ok, request.Decision)
-					}
+					testutil.Equals(t, ok, request.Decision)
 					var errors []string
 					for _, n := range diag.Errors {
 						errors = append(errors, string(n.PolicyID))
