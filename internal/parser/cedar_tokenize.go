@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -23,6 +24,7 @@ const (
 	TokenEOF = TokenType(iota)
 	TokenIdent
 	TokenInt
+	TokenReservedKeyword
 	TokenString
 	TokenOperator
 	TokenUnknown
@@ -33,6 +35,8 @@ type Token struct {
 	Pos  Position
 	Text string
 }
+
+var reservedKeywords = []string{"true", "false", "if", "then", "else", "in", "like", "has"}
 
 func (t Token) isEOF() bool {
 	return t.Type == TokenEOF
@@ -472,10 +476,16 @@ redo:
 	s.tokEnd = s.srcPos - s.lastCharLen
 	s.ch = ch
 
+	// last minute check for reserved keywords
+	text := s.tokenText()
+	if tt == TokenIdent && slices.Contains(reservedKeywords, text) {
+		tt = TokenReservedKeyword
+	}
+
 	return Token{
 		Type: tt,
 		Pos:  s.position,
-		Text: s.tokenText(),
+		Text: text,
 	}
 }
 

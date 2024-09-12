@@ -27,7 +27,8 @@ These are some identifiers
 multiline comment
 // embedded comment does nothing
 */
-'/%|&=ë٩`
+'/%|&=ë٩
+true false if then else in like has`
 	want := []Token{
 		{Type: TokenIdent, Text: "These", Pos: Position{Offset: 1, Line: 2, Column: 1}},
 		{Type: TokenIdent, Text: "are", Pos: Position{Offset: 7, Line: 2, Column: 7}},
@@ -90,7 +91,16 @@ multiline comment
 		{Type: TokenUnknown, Text: "ë", Pos: Position{Offset: 271, Line: 16, Column: 7}},
 		{Type: TokenUnknown, Text: "٩", Pos: Position{Offset: 273, Line: 16, Column: 8}},
 
-		{Type: TokenEOF, Text: "", Pos: Position{Offset: 275, Line: 16, Column: 9}},
+		{Type: TokenReservedKeyword, Text: "true", Pos: Position{Offset: 276, Line: 17, Column: 1}},
+		{Type: TokenReservedKeyword, Text: "false", Pos: Position{Offset: 281, Line: 17, Column: 6}},
+		{Type: TokenReservedKeyword, Text: "if", Pos: Position{Offset: 287, Line: 17, Column: 12}},
+		{Type: TokenReservedKeyword, Text: "then", Pos: Position{Offset: 290, Line: 17, Column: 15}},
+		{Type: TokenReservedKeyword, Text: "else", Pos: Position{Offset: 295, Line: 17, Column: 20}},
+		{Type: TokenReservedKeyword, Text: "in", Pos: Position{Offset: 300, Line: 17, Column: 25}},
+		{Type: TokenReservedKeyword, Text: "like", Pos: Position{Offset: 303, Line: 17, Column: 28}},
+		{Type: TokenReservedKeyword, Text: "has", Pos: Position{Offset: 308, Line: 17, Column: 33}},
+
+		{Type: TokenEOF, Text: "", Pos: Position{Offset: 311, Line: 17, Column: 36}},
 	}
 	got, err := Tokenize([]byte(input))
 	testutil.OK(t, err)
