@@ -36,7 +36,9 @@ type Token struct {
 	Text string
 }
 
-var reservedKeywords = []string{"true", "false", "if", "then", "else", "in", "like", "has"}
+// N.B. "is" is included here for compatibility with the Rust implementation. The Cedar specification does not list
+// "is" as a reserved keyword
+var reservedKeywords = []string{"true", "false", "if", "then", "else", "in", "like", "has", "is"}
 
 func (t Token) isEOF() bool {
 	return t.Type == TokenEOF

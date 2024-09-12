@@ -28,7 +28,7 @@ multiline comment
 // embedded comment does nothing
 */
 '/%|&=ë٩
-true false if then else in like has`
+true false if then else in like has is`
 	want := []Token{
 		{Type: TokenIdent, Text: "These", Pos: Position{Offset: 1, Line: 2, Column: 1}},
 		{Type: TokenIdent, Text: "are", Pos: Position{Offset: 7, Line: 2, Column: 7}},
@@ -99,8 +99,9 @@ true false if then else in like has`
 		{Type: TokenReservedKeyword, Text: "in", Pos: Position{Offset: 300, Line: 17, Column: 25}},
 		{Type: TokenReservedKeyword, Text: "like", Pos: Position{Offset: 303, Line: 17, Column: 28}},
 		{Type: TokenReservedKeyword, Text: "has", Pos: Position{Offset: 308, Line: 17, Column: 33}},
+		{Type: TokenReservedKeyword, Text: "is", Pos: Position{Offset: 312, Line: 17, Column: 37}},
 
-		{Type: TokenEOF, Text: "", Pos: Position{Offset: 311, Line: 17, Column: 36}},
+		{Type: TokenEOF, Text: "", Pos: Position{Offset: 314, Line: 17, Column: 39}},
 	}
 	got, err := Tokenize([]byte(input))
 	testutil.OK(t, err)

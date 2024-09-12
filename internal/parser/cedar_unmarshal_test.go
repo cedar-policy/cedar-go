@@ -553,6 +553,11 @@ func TestParseApproximateErrors(t *testing.T) {
 		{"func", `permit (principal, action, resource) when { ip(}`, "invalid primary"},
 		{"args", `permit (principal, action, resource) when { ip(42 42)`, "got 42 want ,"},
 		{"dupeKey", `permit (principal, action, resource) when { {k:42,k:43}`, "duplicate key"},
+		{"reservedKeywordAsRecordKey", `permit (principal, action, resource) when { {false:43} }`, "expected ident or string"},
+		{"reservedKeywordAsHas", `permit (principal, action, resource) when { {} has false }`, "expected ident or string"},
+		{"reservedKeywordAsEntityType", `permit (principal == false::"42", action, resource)`, "expected ident"},
+		{"reservedKeywordAsAttributeAccess", `permit (principal, action, resource) when { context.false }`, "expected ident"},
+		{"reservedKeywordAsAnnotation", `@false() permit (principal, action, resource)`, "expected ident"},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -560,6 +565,7 @@ func TestParseApproximateErrors(t *testing.T) {
 			t.Parallel()
 			var pol parser.Policy
 			err := pol.UnmarshalCedar([]byte(tt.in))
+			testutil.Error(t, err)
 			testutil.FatalIf(t, !strings.Contains(err.Error(), tt.outErrSubstring), "got %v want %v", err.Error(), tt.outErrSubstring)
 		})
 	}

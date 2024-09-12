@@ -843,7 +843,7 @@ func (p *parser) recordEntry() (string, ast.Node, error) {
 		}
 		key = str
 	default:
-		return key, value, p.errorf("unexpected token")
+		return "", ast.Node{}, p.errorf("expected ident or string")
 	}
 	if err := p.exact(":"); err != nil {
 		return key, value, err
@@ -862,7 +862,7 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 		p.advance()
 		t := p.advance()
 		if !t.isIdent() {
-			return ast.Node{}, false, p.errorf("unexpected token")
+			return ast.Node{}, false, p.errorf("expected ident")
 		}
 		if p.peek().Text == "(" {
 			methodName := t.Text
