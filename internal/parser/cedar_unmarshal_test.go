@@ -71,6 +71,12 @@ permit ( principal, action, resource );`,
 			ast.Annotation("foo", "bar").Annotation("baz", "quux").Permit(),
 		},
 		{
+			"reserved keyword annotation key",
+			`@is("bar")
+permit ( principal, action, resource );`,
+			ast.Annotation("is", "bar").Permit(),
+		},
+		{
 			"scope eq",
 			`permit (
     principal == User::"johnny",

@@ -52,6 +52,10 @@ func (t Token) isInt() bool {
 	return t.Type == TokenInt
 }
 
+func (t Token) isReservedKeyword() bool {
+	return t.Type == TokenReservedKeyword
+}
+
 func (t Token) isString() bool {
 	return t.Type == TokenString
 }

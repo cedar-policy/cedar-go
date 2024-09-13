@@ -142,8 +142,11 @@ func (p *parser) annotations() (ast.Annotations, error) {
 func (p *parser) annotation(a *ast.Annotations, known map[string]struct{}) error {
 	var err error
 	t := p.advance()
-	if !t.isIdent() {
-		return p.errorf("expected ident")
+	// As of 2024-09-13, the ability to use reserved keywords is not documented in the Cedar schema. The ability to use
+	// reserved keywords was added in this commit:
+	// https://github.com/cedar-policy/cedar/commit/5f62c6df06b59abc5634d6668198a826839c6fb7
+	if !(t.isIdent() || t.isReservedKeyword()) {
+		return p.errorf("expected ident or reserved keyword")
 	}
 	name := t.Text
 	if err = p.exact("("); err != nil {
