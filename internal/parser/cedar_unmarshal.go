@@ -142,8 +142,11 @@ func (p *parser) annotations() (ast.Annotations, error) {
 func (p *parser) annotation(a *ast.Annotations, known map[string]struct{}) error {
 	var err error
 	t := p.advance()
-	if !t.isIdent() {
-		return p.errorf("expected ident")
+	// As of 2024-09-13, the ability to use reserved keywords is not documented in the Cedar schema. The ability to use
+	// reserved keywords was added in this commit:
+	// https://github.com/cedar-policy/cedar/commit/5f62c6df06b59abc5634d6668198a826839c6fb7
+	if !(t.isIdent() || t.isReservedKeyword()) {
+		return p.errorf("expected ident or reserved keyword")
 	}
 	name := t.Text
 	if err = p.exact("("); err != nil {
@@ -704,16 +707,25 @@ func (p *parser) primary() (ast.Node, error) {
 		res = ast.True()
 	case t.Text == "false":
 		res = ast.False()
-	case t.Text == consts.Principal:
-		res = ast.Principal()
-	case t.Text == consts.Action:
-		res = ast.Action()
-	case t.Text == consts.Resource:
-		res = ast.Resource()
-	case t.Text == consts.Context:
-		res = ast.Context()
 	case t.isIdent():
-		return p.entityOrExtFun(t.Text)
+		// There's an ambiguity here between VAR, Entity, and ExtFun - all of which can start with an Ident. We need to
+		// look ahead one token to resolve it.
+		next := p.peek()
+		if next.Text == "::" || next.Text == "(" {
+			return p.entityOrExtFun(t.Text)
+		}
+		switch {
+		case t.Text == consts.Principal:
+			res = ast.Principal()
+		case t.Text == consts.Action:
+			res = ast.Action()
+		case t.Text == consts.Resource:
+			res = ast.Resource()
+		case t.Text == consts.Context:
+			res = ast.Context()
+		default:
+			return res, p.errorf("invalid primary")
+		}
 	case t.Text == "(":
 		expr, err := p.expression()
 		if err != nil {
@@ -843,7 +855,7 @@ func (p *parser) recordEntry() (string, ast.Node, error) {
 		}
 		key = str
 	default:
-		return key, value, p.errorf("unexpected token")
+		return "", ast.Node{}, p.errorf("expected ident or string")
 	}
 	if err := p.exact(":"); err != nil {
 		return key, value, err
@@ -862,7 +874,7 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 		p.advance()
 		t := p.advance()
 		if !t.isIdent() {
-			return ast.Node{}, false, p.errorf("unexpected token")
+			return ast.Node{}, false, p.errorf("expected ident")
 		}
 		if p.peek().Text == "(" {
 			methodName := t.Text

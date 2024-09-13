@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -23,6 +24,7 @@ const (
 	TokenEOF = TokenType(iota)
 	TokenIdent
 	TokenInt
+	TokenReservedKeyword
 	TokenString
 	TokenOperator
 	TokenUnknown
@@ -34,6 +36,10 @@ type Token struct {
 	Text string
 }
 
+// N.B. "is" is included here for compatibility with the Rust implementation. The Cedar specification does not list
+// "is" as a reserved keyword
+var reservedKeywords = []string{"true", "false", "if", "then", "else", "in", "like", "has", "is"}
+
 func (t Token) isEOF() bool {
 	return t.Type == TokenEOF
 }
@@ -44,6 +50,10 @@ func (t Token) isIdent() bool {
 
 func (t Token) isInt() bool {
 	return t.Type == TokenInt
+}
+
+func (t Token) isReservedKeyword() bool {
+	return t.Type == TokenReservedKeyword
 }
 
 func (t Token) isString() bool {
@@ -472,10 +482,16 @@ redo:
 	s.tokEnd = s.srcPos - s.lastCharLen
 	s.ch = ch
 
+	// last minute check for reserved keywords
+	text := s.tokenText()
+	if tt == TokenIdent && slices.Contains(reservedKeywords, text) {
+		tt = TokenReservedKeyword
+	}
+
 	return Token{
 		Type: tt,
 		Pos:  s.position,
-		Text: s.tokenText(),
+		Text: text,
 	}
 }
 
