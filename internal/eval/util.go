@@ -68,7 +68,7 @@ func ValueToSet(v types.Value) (types.Set, error) {
 func ValueToRecord(v types.Value) (types.Record, error) {
 	rv, ok := v.(types.Record)
 	if !ok {
-		return nil, fmt.Errorf("%w: expected record got %v", ErrType, TypeName(v))
+		return types.Record{}, fmt.Errorf("%w: expected record got %v", ErrType, TypeName(v))
 	}
 	return rv, nil
 }

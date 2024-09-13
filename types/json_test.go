@@ -67,7 +67,7 @@ func TestJSON_Value(t *testing.T) {
 		{"badDatetime", `{ "__extn": { "fn": "datetime", "arg": "bad" } }`, zeroValue(), ErrDatetime},
 		{"badDuration", `{ "__extn": { "fn": "duration", "arg": "bad" } }`, zeroValue(), ErrDuration},
 		{"set", `[42]`, NewSet([]Value{Long(42)}), nil},
-		{"record", `{"a":"b"}`, Record{"a": String("b")}, nil},
+		{"record", `{"a":"b"}`, NewRecord(RecordMap{"a": String("b")}), nil},
 		{"bool", `false`, Boolean(false), nil},
 	}
 	for _, tt := range tests {
@@ -539,14 +539,14 @@ func TestJSONMarshal(t *testing.T) {
 		outExplicit string
 		outImplicit string
 	}{
-		{"record", Record{
+		{"record", NewRecord(RecordMap{
 			"ak": String("av"),
 			"ck": String("cv"),
 			"bk": String("bv"),
-		}, `{"ak":"av","bk":"bv","ck":"cv"}`, `{"ak":"av","bk":"bv","ck":"cv"}`},
-		{"recordWithExt", Record{
+		}), `{"ak":"av","bk":"bv","ck":"cv"}`, `{"ak":"av","bk":"bv","ck":"cv"}`},
+		{"recordWithExt", NewRecord(RecordMap{
 			"ip": mustIPValue("222.222.222.7"),
-		}, `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`, `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`},
+		}), `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`, `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`},
 		{"set", NewSet([]Value{
 			String("av"),
 			String("cv"),
@@ -606,9 +606,9 @@ func TestJSONRecord(t *testing.T) {
 	})
 	t.Run("MarshalKeyErrImpossible", func(t *testing.T) {
 		t.Parallel()
-		r := Record{}
 		k := []byte{0xde, 0x01}
-		r[String(k)] = Boolean(false)
+		m := RecordMap{String(k): Boolean(false)}
+		r := NewRecord(m)
 		v, err := json.Marshal(r)
 		// this demonstrates that invalid keys will still result in json
 		testutil.Equals(t, string(v), `{"\ufffd\u0001":false}`)
@@ -616,7 +616,7 @@ func TestJSONRecord(t *testing.T) {
 	})
 	t.Run("MarshalValueErr", func(t *testing.T) {
 		t.Parallel()
-		r := Record{"key": &jsonErr{}}
+		r := NewRecord(RecordMap{"key": &jsonErr{}})
 		_, err := json.Marshal(r)
 		testutil.Error(t, err)
 	})

@@ -34,19 +34,19 @@ func TestBatch(t *testing.T) {
 				Principal: p1,
 				Action:    Variable("action"),
 				Resource:  Variable("resource"),
-				Context:   types.Record{},
+				Context:   types.NewRecord(types.RecordMap{}),
 				Variables: Variables{
 					"action":   []types.Value{a1, a2},
 					"resource": []types.Value{r1, r2, r3},
 				},
 			},
 			[]Result{
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: true, Values: Values{"action": a1, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"action": a1, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r3, Context: types.Record{}}, Decision: true, Values: Values{"action": a1, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a2, Resource: r1, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a2, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a2, Resource: r3, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{})}, Decision: true, Values: Values{"action": a1, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.NewRecord(types.RecordMap{})}, Decision: true, Values: Values{"action": a1, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r3, Context: types.NewRecord(types.RecordMap{})}, Decision: true, Values: Values{"action": a1, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r1, Context: types.NewRecord(types.RecordMap{})}, Decision: true, Values: Values{"action": a2, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r2, Context: types.NewRecord(types.RecordMap{})}, Decision: true, Values: Values{"action": a2, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r3, Context: types.NewRecord(types.RecordMap{})}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
 
@@ -57,19 +57,19 @@ func TestBatch(t *testing.T) {
 				Principal: p1,
 				Action:    Variable("action"),
 				Resource:  Variable("resource"),
-				Context:   types.Record{},
+				Context:   types.NewRecord(types.RecordMap{}),
 				Variables: Variables{
 					"action":   []types.Value{a1, a2},
 					"resource": []types.Value{r1, r2, r3},
 				},
 			},
 			[]Result{
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"action": a1, "resource": r1}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: false, Values: Values{"action": a1, "resource": r2}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r3, Context: types.Record{}}, Decision: false, Values: Values{"action": a1, "resource": r3}},
-				{Request: types.Request{Principal: p1, Action: a2, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"action": a2, "resource": r1}},
-				{Request: types.Request{Principal: p1, Action: a2, Resource: r2, Context: types.Record{}}, Decision: false, Values: Values{"action": a2, "resource": r2}},
-				{Request: types.Request{Principal: p1, Action: a2, Resource: r3, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{})}, Decision: false, Values: Values{"action": a1, "resource": r1}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.NewRecord(types.RecordMap{})}, Decision: false, Values: Values{"action": a1, "resource": r2}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r3, Context: types.NewRecord(types.RecordMap{})}, Decision: false, Values: Values{"action": a1, "resource": r3}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r1, Context: types.NewRecord(types.RecordMap{})}, Decision: false, Values: Values{"action": a2, "resource": r1}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r2, Context: types.NewRecord(types.RecordMap{})}, Decision: false, Values: Values{"action": a2, "resource": r2}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r3, Context: types.NewRecord(types.RecordMap{})}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
 
@@ -78,32 +78,32 @@ func TestBatch(t *testing.T) {
 			types.Entities{
 				p1: {
 					UID: p1,
-					Attributes: types.Record{
-						"tags": types.Record{"a": types.String("a")},
-					},
+					Attributes: types.NewRecord(types.RecordMap{
+						"tags": types.NewRecord(types.RecordMap{"a": types.String("a")}),
+					}),
 				},
 				p2: {
 					UID: p2,
-					Attributes: types.Record{
-						"tags": types.Record{"b": types.String("b")},
-					},
+					Attributes: types.NewRecord(types.RecordMap{
+						"tags": types.NewRecord(types.RecordMap{"b": types.String("b")}),
+					}),
 				},
 			},
 			Request{
 				Principal: Variable("principal"),
 				Action:    a1,
 				Resource:  Variable("resource"),
-				Context:   types.Record{},
+				Context:   types.NewRecord(types.RecordMap{}),
 				Variables: Variables{
 					"principal": []types.Value{p1, p2},
 					"resource":  []types.Value{r1, r2},
 				},
 			},
 			[]Result{
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: true, Values: Values{"principal": p1, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"principal": p1, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p2, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"principal": p2, "resource": r1}},
-				{Request: types.Request{Principal: p2, Action: a1, Resource: r2, Context: types.Record{}}, Decision: false, Values: Values{"principal": p2, "resource": r2}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{})}, Decision: true, Values: Values{"principal": p1, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.NewRecord(types.RecordMap{})}, Decision: true, Values: Values{"principal": p1, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p2, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{})}, Decision: false, Values: Values{"principal": p2, "resource": r1}},
+				{Request: types.Request{Principal: p2, Action: a1, Resource: r2, Context: types.NewRecord(types.RecordMap{})}, Decision: false, Values: Values{"principal": p2, "resource": r2}},
 			},
 		},
 
@@ -114,21 +114,21 @@ func TestBatch(t *testing.T) {
 				Principal: p1,
 				Action:    Variable("action"),
 				Resource:  Variable("resource"),
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"key": types.Long(42),
-				},
+				}),
 				Variables: Variables{
 					"action":   []types.Value{a1, a2},
 					"resource": []types.Value{r1, r2, r3},
 				},
 			},
 			[]Result{
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a1, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a1, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r3, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a1, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a2, Resource: r1, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a2, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a2, Resource: r2, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a2, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a2, Resource: r3, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{"key": types.Long(42)})}, Decision: true, Values: Values{"action": a1, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.NewRecord(types.RecordMap{"key": types.Long(42)})}, Decision: true, Values: Values{"action": a1, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r3, Context: types.NewRecord(types.RecordMap{"key": types.Long(42)})}, Decision: true, Values: Values{"action": a1, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r1, Context: types.NewRecord(types.RecordMap{"key": types.Long(42)})}, Decision: true, Values: Values{"action": a2, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r2, Context: types.NewRecord(types.RecordMap{"key": types.Long(42)})}, Decision: true, Values: Values{"action": a2, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r3, Context: types.NewRecord(types.RecordMap{"key": types.Long(42)})}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
 
@@ -141,13 +141,17 @@ func TestBatch(t *testing.T) {
 				Resource:  r1,
 				Context:   Variable("context"),
 				Variables: Variables{
-					"context": []types.Value{types.Record{"key": types.Long(41)}, types.Record{"key": types.Long(42)}, types.Record{"key": types.Long(43)}},
+					"context": []types.Value{
+						types.NewRecord(types.RecordMap{"key": types.Long(41)}),
+						types.NewRecord(types.RecordMap{"key": types.Long(42)}),
+						types.NewRecord(types.RecordMap{"key": types.Long(43)}),
+					},
 				},
 			},
 			[]Result{
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(41)}}, Decision: false, Values: Values{"context": types.Record{"key": types.Long(41)}}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"context": types.Record{"key": types.Long(42)}}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(43)}}, Decision: false, Values: Values{"context": types.Record{"key": types.Long(43)}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{"key": types.Long(41)})}, Decision: false, Values: Values{"context": types.NewRecord(types.RecordMap{"key": types.Long(41)})}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{"key": types.Long(42)})}, Decision: true, Values: Values{"context": types.NewRecord(types.RecordMap{"key": types.Long(42)})}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{"key": types.Long(43)})}, Decision: false, Values: Values{"context": types.NewRecord(types.RecordMap{"key": types.Long(43)})}},
 			},
 		},
 
@@ -158,17 +162,17 @@ func TestBatch(t *testing.T) {
 				Principal: p1,
 				Action:    a1,
 				Resource:  r1,
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"key": Variable("key"),
-				},
+				}),
 				Variables: Variables{
 					"key": []types.Value{types.Long(41), types.Long(42), types.Long(43)},
 				},
 			},
 			[]Result{
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(41)}}, Decision: false, Values: Values{"key": types.Long(41)}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(42)}}, Decision: true, Values: Values{"key": types.Long(42)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{"key": types.Long(43)}}, Decision: false, Values: Values{"key": types.Long(43)}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{"key": types.Long(41)})}, Decision: false, Values: Values{"key": types.Long(41)}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{"key": types.Long(42)})}, Decision: true, Values: Values{"key": types.Long(42)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{"key": types.Long(43)})}, Decision: false, Values: Values{"key": types.Long(43)}},
 			},
 		},
 
@@ -190,8 +194,8 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			[]Result{
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: nil}, Decision: false, Values: Values{"resource": r1}},
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: nil}, Decision: true, Values: Values{"resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false, Values: Values{"resource": r1}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
 			},
 		},
 
@@ -203,7 +207,7 @@ func TestBatch(t *testing.T) {
 				Principal: Variable("principal"),
 				Action:    Variable("action"),
 				Resource:  Variable("resource"),
-				Context:   types.Record{},
+				Context:   types.NewRecord(types.RecordMap{}),
 				Variables: Variables{
 					"principal": []types.Value{p1},
 					"action":    []types.Value{a1},
@@ -211,7 +215,7 @@ func TestBatch(t *testing.T) {
 				},
 			},
 			[]Result{
-				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: false,
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{})}, Decision: false,
 					Values: Values{"principal": p1, "action": a1, "resource": r1},
 					Diagnostic: types.Diagnostic{
 						Errors: []types.DiagnosticError{
@@ -231,7 +235,7 @@ func TestBatch(t *testing.T) {
 			ps.Store("0", cedar.NewPolicyFromAST((*publicast.Policy)(tt.policy)))
 
 			err := Authorize(context.Background(), ps, tt.entities, tt.request, func(br Result) {
-				br.Request.Context = maps.Clone(br.Request.Context)
+				br.Request.Context = br.Request.Context.DeepClone()
 				br.Values = maps.Clone(br.Values)
 				res = append(res, br)
 			})
@@ -287,7 +291,7 @@ func TestBatchErrors(t *testing.T) {
 			Principal: nil,
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
-			Context:   types.Record{},
+			Context:   types.NewRecord(types.RecordMap{}),
 		}, func(_ Result) {},
 		)
 		testutil.ErrorIs(t, err, errMissingPart)
@@ -297,7 +301,7 @@ func TestBatchErrors(t *testing.T) {
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    nil,
 			Resource:  types.NewEntityUID("Resource", "resource"),
-			Context:   types.Record{},
+			Context:   types.NewRecord(types.RecordMap{}),
 		}, func(_ Result) {},
 		)
 		testutil.ErrorIs(t, err, errMissingPart)
@@ -307,7 +311,7 @@ func TestBatchErrors(t *testing.T) {
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  nil,
-			Context:   types.Record{},
+			Context:   types.NewRecord(types.RecordMap{}),
 		}, func(_ Result) {},
 		)
 		testutil.ErrorIs(t, err, errMissingPart)
@@ -330,7 +334,7 @@ func TestBatchErrors(t *testing.T) {
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
-			Context:   types.Record{},
+			Context:   types.NewRecord(types.RecordMap{}),
 		}, func(_ Result) {},
 		)
 		testutil.ErrorIs(t, err, context.Canceled)
@@ -343,7 +347,7 @@ func TestBatchErrors(t *testing.T) {
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  Variable("resource"),
-			Context:   types.Record{},
+			Context:   types.NewRecord(types.RecordMap{}),
 			Variables: Variables{
 				"resource": []types.Value{
 					types.NewEntityUID("Resource", "1"),
@@ -365,7 +369,7 @@ func TestBatchErrors(t *testing.T) {
 			Principal: types.String("invalid"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
-			Context:   types.Record{},
+			Context:   types.NewRecord(types.RecordMap{}),
 		}, func(_ Result) {},
 		)
 		testutil.ErrorIs(t, err, errInvalidPart)
@@ -375,7 +379,7 @@ func TestBatchErrors(t *testing.T) {
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.String("invalid"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
-			Context:   types.Record{},
+			Context:   types.NewRecord(types.RecordMap{}),
 		}, func(_ Result) {},
 		)
 		testutil.ErrorIs(t, err, errInvalidPart)
@@ -385,7 +389,7 @@ func TestBatchErrors(t *testing.T) {
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.String("invalid"),
-			Context:   types.Record{},
+			Context:   types.NewRecord(types.RecordMap{}),
 		}, func(_ Result) {},
 		)
 		testutil.ErrorIs(t, err, errInvalidPart)
@@ -527,10 +531,10 @@ func TestIgnoreReasons(t *testing.T) {
 				Principal: types.NewEntityUID("Principal", "bob"),
 				Action:    types.NewEntityUID("Action", "access"),
 				Resource:  types.NewEntityUID("Resource", "prod"),
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"location": types.String("unknown"),
 					"device":   types.String("bad"),
-				},
+				}),
 			},
 			1,
 			types.Deny,
@@ -624,8 +628,8 @@ func TestCloneSub(t *testing.T) {
 		},
 		{
 			"record",
-			types.Record{"key": Variable("bananas")}, "bananas", types.String("hello"),
-			types.Record{"key": types.String("hello")}, true,
+			types.NewRecord(types.RecordMap{"key": Variable("bananas")}), "bananas", types.String("hello"),
+			types.NewRecord(types.RecordMap{"key": types.String("hello")}), true,
 		},
 		{
 			"set",
@@ -634,8 +638,8 @@ func TestCloneSub(t *testing.T) {
 		},
 		{
 			"recordNoChange",
-			types.Record{"key": Variable("asdf")}, "bananas", types.String("hello"),
-			types.Record{"key": Variable("asdf")}, false,
+			types.NewRecord(types.RecordMap{"key": Variable("asdf")}), "bananas", types.String("hello"),
+			types.NewRecord(types.RecordMap{"key": Variable("asdf")}), false,
 		},
 		{
 			"setNoChange",
@@ -661,7 +665,7 @@ func TestFindVariables(t *testing.T) {
 		in   types.Value
 		out  map[types.String]struct{}
 	}{
-		{"record", types.Record{"key": Variable("bananas")}, map[types.String]struct{}{"bananas": {}}},
+		{"record", types.NewRecord(types.RecordMap{"key": Variable("bananas")}), map[types.String]struct{}{"bananas": {}}},
 		{"set", types.NewSet([]types.Value{Variable("bananas")}), map[types.String]struct{}{"bananas": {}}},
 		{"dupes", types.NewSet([]types.Value{Variable("bananas"), Variable("bananas")}), map[types.String]struct{}{"bananas": {}}},
 		{"none", types.String("test"), map[types.String]struct{}{}},

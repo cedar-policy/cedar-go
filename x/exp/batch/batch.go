@@ -328,21 +328,34 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 			return v, true
 		}
 	case types.Record:
-		cloned := false
-		for kk, vv := range t {
-			if vv, delta := cloneSub(vv, k, v); delta {
-				if !cloned {
-					t = maps.Clone(t) // intentional shallow clone
-					cloned = true
-				}
-				t[kk] = vv
+		hasDeltas := false
+
+		// First pass, check for deltas
+		t.Iterate(func(_ types.String, vv types.Value) bool {
+			if _, delta := cloneSub(vv, k, v); delta {
+				hasDeltas = true
+				return false
 			}
+			return true
+		})
+
+		// If no deltas, just return the input Value
+		if !hasDeltas {
+			return t, false
 		}
-		return t, cloned
+
+		// If there were deltas, build a new Record
+		newMap := make(types.RecordMap, t.Len())
+		t.Iterate(func(kk types.String, vv types.Value) bool {
+			vv, _ = cloneSub(vv, k, v)
+			newMap[kk] = vv
+			return true
+		})
+		return types.NewRecord(newMap), true
 	case types.Set:
 		hasDeltas := false
 
-		// first pass, check for deltas
+		// First pass, check for deltas
 		t.Iterate(func(vv types.Value) bool {
 			if _, delta := cloneSub(vv, k, v); delta {
 				hasDeltas = true
@@ -375,9 +388,10 @@ func findVariables(found map[types.String]struct{}, r types.Value) {
 			found[key] = struct{}{}
 		}
 	case types.Record:
-		for _, vv := range t {
+		t.Iterate(func(_ types.String, vv types.Value) bool {
 			findVariables(found, vv)
-		}
+			return true
+		})
 	case types.Set:
 		t.Iterate(func(vv types.Value) bool {
 			findVariables(found, vv)

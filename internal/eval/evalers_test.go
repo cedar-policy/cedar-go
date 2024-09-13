@@ -1513,16 +1513,16 @@ func TestRecordLiteralNode(t *testing.T) {
 		result types.Value
 		err    error
 	}{
-		{"empty", map[types.String]Evaler{}, types.Record{}, nil},
+		{"empty", map[types.String]Evaler{}, types.NewRecord(types.RecordMap{}), nil},
 		{"errorNode", map[types.String]Evaler{"foo": newErrorEval(errTest)}, zeroValue(), errTest},
 		{"ok",
 			map[types.String]Evaler{
 				"foo": newLiteralEval(types.True),
 				"bar": newLiteralEval(types.String("baz")),
-			}, types.Record{
+			}, types.NewRecord(types.RecordMap{
 				"foo": types.True,
 				"bar": types.String("baz"),
-			}, nil},
+			}), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -1548,12 +1548,12 @@ func TestAttributeAccessNode(t *testing.T) {
 		{"RecordError", newErrorEval(errTest), "foo", zeroValue(), errTest},
 		{"RecordTypeError", newLiteralEval(types.True), "foo", zeroValue(), ErrType},
 		{"UnknownAttribute",
-			newLiteralEval(types.Record{}),
+			newLiteralEval(types.NewRecord(types.RecordMap{})),
 			"foo",
 			zeroValue(),
 			errAttributeAccess},
 		{"KnownAttribute",
-			newLiteralEval(types.Record{"foo": types.Long(42)}),
+			newLiteralEval(types.NewRecord(types.RecordMap{"foo": types.Long(42)})),
 			"foo",
 			types.Long(42),
 			nil},
@@ -1585,7 +1585,7 @@ func TestAttributeAccessNode(t *testing.T) {
 			n := newAttributeAccessEval(tt.object, tt.attribute)
 			entity := &types.Entity{
 				UID:        types.NewEntityUID("knownType", "knownID"),
-				Attributes: types.Record{"knownAttr": types.Long(42)},
+				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
 			v, err := n.Eval(InitEnv(&Env{
 				Entities: types.Entities{
@@ -1610,12 +1610,12 @@ func TestHasNode(t *testing.T) {
 		{"RecordError", newErrorEval(errTest), "foo", zeroValue(), errTest},
 		{"RecordTypeError", newLiteralEval(types.True), "foo", zeroValue(), ErrType},
 		{"UnknownAttribute",
-			newLiteralEval(types.Record{}),
+			newLiteralEval(types.NewRecord(types.RecordMap{})),
 			"foo",
 			types.False,
 			nil},
 		{"KnownAttribute",
-			newLiteralEval(types.Record{"foo": types.Long(42)}),
+			newLiteralEval(types.NewRecord(types.RecordMap{"foo": types.Long(42)})),
 			"foo",
 			types.True,
 			nil},
@@ -1642,7 +1642,7 @@ func TestHasNode(t *testing.T) {
 			n := newHasEval(tt.record, tt.attribute)
 			entity := &types.Entity{
 				UID:        types.NewEntityUID("knownType", "knownID"),
-				Attributes: types.Record{"knownAttr": types.Long(42)},
+				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
 			v, err := n.Eval(InitEnv(&Env{
 				Entities: types.Entities{
@@ -2302,7 +2302,7 @@ func TestCedarString(t *testing.T) {
 		{"string", types.String("hello"), `hello`, `"hello"`},
 		{"number", types.Long(42), `42`, `42`},
 		{"bool", types.True, `true`, `true`},
-		{"record", types.Record{"a": types.Long(42), "b": types.Long(43)}, `{"a":42, "b":43}`, `{"a":42, "b":43}`},
+		{"record", types.NewRecord(types.RecordMap{"a": types.Long(42), "b": types.Long(43)}), `{"a":42, "b":43}`, `{"a":42, "b":43}`},
 		{"set", types.NewSet([]types.Value{types.Long(42), types.Long(43)}), `[42, 43]`, `[42, 43]`},
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},

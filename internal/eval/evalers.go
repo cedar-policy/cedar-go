@@ -842,7 +842,7 @@ func newRecordLiteralEval(elements map[types.String]Evaler) *recordLiteralEval {
 }
 
 func (n *recordLiteralEval) Eval(env *Env) (types.Value, error) {
-	vals := types.Record{}
+	vals := types.RecordMap{}
 	for k, en := range n.elements {
 		v, err := en.Eval(env)
 		if err != nil {
@@ -850,7 +850,7 @@ func (n *recordLiteralEval) Eval(env *Env) (types.Value, error) {
 		}
 		vals[k] = v
 	}
-	return vals, nil
+	return types.NewRecord(vals), nil
 }
 
 // attributeAccessEval
@@ -878,13 +878,13 @@ func (n *attributeAccessEval) Eval(env *Env) (types.Value, error) {
 		if !ok {
 			return zeroValue(), fmt.Errorf("entity `%v` %w", vv.String(), errEntityNotExist)
 		}
-		val, ok := rec.Attributes[n.attribute]
+		val, ok := rec.Attributes.Get(n.attribute)
 		if !ok {
 			return zeroValue(), fmt.Errorf("`%s` %w `%s`", vv.String(), errAttributeAccess, n.attribute)
 		}
 		return val, nil
 	case types.Record:
-		val, ok := vv[n.attribute]
+		val, ok := vv.Get(n.attribute)
 		if !ok {
 			return zeroValue(), fmt.Errorf("record %w `%s`", errAttributeAccess, n.attribute)
 		}
@@ -920,7 +920,7 @@ func (n *hasEval) Eval(env *Env) (types.Value, error) {
 	default:
 		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
 	}
-	_, ok := record[n.attribute]
+	_, ok := record.Get(n.attribute)
 	return types.Boolean(ok), nil
 }
 

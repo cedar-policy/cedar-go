@@ -20,13 +20,13 @@ func TestToEval(t *testing.T) {
 	}{
 		{
 			"access",
-			ast.Value(types.Record{"key": types.Long(42)}).Access("key"),
+			ast.Value(types.NewRecord(types.RecordMap{"key": types.Long(42)})).Access("key"),
 			types.Long(42),
 			testutil.OK,
 		},
 		{
 			"has",
-			ast.Value(types.Record{"key": types.Long(42)}).Has("key"),
+			ast.Value(types.NewRecord(types.RecordMap{"key": types.Long(42)})).Has("key"),
 			types.True,
 			testutil.OK,
 		},
@@ -63,7 +63,7 @@ func TestToEval(t *testing.T) {
 		{
 			"record",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(42)}}),
-			types.Record{"key": types.Long(42)},
+			types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 			testutil.OK,
 		},
 		{
@@ -105,7 +105,7 @@ func TestToEval(t *testing.T) {
 		{
 			"context",
 			ast.Context(),
-			types.Record{},
+			types.NewRecord(types.RecordMap{}),
 			testutil.OK,
 		},
 		{
@@ -354,7 +354,7 @@ func TestToEval(t *testing.T) {
 				Principal: types.NewEntityUID("Actor", "principal"),
 				Action:    types.NewEntityUID("Action", "test"),
 				Resource:  types.NewEntityUID("Resource", "database"),
-				Context:   types.Record{},
+				Context:   types.NewRecord(types.RecordMap{}),
 			}))
 			tt.err(t, err)
 			testutil.Equals(t, out, tt.out)

@@ -9,18 +9,55 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-// A Record is a collection of attributes. Each attribute consists of a name and
+type RecordMap = map[String]Value
+
+// A Record is an immutable collection of attributes. Each attribute consists of a name and
 // an associated value. Names are simple strings. Values can be of any type.
-type Record map[String]Value
+type Record struct {
+	m RecordMap
+}
+
+func NewRecord(m RecordMap) Record {
+	return Record{m: maps.Clone(m)}
+}
+
+func (r Record) Len() int {
+	return len(r.m)
+}
+
+// RecordIterator is called for each item in the Record when passed to Iterate. Returning false from this function
+// causes iteration to cease.
+type RecordIterator func(String, Value) bool
+
+// Iterate calls iter for each key/value pair in the record. Iteration order is non-deterministic.
+func (r Record) Iterate(iter RecordIterator) {
+	for k, v := range r.m {
+		if !iter(k, v) {
+			break
+		}
+	}
+}
+
+// Get returns (v, true) where v is the Value associated with key s, if Record contains key s. Get returns (nil, false)
+// if Record does not contain key s.
+func (r Record) Get(s String) (Value, bool) {
+	v, ok := r.m[s]
+	return v, ok
+}
+
+// Map returns a clone of the Record's internal RecordMap which is safe to mutate.
+func (r Record) Map() RecordMap {
+	return maps.Clone(r.m)
+}
 
 // Equals returns true if the records are Equal.
 func (a Record) Equal(bi Value) bool {
 	b, ok := bi.(Record)
-	if !ok || len(a) != len(b) {
+	if !ok || len(a.m) != len(b.m) {
 		return false
 	}
-	for k, av := range a {
-		bv, ok := b[k]
+	for k, av := range a.m {
+		bv, ok := b.m[k]
 		if !ok || !av.Equal(bv) {
 			return false
 		}
@@ -34,10 +71,11 @@ func (v *Record) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	*v = Record{}
+	m := make(RecordMap, len(res))
 	for kk, vv := range res {
-		(*v)[String(kk)] = vv.Value
+		m[String(kk)] = vv.Value
 	}
+	*v = NewRecord(m)
 	return nil
 }
 
@@ -46,7 +84,7 @@ func (v *Record) UnmarshalJSON(b []byte) error {
 func (v Record) MarshalJSON() ([]byte, error) {
 	w := &bytes.Buffer{}
 	w.WriteByte('{')
-	keys := maps.Keys(v)
+	keys := maps.Keys(v.m)
 	slices.Sort(keys)
 	for i, kk := range keys {
 		if i > 0 {
@@ -55,7 +93,7 @@ func (v Record) MarshalJSON() ([]byte, error) {
 		kb, _ := json.Marshal(kk) // json.Marshal cannot error on strings
 		w.Write(kb)
 		w.WriteByte(':')
-		vv := v[kk]
+		vv := v.m[kk]
 		vb, err := vv.ExplicitMarshalJSON()
 		if err != nil {
 			return nil, err
@@ -78,10 +116,10 @@ func (r Record) MarshalCedar() []byte {
 	var sb bytes.Buffer
 	sb.WriteRune('{')
 	first := true
-	keys := maps.Keys(r)
+	keys := maps.Keys(r.m)
 	slices.Sort(keys)
 	for _, k := range keys {
-		v := r[k]
+		v := r.m[k]
 		if !first {
 			sb.WriteString(", ")
 		}
@@ -97,12 +135,12 @@ func (v Record) deepClone() Value { return v.DeepClone() }
 
 // DeepClone returns a deep clone of the Record.
 func (v Record) DeepClone() Record {
-	if v == nil {
+	if v.m == nil {
 		return v
 	}
-	res := make(Record, len(v))
-	for k, vv := range v {
+	res := make(RecordMap, len(v.m))
+	for k, vv := range v.m {
 		res[k] = vv.deepClone()
 	}
-	return res
+	return Record{m: res}
 }

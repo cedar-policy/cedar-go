@@ -32,12 +32,12 @@ func TestEntitiesJSON(t *testing.T) {
 		ent := &types.Entity{
 			UID:        types.NewEntityUID("Type", "id"),
 			Parents:    []types.EntityUID{},
-			Attributes: types.Record{"key": types.Long(42)},
+			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
 		ent2 := &types.Entity{
 			UID:        types.NewEntityUID("Type", "id2"),
 			Parents:    []types.EntityUID{},
-			Attributes: types.Record{"key": types.Long(42)},
+			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
 		e[ent.UID] = ent
 		e[ent2.UID] = ent2
@@ -56,7 +56,7 @@ func TestEntitiesJSON(t *testing.T) {
 		ent := &types.Entity{
 			UID:        types.NewEntityUID("Type", "id"),
 			Parents:    []types.EntityUID{},
-			Attributes: types.Record{"key": types.Long(42)},
+			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
 		want[ent.UID] = ent
 		testutil.Equals(t, e, want)

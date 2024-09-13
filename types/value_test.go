@@ -64,12 +64,13 @@ func TestDeepClone(t *testing.T) {
 
 	t.Run("Record", func(t *testing.T) {
 		t.Parallel()
-		a := Record{"key": Long(42)}
+		m := RecordMap{"key": Long(42)}
+		a := NewRecord(m)
 		b := a.deepClone()
 		testutil.Equals(t, Value(a), b)
-		a["key"] = String("bananas")
-		testutil.Equals(t, a, Record{"key": String("bananas")})
-		testutil.Equals(t, b, Value(Record{"key": Long(42)}))
+		m["key"] = String("bananas")
+		testutil.Equals(t, a, NewRecord(RecordMap{"key": Long(42)}))
+		testutil.Equals(t, b, Value(NewRecord(RecordMap{"key": Long(42)})))
 	})
 
 	t.Run("NilRecord", func(t *testing.T) {

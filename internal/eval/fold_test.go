@@ -17,7 +17,7 @@ func TestFoldNode(t *testing.T) {
 	}{
 		{"record-bake",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.True()}}),
-			ast.Value(types.Record{"key": types.True}),
+			ast.Value(types.NewRecord(types.RecordMap{"key": types.True})),
 		},
 		{"set-bake",
 			ast.Set(ast.True()),
@@ -25,7 +25,7 @@ func TestFoldNode(t *testing.T) {
 		},
 		{"record-fold",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(6).Multiply(ast.Long(7))}}),
-			ast.Value(types.Record{"key": types.Long(42)}),
+			ast.Value(types.NewRecord(types.RecordMap{"key": types.Long(42)})),
 		},
 		{"set-fold",
 			ast.Set(ast.Long(6).Multiply(ast.Long(7))),
@@ -210,7 +210,7 @@ func TestFoldPolicy(t *testing.T) {
 		{
 			"valueRecordElements",
 			ast.Permit().When(ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(42)}})),
-			ast.Permit().When(ast.Value(types.Record{"key": types.Long(42)})),
+			ast.Permit().When(ast.Value(types.NewRecord(types.RecordMap{"key": types.Long(42)}))),
 		},
 		{
 			"valueEntityUID",
