@@ -40,15 +40,14 @@ type Diagnostic struct {
 	Errors  []DiagnosticError  `json:"errors,omitempty"`
 }
 
-// A DiagnosticReason details the Policy index within a PolicySet, and the Position within
-// the text document.
+// A DiagnosticReason details the PolicyID within a PolicySet and the Position within the text document, if applicable.
 type DiagnosticReason struct {
 	PolicyID PolicyID `json:"policy"`
 	Position Position `json:"position"`
 }
 
-// An DiagnosticError details the Policy index within a PolicySet, the Position within the
-// text document, and the resulting error message.
+// An DiagnosticError details the PolicyID within a PolicySet, the Position within the text document if applicable, and
+// the resulting error message.
 type DiagnosticError struct {
 	PolicyID PolicyID `json:"policy"`
 	Position Position `json:"position"`

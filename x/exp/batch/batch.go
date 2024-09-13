@@ -84,7 +84,7 @@ var errInvalidPart = fmt.Errorf("invalid part")
 // Authorize will run a batch of authorization evaluations.
 //
 // All the request parts (PARC) must be specified, but you can
-// specify [Variable] or [Ignore].  Varibles can be enumerated
+// specify [Variable] or [Ignore].  Variables can be enumerated
 // using the Variables.
 //
 // Using [Ignore] you can ask questions like "When ignoring context could this request be allowed?"
