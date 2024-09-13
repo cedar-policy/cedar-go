@@ -3,6 +3,8 @@ package eval
 import (
 	"fmt"
 
+	"github.com/cedar-policy/cedar-go/internal/consts"
+	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -17,18 +19,39 @@ func zeroValue() types.Value {
 	return nil
 }
 
-type Context struct {
+type Env struct {
 	Entities                    types.Entities
 	Principal, Action, Resource types.Value
 	Context                     types.Value
+
+	inCache map[inKey]bool
+}
+
+type inKey struct {
+	a, b types.EntityUID
+}
+
+func NewEnv() *Env {
+	return InitEnv(&Env{})
+}
+
+func InitEnv(in *Env) *Env {
+	// add caches if applicable
+	in.inCache = map[inKey]bool{}
+	return in
+}
+
+func InitEnvWithCacheFrom(in *Env, parent *Env) *Env {
+	in.inCache = parent.inCache
+	return in
 }
 
 type Evaler interface {
-	Eval(*Context) (types.Value, error)
+	Eval(*Env) (types.Value, error)
 }
 
-func evalBool(n Evaler, ctx *Context) (types.Boolean, error) {
-	v, err := n.Eval(ctx)
+func evalBool(n Evaler, env *Env) (types.Boolean, error) {
+	v, err := n.Eval(env)
 	if err != nil {
 		return false, err
 	}
@@ -39,8 +62,8 @@ func evalBool(n Evaler, ctx *Context) (types.Boolean, error) {
 	return b, nil
 }
 
-func evalLong(n Evaler, ctx *Context) (types.Long, error) {
-	v, err := n.Eval(ctx)
+func evalLong(n Evaler, env *Env) (types.Long, error) {
+	v, err := n.Eval(env)
 	if err != nil {
 		return 0, err
 	}
@@ -51,8 +74,8 @@ func evalLong(n Evaler, ctx *Context) (types.Long, error) {
 	return l, nil
 }
 
-func evalString(n Evaler, ctx *Context) (types.String, error) {
-	v, err := n.Eval(ctx)
+func evalString(n Evaler, env *Env) (types.String, error) {
+	v, err := n.Eval(env)
 	if err != nil {
 		return "", err
 	}
@@ -63,8 +86,8 @@ func evalString(n Evaler, ctx *Context) (types.String, error) {
 	return s, nil
 }
 
-func evalSet(n Evaler, ctx *Context) (types.Set, error) {
-	v, err := n.Eval(ctx)
+func evalSet(n Evaler, env *Env) (types.Set, error) {
+	v, err := n.Eval(env)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +98,8 @@ func evalSet(n Evaler, ctx *Context) (types.Set, error) {
 	return s, nil
 }
 
-func evalEntity(n Evaler, ctx *Context) (types.EntityUID, error) {
-	v, err := n.Eval(ctx)
+func evalEntity(n Evaler, env *Env) (types.EntityUID, error) {
+	v, err := n.Eval(env)
 	if err != nil {
 		return types.EntityUID{}, err
 	}
@@ -87,8 +110,8 @@ func evalEntity(n Evaler, ctx *Context) (types.EntityUID, error) {
 	return e, nil
 }
 
-func evalDecimal(n Evaler, ctx *Context) (types.Decimal, error) {
-	v, err := n.Eval(ctx)
+func evalDecimal(n Evaler, env *Env) (types.Decimal, error) {
+	v, err := n.Eval(env)
 	if err != nil {
 		return types.Decimal{}, err
 	}
@@ -99,8 +122,8 @@ func evalDecimal(n Evaler, ctx *Context) (types.Decimal, error) {
 	return d, nil
 }
 
-func evalIP(n Evaler, ctx *Context) (types.IPAddr, error) {
-	v, err := n.Eval(ctx)
+func evalIP(n Evaler, env *Env) (types.IPAddr, error) {
+	v, err := n.Eval(env)
 	if err != nil {
 		return types.IPAddr{}, err
 	}
@@ -122,7 +145,7 @@ func newErrorEval(err error) *errorEval {
 	}
 }
 
-func (n *errorEval) Eval(_ *Context) (types.Value, error) {
+func (n *errorEval) Eval(_ *Env) (types.Value, error) {
 	return zeroValue(), n.err
 }
 
@@ -135,7 +158,7 @@ func newLiteralEval(value types.Value) *literalEval {
 	return &literalEval{value: value}
 }
 
-func (n *literalEval) Eval(_ *Context) (types.Value, error) {
+func (n *literalEval) Eval(_ *Env) (types.Value, error) {
 	return n.value, nil
 }
 
@@ -145,15 +168,15 @@ type orEval struct {
 	rhs Evaler
 }
 
-func newOrNode(lhs Evaler, rhs Evaler) *orEval {
+func newOrEval(lhs Evaler, rhs Evaler) Evaler {
 	return &orEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *orEval) Eval(ctx *Context) (types.Value, error) {
-	v, err := n.lhs.Eval(ctx)
+func (n *orEval) Eval(env *Env) (types.Value, error) {
+	v, err := n.lhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -164,7 +187,7 @@ func (n *orEval) Eval(ctx *Context) (types.Value, error) {
 	if b {
 		return v, nil
 	}
-	v, err = n.rhs.Eval(ctx)
+	v, err = n.rhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -181,15 +204,15 @@ type andEval struct {
 	rhs Evaler
 }
 
-func newAndEval(lhs Evaler, rhs Evaler) *andEval {
+func newAndEval(lhs Evaler, rhs Evaler) Evaler {
 	return &andEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *andEval) Eval(ctx *Context) (types.Value, error) {
-	v, err := n.lhs.Eval(ctx)
+func (n *andEval) Eval(env *Env) (types.Value, error) {
+	v, err := n.lhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -200,7 +223,7 @@ func (n *andEval) Eval(ctx *Context) (types.Value, error) {
 	if !b {
 		return v, nil
 	}
-	v, err = n.rhs.Eval(ctx)
+	v, err = n.rhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -216,14 +239,14 @@ type notEval struct {
 	inner Evaler
 }
 
-func newNotEval(inner Evaler) *notEval {
+func newNotEval(inner Evaler) Evaler {
 	return &notEval{
 		inner: inner,
 	}
 }
 
-func (n *notEval) Eval(ctx *Context) (types.Value, error) {
-	v, err := n.inner.Eval(ctx)
+func (n *notEval) Eval(env *Env) (types.Value, error) {
+	v, err := n.inner.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -284,19 +307,19 @@ type addEval struct {
 	rhs Evaler
 }
 
-func newAddEval(lhs Evaler, rhs Evaler) *addEval {
+func newAddEval(lhs Evaler, rhs Evaler) Evaler {
 	return &addEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *addEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, ctx)
+func (n *addEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalLong(n.rhs, ctx)
+	rhs, err := evalLong(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -313,19 +336,19 @@ type subtractEval struct {
 	rhs Evaler
 }
 
-func newSubtractEval(lhs Evaler, rhs Evaler) *subtractEval {
+func newSubtractEval(lhs Evaler, rhs Evaler) Evaler {
 	return &subtractEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *subtractEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, ctx)
+func (n *subtractEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalLong(n.rhs, ctx)
+	rhs, err := evalLong(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -342,19 +365,19 @@ type multiplyEval struct {
 	rhs Evaler
 }
 
-func newMultiplyEval(lhs Evaler, rhs Evaler) *multiplyEval {
+func newMultiplyEval(lhs Evaler, rhs Evaler) Evaler {
 	return &multiplyEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *multiplyEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, ctx)
+func (n *multiplyEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalLong(n.rhs, ctx)
+	rhs, err := evalLong(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -370,14 +393,14 @@ type negateEval struct {
 	inner Evaler
 }
 
-func newNegateEval(inner Evaler) *negateEval {
+func newNegateEval(inner Evaler) Evaler {
 	return &negateEval{
 		inner: inner,
 	}
 }
 
-func (n *negateEval) Eval(ctx *Context) (types.Value, error) {
-	inner, err := evalLong(n.inner, ctx)
+func (n *negateEval) Eval(env *Env) (types.Value, error) {
+	inner, err := evalLong(n.inner, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -394,19 +417,19 @@ type longLessThanEval struct {
 	rhs Evaler
 }
 
-func newLongLessThanEval(lhs Evaler, rhs Evaler) *longLessThanEval {
+func newLongLessThanEval(lhs Evaler, rhs Evaler) Evaler {
 	return &longLessThanEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *longLessThanEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, ctx)
+func (n *longLessThanEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalLong(n.rhs, ctx)
+	rhs, err := evalLong(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -419,19 +442,19 @@ type longLessThanOrEqualEval struct {
 	rhs Evaler
 }
 
-func newLongLessThanOrEqualEval(lhs Evaler, rhs Evaler) *longLessThanOrEqualEval {
+func newLongLessThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	return &longLessThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *longLessThanOrEqualEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, ctx)
+func (n *longLessThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalLong(n.rhs, ctx)
+	rhs, err := evalLong(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -444,19 +467,19 @@ type longGreaterThanEval struct {
 	rhs Evaler
 }
 
-func newLongGreaterThanEval(lhs Evaler, rhs Evaler) *longGreaterThanEval {
+func newLongGreaterThanEval(lhs Evaler, rhs Evaler) Evaler {
 	return &longGreaterThanEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *longGreaterThanEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, ctx)
+func (n *longGreaterThanEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalLong(n.rhs, ctx)
+	rhs, err := evalLong(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -469,19 +492,19 @@ type longGreaterThanOrEqualEval struct {
 	rhs Evaler
 }
 
-func newLongGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *longGreaterThanOrEqualEval {
+func newLongGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	return &longGreaterThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *longGreaterThanOrEqualEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, ctx)
+func (n *longGreaterThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalLong(n.rhs, ctx)
+	rhs, err := evalLong(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -501,12 +524,12 @@ func newDecimalLessThanEval(lhs Evaler, rhs Evaler) *decimalLessThanEval {
 	}
 }
 
-func (n *decimalLessThanEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalDecimal(n.lhs, ctx)
+func (n *decimalLessThanEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDecimal(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalDecimal(n.rhs, ctx)
+	rhs, err := evalDecimal(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -526,12 +549,12 @@ func newDecimalLessThanOrEqualEval(lhs Evaler, rhs Evaler) *decimalLessThanOrEqu
 	}
 }
 
-func (n *decimalLessThanOrEqualEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalDecimal(n.lhs, ctx)
+func (n *decimalLessThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDecimal(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalDecimal(n.rhs, ctx)
+	rhs, err := evalDecimal(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -551,12 +574,12 @@ func newDecimalGreaterThanEval(lhs Evaler, rhs Evaler) *decimalGreaterThanEval {
 	}
 }
 
-func (n *decimalGreaterThanEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalDecimal(n.lhs, ctx)
+func (n *decimalGreaterThanEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDecimal(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalDecimal(n.rhs, ctx)
+	rhs, err := evalDecimal(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -576,12 +599,12 @@ func newDecimalGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *decimalGreaterTha
 	}
 }
 
-func (n *decimalGreaterThanOrEqualEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalDecimal(n.lhs, ctx)
+func (n *decimalGreaterThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalDecimal(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalDecimal(n.rhs, ctx)
+	rhs, err := evalDecimal(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -603,15 +626,15 @@ func newIfThenElseEval(if_, then, else_ Evaler) *ifThenElseEval {
 	}
 }
 
-func (n *ifThenElseEval) Eval(ctx *Context) (types.Value, error) {
-	cond, err := evalBool(n.if_, ctx)
+func (n *ifThenElseEval) Eval(env *Env) (types.Value, error) {
+	cond, err := evalBool(n.if_, env)
 	if err != nil {
 		return zeroValue(), err
 	}
 	if cond {
-		return n.then.Eval(ctx)
+		return n.then.Eval(env)
 	}
-	return n.else_.Eval(ctx)
+	return n.else_.Eval(env)
 }
 
 // notEqualNode
@@ -619,19 +642,19 @@ type equalEval struct {
 	lhs, rhs Evaler
 }
 
-func newEqualEval(lhs, rhs Evaler) *equalEval {
+func newEqualEval(lhs, rhs Evaler) Evaler {
 	return &equalEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *equalEval) Eval(ctx *Context) (types.Value, error) {
-	lv, err := n.lhs.Eval(ctx)
+func (n *equalEval) Eval(env *Env) (types.Value, error) {
+	lv, err := n.lhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rv, err := n.rhs.Eval(ctx)
+	rv, err := n.rhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -643,19 +666,19 @@ type notEqualEval struct {
 	lhs, rhs Evaler
 }
 
-func newNotEqualEval(lhs, rhs Evaler) *notEqualEval {
+func newNotEqualEval(lhs, rhs Evaler) Evaler {
 	return &notEqualEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *notEqualEval) Eval(ctx *Context) (types.Value, error) {
-	lv, err := n.lhs.Eval(ctx)
+func (n *notEqualEval) Eval(env *Env) (types.Value, error) {
+	lv, err := n.lhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rv, err := n.rhs.Eval(ctx)
+	rv, err := n.rhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -671,10 +694,10 @@ func newSetLiteralEval(elements []Evaler) *setLiteralEval {
 	return &setLiteralEval{elements: elements}
 }
 
-func (n *setLiteralEval) Eval(ctx *Context) (types.Value, error) {
+func (n *setLiteralEval) Eval(env *Env) (types.Value, error) {
 	var vals types.Set
 	for _, e := range n.elements {
-		v, err := e.Eval(ctx)
+		v, err := e.Eval(env)
 		if err != nil {
 			return zeroValue(), err
 		}
@@ -688,19 +711,19 @@ type containsEval struct {
 	lhs, rhs Evaler
 }
 
-func newContainsEval(lhs, rhs Evaler) *containsEval {
+func newContainsEval(lhs, rhs Evaler) Evaler {
 	return &containsEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *containsEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalSet(n.lhs, ctx)
+func (n *containsEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalSet(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := n.rhs.Eval(ctx)
+	rhs, err := n.rhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -712,19 +735,19 @@ type containsAllEval struct {
 	lhs, rhs Evaler
 }
 
-func newContainsAllEval(lhs, rhs Evaler) *containsAllEval {
+func newContainsAllEval(lhs, rhs Evaler) Evaler {
 	return &containsAllEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *containsAllEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalSet(n.lhs, ctx)
+func (n *containsAllEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalSet(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalSet(n.rhs, ctx)
+	rhs, err := evalSet(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -743,19 +766,19 @@ type containsAnyEval struct {
 	lhs, rhs Evaler
 }
 
-func newContainsAnyEval(lhs, rhs Evaler) *containsAnyEval {
+func newContainsAnyEval(lhs, rhs Evaler) Evaler {
 	return &containsAnyEval{
 		lhs: lhs,
 		rhs: rhs,
 	}
 }
 
-func (n *containsAnyEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalSet(n.lhs, ctx)
+func (n *containsAnyEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalSet(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalSet(n.rhs, ctx)
+	rhs, err := evalSet(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -778,10 +801,10 @@ func newRecordLiteralEval(elements map[types.String]Evaler) *recordLiteralEval {
 	return &recordLiteralEval{elements: elements}
 }
 
-func (n *recordLiteralEval) Eval(ctx *Context) (types.Value, error) {
+func (n *recordLiteralEval) Eval(env *Env) (types.Value, error) {
 	vals := types.Record{}
 	for k, en := range n.elements {
-		v, err := en.Eval(ctx)
+		v, err := en.Eval(env)
 		if err != nil {
 			return zeroValue(), err
 		}
@@ -800,36 +823,35 @@ func newAttributeAccessEval(record Evaler, attribute types.String) *attributeAcc
 	return &attributeAccessEval{object: record, attribute: attribute}
 }
 
-func (n *attributeAccessEval) Eval(ctx *Context) (types.Value, error) {
-	v, err := n.object.Eval(ctx)
+func (n *attributeAccessEval) Eval(env *Env) (types.Value, error) {
+	v, err := n.object.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	var record types.Record
-	key := "record"
 	switch vv := v.(type) {
 	case types.EntityUID:
-		key = "`" + vv.String() + "`"
 		var unspecified types.EntityUID
 		if vv == unspecified {
 			return zeroValue(), fmt.Errorf("cannot access attribute `%s` of %w", n.attribute, errUnspecifiedEntity)
 		}
-		rec, ok := ctx.Entities[vv]
+		rec, ok := env.Entities[vv]
 		if !ok {
 			return zeroValue(), fmt.Errorf("entity `%v` %w", vv.String(), errEntityNotExist)
-		} else {
-			record = rec.Attributes
 		}
+		val, ok := rec.Attributes[n.attribute]
+		if !ok {
+			return zeroValue(), fmt.Errorf("`%s` %w `%s`", vv.String(), errAttributeAccess, n.attribute)
+		}
+		return val, nil
 	case types.Record:
-		record = vv
+		val, ok := vv[n.attribute]
+		if !ok {
+			return zeroValue(), fmt.Errorf("record %w `%s`", errAttributeAccess, n.attribute)
+		}
+		return val, nil
 	default:
 		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
 	}
-	val, ok := record[n.attribute]
-	if !ok {
-		return zeroValue(), fmt.Errorf("%s %w `%s`", key, errAttributeAccess, n.attribute)
-	}
-	return val, nil
 }
 
 // hasEval
@@ -842,18 +864,15 @@ func newHasEval(record Evaler, attribute types.String) *hasEval {
 	return &hasEval{object: record, attribute: attribute}
 }
 
-func (n *hasEval) Eval(ctx *Context) (types.Value, error) {
-	v, err := n.object.Eval(ctx)
+func (n *hasEval) Eval(env *Env) (types.Value, error) {
+	v, err := n.object.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
 	var record types.Record
 	switch vv := v.(type) {
 	case types.EntityUID:
-		rec, ok := ctx.Entities[vv]
-		if !ok {
-			record = types.Record{}
-		} else {
+		if rec, ok := env.Entities[vv]; ok {
 			record = rec.Attributes
 		}
 	case types.Record:
@@ -875,32 +894,34 @@ func newLikeEval(lhs Evaler, pattern types.Pattern) *likeEval {
 	return &likeEval{lhs: lhs, pattern: pattern}
 }
 
-func (l *likeEval) Eval(ctx *Context) (types.Value, error) {
-	v, err := evalString(l.lhs, ctx)
+func (l *likeEval) Eval(env *Env) (types.Value, error) {
+	v, err := evalString(l.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
 	return types.Boolean(l.pattern.Match(v)), nil
 }
 
-type variableName func(ctx *Context) types.Value
-
-func variableNamePrincipal(ctx *Context) types.Value { return ctx.Principal }
-func variableNameAction(ctx *Context) types.Value    { return ctx.Action }
-func variableNameResource(ctx *Context) types.Value  { return ctx.Resource }
-func variableNameContext(ctx *Context) types.Value   { return ctx.Context }
-
 // variableEval
 type variableEval struct {
-	variableName variableName
+	variableName types.String
 }
 
-func newVariableEval(variableName variableName) *variableEval {
+func newVariableEval(variableName types.String) *variableEval {
 	return &variableEval{variableName: variableName}
 }
 
-func (n *variableEval) Eval(ctx *Context) (types.Value, error) {
-	return n.variableName(ctx), nil
+func (n *variableEval) Eval(env *Env) (types.Value, error) {
+	switch n.variableName {
+	case consts.Principal:
+		return env.Principal, nil
+	case consts.Action:
+		return env.Action, nil
+	case consts.Resource:
+		return env.Resource, nil
+	default: // context
+		return env.Context, nil
+	}
 }
 
 // inEval
@@ -908,47 +929,110 @@ type inEval struct {
 	lhs, rhs Evaler
 }
 
-func newInEval(lhs, rhs Evaler) *inEval {
+func newInEval(lhs, rhs Evaler) Evaler {
 	return &inEval{lhs: lhs, rhs: rhs}
 }
 
-func entityIn(entity types.EntityUID, query map[types.EntityUID]struct{}, entityMap types.Entities) bool {
-	checked := map[types.EntityUID]struct{}{}
-	toCheck := []types.EntityUID{entity}
-	for len(toCheck) > 0 {
-		var candidate types.EntityUID
-		candidate, toCheck = toCheck[len(toCheck)-1], toCheck[:len(toCheck)-1]
-		if _, ok := checked[candidate]; ok {
-			continue
-		}
-		if _, ok := query[candidate]; ok {
-			return true
-		}
-		next, ok := entityMap[candidate]
-		if ok {
-			toCheck = append(toCheck, next.Parents...)
-		}
-		checked[candidate] = struct{}{}
-	}
-	return false
+func hasKnown(known map[types.EntityUID]struct{}, k types.EntityUID) bool {
+	_, ok := known[k]
+	return ok
 }
 
-func (n *inEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalEntity(n.lhs, ctx)
+func entityInOne(env *Env, entity types.EntityUID, parent types.EntityUID) bool {
+	key := inKey{a: entity, b: parent}
+	if cached, ok := env.inCache[key]; ok {
+		return cached
+	}
+	result := entityInOneWork(env, entity, parent)
+	env.inCache[key] = result
+	return result
+}
+func entityInOneWork(env *Env, entity types.EntityUID, parent types.EntityUID) bool {
+	if entity == parent {
+		return true
+	}
+	var known map[types.EntityUID]struct{}
+	var todo []types.EntityUID
+	var candidate = entity
+	for {
+		if fe, ok := env.Entities[candidate]; ok {
+			for _, k := range fe.Parents {
+				if k == parent {
+					return true
+				}
+			}
+			for _, k := range fe.Parents {
+				p, ok := env.Entities[k]
+				if !ok || len(p.Parents) == 0 || k == entity || hasKnown(known, k) {
+					continue
+				}
+				todo = append(todo, k)
+				if known == nil {
+					known = map[types.EntityUID]struct{}{}
+				}
+				known[k] = struct{}{}
+			}
+		}
+		if len(todo) == 0 {
+			return false
+		}
+		candidate, todo = todo[len(todo)-1], todo[:len(todo)-1]
+	}
+}
+
+func entityInSet(env *Env, entity types.EntityUID, parents map[types.EntityUID]struct{}) bool {
+	if _, ok := parents[entity]; ok {
+		return true
+	}
+	var known map[types.EntityUID]struct{}
+	var todo []types.EntityUID
+	var candidate = entity
+	for {
+		if fe, ok := env.Entities[candidate]; ok {
+			for _, k := range fe.Parents {
+				if _, ok := parents[k]; ok {
+					return true
+				}
+			}
+			for _, k := range fe.Parents {
+				p, ok := env.Entities[k]
+				if !ok || len(p.Parents) == 0 || k == entity || hasKnown(known, k) {
+					continue
+				}
+				todo = append(todo, k)
+				if known == nil {
+					known = map[types.EntityUID]struct{}{}
+				}
+				known[k] = struct{}{}
+			}
+		}
+		if len(todo) == 0 {
+			return false
+		}
+		candidate, todo = todo[len(todo)-1], todo[:len(todo)-1]
+	}
+}
+
+func (n *inEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalEntity(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
 
-	rhs, err := n.rhs.Eval(ctx)
+	rhs, err := n.rhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
 	}
 
-	query := map[types.EntityUID]struct{}{}
+	return doInEval(env, lhs, rhs)
+}
+
+func doInEval(env *Env, lhs types.EntityUID, rhs types.Value) (types.Value, error) {
 	switch rhsv := rhs.(type) {
 	case types.EntityUID:
-		query[rhsv] = struct{}{}
+		return types.Boolean(entityInOne(env, lhs, rhsv)), nil
 	case types.Set:
+		query := make(map[types.EntityUID]struct{}, len(rhsv))
 		for _, rhv := range rhsv {
 			e, err := ValueToEntity(rhv)
 			if err != nil {
@@ -956,11 +1040,10 @@ func (n *inEval) Eval(ctx *Context) (types.Value, error) {
 			}
 			query[e] = struct{}{}
 		}
-	default:
-		return zeroValue(), fmt.Errorf(
-			"%w: expected one of [set, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(rhs))
+		return types.Boolean(entityInSet(env, lhs, query)), nil
 	}
-	return types.Boolean(entityIn(lhs, query, ctx.Entities)), nil
+	return zeroValue(), fmt.Errorf(
+		"%w: expected one of [set, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(rhs))
 }
 
 // isEval
@@ -973,13 +1056,37 @@ func newIsEval(lhs Evaler, rhs types.EntityType) *isEval {
 	return &isEval{lhs: lhs, rhs: rhs}
 }
 
-func (n *isEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalEntity(n.lhs, ctx)
+func (n *isEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalEntity(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-
 	return types.Boolean(lhs.Type == n.rhs), nil
+}
+
+type isInEval struct {
+	lhs Evaler
+	is  types.EntityType
+	rhs Evaler
+}
+
+func newIsInEval(lhs Evaler, is types.EntityType, rhs Evaler) Evaler {
+	return &isInEval{lhs: lhs, is: is, rhs: rhs}
+}
+
+func (n *isInEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalEntity(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	if lhs.Type != n.is {
+		return types.False, nil
+	}
+	rhs, err := n.rhs.Eval(env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return doInEval(env, lhs, rhs)
 }
 
 // decimalLiteralEval
@@ -991,8 +1098,8 @@ func newDecimalLiteralEval(literal Evaler) *decimalLiteralEval {
 	return &decimalLiteralEval{literal: literal}
 }
 
-func (n *decimalLiteralEval) Eval(ctx *Context) (types.Value, error) {
-	literal, err := evalString(n.literal, ctx)
+func (n *decimalLiteralEval) Eval(env *Env) (types.Value, error) {
+	literal, err := evalString(n.literal, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -1013,8 +1120,8 @@ func newIPLiteralEval(literal Evaler) *ipLiteralEval {
 	return &ipLiteralEval{literal: literal}
 }
 
-func (n *ipLiteralEval) Eval(ctx *Context) (types.Value, error) {
-	literal, err := evalString(n.literal, ctx)
+func (n *ipLiteralEval) Eval(env *Env) (types.Value, error) {
+	literal, err := evalString(n.literal, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -1044,8 +1151,8 @@ func newIPTestEval(object Evaler, test ipTestType) *ipTestEval {
 	return &ipTestEval{object: object, test: test}
 }
 
-func (n *ipTestEval) Eval(ctx *Context) (types.Value, error) {
-	i, err := evalIP(n.object, ctx)
+func (n *ipTestEval) Eval(env *Env) (types.Value, error) {
+	i, err := evalIP(n.object, env)
 	if err != nil {
 		return zeroValue(), err
 	}
@@ -1062,14 +1169,56 @@ func newIPIsInRangeEval(lhs, rhs Evaler) *ipIsInRangeEval {
 	return &ipIsInRangeEval{lhs: lhs, rhs: rhs}
 }
 
-func (n *ipIsInRangeEval) Eval(ctx *Context) (types.Value, error) {
-	lhs, err := evalIP(n.lhs, ctx)
+func (n *ipIsInRangeEval) Eval(env *Env) (types.Value, error) {
+	lhs, err := evalIP(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
-	rhs, err := evalIP(n.rhs, ctx)
+	rhs, err := evalIP(n.rhs, env)
 	if err != nil {
 		return zeroValue(), err
 	}
 	return types.Boolean(rhs.Contains(lhs)), nil
+}
+
+// extensionEval
+
+func newExtensionEval(name types.Path, args []Evaler) Evaler {
+	// error is not part of the cedar spec, so leaving it out of the list of extensions that can be parsed, etc
+	if name == partialErrorName && len(args) == 1 {
+		return newPartialErrorEval(args[0])
+	}
+
+	if i, ok := extensions.ExtMap[name]; ok {
+		if i.Args != len(args) {
+			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s)", errArity, name, i.Args))
+		}
+		switch {
+		case name == "ip":
+			return newIPLiteralEval(args[0])
+		case name == "decimal":
+			return newDecimalLiteralEval(args[0])
+
+		case name == "lessThan":
+			return newDecimalLessThanEval(args[0], args[1])
+		case name == "lessThanOrEqual":
+			return newDecimalLessThanOrEqualEval(args[0], args[1])
+		case name == "greaterThan":
+			return newDecimalGreaterThanEval(args[0], args[1])
+		case name == "greaterThanOrEqual":
+			return newDecimalGreaterThanOrEqualEval(args[0], args[1])
+
+		case name == "isIpv4":
+			return newIPTestEval(args[0], ipTestIPv4)
+		case name == "isIpv6":
+			return newIPTestEval(args[0], ipTestIPv6)
+		case name == "isLoopback":
+			return newIPTestEval(args[0], ipTestLoopback)
+		case name == "isMulticast":
+			return newIPTestEval(args[0], ipTestMulticast)
+		case name == "isInRange":
+			return newIPIsInRangeEval(args[0], args[1])
+		}
+	}
+	return newErrorEval(fmt.Errorf("%w: %s", errUnknownExtensionFunction, name))
 }

@@ -4,17 +4,18 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
-	"slices"
 	"strings"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/batch"
 )
 
 // jsonEntity is not part of entityValue as I can find
@@ -40,14 +41,14 @@ type corpusTest struct {
 	ShouldValidate bool   `json:"shouldValidate"`
 	Entities       string `json:"entities"`
 	Requests       []struct {
-		Desc      string       `json:"description"`
-		Principal jsonEntity   `json:"principal"`
-		Action    jsonEntity   `json:"action"`
-		Resource  jsonEntity   `json:"resource"`
-		Context   types.Record `json:"context"`
-		Decision  string       `json:"decision"`
-		Reasons   []string     `json:"reason"`
-		Errors    []string     `json:"errors"`
+		Desc      string           `json:"description"`
+		Principal jsonEntity       `json:"principal"`
+		Action    jsonEntity       `json:"action"`
+		Resource  jsonEntity       `json:"resource"`
+		Context   types.Record     `json:"context"`
+		Decision  types.Decision   `json:"decision"`
+		Reasons   []types.PolicyID `json:"reason"`
+		Errors    []types.PolicyID `json:"errors"`
 	} `json:"requests"`
 }
 
@@ -89,6 +90,7 @@ func (fdm TarFileMap) GetFileData(path string) ([]byte, error) {
 	return content, nil
 }
 
+//nolint:revive // due to test cognitive complexity
 func TestCorpus(t *testing.T) {
 	t.Parallel()
 
@@ -156,6 +158,13 @@ func TestCorpus(t *testing.T) {
 			}
 
 			for _, request := range tt.Requests {
+				if len(request.Reasons) == 0 && request.Reasons != nil {
+					request.Reasons = nil
+				}
+				if len(request.Errors) == 0 && request.Errors != nil {
+					request.Errors = nil
+				}
+
 				t.Run(request.Desc, func(t *testing.T) {
 					t.Parallel()
 					ok, diag := policySet.IsAuthorized(
@@ -167,23 +176,61 @@ func TestCorpus(t *testing.T) {
 							Context:   request.Context,
 						})
 
-					if ok != (request.Decision == "allow") {
-						t.Fatalf("got %v want %v", ok, request.Decision)
-					}
-					var errors []string
+					testutil.Equals(t, ok, request.Decision)
+					var errors []types.PolicyID
 					for _, n := range diag.Errors {
-						errors = append(errors, string(n.PolicyID))
+						errors = append(errors, n.PolicyID)
 					}
-					if !slices.Equal(errors, request.Errors) {
-						t.Errorf("errors got %v want %v", errors, request.Errors)
-					}
-					var reasons []string
+					testutil.Equals(t, errors, request.Errors)
+					var reasons []types.PolicyID
 					for _, n := range diag.Reasons {
-						reasons = append(reasons, string(n.PolicyID))
+						reasons = append(reasons, n.PolicyID)
 					}
-					if !slices.Equal(reasons, request.Reasons) {
-						t.Errorf("reasons got %v want %v", reasons, request.Reasons)
+					testutil.Equals(t, reasons, request.Reasons)
+				})
+
+				t.Run(request.Desc+"/batch", func(t *testing.T) {
+					t.Parallel()
+					ctx := context.Background()
+					var res batch.Result
+					var total int
+					principal := types.EntityUID(request.Principal)
+					action := types.EntityUID(request.Action)
+					resource := types.EntityUID(request.Resource)
+					context := request.Context
+					batch.Authorize(ctx, policySet, entities, batch.Request{
+						Principal: batch.Variable("principal"),
+						Action:    batch.Variable("action"),
+						Resource:  batch.Variable("resource"),
+						Context:   batch.Variable("context"),
+						Variables: batch.Variables{
+							"principal": []types.Value{principal},
+							"action":    []types.Value{action},
+							"resource":  []types.Value{resource},
+							"context":   []types.Value{context},
+						},
+					}, func(r batch.Result) {
+						res = r
+						total++
+					})
+					testutil.Equals(t, total, 1)
+					testutil.Equals(t, res.Request.Principal, principal)
+					testutil.Equals(t, res.Request.Action, action)
+					testutil.Equals(t, res.Request.Resource, resource)
+					testutil.Equals(t, res.Request.Context, context)
+
+					ok, diag := res.Decision, res.Diagnostic
+					testutil.Equals(t, ok, request.Decision)
+					var errors []types.PolicyID
+					for _, n := range diag.Errors {
+						errors = append(errors, n.PolicyID)
 					}
+					testutil.Equals(t, errors, request.Errors)
+					var reasons []types.PolicyID
+					for _, n := range diag.Reasons {
+						reasons = append(reasons, n.PolicyID)
+					}
+					testutil.Equals(t, reasons, request.Reasons)
 				})
 			}
 		})

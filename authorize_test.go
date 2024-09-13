@@ -1,11 +1,8 @@
 package cedar
 
 import (
-	"encoding/json"
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/ast"
-	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -705,6 +702,22 @@ func TestIsAuthorized(t *testing.T) {
 			Want:      true,
 			DiagErr:   0,
 		},
+		{
+			Name:   "rfc-57", // https://github.com/cedar-policy/rfcs/blob/main/text/0057-general-multiplication.md
+			Policy: `permit(principal, action, resource) when { context.foo * principal.bar >= 100 };`,
+			Entities: types.Entities{
+				types.NewEntityUID("Principal", "1"): &types.Entity{
+					UID:        types.NewEntityUID("Principal", "1"),
+					Attributes: types.Record{"bar": types.Long(42)},
+				},
+			},
+			Principal: types.NewEntityUID("Principal", "1"),
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  types.NewEntityUID("Resource", "resource"),
+			Context:   types.Record{"foo": types.Long(43)},
+			Want:      true,
+			DiagErr:   0,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -722,59 +735,4 @@ func TestIsAuthorized(t *testing.T) {
 			testutil.Equals(t, ok, tt.Want)
 		})
 	}
-}
-
-func TestError(t *testing.T) {
-	t.Parallel()
-	e := Error{PolicyID: "policy42", Message: "bad error"}
-	testutil.Equals(t, e.String(), "while evaluating policy `policy42`: bad error")
-}
-
-type badEvaler struct{}
-
-func (e *badEvaler) Eval(*eval.Context) (types.Value, error) {
-	return types.Long(42), nil
-}
-
-func TestBadEval(t *testing.T) {
-	t.Parallel()
-	ps := NewPolicySet()
-	pol := NewPolicyFromAST(ast.Permit())
-	pol.eval = &badEvaler{}
-	ps.Store("pol", pol)
-	dec, diag := ps.IsAuthorized(nil, Request{})
-	testutil.Equals(t, dec, Deny)
-	testutil.Equals(t, len(diag.Errors), 1)
-}
-
-func TestJSONDecision(t *testing.T) {
-	t.Parallel()
-	t.Run("MarshalAllow", func(t *testing.T) {
-		t.Parallel()
-		d := Allow
-		b, err := d.MarshalJSON()
-		testutil.OK(t, err)
-		testutil.Equals(t, string(b), `"allow"`)
-	})
-	t.Run("MarshalDeny", func(t *testing.T) {
-		t.Parallel()
-		d := Deny
-		b, err := d.MarshalJSON()
-		testutil.OK(t, err)
-		testutil.Equals(t, string(b), `"deny"`)
-	})
-	t.Run("UnmarshalAllow", func(t *testing.T) {
-		t.Parallel()
-		var d Decision
-		err := json.Unmarshal([]byte(`"allow"`), &d)
-		testutil.OK(t, err)
-		testutil.Equals(t, d, Allow)
-	})
-	t.Run("UnmarshalDeny", func(t *testing.T) {
-		t.Parallel()
-		var d Decision
-		err := json.Unmarshal([]byte(`"deny"`), &d)
-		testutil.OK(t, err)
-		testutil.Equals(t, d, Deny)
-	})
 }

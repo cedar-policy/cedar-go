@@ -13,7 +13,7 @@ import (
 
 // A Policy is the parsed form of a single Cedar language policy statement.
 type Policy struct {
-	eval eval.Evaler // determines if a policy matches a request.
+	eval eval.BoolEvaler // determines if a policy matches a request.
 	ast  *internalast.Policy
 }
 
@@ -67,9 +67,7 @@ func NewPolicyFromAST(astIn *ast.Policy) *Policy {
 	return p
 }
 
-// An Annotations is a map of key, value pairs found in the policy. Annotations
-// have no impact on policy evaluation.
-type Annotations map[types.Ident]types.String
+type Annotations = types.Annotations
 
 // Annotations retrieves the annotations associated with this policy.
 func (p *Policy) Annotations() Annotations {
@@ -80,14 +78,11 @@ func (p *Policy) Annotations() Annotations {
 	return res
 }
 
-// An Effect specifies the intent of the policy, to either permit or forbid any
-// request that matches the scope and conditions specified in the policy.
-type Effect bool
+type Effect = types.Effect
 
-// Each Policy has a Permit or Forbid effect that is determined during parsing.
 const (
-	Permit = Effect(true)
-	Forbid = Effect(false)
+	Permit = types.Permit
+	Forbid = types.Forbid
 )
 
 // Effect retrieves the effect of this policy.
@@ -95,20 +90,7 @@ func (p *Policy) Effect() Effect {
 	return Effect(p.ast.Effect)
 }
 
-// A Position describes an arbitrary source position including the file, line, and column location.
-type Position struct {
-	// Filename is the optional name of the source file for the enclosing policy, "" if the source is unknown or not a named file
-	Filename string `json:"filename"`
-
-	// Offset is the byte offset, starting at 0
-	Offset int `json:"offset"`
-
-	// Line is the line number, starting at 1
-	Line int `json:"line"`
-
-	// Column is the column number, starting at 1 (character count per line)
-	Column int `json:"column"`
-}
+type Position = types.Position
 
 // Position retrieves the position of this policy.
 func (p *Policy) Position() Position {
@@ -118,4 +100,10 @@ func (p *Policy) Position() Position {
 // SetFilename sets the filename of this policy.
 func (p *Policy) SetFilename(fileName string) {
 	p.ast.Position.Filename = fileName
+}
+
+// AST retrieves the AST of this policy.  Do not modify the AST, as the
+// compiled policy will no longer be in sync with the AST.
+func (p *Policy) AST() *ast.Policy {
+	return (*ast.Policy)(p.ast)
 }
