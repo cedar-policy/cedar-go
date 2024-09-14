@@ -64,13 +64,13 @@ func toEval(n ast.IsNode) Evaler {
 	case ast.NodeTypeNotEquals:
 		return newNotEqualEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeGreaterThan:
-		return newVirtualGreaterThanEval(toEval(v.Left), toEval(v.Right))
+		return newComparableValueGreaterThanEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeGreaterThanOrEqual:
-		return newVirtualGreaterThanOrEqualEval(toEval(v.Left), toEval(v.Right))
+		return newComparableValueGreaterThanOrEqualEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeLessThan:
-		return newVirtualLessThanEval(toEval(v.Left), toEval(v.Right))
+		return newComparableValueLessThanEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeLessThanOrEqual:
-		return newVirtualLessThanOrEqualEval(toEval(v.Left), toEval(v.Right))
+		return newComparableValueLessThanOrEqualEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeSub:
 		return newSubtractEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeAdd:

@@ -3,6 +3,7 @@ package types_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
@@ -58,6 +59,13 @@ func TestDatetime(t *testing.T) {
 			{"012345678", "error parsing datetime value: string too short"},
 
 			{"195-01-01T00:00:00Z", "error parsing datetime value: invalid year"},
+			{"1995+01-01T00:00:00Z", "error parsing datetime value: unexpected character '+'"},
+			{"1995-01+01T00:00:00Z", "error parsing datetime value: unexpected character '+'"},
+			{"1995-01-01T00+00:00Z", "error parsing datetime value: unexpected character '+'"},
+			{"1995-01-01T00:00+00Z", "error parsing datetime value: unexpected character '+'"},
+			{"1995-01-00Y00:00:00Z", "error parsing datetime value: unexpected character 'Y'"},
+			{"1995-01-00T00:00:00V", "error parsing datetime value: invalid time zone designator"},
+
 			{"1995-1-01T00:00:00Z", "error parsing datetime value: invalid month"},
 			{"1995-01-0T00:00:00Z", "error parsing datetime value: invalid day"},
 			{"1995-01T00:00:00Z", "error parsing datetime value: unexpected character 'T'"},
@@ -65,31 +73,31 @@ func TestDatetime(t *testing.T) {
 			{"1995-01-01Taa:00:00Z", "error parsing datetime value: invalid hour"},
 			{"1995-01-01T00:aa:00Z", "error parsing datetime value: invalid minute"},
 			{"1995-01-01T00:00:aaZ", "error parsing datetime value: invalid second"},
-			{"1995-01-01T00:00:00Zgarbage", "error parsing datetime value: unexpected trailer after timezone indicator"},
+			{"1995-01-01T00:00:00Zgarbage", "error parsing datetime value: unexpected trailer after time zone designator"},
 			{"1995-01-01T00:00:00.", "error parsing datetime value: invalid millisecond"},
 			{"1995-01-01T00:00:00.0", "error parsing datetime value: invalid millisecond"},
 			{"1995-01-01T00:00:00.00", "error parsing datetime value: invalid millisecond"},
 			{"1995-01-01T00:00:00.aaa", "error parsing datetime value: invalid millisecond"},
 
-			{"1995-01-01T00:00:00.001", "error parsing datetime value: expected timezone indicator"},
+			{"1995-01-01T00:00:00.001", "error parsing datetime value: expected time zone designator"},
 
-			{"1995-01-01T00:00:00.000Z+", "error parsing datetime value: unexpected trailer after timezone indicator"},
-			{"1995-01-01T00:00:00.000Z+0000", "error parsing datetime value: unexpected trailer after timezone indicator"},
-			{"1995-01-01T00:00:00.000Z+000", "error parsing datetime value: unexpected trailer after timezone indicator"},
+			{"1995-01-01T00:00:00.000Z+", "error parsing datetime value: unexpected trailer after time zone designator"},
+			{"1995-01-01T00:00:00.000Z+0000", "error parsing datetime value: unexpected trailer after time zone designator"},
+			{"1995-01-01T00:00:00.000Z+000", "error parsing datetime value: unexpected trailer after time zone designator"},
 
-			{"1995-01-01T00:00:00.000+", "error parsing datetime value: expected time offset"},
+			{"1995-01-01T00:00:00.000+", "error parsing datetime value: invalid time zone offset"},
 
-			{"1995-01-01T00:00:00.000+", "error parsing datetime value: expected time offset"},
-			{"1995-01-01T00:00:00.000-", "error parsing datetime value: expected time offset"},
+			{"1995-01-01T00:00:00.000+", "error parsing datetime value: invalid time zone offset"},
+			{"1995-01-01T00:00:00.000-", "error parsing datetime value: invalid time zone offset"},
 
-			{"1995-01-01T00:00:00.000-0", "error parsing datetime value: expected time offset"},
-			{"1995-01-01T00:00:00.000-00", "error parsing datetime value: expected time offset"},
-			{"1995-01-01T00:00:00.000-000", "error parsing datetime value: expected time offset"},
-			{"1995-01-01T00:00:00.000-000a", "error parsing datetime value: invalid time offset"},
-			{"1995-01-01T00:00:00.000-00aa", "error parsing datetime value: invalid time offset"},
-			{"1995-01-01T00:00:00.000-0aaa", "error parsing datetime value: invalid time offset"},
-			{"1995-01-01T00:00:00.000-aaaa", "error parsing datetime value: invalid time offset"},
-			{"1995-01-01T00:00:00.000-aaaa0", "error parsing datetime value: unexpected trailer"},
+			{"1995-01-01T00:00:00.000-0", "error parsing datetime value: invalid time zone offset"},
+			{"1995-01-01T00:00:00.000-00", "error parsing datetime value: invalid time zone offset"},
+			{"1995-01-01T00:00:00.000-000", "error parsing datetime value: invalid time zone offset"},
+			{"1995-01-01T00:00:00.000-000a", "error parsing datetime value: invalid time zone offset"},
+			{"1995-01-01T00:00:00.000-00aa", "error parsing datetime value: invalid time zone offset"},
+			{"1995-01-01T00:00:00.000-0aaa", "error parsing datetime value: invalid time zone offset"},
+			{"1995-01-01T00:00:00.000-aaaa", "error parsing datetime value: invalid time zone offset"},
+			{"1995-01-01T00:00:00.000-aaaa0", "error parsing datetime value: unexpected trailer after time zone designator"},
 		}
 		for ti, tt := range tests {
 			tt := tt
@@ -102,11 +110,18 @@ func TestDatetime(t *testing.T) {
 		}
 	}
 
+	t.Run("Construct", func(t *testing.T) {
+		t.Parallel()
+		one := types.DatetimeFromMillis(1)
+		two := types.FromStdTime(time.UnixMilli(1))
+		testutil.Equals(t, one.Milliseconds(), two.Milliseconds())
+	})
+
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
-		one := types.UnsafeDatetime(1)
-		one2 := types.UnsafeDatetime(1)
-		zero := types.UnsafeDatetime(0)
+		one := types.DatetimeFromMillis(1)
+		one2 := types.FromStdTime(time.UnixMilli(1))
+		zero := types.FromStdTime(time.UnixMilli(0))
 		f := types.Boolean(false)
 		testutil.FatalIf(t, !one.Equal(one), "%v not Equal to %v", one, one)
 		testutil.FatalIf(t, !one.Equal(one2), "%v not Equal to %v", one, one2)
@@ -115,9 +130,74 @@ func TestDatetime(t *testing.T) {
 		testutil.FatalIf(t, zero.Equal(f), "%v Equal to %v", zero, f)
 	})
 
-	t.Run("MarshalCedar", func(t *testing.T) {
+	t.Run("LessThan", func(t *testing.T) {
 		t.Parallel()
-		testutil.Equals(t, string(types.UnsafeDatetime(42).MarshalCedar()), `datetime("1970-01-01T00:00:00.042Z")`)
+		one := types.FromStdTime(time.UnixMilli(1))
+		zero := types.FromStdTime(time.UnixMilli(0))
+		f := types.Boolean(false)
+
+		tests := []struct {
+			l       types.Datetime
+			r       types.Value
+			want    bool
+			wantErr error
+		}{
+			{one, zero, false, nil},
+			{zero, one, true, nil},
+			{zero, zero, false, nil},
+			{zero, f, false, types.ErrNotComparable},
+		}
+
+		for ti, tt := range tests {
+			tt := tt
+			t.Run(fmt.Sprintf("LessThan_%d_%v<%v", ti, tt.l, tt.r), func(t *testing.T) {
+				t.Parallel()
+				got, gotErr := tt.l.LessThan(tt.r)
+				testutil.Equals(t, got, tt.want)
+				testutil.ErrorIs(t, gotErr, tt.wantErr)
+			})
+		}
+
 	})
 
+	t.Run("LessThanOrEqual", func(t *testing.T) {
+		t.Parallel()
+		one := types.FromStdTime(time.UnixMilli(1))
+		zero := types.FromStdTime(time.UnixMilli(0))
+		f := types.Boolean(false)
+
+		tests := []struct {
+			l       types.Datetime
+			r       types.Value
+			want    bool
+			wantErr error
+		}{
+			{one, zero, false, nil},
+			{zero, one, true, nil},
+			{zero, zero, true, nil},
+			{zero, f, false, types.ErrNotComparable},
+		}
+
+		for ti, tt := range tests {
+			tt := tt
+			t.Run(fmt.Sprintf("LessThanOrEqual_%d_%v<%v", ti, tt.l, tt.r), func(t *testing.T) {
+				t.Parallel()
+				got, gotErr := tt.l.LessThanOrEqual(tt.r)
+				testutil.Equals(t, got, tt.want)
+				testutil.ErrorIs(t, gotErr, tt.wantErr)
+			})
+		}
+	})
+
+	t.Run("MarshalCedar", func(t *testing.T) {
+		t.Parallel()
+		testutil.Equals(t, string(types.FromStdTime(time.UnixMilli(42)).MarshalCedar()), `datetime("1970-01-01T00:00:00.042Z")`)
+	})
+
+	t.Run("MarshalJSON", func(t *testing.T) {
+		t.Parallel()
+		bs, err := types.FromStdTime(time.UnixMilli(42)).MarshalJSON()
+		testutil.OK(t, err)
+		testutil.Equals(t, string(bs), `datetime("1970-01-01T00:00:00.042Z")`)
+	})
 }

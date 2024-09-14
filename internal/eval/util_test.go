@@ -2,6 +2,7 @@ package eval
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
@@ -181,7 +182,7 @@ func TestTypeName(t *testing.T) {
 	}{
 
 		{"boolean", types.Boolean(true), "bool"},
-		{"datetime", types.UnsafeDatetime(42), "datetime"},
+		{"datetime", types.FromStdTime(time.UnixMilli(42)), "datetime"},
 		{"decimal", types.UnsafeDecimal(42), "decimal"},
 		{"entityUID", types.NewEntityUID("T", "42"), "(entity of type `T`)"},
 		{"ip", types.IPAddr{}, "IP"},

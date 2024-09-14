@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/parser"
@@ -947,7 +948,7 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 	}
 }
 
-// hack: newVirtualLessThanEval and friends aren't func(Evaler, Evaler) Evaler, but we can turn them into it with generics.
+// hack: newComparableValueLessThanEval and friends aren't func(Evaler, Evaler) Evaler, but we can turn them into it with generics.
 func makeEvaler[T Evaler](fn func(Evaler, Evaler) T) func(Evaler, Evaler) Evaler {
 	return func(lhs Evaler, rhs Evaler) Evaler {
 		return fn(lhs, rhs)
@@ -966,19 +967,19 @@ func toEvaler(x any) Evaler {
 	}
 }
 
-func TestVirtualComparisonNodes(t *testing.T) {
+func TestComparableValueComparisonNodes(t *testing.T) {
 	t.Parallel()
 
 	var (
 		zero         = types.Long(0)
 		neg1         = types.Long(-1)
 		pos1         = types.Long(1)
-		zeroDate     = types.UnsafeDatetime(0)
-		futureDate   = types.UnsafeDatetime(1)
-		pastDate     = types.UnsafeDatetime(-1)
-		zeroDuration = types.UnsafeDuration(0)
-		negDuration  = types.UnsafeDuration(-1)
-		posDuration  = types.UnsafeDuration(1)
+		zeroDate     = types.FromStdTime(time.UnixMilli(0))
+		futureDate   = types.FromStdTime(time.UnixMilli(1))
+		pastDate     = types.FromStdTime(time.UnixMilli(-1))
+		zeroDuration = types.FromStdDuration(time.Duration(0))
+		negDuration  = types.FromStdDuration(-1 * time.Millisecond)
+		posDuration  = types.FromStdDuration(1 * time.Millisecond)
 	)
 
 	type test struct {
@@ -994,7 +995,7 @@ func TestVirtualComparisonNodes(t *testing.T) {
 
 	tests := []testNode{
 		{name: "<",
-			evaler: makeEvaler(newVirtualLessThanEval),
+			evaler: makeEvaler(newComparableValueLessThanEval),
 			table: []test{
 				{neg1, neg1, false, nil},
 				{neg1, zero, true, nil},
@@ -1033,10 +1034,13 @@ func TestVirtualComparisonNodes(t *testing.T) {
 				{neg1, errTest, false, errTest},
 				{types.True, neg1, false, ErrType},
 				{neg1, types.False, false, ErrType},
+				{pastDate, neg1, false, ErrType},
+				{negDuration, futureDate, false, ErrType},
+				{neg1, negDuration, false, ErrType},
 			},
 		},
 		{name: "<=",
-			evaler: makeEvaler(newVirtualLessThanOrEqualEval),
+			evaler: makeEvaler(newComparableValueLessThanOrEqualEval),
 			table: []test{
 				{neg1, neg1, true, nil},
 				{neg1, zero, true, nil},
@@ -1075,10 +1079,13 @@ func TestVirtualComparisonNodes(t *testing.T) {
 				{neg1, errTest, false, errTest},
 				{types.True, neg1, false, ErrType},
 				{neg1, types.False, false, ErrType},
+				{pastDate, neg1, false, ErrType},
+				{negDuration, futureDate, false, ErrType},
+				{neg1, negDuration, false, ErrType},
 			},
 		},
 		{name: ">",
-			evaler: makeEvaler(newVirtualGreaterThanEval),
+			evaler: makeEvaler(newComparableValueGreaterThanEval),
 			table: []test{
 				{neg1, neg1, false, nil},
 				{neg1, zero, false, nil},
@@ -1117,10 +1124,13 @@ func TestVirtualComparisonNodes(t *testing.T) {
 				{neg1, errTest, false, errTest},
 				{types.True, neg1, false, ErrType},
 				{neg1, types.False, false, ErrType},
+				{pastDate, neg1, false, ErrType},
+				{negDuration, futureDate, false, ErrType},
+				{neg1, negDuration, false, ErrType},
 			},
 		},
 		{name: ">=",
-			evaler: makeEvaler(newVirtualGreaterThanOrEqualEval),
+			evaler: makeEvaler(newComparableValueGreaterThanOrEqualEval),
 			table: []test{
 				{neg1, neg1, true, nil},
 				{neg1, zero, false, nil},
@@ -1159,6 +1169,9 @@ func TestVirtualComparisonNodes(t *testing.T) {
 				{neg1, errTest, false, errTest},
 				{types.True, neg1, false, ErrType},
 				{neg1, types.False, false, ErrType},
+				{pastDate, neg1, false, ErrType},
+				{negDuration, futureDate, false, ErrType},
+				{neg1, negDuration, false, ErrType},
 			},
 		},
 	}
@@ -2272,7 +2285,7 @@ func TestCedarString(t *testing.T) {
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
 		{"decimal", types.UnsafeDecimal(1234.5678), `1234.5678`, `decimal("1234.5678")`},
-		{"duration", types.UnsafeDuration(1), `1ms`, `duration("1ms")`},
+		{"duration", types.FromStdDuration(1 * time.Millisecond), `1ms`, `duration("1ms")`},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2311,6 +2324,31 @@ func TestCache(t *testing.T) {
 	testutil.Equals(t, res, types.Value(types.False))
 }
 
+func TestDatetimeLiteralNode(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"DatetimeError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDatetime},
+		{"Success", newLiteralEval(types.String("1970-01-01")), types.FromStdTime(time.UnixMilli(0)), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newDatetimeLiteralEval(tt.arg)
+			v, err := n.Eval(NewEnv())
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
 func TestDatetimeToDate(t *testing.T) {
 	t.Parallel()
 	aTime, err := types.ParseDatetime("1970-01-02T10:00:00Z")
@@ -2324,7 +2362,7 @@ func TestDatetimeToDate(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"Success", newLiteralEval(aTime), types.UnsafeDatetime(24 * 60 * 60 * 1000), nil},
+		{"Success", newLiteralEval(aTime), types.FromStdTime(time.UnixMilli(24 * 60 * 60 * 1000)), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2340,24 +2378,30 @@ func TestDatetimeToDate(t *testing.T) {
 
 func TestDatetimeDurationSince(t *testing.T) {
 	t.Parallel()
-	aTime, err := types.ParseDatetime("1970-01-02T00:00:00Z")
+	baseTime, err := types.ParseDatetime("1970-01-01T01:00:00Z")
 	testutil.OK(t, err)
+	endTime, err := types.ParseDatetime("1970-01-01T00:00:00Z")
+	testutil.OK(t, err)
+	dur := types.FromStdDuration(1 * time.Hour)
+	bad := types.Long(1)
 
 	tests := []struct {
 		name   string
-		arg    Evaler
+		lhs    Evaler
+		rhs    Evaler
 		result types.Value
 		err    error
 	}{
-		{"Error", newErrorEval(errTest), zeroValue(), errTest},
-		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"Success", newLiteralEval(aTime), types.UnsafeDuration(24 * 60 * 60 * 1000), nil},
+		{"Error", newErrorEval(errTest), newLiteralEval(bad), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(bad), newLiteralEval(endTime), zeroValue(), ErrType},
+		{"ArgTypeError", newLiteralEval(baseTime), newLiteralEval(bad), zeroValue(), ErrType},
+		{"Success", newLiteralEval(baseTime), newLiteralEval(endTime), dur, nil},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			n := newDurationSinceEval(tt.arg, newLiteralEval(types.UnsafeDatetime(0)))
+			n := newDurationSinceEval(tt.lhs, tt.rhs)
 			v, err := n.Eval(&Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
@@ -2367,24 +2411,30 @@ func TestDatetimeDurationSince(t *testing.T) {
 
 func TestDatetimeOffset(t *testing.T) {
 	t.Parallel()
-	aTime, err := types.ParseDatetime("1970-01-01T00:00:00Z")
+	baseTime, err := types.ParseDatetime("1970-01-01T00:00:00Z")
 	testutil.OK(t, err)
+	endTime, err := types.ParseDatetime("1970-01-01T01:00:00Z")
+	testutil.OK(t, err)
+	dur := types.FromStdDuration(1 * time.Hour)
+	bad := types.Long(1)
 
 	tests := []struct {
 		name   string
-		arg    Evaler
+		lhs    Evaler
+		rhs    Evaler
 		result types.Value
 		err    error
 	}{
-		{"Error", newErrorEval(errTest), zeroValue(), errTest},
-		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"Success", newLiteralEval(aTime), types.UnsafeDatetime(24 * 60 * 60 * 1000), nil},
+		{"Error", newErrorEval(errTest), newLiteralEval(bad), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(bad), newLiteralEval(dur), zeroValue(), ErrType},
+		{"ArgTypeError", newLiteralEval(baseTime), newLiteralEval(bad), zeroValue(), ErrType},
+		{"Success", newLiteralEval(baseTime), newLiteralEval(dur), endTime, nil},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			n := newOffsetEval(tt.arg, newLiteralEval(types.UnsafeDuration(24*60*60*1000)))
+			n := newOffsetEval(tt.lhs, tt.rhs)
 			v, err := n.Eval(&Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
@@ -2405,7 +2455,7 @@ func TestDatetimeToTime(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"Success", newLiteralEval(aTime), types.UnsafeDuration(10 * 60 * 60 * 1000), nil},
+		{"Success", newLiteralEval(aTime), types.FromStdDuration(10 * time.Hour), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2413,6 +2463,31 @@ func TestDatetimeToTime(t *testing.T) {
 			t.Parallel()
 			n := newToTimeEval(tt.arg)
 			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationLiteralNode(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"DurationError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDuration},
+		{"Success", newLiteralEval(types.String("1h")), types.FromStdDuration(1 * time.Hour), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newDurationLiteralEval(tt.arg)
+			v, err := n.Eval(NewEnv())
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
