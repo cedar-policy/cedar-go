@@ -133,12 +133,18 @@ While in development (0.x.y), each tagged release may contain breaking changes.
 
 ## Change log
 
-### New features in 0.4.x
+### New features in 0.3.1
 
 - General performance improvements to the evaluator
 - An experimental batch evaluator has been added to `x/exp/batch`
+- Reserved keywords are now rejected in all appropriate places when parsing Cedar text
+- A parsing ambiguity between variables, entity UIDs, and extension functions has been resolved
 
-### New features in 0.2.x
+### Upgrading from 0.2.x to 0.3.x
+
+- The JSON marshaling of the Position struct now uses canonical lower-case keys for its fields
+
+### New features in 0.2.0
 
 - A programmatic AST is now available in the `ast` package.
 - Policy sets can be marshaled and unmarshaled from JSON.
