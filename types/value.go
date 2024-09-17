@@ -15,8 +15,7 @@ var ErrNotComparable = fmt.Errorf("incompatible types in comparison")
 // Implementations of Value _must_ be able to be safely copied shallowly, which means they must either be immutable
 // or be made up of data structures that are free of pointers (e.g. slices and maps).
 type Value interface {
-	// String produces a string representation of the Value.
-	String() string
+	fmt.Stringer
 	// MarshalCedar produces a valid MarshalCedar language representation of the Value.
 	MarshalCedar() []byte
 	// ExplicitMarshalJSON marshals the Value into JSON using the explicit (if
