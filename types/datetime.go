@@ -308,3 +308,7 @@ func (a Datetime) ExplicitMarshalJSON() ([]byte, error) {
 func (a Datetime) Milliseconds() int64 {
 	return a.value
 }
+
+func (v Datetime) hash() uint64 {
+	return uint64(v.value)
+}

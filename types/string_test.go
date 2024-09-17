@@ -25,5 +25,4 @@ func TestString(t *testing.T) {
 		testutil.Equals(t, types.String("hello").String(), `hello`)
 		testutil.Equals(t, types.String("hello\ngoodbye").String(), "hello\ngoodbye")
 	})
-
 }

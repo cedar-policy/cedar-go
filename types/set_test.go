@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -83,7 +84,14 @@ func TestSet(t *testing.T) {
 					return true
 				})
 
-				testutil.Equals(t, got, tt.values)
+				testutil.Equals(t, len(got), len(tt.values))
+				for _, v := range got {
+					testutil.FatalIf(
+						t,
+						!slices.ContainsFunc(tt.values, func(vv types.Value) bool { return vv.Equal(v) }),
+						"value %v not in input slice %v", v, tt.values,
+					)
+				}
 			})
 		}
 	})
@@ -92,14 +100,16 @@ func TestSet(t *testing.T) {
 		t.Parallel()
 
 		set := types.NewSet([]types.Value{types.Long(42), types.Long(1337)})
+
+		// It would be nice to know which element or elements were returned when iteration ends early, but iteration
+		// order for Sets is non-deterministic
 		tests := []struct {
 			name    string
 			breakOn int
-			want    []types.Value
 		}{
-			{name: "empty set", breakOn: 0, want: nil},
-			{name: "one item", breakOn: 1, want: []types.Value{types.Long(42)}},
-			{name: "two items", breakOn: 2, want: []types.Value{types.Long(42), types.Long(1337)}},
+			{name: "empty record", breakOn: 0},
+			{name: "one item", breakOn: 1},
+			{name: "two items", breakOn: 2},
 		}
 
 		for _, tt := range tests {
@@ -116,7 +126,10 @@ func TestSet(t *testing.T) {
 					return true
 				})
 
-				testutil.Equals(t, got, tt.want)
+				testutil.Equals(t, len(got), tt.breakOn)
+				for _, g := range got {
+					testutil.FatalIf(t, !set.Contains(g), "got value %v which is not in set %v", g, set)
+				}
 			})
 		}
 	})

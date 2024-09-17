@@ -297,3 +297,7 @@ func (v Duration) ToSeconds() int64 {
 func (v Duration) ToMilliseconds() int64 {
 	return v.value
 }
+
+func (v Duration) hash() uint64 {
+	return uint64(v.value)
+}

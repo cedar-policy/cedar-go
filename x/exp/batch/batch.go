@@ -220,10 +220,11 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 	// then loop the current variable
 	loopEnv := *be.env
 	u := be.Variables[0]
-	_, chPrincipal := cloneSub(be.env.Principal, u.Key, nil)
-	_, chAction := cloneSub(be.env.Action, u.Key, nil)
-	_, chResource := cloneSub(be.env.Resource, u.Key, nil)
-	_, chContext := cloneSub(be.env.Context, u.Key, nil)
+	dummyVal := types.True
+	_, chPrincipal := cloneSub(be.env.Principal, u.Key, dummyVal)
+	_, chAction := cloneSub(be.env.Action, u.Key, dummyVal)
+	_, chResource := cloneSub(be.env.Resource, u.Key, dummyVal)
+	_, chContext := cloneSub(be.env.Context, u.Key, dummyVal)
 	be.Variables = be.Variables[1:]
 	be.Values = maps.Clone(be.Values)
 	for _, v := range u.Values {

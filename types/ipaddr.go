@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/netip"
 	"strings"
 )
@@ -149,4 +150,12 @@ func (v IPAddr) ExplicitMarshalJSON() ([]byte, error) {
 			Arg: v.String(),
 		},
 	})
+}
+
+func (v IPAddr) hash() uint64 {
+	// MarshalBinary() cannot actually fail
+	bytes, _ := netip.Prefix(v).MarshalBinary()
+	h := fnv.New64()
+	_, _ = h.Write(bytes)
+	return h.Sum64()
 }

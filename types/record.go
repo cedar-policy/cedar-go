@@ -2,7 +2,9 @@ package types
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
+	"hash/fnv"
 	"slices"
 	"strconv"
 
@@ -14,11 +16,27 @@ type RecordMap = map[String]Value
 // A Record is an immutable collection of attributes. Each attribute consists of a name and
 // an associated value. Names are simple strings. Values can be of any type.
 type Record struct {
-	m RecordMap
+	m       RecordMap
+	hashVal uint64
 }
 
 func NewRecord(m RecordMap) Record {
-	return Record{m: maps.Clone(m)}
+	// Special case hashVal for empty map to 0 so that the return value of Value.hash() of Record{} and
+	// NewRecord(RecordMap{}) are the same
+	var hashVal uint64
+	if len(m) > 0 {
+		orderedKeys := maps.Keys(m)
+		slices.Sort(orderedKeys)
+
+		h := fnv.New64()
+		for _, k := range orderedKeys {
+			_, _ = h.Write([]byte(k))
+			_ = binary.Write(h, binary.LittleEndian, m[k].hash())
+		}
+		hashVal = h.Sum64()
+	}
+
+	return Record{m: maps.Clone(m), hashVal: hashVal}
 }
 
 func (r Record) Len() int {
@@ -53,7 +71,7 @@ func (r Record) Map() RecordMap {
 // Equals returns true if the records are Equal.
 func (a Record) Equal(bi Value) bool {
 	b, ok := bi.(Record)
-	if !ok || len(a.m) != len(b.m) {
+	if !ok || len(a.m) != len(b.m) || a.hashVal != b.hashVal {
 		return false
 	}
 	for k, av := range a.m {
@@ -130,4 +148,8 @@ func (r Record) MarshalCedar() []byte {
 	}
 	sb.WriteRune('}')
 	return sb.Bytes()
+}
+
+func (v Record) hash() uint64 {
+	return v.hashVal
 }

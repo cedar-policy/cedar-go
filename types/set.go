@@ -4,28 +4,51 @@ import (
 	"bytes"
 	"encoding/json"
 	"slices"
+
+	"golang.org/x/exp/maps"
 )
 
 // A Set is an immutable collection of elements that can be of the same or different types.
 type Set struct {
-	v []Value
+	s       map[uint64]Value
+	hashVal uint64
 }
 
 // NewSet takes a slice of Values and stores a clone of the values internally.
 func NewSet(v []Value) Set {
-	newSlice := make([]Value, 0, len(v))
+	set := make(map[uint64]Value, len(v))
+
 	for _, vv := range v {
-		if slices.ContainsFunc(newSlice, func(vvv Value) bool { return vv.Equal(vvv) }) {
-			continue
+		hash := vv.hash()
+
+		// Insert the value into the map. Deal with collisions via open addressing by simply incrementing the hash
+		// value. This method is safe so long as Set is immutable because nothing can be removed from the map.
+		for {
+			existing, ok := set[hash]
+			if !ok {
+				set[hash] = vv
+				break
+			} else if vv.Equal(existing) {
+				// found duplicate in slice
+				break
+			}
+			hash++
 		}
-		newSlice = append(newSlice, vv)
 	}
-	return Set{v: newSlice}
+
+	// Special case hashVal for empty set to 0 so that the return value of Value.hash() of Set{} and NewSet([]Value{})
+	// are the same
+	var hashVal uint64
+	for _, v := range maps.Values(set) {
+		hashVal += v.hash()
+	}
+
+	return Set{s: set, hashVal: hashVal}
 }
 
 // Len returns the number of unique Values in the Set
 func (s Set) Len() int {
-	return len(s.v)
+	return len(s.s)
 }
 
 // SetIterator defines the type of the iteration callback function
@@ -34,7 +57,7 @@ type SetIterator func(Value) bool
 // Iterate calls iter for each item in the Set. Returning false from the iter function causes iteration to cease.
 // Iteration order is non-deterministic.
 func (s Set) Iterate(iter SetIterator) {
-	for _, v := range s.v {
+	for _, v := range s.s {
 		if !iter(v) {
 			break
 		}
@@ -43,12 +66,17 @@ func (s Set) Iterate(iter SetIterator) {
 
 // Contains returns true if the Value v is present in the Set
 func (s Set) Contains(v Value) bool {
-	for _, e := range s.v {
-		if e.Equal(v) {
+	hash := v.hash()
+
+	for {
+		existing, ok := s.s[hash]
+		if !ok {
+			return false
+		} else if v.Equal(existing) {
 			return true
 		}
+		hash++
 	}
-	return false
 }
 
 // Slice returns a slice of the Values in the Set which is safe to mutate. The order of the values is non-deterministic.
@@ -65,13 +93,13 @@ func (as Set) Equal(bi Value) bool {
 	if !ok {
 		return false
 	}
-	for _, a := range as.v {
-		if !bs.Contains(a) {
-			return false
-		}
+
+	if len(as.s) != len(bs.s) || as.hashVal != bs.hashVal {
+		return false
 	}
-	for _, b := range bs.v {
-		if !as.Contains(b) {
+
+	for _, v := range as.s {
+		if !bs.Contains(v) {
 			return false
 		}
 	}
@@ -100,15 +128,18 @@ func (v *Set) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON marshals the Set into JSON, the marshaller uses the explicit JSON
-// form for all the values in the Set.
+// form for all the values in the Set and always orders elements by their hash
+// hash order, which may differ from the original order.
 func (v Set) MarshalJSON() ([]byte, error) {
 	w := &bytes.Buffer{}
 	w.WriteByte('[')
-	for i, vv := range v.v {
-		if i > 0 {
+	orderedKeys := maps.Keys(v.s)
+	slices.Sort(orderedKeys)
+	for i, k := range orderedKeys {
+		if i != 0 {
 			w.WriteByte(',')
 		}
-		b, err := vv.ExplicitMarshalJSON()
+		b, err := v.s[k].ExplicitMarshalJSON()
 		if err != nil {
 			return nil, err
 		}
@@ -126,15 +157,22 @@ func (v Set) ExplicitMarshalJSON() ([]byte, error) { return v.MarshalJSON() }
 func (v Set) String() string { return string(v.MarshalCedar()) }
 
 // MarshalCedar produces a valid MarshalCedar language representation of the Set, e.g. `[1,2,3]`.
+// Set elements are rendered in hash order, which may differ from the original order.
 func (v Set) MarshalCedar() []byte {
 	var sb bytes.Buffer
 	sb.WriteRune('[')
-	for i, elem := range v.v {
-		if i > 0 {
+	orderedKeys := maps.Keys(v.s)
+	slices.Sort(orderedKeys)
+	for i, k := range orderedKeys {
+		if i != 0 {
 			sb.WriteString(", ")
 		}
-		sb.Write(elem.MarshalCedar())
+		sb.Write(v.s[k].MarshalCedar())
 	}
 	sb.WriteRune(']')
 	return sb.Bytes()
+}
+
+func (v Set) hash() uint64 {
+	return v.hashVal
 }

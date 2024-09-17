@@ -551,7 +551,7 @@ func TestJSONMarshal(t *testing.T) {
 			String("av"),
 			String("cv"),
 			String("bv"),
-		}), `["av","cv","bv"]`, `["av","cv","bv"]`},
+		}), `["cv","bv","av"]`, `["cv","bv","av"]`},
 		{"setWithExt", NewSet([]Value{mustIPValue("222.222.222.7")}),
 			`[{"__extn":{"fn":"ip","arg":"222.222.222.7"}}]`, `[{"__extn":{"fn":"ip","arg":"222.222.222.7"}}]`},
 		{"entity", EntityUID{"User", "alice"}, `{"__entity":{"type":"User","id":"alice"}}`, `{"type":"User","id":"alice"}`},
@@ -578,6 +578,7 @@ func (j *jsonErr) String() string                       { return "" }
 func (j *jsonErr) MarshalCedar() []byte                 { return nil }
 func (j *jsonErr) Equal(Value) bool                     { return false }
 func (j *jsonErr) ExplicitMarshalJSON() ([]byte, error) { return nil, fmt.Errorf("jsonErr") }
+func (j *jsonErr) hash() uint64                         { return 0 }
 
 func TestJSONSet(t *testing.T) {
 	t.Parallel()
