@@ -30,5 +30,4 @@ func TestEntity(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(t, string(types.EntityUID{"type", "id"}.MarshalCedar()), `type::"id"`)
 	})
-
 }

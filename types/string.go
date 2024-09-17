@@ -25,4 +25,3 @@ func (v String) String() string {
 func (v String) MarshalCedar() []byte {
 	return []byte(strconv.Quote(string(v)))
 }
-func (v String) deepClone() Value { return v }

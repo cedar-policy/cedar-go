@@ -131,16 +131,3 @@ func (r Record) MarshalCedar() []byte {
 	sb.WriteRune('}')
 	return sb.Bytes()
 }
-func (v Record) deepClone() Value { return v.DeepClone() }
-
-// DeepClone returns a deep clone of the Record.
-func (v Record) DeepClone() Record {
-	if v.m == nil {
-		return v
-	}
-	res := make(RecordMap, len(v.m))
-	for k, vv := range v.m {
-		res[k] = vv.deepClone()
-	}
-	return Record{m: res}
-}

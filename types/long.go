@@ -39,4 +39,3 @@ func (v Long) String() string { return fmt.Sprint(int64(v)) }
 func (v Long) MarshalCedar() []byte {
 	return []byte(v.String())
 }
-func (v Long) deepClone() Value { return v }

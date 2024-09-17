@@ -188,4 +188,3 @@ func (v Decimal) ExplicitMarshalJSON() ([]byte, error) {
 		},
 	})
 }
-func (v Decimal) deepClone() Value { return v }

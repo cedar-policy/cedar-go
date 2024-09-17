@@ -308,5 +308,3 @@ func (a Datetime) ExplicitMarshalJSON() ([]byte, error) {
 func (a Datetime) Milliseconds() int64 {
 	return a.value
 }
-
-func (v Datetime) deepClone() Value { return v }

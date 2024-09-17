@@ -77,4 +77,3 @@ func (v EntityUID) ExplicitMarshalJSON() ([]byte, error) {
 		},
 	})
 }
-func (v EntityUID) deepClone() Value { return v }

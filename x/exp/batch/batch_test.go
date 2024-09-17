@@ -235,7 +235,7 @@ func TestBatch(t *testing.T) {
 			ps.Store("0", cedar.NewPolicyFromAST((*publicast.Policy)(tt.policy)))
 
 			err := Authorize(context.Background(), ps, tt.entities, tt.request, func(br Result) {
-				br.Request.Context = br.Request.Context.DeepClone()
+				// Need to clone this because it could be mutated in successive authorizations
 				br.Values = maps.Clone(br.Values)
 				res = append(res, br)
 			})

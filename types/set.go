@@ -18,7 +18,7 @@ func NewSet(v []Value) Set {
 		if slices.ContainsFunc(newSlice, func(vvv Value) bool { return vv.Equal(vvv) }) {
 			continue
 		}
-		newSlice = append(newSlice, vv.deepClone())
+		newSlice = append(newSlice, vv)
 	}
 	return Set{v: newSlice}
 }
@@ -137,17 +137,4 @@ func (v Set) MarshalCedar() []byte {
 	}
 	sb.WriteRune(']')
 	return sb.Bytes()
-}
-func (v Set) deepClone() Value { return v.DeepClone() }
-
-// DeepClone returns a deep clone of the Set.
-func (v Set) DeepClone() Set {
-	if v.v == nil {
-		return Set{nil}
-	}
-	vals := make([]Value, len(v.v))
-	for i, vv := range v.v {
-		vals[i] = vv.deepClone()
-	}
-	return NewSet(vals)
 }

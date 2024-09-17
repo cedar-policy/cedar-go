@@ -150,7 +150,3 @@ func (v IPAddr) ExplicitMarshalJSON() ([]byte, error) {
 		},
 	})
 }
-
-// in this case, netip.Prefix does contain a pointer, but
-// the interface given is immutable, so it is safe to return
-func (v IPAddr) deepClone() Value { return v }
