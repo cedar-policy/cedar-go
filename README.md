@@ -34,7 +34,7 @@ The Go implementation includes:
 
 - the core authorizer
 - JSON marshalling and unmarshalling
-- all core and extended types
+- all core and extended types (including [RFC 80](https://github.com/cedar-policy/rfcs/blob/main/text/0080-datetime-extension.md)'s datetime and duration)
 - integration test suite
 
 The Go implementation does not yet include:
@@ -132,6 +132,11 @@ compatibility promise.
 While in development (0.x.y), each tagged release may contain breaking changes.
 
 ## Change log
+
+### New features in 0.3.2
+
+- An implementation of the `datetime` and `duration` extension types specified in [RFC 80](https://github.com/cedar-policy/rfcs/blob/main/text/0080-datetime-extension.md).
+  - Note: While these types have been accepted into the language, they have not yet been formally analyzed in the [specification](https://github.com/cedar-policy/cedar-spec/).
 
 ### New features in 0.3.1
 
