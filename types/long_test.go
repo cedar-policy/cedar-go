@@ -87,5 +87,4 @@ func TestLong(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(t, types.Long(1).String(), "1")
 	})
-
 }

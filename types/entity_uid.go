@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"hash/fnv"
 	"strconv"
 )
 
@@ -77,4 +78,10 @@ func (v EntityUID) ExplicitMarshalJSON() ([]byte, error) {
 		},
 	})
 }
-func (v EntityUID) deepClone() Value { return v }
+
+func (v EntityUID) hash() uint64 {
+	h := fnv.New64()
+	_, _ = h.Write([]byte(v.Type))
+	_, _ = h.Write([]byte(v.ID))
+	return h.Sum64()
+}

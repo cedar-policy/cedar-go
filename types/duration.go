@@ -267,7 +267,6 @@ func (v Duration) ExplicitMarshalJSON() ([]byte, error) {
 		},
 	})
 }
-func (v Duration) deepClone() Value { return v }
 
 // ToDays returns the number of days this Duration represents,
 // truncating when fractional
@@ -297,4 +296,8 @@ func (v Duration) ToSeconds() int64 {
 // represents
 func (v Duration) ToMilliseconds() int64 {
 	return v.value
+}
+
+func (v Duration) hash() uint64 {
+	return uint64(v.value)
 }

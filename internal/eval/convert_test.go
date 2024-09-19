@@ -20,13 +20,13 @@ func TestToEval(t *testing.T) {
 	}{
 		{
 			"access",
-			ast.Value(types.Record{"key": types.Long(42)}).Access("key"),
+			ast.Value(types.NewRecord(types.RecordMap{"key": types.Long(42)})).Access("key"),
 			types.Long(42),
 			testutil.OK,
 		},
 		{
 			"has",
-			ast.Value(types.Record{"key": types.Long(42)}).Has("key"),
+			ast.Value(types.NewRecord(types.RecordMap{"key": types.Long(42)})).Has("key"),
 			types.True,
 			testutil.OK,
 		},
@@ -63,13 +63,13 @@ func TestToEval(t *testing.T) {
 		{
 			"record",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(42)}}),
-			types.Record{"key": types.Long(42)},
+			types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 			testutil.OK,
 		},
 		{
 			"set",
 			ast.Set(ast.Long(42)),
-			types.Set{types.Long(42)},
+			types.NewSet([]types.Value{types.Long(42)}),
 			testutil.OK,
 		},
 		{
@@ -182,19 +182,19 @@ func TestToEval(t *testing.T) {
 		},
 		{
 			"contains",
-			ast.Value(types.Set{types.Long(42)}).Contains(ast.Long(42)),
+			ast.Value(types.NewSet([]types.Value{types.Long(42)})).Contains(ast.Long(42)),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"containsAll",
-			ast.Value(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAll(ast.Value(types.Set{types.Long(42), types.Long(43)})),
+			ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43), types.Long(44)})).ContainsAll(ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43)}))),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"containsAny",
-			ast.Value(types.Set{types.Long(42), types.Long(43), types.Long(44)}).ContainsAny(ast.Value(types.Set{types.Long(1), types.Long(42)})),
+			ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43), types.Long(44)})).ContainsAny(ast.Value(types.NewSet([]types.Value{types.Long(1), types.Long(42)}))),
 			types.True,
 			testutil.OK,
 		},

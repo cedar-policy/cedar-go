@@ -30,4 +30,10 @@ func (v Boolean) MarshalCedar() []byte {
 
 // ExplicitMarshalJSON marshals the Boolean into JSON.
 func (v Boolean) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
-func (v Boolean) deepClone() Value                     { return v }
+
+func (v Boolean) hash() uint64 {
+	if v {
+		return 1
+	}
+	return 0
+}

@@ -133,6 +133,20 @@ While in development (0.x.y), each tagged release may contain breaking changes.
 
 ## Change log
 
+### New features in 0.4.0
+
+- `types.Set` is now implemented as a hash set, turning `Set.Contains()` into an O(1) operation, on average. This mitigates a worst case quadratic runtime for the evaluation of the `containsAny()` operator.
+
+### Upgrading from 0.3.x to 0.4.x
+
+- `types.Set` is now an immutable type which must be constructed via `types.NewSet()`
+  - To iterate the values, use `Set.Iterate()`, which takes an iterator callback.
+  - Duplicates are now removed from `Set`s, so they won't be rendered when calling `Set.MarshalCedar()` or `Set.MarshalJSON`.
+  - All implementations of `types.Value` are now safe to copy shallowly, so `Set.DeepClone()` has been removed.
+- `types.Record` is now an immutable type which must be constructed via `types.NewRecord()`
+  - To iterate the keys and values, use `Record.Iterate()`, which takes an iterator callback.
+  - All implementations of `types.Value` are now safe to copy shallowly, so `Record.DeepClone()` has been removed.
+
 ### New features in 0.3.2
 
 - An implementation of the `datetime` and `duration` extension types specified in [RFC 80](https://github.com/cedar-policy/rfcs/blob/main/text/0080-datetime-extension.md).

@@ -7,7 +7,6 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
-	"github.com/cedar-policy/cedar-go/types"
 )
 
 func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
@@ -38,11 +37,11 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 	case ast.ScopeTypeIn:
 		return ast.NewNode(varNode).In(ast.Value(t.Entity))
 	case ast.ScopeTypeInSet:
-		set := make(types.Set, len(t.Entities))
+		set := make([]ast.Node, len(t.Entities))
 		for i, e := range t.Entities {
-			set[i] = e
+			set[i] = ast.Value(e)
 		}
-		return ast.NewNode(varNode).In(ast.Value(set))
+		return ast.NewNode(varNode).In(ast.Set(set...))
 	case ast.ScopeTypeIs:
 		return ast.NewNode(varNode).Is(t.Type)
 

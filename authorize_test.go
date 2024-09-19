@@ -86,7 +86,7 @@ func TestIsAuthorized(t *testing.T) {
 			Principal: cuzco,
 			Action:    dropTable,
 			Resource:  types.NewEntityUID("table", "whatever"),
-			Context:   types.Record{"x": types.Long(42)},
+			Context:   types.NewRecord(types.RecordMap{"x": types.Long(42)}),
 			Want:      true,
 			DiagErr:   0,
 		},
@@ -97,7 +97,7 @@ func TestIsAuthorized(t *testing.T) {
 			Principal: cuzco,
 			Action:    dropTable,
 			Resource:  types.NewEntityUID("table", "whatever"),
-			Context:   types.Record{"x": types.Long(43)},
+			Context:   types.NewRecord(types.RecordMap{"x": types.Long(43)}),
 			Want:      false,
 			DiagErr:   0,
 		},
@@ -107,7 +107,7 @@ func TestIsAuthorized(t *testing.T) {
 			Entities: types.Entities{
 				cuzco: &types.Entity{
 					UID:        cuzco,
-					Attributes: types.Record{"x": types.Long(42)},
+					Attributes: types.NewRecord(types.RecordMap{"x": types.Long(42)}),
 				},
 			},
 			Principal: cuzco,
@@ -123,7 +123,7 @@ func TestIsAuthorized(t *testing.T) {
 			Entities: types.Entities{
 				cuzco: &types.Entity{
 					UID:        cuzco,
-					Attributes: types.Record{"x": types.Long(43)},
+					Attributes: types.NewRecord(types.RecordMap{"x": types.Long(43)}),
 				},
 			},
 			Principal: cuzco,
@@ -302,7 +302,7 @@ func TestIsAuthorized(t *testing.T) {
 			Entities: types.Entities{
 				cuzco: &types.Entity{
 					UID:        cuzco,
-					Attributes: types.Record{"name": types.String("bob")},
+					Attributes: types.NewRecord(types.RecordMap{"name": types.String("bob")}),
 				},
 			},
 			Principal: cuzco,
@@ -678,7 +678,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:     "negative-unary-op",
 			Policy:   `permit(principal,action,resource) when { -context.value > 0 };`,
 			Entities: types.Entities{},
-			Context:  types.Record{"value": types.Long(-42)},
+			Context:  types.NewRecord(types.RecordMap{"value": types.Long(-42)}),
 			Want:     true,
 			DiagErr:  0,
 		},
@@ -770,13 +770,13 @@ func TestIsAuthorized(t *testing.T) {
 			Entities: types.Entities{
 				types.NewEntityUID("Principal", "1"): &types.Entity{
 					UID:        types.NewEntityUID("Principal", "1"),
-					Attributes: types.Record{"bar": types.Long(42)},
+					Attributes: types.NewRecord(types.RecordMap{"bar": types.Long(42)}),
 				},
 			},
 			Principal: types.NewEntityUID("Principal", "1"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
-			Context:   types.Record{"foo": types.Long(43)},
+			Context:   types.NewRecord(types.RecordMap{"foo": types.Long(43)}),
 			Want:      true,
 			DiagErr:   0,
 		},

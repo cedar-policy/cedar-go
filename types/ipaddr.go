@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/netip"
 	"strings"
 )
@@ -151,6 +152,10 @@ func (v IPAddr) ExplicitMarshalJSON() ([]byte, error) {
 	})
 }
 
-// in this case, netip.Prefix does contain a pointer, but
-// the interface given is immutable, so it is safe to return
-func (v IPAddr) deepClone() Value { return v }
+func (v IPAddr) hash() uint64 {
+	// MarshalBinary() cannot actually fail
+	bytes, _ := netip.Prefix(v).MarshalBinary()
+	h := fnv.New64()
+	_, _ = h.Write(bytes)
+	return h.Sum64()
+}

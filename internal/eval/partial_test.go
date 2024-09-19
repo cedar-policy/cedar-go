@@ -277,9 +277,9 @@ func TestPartialPolicy(t *testing.T) {
 		{"contextVariableAccess",
 			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"key": Variable("var"),
-				},
+				}),
 			},
 			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
 			true,
@@ -320,10 +320,10 @@ func TestPartialPolicy(t *testing.T) {
 		{"ignoreAnd",
 			ast.Permit().When(ast.Context().Access("variable").And(ast.Context().Access("ignore").Equal(ast.Long(42)))),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit(),
 			true,
@@ -331,10 +331,10 @@ func TestPartialPolicy(t *testing.T) {
 		{"ignoreOr",
 			ast.Permit().When(ast.Context().Access("variable").Or(ast.Context().Access("ignore").Equal(ast.Long(42)))),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit(),
 			true,
@@ -342,10 +342,10 @@ func TestPartialPolicy(t *testing.T) {
 		{"ignoreIfThen",
 			ast.Permit().When(ast.IfThenElse(ast.Context().Access("variable"), ast.Context().Access("ignore").Equal(ast.Long(42)), ast.True())),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit(),
 			true,
@@ -353,10 +353,10 @@ func TestPartialPolicy(t *testing.T) {
 		{"ignoreIfElse",
 			ast.Permit().When(ast.IfThenElse(ast.Context().Access("variable"), ast.True(), ast.Context().Access("ignore").Equal(ast.Long(42)))),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit(),
 			true,
@@ -364,10 +364,10 @@ func TestPartialPolicy(t *testing.T) {
 		{"ignoreHas",
 			ast.Permit().When(ast.Context().Has("ignore")),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit(),
 			true,
@@ -375,10 +375,10 @@ func TestPartialPolicy(t *testing.T) {
 		{"ignoreHasNot",
 			ast.Permit().When(ast.Not(ast.Context().Has("ignore"))),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit(),
 			true,
@@ -386,9 +386,9 @@ func TestPartialPolicy(t *testing.T) {
 		{"errorShortCircuit",
 			ast.Permit().When(ast.True()).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit().When(ast.NewNode(extError(errors.New("type error: expected long, got string")))),
 			true,
@@ -396,9 +396,9 @@ func TestPartialPolicy(t *testing.T) {
 		{"errorShortCircuitKept",
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(extError(errors.New("type error: expected long, got string")))),
 			true,
@@ -406,9 +406,9 @@ func TestPartialPolicy(t *testing.T) {
 		{"errorConditionShortCircuit",
 			ast.Permit().When(ast.True()).When(ast.String("test")).When(ast.Context().Access("variable")),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit().When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 			true,
@@ -416,9 +416,9 @@ func TestPartialPolicy(t *testing.T) {
 		{"errorConditionShortCircuitKept",
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test")).When(ast.Context().Access("variable")),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 			true,
@@ -426,9 +426,9 @@ func TestPartialPolicy(t *testing.T) {
 		{"errorConditionShortCircuitKeptDeeper",
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test")).When(ast.Context().Access("variable")),
 			&Env{
-				Context: types.Record{
+				Context: types.NewRecord(types.RecordMap{
 					"variable": Variable("variable"),
-				},
+				}),
 			},
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 			true,
@@ -717,7 +717,7 @@ func TestPartialBasic(t *testing.T) {
 		{
 			"valueSetNodesFold",
 			ast.Set(ast.Long(42), ast.Long(43)),
-			ast.Value(types.Set{types.Long(42), types.Long(43)}),
+			ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43)})),
 			testutil.OK,
 		},
 		{
@@ -735,7 +735,7 @@ func TestPartialBasic(t *testing.T) {
 		{
 			"valueRecordElementsFold",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(42)}}),
-			ast.Value(types.Record{"key": types.Long(42)}),
+			ast.Value(types.NewRecord(types.RecordMap{"key": types.Long(42)})),
 			testutil.OK,
 		},
 		{
@@ -1101,7 +1101,7 @@ func TestPartialBasic(t *testing.T) {
 		{
 			"opContainsKeep",
 			ast.Set(ast.Long(42)).Contains(ast.Context()),
-			ast.Value(types.Set{types.Long(42)}).Contains(ast.Context()),
+			ast.Value(types.NewSet([]types.Value{types.Long(42)})).Contains(ast.Context()),
 			testutil.OK,
 		},
 		{
@@ -1119,7 +1119,7 @@ func TestPartialBasic(t *testing.T) {
 		{
 			"opContainsAllKeep",
 			ast.Set(ast.Long(42)).ContainsAll(ast.Context()),
-			ast.Value(types.Set{types.Long(42)}).ContainsAll(ast.Context()),
+			ast.Value(types.NewSet([]types.Value{types.Long(42)})).ContainsAll(ast.Context()),
 			testutil.OK,
 		},
 		{
@@ -1137,7 +1137,7 @@ func TestPartialBasic(t *testing.T) {
 		{
 			"opContainsAnyKeep",
 			ast.Set(ast.Long(42)).ContainsAny(ast.Context()),
-			ast.Value(types.Set{types.Long(42)}).ContainsAny(ast.Context()),
+			ast.Value(types.NewSet([]types.Value{types.Long(42)})).ContainsAny(ast.Context()),
 			testutil.OK,
 		},
 		{
@@ -1160,7 +1160,7 @@ func TestPartialBasic(t *testing.T) {
 		},
 		{
 			"opAccessFold",
-			ast.Value(types.Record{"key": types.Long(42)}).Access("key"),
+			ast.Value(types.NewRecord(types.RecordMap{"key": types.Long(42)})).Access("key"),
 			ast.Long(42),
 			testutil.OK,
 		},
@@ -1178,7 +1178,7 @@ func TestPartialBasic(t *testing.T) {
 		},
 		{
 			"opHasFold",
-			ast.Value(types.Record{"key": types.Long(42)}).Has("key"),
+			ast.Value(types.NewRecord(types.RecordMap{"key": types.Long(42)})).Has("key"),
 			ast.True(),
 			testutil.OK,
 		},
@@ -1259,7 +1259,7 @@ func TestPartialHasEval(t *testing.T) {
 	}{
 		{"happy",
 			Env{},
-			newPartialHasEval(newLiteralEval(types.Record{"key": types.Long(42)}), "key"),
+			newPartialHasEval(newLiteralEval(types.NewRecord(types.RecordMap{"key": types.Long(42)})), "key"),
 			types.True, testutil.OK,
 		},
 		{"badArg",
@@ -1276,7 +1276,7 @@ func TestPartialHasEval(t *testing.T) {
 			Env{Entities: types.Entities{
 				types.NewEntityUID("T", "1"): &types.Entity{
 					UID:        types.NewEntityUID("T", "1"),
-					Attributes: types.Record{"key": types.Long(42)},
+					Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 				},
 			}},
 			newPartialHasEval(newLiteralEval(types.NewEntityUID("T", "1")), "key"),

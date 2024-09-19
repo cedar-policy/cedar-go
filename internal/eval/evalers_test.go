@@ -1290,20 +1290,20 @@ func TestSetLiteralNode(t *testing.T) {
 		{"nested",
 			[]Evaler{
 				newLiteralEval(types.True),
-				newLiteralEval(types.Set{
+				newLiteralEval(types.NewSet([]types.Value{
+					types.False,
+					types.Long(1),
+				})),
+				newLiteralEval(types.Long(10)),
+			},
+			types.NewSet([]types.Value{
+				types.True,
+				types.NewSet([]types.Value{
 					types.False,
 					types.Long(1),
 				}),
-				newLiteralEval(types.Long(10)),
-			},
-			types.Set{
-				types.True,
-				types.Set{
-					types.False,
-					types.Long(1),
-				},
 				types.Long(10),
-			},
+			}),
 			nil},
 	}
 	for _, tt := range tests {
@@ -1343,8 +1343,8 @@ func TestContainsNode(t *testing.T) {
 	}
 	{
 		empty := types.Set{}
-		trueAndOne := types.Set{types.True, types.Long(1)}
-		nested := types.Set{trueAndOne, types.False, types.Long(2)}
+		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
+		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
 
 		tests := []struct {
 			name     string
@@ -1398,9 +1398,9 @@ func TestContainsAllNode(t *testing.T) {
 	}
 	{
 		empty := types.Set{}
-		trueOnly := types.Set{types.True}
-		trueAndOne := types.Set{types.True, types.Long(1)}
-		nested := types.Set{trueAndOne, types.False, types.Long(2)}
+		trueOnly := types.NewSet([]types.Value{types.True})
+		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
+		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
 
 		tests := []struct {
 			name     string
@@ -1452,10 +1452,10 @@ func TestContainsAnyNode(t *testing.T) {
 	}
 	{
 		empty := types.Set{}
-		trueOnly := types.Set{types.True}
-		trueAndOne := types.Set{types.True, types.Long(1)}
-		trueAndTwo := types.Set{types.True, types.Long(2)}
-		nested := types.Set{trueAndOne, types.False, types.Long(2)}
+		trueOnly := types.NewSet([]types.Value{types.True})
+		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
+		trueAndTwo := types.NewSet([]types.Value{types.True, types.Long(2)})
+		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
 
 		tests := []struct {
 			name     string
@@ -1481,6 +1481,28 @@ func TestContainsAnyNode(t *testing.T) {
 			})
 		}
 	}
+
+	t.Run("not quadratic", func(t *testing.T) {
+		t.Parallel()
+
+		// Make two totally disjoint sets to force a worst case search
+		setSize := 200000
+		set1 := make([]types.Value, setSize)
+		set2 := make([]types.Value, setSize)
+
+		for i := 0; i < setSize; i++ {
+			set1[i] = types.Long(i)
+			set2[i] = types.Long(setSize + i)
+		}
+
+		n := newContainsAnyEval(newLiteralEval(types.NewSet(set1)), newLiteralEval(types.NewSet(set2)))
+
+		// This call would take several minutes if the evaluation of ContainsAny was quadratic
+		val, err := n.Eval(NewEnv())
+
+		testutil.OK(t, err)
+		testutil.Equals(t, val.(types.Boolean), types.False)
+	})
 }
 
 func TestRecordLiteralNode(t *testing.T) {
@@ -1497,10 +1519,10 @@ func TestRecordLiteralNode(t *testing.T) {
 			map[types.String]Evaler{
 				"foo": newLiteralEval(types.True),
 				"bar": newLiteralEval(types.String("baz")),
-			}, types.Record{
+			}, types.NewRecord(types.RecordMap{
 				"foo": types.True,
 				"bar": types.String("baz"),
-			}, nil},
+			}), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -1531,7 +1553,7 @@ func TestAttributeAccessNode(t *testing.T) {
 			zeroValue(),
 			errAttributeAccess},
 		{"KnownAttribute",
-			newLiteralEval(types.Record{"foo": types.Long(42)}),
+			newLiteralEval(types.NewRecord(types.RecordMap{"foo": types.Long(42)})),
 			"foo",
 			types.Long(42),
 			nil},
@@ -1563,7 +1585,7 @@ func TestAttributeAccessNode(t *testing.T) {
 			n := newAttributeAccessEval(tt.object, tt.attribute)
 			entity := &types.Entity{
 				UID:        types.NewEntityUID("knownType", "knownID"),
-				Attributes: types.Record{"knownAttr": types.Long(42)},
+				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
 			v, err := n.Eval(InitEnv(&Env{
 				Entities: types.Entities{
@@ -1593,7 +1615,7 @@ func TestHasNode(t *testing.T) {
 			types.False,
 			nil},
 		{"KnownAttribute",
-			newLiteralEval(types.Record{"foo": types.Long(42)}),
+			newLiteralEval(types.NewRecord(types.RecordMap{"foo": types.Long(42)})),
 			"foo",
 			types.True,
 			nil},
@@ -1620,7 +1642,7 @@ func TestHasNode(t *testing.T) {
 			n := newHasEval(tt.record, tt.attribute)
 			entity := &types.Entity{
 				UID:        types.NewEntityUID("knownType", "knownID"),
-				Attributes: types.Record{"knownAttr": types.Long(42)},
+				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
 			v, err := n.Eval(InitEnv(&Env{
 				Entities: types.Entities{
@@ -1928,9 +1950,9 @@ func TestInNode(t *testing.T) {
 		{
 			"RhsTypeError2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
-			newLiteralEval(types.Set{
+			newLiteralEval(types.NewSet([]types.Value{
 				types.String("foo"),
-			}),
+			})),
 			map[string][]string{},
 			zeroValue(),
 			ErrType,
@@ -1946,9 +1968,9 @@ func TestInNode(t *testing.T) {
 		{
 			"Reflexive2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
-			newLiteralEval(types.Set{
+			newLiteralEval(types.NewSet([]types.Value{
 				types.NewEntityUID("human", "joe"),
-			}),
+			})),
 			map[string][]string{},
 			types.True,
 			nil,
@@ -2052,9 +2074,9 @@ func TestIsInNode(t *testing.T) {
 			"RhsTypeError2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
 			"human",
-			newLiteralEval(types.Set{
+			newLiteralEval(types.NewSet([]types.Value{
 				types.String("foo"),
-			}),
+			})),
 			map[string][]string{},
 			zeroValue(),
 			ErrType,
@@ -2072,9 +2094,9 @@ func TestIsInNode(t *testing.T) {
 			"Reflexive2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
 			"human",
-			newLiteralEval(types.Set{
+			newLiteralEval(types.NewSet([]types.Value{
 				types.NewEntityUID("human", "joe"),
-			}),
+			})),
 			map[string][]string{},
 			types.True,
 			nil,
@@ -2280,8 +2302,8 @@ func TestCedarString(t *testing.T) {
 		{"string", types.String("hello"), `hello`, `"hello"`},
 		{"number", types.Long(42), `42`, `42`},
 		{"bool", types.True, `true`, `true`},
-		{"record", types.Record{"a": types.Long(42), "b": types.Long(43)}, `{"a":42, "b":43}`, `{"a":42, "b":43}`},
-		{"set", types.Set{types.Long(42), types.Long(43)}, `[42, 43]`, `[42, 43]`},
+		{"record", types.NewRecord(types.RecordMap{"a": types.Long(42), "b": types.Long(43)}), `{"a":42, "b":43}`, `{"a":42, "b":43}`},
+		{"set", types.NewSet([]types.Value{types.Long(42), types.Long(43)}), `[42, 43]`, `[42, 43]`},
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
 		{"decimal", types.UnsafeDecimal(1234.5678), `1234.5678`, `decimal("1234.5678")`},

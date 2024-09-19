@@ -52,9 +52,9 @@ func TestAstExamples(t *testing.T) {
 	// when { {x: "value"}.x == "value" }
 	// when { {x: 1 + context.fooCount}.x == 3 }
 	// when { [1, (2 + 3) * 4, context.fooCount].contains(1) };
-	simpleRecord := types.Record{
+	simpleRecord := types.NewRecord(types.RecordMap{
 		"x": types.String("value"),
-	}
+	})
 	_ = ast.Forbid().
 		When(
 			ast.Value(simpleRecord).Access("x").Equal(ast.String("value")),

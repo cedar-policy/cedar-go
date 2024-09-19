@@ -220,10 +220,11 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 	// then loop the current variable
 	loopEnv := *be.env
 	u := be.Variables[0]
-	_, chPrincipal := cloneSub(be.env.Principal, u.Key, nil)
-	_, chAction := cloneSub(be.env.Action, u.Key, nil)
-	_, chResource := cloneSub(be.env.Resource, u.Key, nil)
-	_, chContext := cloneSub(be.env.Context, u.Key, nil)
+	dummyVal := types.True
+	_, chPrincipal := cloneSub(be.env.Principal, u.Key, dummyVal)
+	_, chAction := cloneSub(be.env.Action, u.Key, dummyVal)
+	_, chResource := cloneSub(be.env.Resource, u.Key, dummyVal)
+	_, chContext := cloneSub(be.env.Context, u.Key, dummyVal)
 	be.Variables = be.Variables[1:]
 	be.Values = maps.Clone(be.Values)
 	for _, v := range u.Values {
@@ -328,29 +329,48 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 			return v, true
 		}
 	case types.Record:
-		cloned := false
-		for kk, vv := range t {
-			if vv, delta := cloneSub(vv, k, v); delta {
-				if !cloned {
-					t = maps.Clone(t) // intentional shallow clone
-					cloned = true
+		var newMap types.RecordMap
+		t.Iterate(func(kk types.String, vv types.Value) bool {
+			if vv, delta := cloneSub(vv, k, v); delta && newMap == nil {
+				if newMap == nil {
+					newMap = t.Map()
 				}
-				t[kk] = vv
+				newMap[kk] = vv
 			}
+			return true
+		})
+
+		if newMap == nil {
+			return t, false
 		}
-		return t, cloned
+		return types.NewRecord(newMap), true
 	case types.Set:
-		cloned := false
-		for kk, vv := range t {
-			if vv, delta := cloneSub(vv, k, v); delta {
-				if !cloned {
-					t = slices.Clone(t) // intentional shallow clone
-					cloned = true
-				}
-				t[kk] = vv
+		hasDeltas := false
+
+		// Look for deltas. Unfortunately, due to the indeterminate nature of the set iteration order,
+		// we can't pull the same trick as we do for Records above
+		t.Iterate(func(vv types.Value) bool {
+			if _, delta := cloneSub(vv, k, v); delta {
+				hasDeltas = true
+				return false
 			}
+			return true
+		})
+
+		// If no deltas, just return the input Value
+		if !hasDeltas {
+			return t, false
 		}
-		return t, cloned
+
+		// If there were deltas, build a new Set
+		newSlice := make([]types.Value, 0, t.Len())
+		t.Iterate(func(vv types.Value) bool {
+			vv, _ = cloneSub(vv, k, v)
+			newSlice = append(newSlice, vv)
+			return true
+		})
+
+		return types.NewSet(newSlice), true
 	}
 	return r, false
 }
@@ -362,12 +382,14 @@ func findVariables(found map[types.String]struct{}, r types.Value) {
 			found[key] = struct{}{}
 		}
 	case types.Record:
-		for _, vv := range t {
+		t.Iterate(func(_ types.String, vv types.Value) bool {
 			findVariables(found, vv)
-		}
+			return true
+		})
 	case types.Set:
-		for _, vv := range t {
+		t.Iterate(func(vv types.Value) bool {
 			findVariables(found, vv)
-		}
+			return true
+		})
 	}
 }

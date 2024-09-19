@@ -124,5 +124,4 @@ func TestDecimal(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(t, string(types.UnsafeDecimal(42).MarshalCedar()), `decimal("42.0")`)
 	})
-
 }

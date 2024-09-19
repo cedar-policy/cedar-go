@@ -188,4 +188,7 @@ func (v Decimal) ExplicitMarshalJSON() ([]byte, error) {
 		},
 	})
 }
-func (v Decimal) deepClone() Value { return v }
+
+func (v Decimal) hash() uint64 {
+	return uint64(v.Value)
+}

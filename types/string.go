@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"hash/fnv"
 	"strconv"
 )
 
@@ -25,4 +26,9 @@ func (v String) String() string {
 func (v String) MarshalCedar() []byte {
 	return []byte(strconv.Quote(string(v)))
 }
-func (v String) deepClone() Value { return v }
+
+func (v String) hash() uint64 {
+	h := fnv.New64()
+	_, _ = h.Write([]byte(v))
+	return h.Sum64()
+}

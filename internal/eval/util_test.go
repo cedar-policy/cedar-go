@@ -65,7 +65,7 @@ func TestUtil(t *testing.T) {
 		t.Parallel()
 		t.Run("roundTrip", func(t *testing.T) {
 			t.Parallel()
-			v := types.Set{types.Boolean(true), types.Long(1)}
+			v := types.NewSet([]types.Value{types.Boolean(true), types.Long(1)})
 			slice, err := ValueToSet(v)
 			testutil.OK(t, err)
 			v2 := slice
@@ -76,7 +76,7 @@ func TestUtil(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToSet(types.Boolean(true))
 			testutil.ErrorIs(t, err, ErrType)
-			testutil.Equals(t, v, nil)
+			testutil.Equals(t, v.Len(), 0)
 		})
 	})
 
@@ -84,10 +84,10 @@ func TestUtil(t *testing.T) {
 		t.Parallel()
 		t.Run("roundTrip", func(t *testing.T) {
 			t.Parallel()
-			v := types.Record{
+			v := types.NewRecord(types.RecordMap{
 				"foo": types.Boolean(true),
 				"bar": types.Long(1),
-			}
+			})
 			map_, err := ValueToRecord(v)
 			testutil.OK(t, err)
 			v2 := map_
@@ -98,7 +98,7 @@ func TestUtil(t *testing.T) {
 			t.Parallel()
 			v, err := ValueToRecord(types.String("hello"))
 			testutil.ErrorIs(t, err, ErrType)
-			testutil.Equals(t, v, nil)
+			testutil.Equals(t, v, types.Record{})
 		})
 	})
 

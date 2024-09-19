@@ -28,5 +28,4 @@ func TestBool(t *testing.T) {
 		testutil.Equals(t, types.Boolean(true).String(), "true")
 		testutil.Equals(t, types.Boolean(false).String(), "false")
 	})
-
 }

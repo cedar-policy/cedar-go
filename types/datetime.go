@@ -309,4 +309,6 @@ func (a Datetime) Milliseconds() int64 {
 	return a.value
 }
 
-func (v Datetime) deepClone() Value { return v }
+func (v Datetime) hash() uint64 {
+	return uint64(v.value)
+}

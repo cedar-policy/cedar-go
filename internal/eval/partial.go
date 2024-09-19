@@ -514,7 +514,7 @@ func (n *partialHasEval) Eval(env *Env) (types.Value, error) {
 	default:
 		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
 	}
-	v, ok := record[n.attribute]
+	v, ok := record.Get(n.attribute)
 	if IsIgnore(v) {
 		return nil, errIgnore
 	}

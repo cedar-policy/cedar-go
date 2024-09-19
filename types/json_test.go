@@ -66,8 +66,8 @@ func TestJSON_Value(t *testing.T) {
 		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), ErrDecimal},
 		{"badDatetime", `{ "__extn": { "fn": "datetime", "arg": "bad" } }`, zeroValue(), ErrDatetime},
 		{"badDuration", `{ "__extn": { "fn": "duration", "arg": "bad" } }`, zeroValue(), ErrDuration},
-		{"set", `[42]`, Set{Long(42)}, nil},
-		{"record", `{"a":"b"}`, Record{"a": String("b")}, nil},
+		{"set", `[42]`, NewSet([]Value{Long(42)}), nil},
+		{"record", `{"a":"b"}`, NewRecord(RecordMap{"a": String("b")}), nil},
 		{"bool", `false`, Boolean(false), nil},
 	}
 	for _, tt := range tests {
@@ -539,20 +539,20 @@ func TestJSONMarshal(t *testing.T) {
 		outExplicit string
 		outImplicit string
 	}{
-		{"record", Record{
+		{"record", NewRecord(RecordMap{
 			"ak": String("av"),
 			"ck": String("cv"),
 			"bk": String("bv"),
-		}, `{"ak":"av","bk":"bv","ck":"cv"}`, `{"ak":"av","bk":"bv","ck":"cv"}`},
-		{"recordWithExt", Record{
+		}), `{"ak":"av","bk":"bv","ck":"cv"}`, `{"ak":"av","bk":"bv","ck":"cv"}`},
+		{"recordWithExt", NewRecord(RecordMap{
 			"ip": mustIPValue("222.222.222.7"),
-		}, `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`, `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`},
-		{"set", Set{
+		}), `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`, `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`},
+		{"set", NewSet([]Value{
 			String("av"),
 			String("cv"),
 			String("bv"),
-		}, `["av","cv","bv"]`, `["av","cv","bv"]`},
-		{"setWithExt", Set{mustIPValue("222.222.222.7")},
+		}), `["cv","bv","av"]`, `["cv","bv","av"]`},
+		{"setWithExt", NewSet([]Value{mustIPValue("222.222.222.7")}),
 			`[{"__extn":{"fn":"ip","arg":"222.222.222.7"}}]`, `[{"__extn":{"fn":"ip","arg":"222.222.222.7"}}]`},
 		{"entity", EntityUID{"User", "alice"}, `{"__entity":{"type":"User","id":"alice"}}`, `{"type":"User","id":"alice"}`},
 		{"ip", mustIPValue("222.222.222.7"), `{"__extn":{"fn":"ip","arg":"222.222.222.7"}}`, `"222.222.222.7"`},
@@ -578,7 +578,7 @@ func (j *jsonErr) String() string                       { return "" }
 func (j *jsonErr) MarshalCedar() []byte                 { return nil }
 func (j *jsonErr) Equal(Value) bool                     { return false }
 func (j *jsonErr) ExplicitMarshalJSON() ([]byte, error) { return nil, fmt.Errorf("jsonErr") }
-func (j *jsonErr) deepClone() Value                     { return nil }
+func (j *jsonErr) hash() uint64                         { return 0 }
 
 func TestJSONSet(t *testing.T) {
 	t.Parallel()
@@ -590,7 +590,7 @@ func TestJSONSet(t *testing.T) {
 	})
 	t.Run("MarshalErr", func(t *testing.T) {
 		t.Parallel()
-		s := Set{&jsonErr{}}
+		s := NewSet([]Value{&jsonErr{}})
 		_, err := json.Marshal(s)
 		testutil.Error(t, err)
 	})
@@ -606,9 +606,9 @@ func TestJSONRecord(t *testing.T) {
 	})
 	t.Run("MarshalKeyErrImpossible", func(t *testing.T) {
 		t.Parallel()
-		r := Record{}
 		k := []byte{0xde, 0x01}
-		r[String(k)] = Boolean(false)
+		m := RecordMap{String(k): Boolean(false)}
+		r := NewRecord(m)
 		v, err := json.Marshal(r)
 		// this demonstrates that invalid keys will still result in json
 		testutil.Equals(t, string(v), `{"\ufffd\u0001":false}`)
@@ -616,7 +616,7 @@ func TestJSONRecord(t *testing.T) {
 	})
 	t.Run("MarshalValueErr", func(t *testing.T) {
 		t.Parallel()
-		r := Record{"key": &jsonErr{}}
+		r := NewRecord(RecordMap{"key": &jsonErr{}})
 		_, err := json.Marshal(r)
 		testutil.Error(t, err)
 	})
