@@ -14,20 +14,19 @@ import (
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
-	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/batch"
 )
 
 // jsonEntity is not part of entityValue as I can find
 // no evidence this is part of the JSON spec.  It also
 // requires creating a parser, so it's quite expensive.
-type jsonEntity types.EntityUID
+type jsonEntity cedar.EntityUID
 
 func (e *jsonEntity) UnmarshalJSON(b []byte) error {
 	if string(b) == "null" {
 		return nil
 	}
-	var input types.EntityUID
+	var input cedar.EntityUID
 	if err := json.Unmarshal(b, &input); err != nil {
 		return err
 	}
@@ -45,10 +44,10 @@ type corpusTest struct {
 		Principal jsonEntity       `json:"principal"`
 		Action    jsonEntity       `json:"action"`
 		Resource  jsonEntity       `json:"resource"`
-		Context   types.Record     `json:"context"`
-		Decision  types.Decision   `json:"decision"`
-		Reasons   []types.PolicyID `json:"reason"`
-		Errors    []types.PolicyID `json:"errors"`
+		Context   cedar.Record     `json:"context"`
+		Decision  cedar.Decision   `json:"decision"`
+		Reasons   []cedar.PolicyID `json:"reason"`
+		Errors    []cedar.PolicyID `json:"errors"`
 	} `json:"requests"`
 }
 
@@ -142,7 +141,7 @@ func TestCorpus(t *testing.T) {
 				t.Fatal("error reading entities content", err)
 			}
 
-			var entities types.Entities
+			var entities cedar.Entities
 			if err := json.Unmarshal(entitiesContent, &entities); err != nil {
 				t.Fatal("error unmarshalling test", err)
 			}
@@ -170,19 +169,19 @@ func TestCorpus(t *testing.T) {
 					ok, diag := policySet.IsAuthorized(
 						entities,
 						cedar.Request{
-							Principal: types.EntityUID(request.Principal),
-							Action:    types.EntityUID(request.Action),
-							Resource:  types.EntityUID(request.Resource),
+							Principal: cedar.EntityUID(request.Principal),
+							Action:    cedar.EntityUID(request.Action),
+							Resource:  cedar.EntityUID(request.Resource),
 							Context:   request.Context,
 						})
 
 					testutil.Equals(t, ok, request.Decision)
-					var errors []types.PolicyID
+					var errors []cedar.PolicyID
 					for _, n := range diag.Errors {
 						errors = append(errors, n.PolicyID)
 					}
 					testutil.Equals(t, errors, request.Errors)
-					var reasons []types.PolicyID
+					var reasons []cedar.PolicyID
 					for _, n := range diag.Reasons {
 						reasons = append(reasons, n.PolicyID)
 					}
@@ -194,9 +193,9 @@ func TestCorpus(t *testing.T) {
 					ctx := context.Background()
 					var res batch.Result
 					var total int
-					principal := types.EntityUID(request.Principal)
-					action := types.EntityUID(request.Action)
-					resource := types.EntityUID(request.Resource)
+					principal := cedar.EntityUID(request.Principal)
+					action := cedar.EntityUID(request.Action)
+					resource := cedar.EntityUID(request.Resource)
 					context := request.Context
 					batch.Authorize(ctx, policySet, entities, batch.Request{
 						Principal: batch.Variable("principal"),
@@ -204,10 +203,10 @@ func TestCorpus(t *testing.T) {
 						Resource:  batch.Variable("resource"),
 						Context:   batch.Variable("context"),
 						Variables: batch.Variables{
-							"principal": []types.Value{principal},
-							"action":    []types.Value{action},
-							"resource":  []types.Value{resource},
-							"context":   []types.Value{context},
+							"principal": []cedar.Value{principal},
+							"action":    []cedar.Value{action},
+							"resource":  []cedar.Value{resource},
+							"context":   []cedar.Value{context},
 						},
 					}, func(r batch.Result) {
 						res = r
@@ -221,12 +220,12 @@ func TestCorpus(t *testing.T) {
 
 					ok, diag := res.Decision, res.Diagnostic
 					testutil.Equals(t, ok, request.Decision)
-					var errors []types.PolicyID
+					var errors []cedar.PolicyID
 					for _, n := range diag.Errors {
 						errors = append(errors, n.PolicyID)
 					}
 					testutil.Equals(t, errors, request.Errors)
-					var reasons []types.PolicyID
+					var reasons []cedar.PolicyID
 					for _, n := range diag.Reasons {
 						reasons = append(reasons, n.PolicyID)
 					}
@@ -257,7 +256,7 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			(true && (((!870985681610) == principal) == principal)) && principal
 		};`,
-			cedar.Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
+			cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\u0000"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "\u0000\u0000")},
 			cedar.Deny,
 			nil,
 			[]cedar.PolicyID{"policy0"},
@@ -272,7 +271,7 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			(((!870985681610) == principal) == principal)
 		};`,
-			cedar.Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
+			cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\u0000"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "\u0000\u0000")},
 			cedar.Deny,
 			nil,
 			[]cedar.PolicyID{"policy0"},
@@ -286,7 +285,7 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			((!870985681610) == principal)
 		};`,
-			cedar.Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
+			cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\u0000"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "\u0000\u0000")},
 			cedar.Deny,
 			nil,
 			[]cedar.PolicyID{"policy0"},
@@ -301,7 +300,7 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			(!870985681610)
 		};`,
-			cedar.Request{Principal: types.NewEntityUID("a", "\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\u0000")},
+			cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\u0000"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "\u0000\u0000")},
 			cedar.Deny,
 			nil,
 			[]cedar.PolicyID{"policy0"},
@@ -345,7 +344,7 @@ func TestCorpusRelated(t *testing.T) {
 			  ) when {
 				true && ((if (principal in action) then (ip("")) else (if true then (ip("6b6b:f00::32ff:ffff:6368/00")) else (ip("7265:6c69:706d:6f43:5f74:6f70:7374:6f68")))).isMulticast())
 			  };`,
-			cedar.Request{Principal: types.NewEntityUID("a", "\u0000\b\u0011\u0000R"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "\u0000\b\u0011\u0000R")},
+			cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\b\u0011\u0000R"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "\u0000\b\u0011\u0000R")},
 			cedar.Deny,
 			nil,
 			[]cedar.PolicyID{"policy0"},
@@ -373,7 +372,7 @@ func TestCorpusRelated(t *testing.T) {
 			  ) when {
 				true && (([ip("c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5/68")].containsAll([ip("c5c5:c5c5:c5c5:c5c5:c5c5:5cc5:c5c5:c5c5/68")])) || ((ip("")) == (ip(""))))
 			  };`,
-			request:  cedar.Request{Principal: types.NewEntityUID("a", "\u0000\u0000(W\u0000\u0000\u0000"), Action: types.NewEntityUID("Action", "action"), Resource: types.NewEntityUID("a", "")},
+			request:  cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\u0000(W\u0000\u0000\u0000"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "")},
 			decision: cedar.Deny,
 			reasons:  nil,
 			errors:   []cedar.PolicyID{"policy0"},
@@ -385,7 +384,7 @@ func TestCorpusRelated(t *testing.T) {
 			t.Parallel()
 			policy, err := cedar.NewPolicySetFromBytes("", []byte(tt.policy))
 			testutil.OK(t, err)
-			ok, diag := policy.IsAuthorized(types.Entities{}, tt.request)
+			ok, diag := policy.IsAuthorized(cedar.Entities{}, tt.request)
 			testutil.Equals(t, ok, tt.decision)
 			var reasons []cedar.PolicyID
 			for _, n := range diag.Reasons {

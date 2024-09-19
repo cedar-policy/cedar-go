@@ -8,7 +8,6 @@ import (
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
-	"github.com/cedar-policy/cedar-go/types"
 )
 
 func prettifyJson(in []byte) []byte {
@@ -89,7 +88,7 @@ func TestPolicyAST(t *testing.T) {
 	t.Parallel()
 
 	astExample := ast.Permit().
-		ActionEq(types.NewEntityUID("Action", "editPhoto")).
+		ActionEq(cedar.NewEntityUID("Action", "editPhoto")).
 		When(ast.Resource().Access("owner").Equal(ast.Principal()))
 
 	_ = cedar.NewPolicyFromAST(astExample)

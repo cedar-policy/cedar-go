@@ -14,7 +14,7 @@ type Set struct {
 	hashVal uint64
 }
 
-// NewSet takes a slice of Values and stores a clone of the values internally.
+// NewSet returns an immutable Set given a Go slice of Values. Duplicates are removed and order is not preserved.
 func NewSet(v []Value) Set {
 	var set map[uint64]Value
 	if v != nil {
