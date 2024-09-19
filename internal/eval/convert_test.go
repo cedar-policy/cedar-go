@@ -3,6 +3,7 @@ package eval
 import (
 	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -209,6 +210,73 @@ func TestToEval(t *testing.T) {
 			types.UnsafeDecimal(42.42),
 			testutil.OK,
 		},
+		{
+			"datetime",
+			ast.ExtensionCall("datetime", ast.String("1970-01-01T00:00:00.001Z")),
+			types.FromStdTime(time.UnixMilli(1)),
+			testutil.OK,
+		},
+		{
+			"duration",
+			ast.ExtensionCall("duration", ast.String("1ms")),
+			types.FromStdDuration(1 * time.Millisecond),
+			testutil.OK,
+		},
+		{
+			"toDate",
+			ast.ExtensionCall("toDate", ast.Value(types.FromStdTime(time.UnixMilli(1)))),
+			types.FromStdTime(time.UnixMilli(0)),
+			testutil.OK,
+		},
+		{
+			"toTime",
+			ast.ExtensionCall("toTime", ast.Value(types.FromStdTime(time.UnixMilli(1)))),
+			types.FromStdDuration(1 * time.Millisecond),
+			testutil.OK,
+		},
+		{
+			"toDays",
+			ast.ExtensionCall("toDays", ast.Value(types.FromStdDuration(time.Duration(0)))),
+			types.Long(0),
+			testutil.OK,
+		},
+		{
+			"toHours",
+			ast.ExtensionCall("toHours", ast.Value(types.FromStdDuration(time.Duration(0)))),
+			types.Long(0),
+			testutil.OK,
+		},
+		{
+			"toMinutes",
+			ast.ExtensionCall("toMinutes", ast.Value(types.FromStdDuration(time.Duration(0)))),
+			types.Long(0),
+			testutil.OK,
+		},
+		{
+			"toSeconds",
+			ast.ExtensionCall("toSeconds", ast.Value(types.FromStdDuration(time.Duration(0)))),
+			types.Long(0),
+			testutil.OK,
+		},
+		{
+			"toMilliseconds",
+			ast.ExtensionCall("toMilliseconds", ast.Value(types.FromStdDuration(time.Duration(0)))),
+			types.Long(0),
+			testutil.OK,
+		},
+		{
+			"offset",
+			ast.ExtensionCall("offset", ast.Value(types.FromStdTime(time.UnixMilli(0))), ast.Value(types.FromStdDuration(1*time.Millisecond))),
+			types.FromStdTime(time.UnixMilli(1)),
+			testutil.OK,
+		},
+		{
+			"durationSince",
+			ast.ExtensionCall("durationSince", ast.Value(types.FromStdTime(time.UnixMilli(1))), ast.Value(types.FromStdTime(time.UnixMilli(1)))),
+			types.FromStdDuration(time.Duration(0)),
+			testutil.OK,
+		},
+
 		{
 			"lessThan",
 			ast.ExtensionCall("lessThan", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),

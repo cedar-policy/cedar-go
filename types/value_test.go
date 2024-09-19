@@ -2,6 +2,7 @@ package types
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
@@ -96,4 +97,25 @@ func TestDeepClone(t *testing.T) {
 		testutil.Equals(t, a.MarshalCedar(), mustIPValue("127.0.0.43").MarshalCedar())
 		testutil.Equals(t, b.MarshalCedar(), mustIPValue("127.0.0.42").MarshalCedar())
 	})
+
+	t.Run("Datetime", func(t *testing.T) {
+		t.Parallel()
+		a := FromStdTime(time.UnixMilli(42))
+		b := a.deepClone()
+		testutil.Equals(t, Value(a), b)
+		a = FromStdTime(time.UnixMilli(43))
+		testutil.Equals(t, a, FromStdTime(time.UnixMilli(43)))
+		testutil.Equals(t, b, Value(FromStdTime(time.UnixMilli(42))))
+	})
+
+	t.Run("Duration", func(t *testing.T) {
+		t.Parallel()
+		a := FromStdDuration(42 * time.Millisecond)
+		b := a.deepClone()
+		testutil.Equals(t, Value(a), b)
+		a = FromStdDuration(43 * time.Millisecond)
+		testutil.Equals(t, a, FromStdDuration(43*time.Millisecond))
+		testutil.Equals(t, b, Value(FromStdDuration(42*time.Millisecond)))
+	})
+
 }

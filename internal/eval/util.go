@@ -12,6 +12,8 @@ func TypeName(v types.Value) string {
 		return "bool"
 	case types.Decimal:
 		return "decimal"
+	case types.Datetime:
+		return "datetime"
 	case types.EntityUID:
 		return fmt.Sprintf("(entity of type `%s`)", t.Type)
 	case types.IPAddr:
@@ -79,10 +81,26 @@ func ValueToEntity(v types.Value) (types.EntityUID, error) {
 	return ev, nil
 }
 
+func ValueToDatetime(v types.Value) (types.Datetime, error) {
+	d, ok := v.(types.Datetime)
+	if !ok {
+		return types.Datetime{}, fmt.Errorf("%w: expected datetime, got %v", ErrType, TypeName(v))
+	}
+	return d, nil
+}
+
 func ValueToDecimal(v types.Value) (types.Decimal, error) {
 	d, ok := v.(types.Decimal)
 	if !ok {
 		return types.Decimal{}, fmt.Errorf("%w: expected decimal, got %v", ErrType, TypeName(v))
+	}
+	return d, nil
+}
+
+func ValueToDuration(v types.Value) (types.Duration, error) {
+	d, ok := v.(types.Duration)
+	if !ok {
+		return types.Duration{}, fmt.Errorf("%w: expected duration, got %v", ErrType, TypeName(v))
 	}
 	return d, nil
 }

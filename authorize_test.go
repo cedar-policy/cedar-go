@@ -531,6 +531,68 @@ func TestIsAuthorized(t *testing.T) {
 			DiagErr:   1,
 		},
 		{
+			Name: "permit-when-datetime",
+			Policy: `permit(principal,action,resource) when {
+				datetime("1970-01-01T09:08:07Z") < (datetime("1970-02-01")) &&
+				datetime("1970-01-01T09:08:07Z") <= (datetime("1970-02-01")) &&
+				datetime("1970-01-01T09:08:07Z") > (datetime("1970-01-01")) &&
+				datetime("1970-01-01T09:08:07Z") >= (datetime("1970-01-01")) &&
+        datetime("1970-01-01T09:08:07Z").toDate() == datetime("1970-01-01")};`,
+			Entities:  types.Entities{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  types.NewEntityUID("table", "whatever"),
+			Context:   types.Record{},
+			Want:      true,
+			DiagErr:   0,
+		},
+		{
+			Name:      "permit-when-datetime-fun-wrong-arity",
+			Policy:    `permit(principal,action,resource) when { datetime("1970-01-01", "UTC") };`,
+			Entities:  types.Entities{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  types.NewEntityUID("table", "whatever"),
+			Context:   types.Record{},
+			Want:      false,
+			DiagErr:   1,
+		},
+		{
+			Name: "permit-when-duration",
+			Policy: `permit(principal,action,resource) when {
+				duration("9h8m") < (duration("10h")) &&
+				duration("9h8m") <= (duration("10h")) &&
+				duration("9h8m") > (duration("7h")) &&
+				duration("9h8m") >= (duration("7h")) &&
+				duration("1ms").toMilliseconds() == 1 &&
+				duration("1s").toSeconds() == 1 &&
+				duration("1m").toMinutes() == 1 &&
+				duration("1h").toHours() == 1 &&
+				duration("1d").toDays() == 1 &&
+        datetime("1970-01-01").toTime() == duration("0ms") &&
+        datetime("1970-01-01").offset(duration("1ms")).toTime() == duration("1ms") &&
+        datetime("1970-01-01T00:00:00.001Z").durationSince(datetime("1970-01-01")) == duration("1ms")};`,
+
+			Entities:  types.Entities{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  types.NewEntityUID("table", "whatever"),
+			Context:   types.Record{},
+			Want:      true,
+			DiagErr:   0,
+		},
+		{
+			Name:      "permit-when-duration-fun-wrong-arity",
+			Policy:    `permit(principal,action,resource) when { duration("1h", "huh?") };`,
+			Entities:  types.Entities{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  types.NewEntityUID("table", "whatever"),
+			Context:   types.Record{},
+			Want:      false,
+			DiagErr:   1,
+		},
+		{
 			Name: "permit-when-ip",
 			Policy: `permit(principal,action,resource) when {
 				ip("1.2.3.4").isIpv4() &&

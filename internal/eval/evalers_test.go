@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/parser"
@@ -942,6 +943,252 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 				n := newDecimalGreaterThanOrEqualEval(tt.lhs, tt.rhs)
 				_, err := n.Eval(NewEnv())
 				testutil.ErrorIs(t, err, tt.err)
+			})
+		}
+	}
+}
+
+// hack: newComparableValueLessThanEval and friends aren't func(Evaler, Evaler) Evaler, but we can turn them into it with generics.
+func makeEvaler[T Evaler](fn func(Evaler, Evaler) T) func(Evaler, Evaler) Evaler {
+	return func(lhs Evaler, rhs Evaler) Evaler {
+		return fn(lhs, rhs)
+	}
+}
+
+// toEvaler lifts a Value or error into an Evaler
+func toEvaler(x any) Evaler {
+	switch v := x.(type) {
+	case types.Value:
+		return newLiteralEval(v)
+	case error:
+		return newErrorEval(v)
+	default:
+		panic(fmt.Sprintf("can't convert %T into Evaler", v))
+	}
+}
+
+func TestComparableValueComparisonNodes(t *testing.T) {
+	t.Parallel()
+
+	var (
+		zero         = types.Long(0)
+		neg1         = types.Long(-1)
+		pos1         = types.Long(1)
+		zeroDate     = types.FromStdTime(time.UnixMilli(0))
+		futureDate   = types.FromStdTime(time.UnixMilli(1))
+		pastDate     = types.FromStdTime(time.UnixMilli(-1))
+		zeroDuration = types.FromStdDuration(time.Duration(0))
+		negDuration  = types.FromStdDuration(-1 * time.Millisecond)
+		posDuration  = types.FromStdDuration(1 * time.Millisecond)
+	)
+
+	type test struct {
+		lhs, rhs any
+		result   bool
+		wantErr  error
+	}
+	type testNode struct {
+		name   string
+		evaler func(Evaler, Evaler) Evaler
+		table  []test
+	}
+
+	tests := []testNode{
+		{name: "<",
+			evaler: makeEvaler(newComparableValueLessThanEval),
+			table: []test{
+				{neg1, neg1, false, nil},
+				{neg1, zero, true, nil},
+				{neg1, pos1, true, nil},
+				{zero, neg1, false, nil},
+				{zero, zero, false, nil},
+				{zero, pos1, true, nil},
+				{pos1, neg1, false, nil},
+				{pos1, zero, false, nil},
+				{pos1, pos1, false, nil},
+
+				// Datetime
+				{pastDate, pastDate, false, nil},
+				{pastDate, zeroDate, true, nil},
+				{pastDate, futureDate, true, nil},
+				{zeroDate, pastDate, false, nil},
+				{zeroDate, zeroDate, false, nil},
+				{zeroDate, futureDate, true, nil},
+				{futureDate, pastDate, false, nil},
+				{futureDate, zeroDate, false, nil},
+				{futureDate, futureDate, false, nil},
+
+				// Duration
+				{negDuration, negDuration, false, nil},
+				{negDuration, zeroDuration, true, nil},
+				{negDuration, posDuration, true, nil},
+				{zeroDuration, negDuration, false, nil},
+				{zeroDuration, zeroDuration, false, nil},
+				{zeroDuration, posDuration, true, nil},
+				{posDuration, negDuration, false, nil},
+				{posDuration, zeroDuration, false, nil},
+				{posDuration, posDuration, false, nil},
+
+				// Errors
+				{errTest, neg1, false, errTest},
+				{neg1, errTest, false, errTest},
+				{types.True, neg1, false, ErrType},
+				{neg1, types.False, false, ErrType},
+				{pastDate, neg1, false, ErrType},
+				{negDuration, futureDate, false, ErrType},
+				{neg1, negDuration, false, ErrType},
+			},
+		},
+		{name: "<=",
+			evaler: makeEvaler(newComparableValueLessThanOrEqualEval),
+			table: []test{
+				{neg1, neg1, true, nil},
+				{neg1, zero, true, nil},
+				{neg1, pos1, true, nil},
+				{zero, neg1, false, nil},
+				{zero, zero, true, nil},
+				{zero, pos1, true, nil},
+				{pos1, neg1, false, nil},
+				{pos1, zero, false, nil},
+				{pos1, pos1, true, nil},
+
+				// Datetime
+				{pastDate, pastDate, true, nil},
+				{pastDate, zeroDate, true, nil},
+				{pastDate, futureDate, true, nil},
+				{zeroDate, pastDate, false, nil},
+				{zeroDate, zeroDate, true, nil},
+				{zeroDate, futureDate, true, nil},
+				{futureDate, pastDate, false, nil},
+				{futureDate, zeroDate, false, nil},
+				{futureDate, futureDate, true, nil},
+
+				// Duration
+				{negDuration, negDuration, true, nil},
+				{negDuration, zeroDuration, true, nil},
+				{negDuration, posDuration, true, nil},
+				{zeroDuration, negDuration, false, nil},
+				{zeroDuration, zeroDuration, true, nil},
+				{zeroDuration, posDuration, true, nil},
+				{posDuration, negDuration, false, nil},
+				{posDuration, zeroDuration, false, nil},
+				{posDuration, posDuration, true, nil},
+
+				// Errors
+				{errTest, neg1, false, errTest},
+				{neg1, errTest, false, errTest},
+				{types.True, neg1, false, ErrType},
+				{neg1, types.False, false, ErrType},
+				{pastDate, neg1, false, ErrType},
+				{negDuration, futureDate, false, ErrType},
+				{neg1, negDuration, false, ErrType},
+			},
+		},
+		{name: ">",
+			evaler: makeEvaler(newComparableValueGreaterThanEval),
+			table: []test{
+				{neg1, neg1, false, nil},
+				{neg1, zero, false, nil},
+				{neg1, pos1, false, nil},
+				{zero, neg1, true, nil},
+				{zero, zero, false, nil},
+				{zero, pos1, false, nil},
+				{pos1, neg1, true, nil},
+				{pos1, zero, true, nil},
+				{pos1, pos1, false, nil},
+
+				// Datetime
+				{pastDate, pastDate, false, nil},
+				{pastDate, zeroDate, false, nil},
+				{pastDate, futureDate, false, nil},
+				{zeroDate, pastDate, true, nil},
+				{zeroDate, zeroDate, false, nil},
+				{zeroDate, futureDate, false, nil},
+				{futureDate, pastDate, true, nil},
+				{futureDate, zeroDate, true, nil},
+				{futureDate, futureDate, false, nil},
+
+				// Duration
+				{negDuration, negDuration, false, nil},
+				{negDuration, zeroDuration, false, nil},
+				{negDuration, posDuration, false, nil},
+				{zeroDuration, negDuration, true, nil},
+				{zeroDuration, zeroDuration, false, nil},
+				{zeroDuration, posDuration, false, nil},
+				{posDuration, negDuration, true, nil},
+				{posDuration, zeroDuration, true, nil},
+				{posDuration, posDuration, false, nil},
+
+				// Errors
+				{errTest, neg1, false, errTest},
+				{neg1, errTest, false, errTest},
+				{types.True, neg1, false, ErrType},
+				{neg1, types.False, false, ErrType},
+				{pastDate, neg1, false, ErrType},
+				{negDuration, futureDate, false, ErrType},
+				{neg1, negDuration, false, ErrType},
+			},
+		},
+		{name: ">=",
+			evaler: makeEvaler(newComparableValueGreaterThanOrEqualEval),
+			table: []test{
+				{neg1, neg1, true, nil},
+				{neg1, zero, false, nil},
+				{neg1, pos1, false, nil},
+				{zero, neg1, true, nil},
+				{zero, zero, true, nil},
+				{zero, pos1, false, nil},
+				{pos1, neg1, true, nil},
+				{pos1, zero, true, nil},
+				{pos1, pos1, true, nil},
+
+				// Datetime
+				{pastDate, pastDate, true, nil},
+				{pastDate, zeroDate, false, nil},
+				{pastDate, futureDate, false, nil},
+				{zeroDate, pastDate, true, nil},
+				{zeroDate, zeroDate, true, nil},
+				{zeroDate, futureDate, false, nil},
+				{futureDate, pastDate, true, nil},
+				{futureDate, zeroDate, true, nil},
+				{futureDate, futureDate, true, nil},
+
+				// Duration
+				{negDuration, negDuration, true, nil},
+				{negDuration, zeroDuration, false, nil},
+				{negDuration, posDuration, false, nil},
+				{zeroDuration, negDuration, true, nil},
+				{zeroDuration, zeroDuration, true, nil},
+				{zeroDuration, posDuration, false, nil},
+				{posDuration, negDuration, true, nil},
+				{posDuration, zeroDuration, true, nil},
+				{posDuration, posDuration, true, nil},
+
+				// Errors
+				{errTest, neg1, false, errTest},
+				{neg1, errTest, false, errTest},
+				{types.True, neg1, false, ErrType},
+				{neg1, types.False, false, ErrType},
+				{pastDate, neg1, false, ErrType},
+				{negDuration, futureDate, false, ErrType},
+				{neg1, negDuration, false, ErrType},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		for _, tt := range tc.table {
+			t.Run(fmt.Sprintf("%v_%s_%v", tt.lhs, tc.name, tt.rhs), func(t *testing.T) {
+				t.Parallel()
+				n := tc.evaler(toEvaler(tt.lhs), toEvaler(tt.rhs))
+				v, err := n.Eval(&Env{})
+				if tt.wantErr == nil {
+					testutil.OK(t, err)
+					AssertBoolValue(t, v, tt.result)
+				} else {
+					testutil.ErrorIs(t, err, tt.wantErr)
+				}
 			})
 		}
 	}
@@ -2038,6 +2285,7 @@ func TestCedarString(t *testing.T) {
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
 		{"decimal", types.UnsafeDecimal(1234.5678), `1234.5678`, `decimal("1234.5678")`},
+		{"duration", types.FromStdDuration(1 * time.Millisecond), `1ms`, `duration("1ms")`},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2074,5 +2322,309 @@ func TestCache(t *testing.T) {
 	res, err = newInEval(e1Eval, e2Eval).Eval(env)
 	testutil.OK(t, err)
 	testutil.Equals(t, res, types.Value(types.False))
+}
 
+func TestDatetimeLiteralNode(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"DatetimeError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDatetime},
+		{"Success", newLiteralEval(types.String("1970-01-01")), types.FromStdTime(time.UnixMilli(0)), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newDatetimeLiteralEval(tt.arg)
+			v, err := n.Eval(NewEnv())
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDatetimeToDate(t *testing.T) {
+	t.Parallel()
+	aTime, err := types.ParseDatetime("1970-01-02T10:00:00Z")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(aTime), types.FromStdTime(time.UnixMilli(24 * 60 * 60 * 1000)), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToDateEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDatetimeDurationSince(t *testing.T) {
+	t.Parallel()
+	baseTime, err := types.ParseDatetime("1970-01-01T01:00:00Z")
+	testutil.OK(t, err)
+	endTime, err := types.ParseDatetime("1970-01-01T00:00:00Z")
+	testutil.OK(t, err)
+	dur := types.FromStdDuration(1 * time.Hour)
+	bad := types.Long(1)
+
+	tests := []struct {
+		name   string
+		lhs    Evaler
+		rhs    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), newLiteralEval(bad), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(bad), newLiteralEval(endTime), zeroValue(), ErrType},
+		{"ArgTypeError", newLiteralEval(baseTime), newLiteralEval(bad), zeroValue(), ErrType},
+		{"Success", newLiteralEval(baseTime), newLiteralEval(endTime), dur, nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newDurationSinceEval(tt.lhs, tt.rhs)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDatetimeOffset(t *testing.T) {
+	t.Parallel()
+	baseTime, err := types.ParseDatetime("1970-01-01T00:00:00Z")
+	testutil.OK(t, err)
+	endTime, err := types.ParseDatetime("1970-01-01T01:00:00Z")
+	testutil.OK(t, err)
+	dur := types.FromStdDuration(1 * time.Hour)
+	bad := types.Long(1)
+
+	tests := []struct {
+		name   string
+		lhs    Evaler
+		rhs    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), newLiteralEval(bad), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(bad), newLiteralEval(dur), zeroValue(), ErrType},
+		{"ArgTypeError", newLiteralEval(baseTime), newLiteralEval(bad), zeroValue(), ErrType},
+		{"Success", newLiteralEval(baseTime), newLiteralEval(dur), endTime, nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newOffsetEval(tt.lhs, tt.rhs)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDatetimeToTime(t *testing.T) {
+	t.Parallel()
+	aTime, err := types.ParseDatetime("1970-01-01T10:00:00Z")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(aTime), types.FromStdDuration(10 * time.Hour), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToTimeEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationLiteralNode(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"DurationError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDuration},
+		{"Success", newLiteralEval(types.String("1h")), types.FromStdDuration(1 * time.Hour), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newDurationLiteralEval(tt.arg)
+			v, err := n.Eval(NewEnv())
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationToMilliseconds(t *testing.T) {
+	t.Parallel()
+	oneDay, err := types.ParseDuration("1d")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(oneDay), types.Long(24 * 60 * 60 * 1000), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToMillisecondsEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationToSeconds(t *testing.T) {
+	t.Parallel()
+	oneDay, err := types.ParseDuration("1d")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(oneDay), types.Long(24 * 60 * 60), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToSecondsEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationToMinutes(t *testing.T) {
+	t.Parallel()
+	oneDay, err := types.ParseDuration("1d")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(oneDay), types.Long(24 * 60), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToMinutesEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationToHours(t *testing.T) {
+	t.Parallel()
+	oneDay, err := types.ParseDuration("1d")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(oneDay), types.Long(24), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToHoursEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
+}
+
+func TestDurationToDays(t *testing.T) {
+	t.Parallel()
+	oneDay, err := types.ParseDuration("1d")
+	testutil.OK(t, err)
+
+	tests := []struct {
+		name   string
+		arg    Evaler
+		result types.Value
+		err    error
+	}{
+		{"Error", newErrorEval(errTest), zeroValue(), errTest},
+		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
+		{"Success", newLiteralEval(oneDay), types.Long(1), nil},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newToDaysEval(tt.arg)
+			v, err := n.Eval(&Env{})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+	}
 }

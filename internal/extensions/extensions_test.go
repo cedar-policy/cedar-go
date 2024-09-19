@@ -8,5 +8,5 @@ import (
 
 func TestExtensions(t *testing.T) {
 	t.Parallel()
-	testutil.Equals(t, len(ExtMap), 11)
+	testutil.Equals(t, len(ExtMap), 22)
 }
