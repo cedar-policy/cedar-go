@@ -17,6 +17,6 @@ func TestString(t *testing.T) {
 
 		// This isn't necessarily true for all values of String, but we want to ensure we aren't just returning the
 		// same hash value for String.hash() for every instance.
-		testutil.Equals(t, false, String("foo") == String("bar"))
+		testutil.FatalIf(t, String("foo").hash() == String("bar").hash(), "unexpected hash collision")
 	})
 }

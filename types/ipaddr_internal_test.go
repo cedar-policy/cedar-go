@@ -29,6 +29,6 @@ func TestIpAddr(t *testing.T) {
 
 		// This isn't necessarily true for all IPAddrs, but we want to make sure we're not just returning the same hash
 		// value for all IPAddrs
-		testutil.Equals(t, false, ipaddr1.hash() == ipaddr3.hash())
+		testutil.FatalIf(t, ipaddr1.hash() == ipaddr3.hash(), "unexpected hash collision")
 	})
 }

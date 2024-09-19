@@ -16,6 +16,6 @@ func TestEntityUID(t *testing.T) {
 
 		// This isn't necessarily true for all EntityUIDs, but we want to make sure we're not just returning the same
 		// hash value for all EntityUIDs
-		testutil.Equals(t, false, NewEntityUID("type", "id").hash() == NewEntityUID("type2", "id2").hash())
+		testutil.FatalIf(t, NewEntityUID("type", "id").hash() == NewEntityUID("type2", "id2").hash(), "unexpected hash collision")
 	})
 }

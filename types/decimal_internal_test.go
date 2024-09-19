@@ -16,6 +16,6 @@ func TestDecimal(t *testing.T) {
 
 		// This isn't necessarily true for all values of Decimal, but we want to ensure we aren't just returning the
 		// same hash value for Decimal.hash() for every instance.
-		testutil.Equals(t, false, UnsafeDecimal(42).hash() == UnsafeDecimal(1337).hash())
+		testutil.FatalIf(t, UnsafeDecimal(42).hash() == UnsafeDecimal(1337).hash(), "unexpected hash collision")
 	})
 }

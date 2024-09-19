@@ -33,14 +33,14 @@ func TestRecord(t *testing.T) {
 			t.Parallel()
 			m1 := NewRecord(RecordMap{"foo": Long(42), "bar": Long(1337)})
 			m2 := NewRecord(RecordMap{"foo": Long(1337), "bar": Long(42)})
-			testutil.Equals(t, false, m1.hash() == m2.hash())
+			testutil.FatalIf(t, m1.hash() == m2.hash(), "unexpected hash collision")
 		})
 
 		t.Run("same values, different keys", func(t *testing.T) {
 			t.Parallel()
 			m1 := NewRecord(RecordMap{"foo": Long(42), "bar": Long(1337)})
 			m2 := NewRecord(RecordMap{"foo2": Long(42), "bar2": Long(1337)})
-			testutil.Equals(t, false, m1.hash() == m2.hash())
+			testutil.FatalIf(t, m1.hash() == m2.hash(), "unepxected hash collision")
 		})
 
 		t.Run("extra key", func(t *testing.T) {
@@ -49,7 +49,7 @@ func TestRecord(t *testing.T) {
 			m2 := NewRecord(
 				RecordMap{"foo": Long(42), "bar": Long(1337), "baz": Long(0)},
 			)
-			testutil.Equals(t, false, m1.hash() == m2.hash())
+			testutil.FatalIf(t, m1.hash() == m2.hash(), "unepxected hash collision")
 		})
 	})
 }

@@ -18,10 +18,6 @@ func TestParse(t *testing.T) {
 	}{
 		// Success cases
 		// Test cases from https://github.com/cedar-policy/cedar/blob/main/cedar-policy-core/src/parser/testfiles/policies.cedar
-		// Be careful in these tests. These tests parse the given input string, emit an output string, and then parse
-		// that output, ensuring that the two parsed policy sets are the same. However, the order of emitted elements in
-		// a set may not be the same as the order of the input and you may have to craft your input to match the
-		// expected output.
 		{"empty", ``, false},
 		{"ex1", `//@test_annotation("This is the annotation")
 		permit(

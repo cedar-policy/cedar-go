@@ -13,6 +13,6 @@ func TestBoolean(t *testing.T) {
 
 		testutil.Equals(t, Boolean(true).hash(), Boolean(true).hash())
 		testutil.Equals(t, Boolean(false).hash(), Boolean(false).hash())
-		testutil.Equals(t, false, Boolean(true).hash() == Boolean(false).hash())
+		testutil.FatalIf(t, Boolean(true).hash() == Boolean(false).hash(), "unexpected hash collision")
 	})
 }

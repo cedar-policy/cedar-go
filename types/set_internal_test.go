@@ -97,14 +97,14 @@ func TestSet(t *testing.T) {
 			t.Parallel()
 			s1 := NewSet([]Value{Long(42), Long(1337)})
 			s2 := NewSet([]Value{Long(42), Long(1337), Long(1)})
-			testutil.Equals(t, false, s1.hash() == s2.hash())
+			testutil.FatalIf(t, s1.hash() == s2.hash(), "unexpected hash collision")
 		})
 
 		t.Run("disjoint", func(t *testing.T) {
 			t.Parallel()
 			s1 := NewSet([]Value{Long(42), Long(1337)})
 			s2 := NewSet([]Value{Long(0), String("hi")})
-			testutil.Equals(t, false, s1.hash() == s2.hash())
+			testutil.FatalIf(t, s1.hash() == s2.hash(), "unexpected hash collision")
 		})
 	})
 
@@ -113,9 +113,10 @@ func TestSet(t *testing.T) {
 
 		v1 := colliderValue{Value: String("foo"), HashVal: 1337}
 		v2 := colliderValue{Value: String("bar"), HashVal: 1337}
-		v3 := colliderValue{Value: String("baz"), HashVal: 1337}
+		v3 := colliderValue{Value: String("baz"), HashVal: 1338}
+		v4 := colliderValue{Value: String("baz"), HashVal: 1337}
 
-		set := NewSet([]Value{v1, v2, v3})
+		set := NewSet([]Value{v1, v2, v3, v4})
 
 		testutil.Equals(t, set.Len(), 3)
 
@@ -128,5 +129,6 @@ func TestSet(t *testing.T) {
 		testutil.Equals(t, slices.ContainsFunc(vals, func(v Value) bool { return v.Equal(v1) }), true)
 		testutil.Equals(t, slices.ContainsFunc(vals, func(v Value) bool { return v.Equal(v2) }), true)
 		testutil.Equals(t, slices.ContainsFunc(vals, func(v Value) bool { return v.Equal(v3) }), true)
+		testutil.Equals(t, slices.ContainsFunc(vals, func(v Value) bool { return v.Equal(v4) }), true)
 	})
 }
