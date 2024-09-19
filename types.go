@@ -32,6 +32,7 @@ type String = types.String
 type Entities = types.Entities
 type Entity = types.Entity
 type EntityType = types.EntityType
+type EntityUIDSet = types.EntityUIDSet
 type Pattern = types.Pattern
 type Wildcard = types.Wildcard
 
@@ -83,6 +84,17 @@ func FromStdTime(t time.Time) Datetime {
 // NewEntityUID returns an EntityUID given an EntityType and identifier
 func NewEntityUID(typ EntityType, id String) EntityUID {
 	return types.NewEntityUID(typ, id)
+}
+
+// NewEntityUIDSet returns an EntityUIDSet ready for use. Optionally, a desired size for the set can be passed as an
+// argument, as in the argument to make() for a map type.
+func NewEntityUIDSet(args ...int) EntityUIDSet {
+	return types.NewEntityUIDSet(args...)
+}
+
+// NewEntityUIDSetFromSlice creates an EntityUIDSet of size len(items) and calls AddSlice(items) on it.
+func NewEntityUIDSetFromSlice(items []EntityUID) EntityUIDSet {
+	return types.NewEntityUIDSetFromSlice(items)
 }
 
 // NewPattern permits for the programmatic construction of a Pattern out of a slice of pattern components.

@@ -1,8 +1,4 @@
-<<<<<<<< HEAD:internal/hashset_test.go
-package internal
-========
 package sets
->>>>>>>> 0f61d5f (fixup):internal/sets/mapset_test.go
 
 import (
 	"encoding/json"

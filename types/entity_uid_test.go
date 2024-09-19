@@ -31,3 +31,37 @@ func TestEntity(t *testing.T) {
 		testutil.Equals(t, string(types.EntityUID{"type", "id"}.MarshalCedar()), `type::"id"`)
 	})
 }
+
+func TestEntityUIDSet(t *testing.T) {
+	t.Parallel()
+
+	t.Run("new empty set", func(t *testing.T) {
+		emptySets := []types.EntityUIDSet{
+			types.NewEntityUIDSet(),
+			types.NewEntityUIDSet(0),
+			types.NewEntityUIDSet(1),
+			types.NewEntityUIDSetFromSlice(nil),
+			types.NewEntityUIDSetFromSlice([]types.EntityUID{}),
+		}
+
+		for _, es := range emptySets {
+			testutil.Equals(t, es.Len(), 0)
+			testutil.Equals(t, emptySets[0].Equal(es), true)
+			testutil.Equals(t, es.Equal(emptySets[0]), true)
+		}
+	})
+
+	t.Run("new set from slice", func(t *testing.T) {
+		a := types.NewEntityUID("typeA", "1")
+		b := types.NewEntityUID("typeB", "2")
+		o := types.NewEntityUID("typeO", "2")
+		s1 := types.NewEntityUIDSet()
+		s1.Add(a)
+		s1.Add(b)
+		s1.Add(o)
+
+		s2 := types.NewEntityUIDSetFromSlice([]types.EntityUID{o, b, a})
+
+		testutil.Equals(t, s1.Equal(s2), true)
+	})
+}

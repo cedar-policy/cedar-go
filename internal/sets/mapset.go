@@ -1,8 +1,4 @@
-<<<<<<<< HEAD:internal/hashset.go
-package internal
-========
 package sets
->>>>>>>> 0f61d5f (fixup):internal/sets/mapset.go
 
 import (
 	"encoding/json"
@@ -139,6 +135,9 @@ func (h MapSet[T]) Equal(o MapSet[T]) bool {
 
 // MarshalJSON serializes a MapSet as a JSON array. Order is non-deterministic.
 func (h MapSet[T]) MarshalJSON() ([]byte, error) {
+	if h.m == nil {
+		return []byte("[]"), nil
+	}
 	return json.Marshal(h.Slice())
 }
 
