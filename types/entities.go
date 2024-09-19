@@ -21,7 +21,10 @@ type Entity struct {
 }
 
 func (e Entities) MarshalJSON() ([]byte, error) {
-	s := e.toSlice()
+	s := maps.Values(e)
+	slices.SortFunc(s, func(a, b *Entity) int {
+		return strings.Compare(a.UID.String(), b.UID.String())
+	})
 	return json.Marshal(s)
 }
 
@@ -30,24 +33,12 @@ func (e *Entities) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}
-	*e = entitiesFromSlice(s)
-	return nil
-}
-
-func entitiesFromSlice(s []*Entity) Entities {
 	var res = Entities{}
 	for _, e := range s {
 		res[e.UID] = e
 	}
-	return res
-}
-
-func (e Entities) toSlice() []*Entity {
-	s := maps.Values(e)
-	slices.SortFunc(s, func(a, b *Entity) int {
-		return strings.Compare(a.UID.String(), b.UID.String())
-	})
-	return s
+	*e = res
+	return nil
 }
 
 func (e Entities) Clone() Entities {

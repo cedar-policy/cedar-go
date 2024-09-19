@@ -20,6 +20,7 @@ type Record struct {
 	hashVal uint64
 }
 
+// NewRecord returns an immutable Record given a Go map of Strings to Values
 func NewRecord(m RecordMap) Record {
 	// Special case hashVal for empty map to 0 so that the return value of Value.hash() of Record{} and
 	// NewRecord(RecordMap{}) are the same

@@ -136,6 +136,7 @@ While in development (0.x.y), each tagged release may contain breaking changes.
 ### New features in 0.4.0
 
 - `types.Set` is now implemented as a hash set, turning `Set.Contains()` into an O(1) operation, on average. This mitigates a worst case quadratic runtime for the evaluation of the `containsAny()` operator.
+- For convenience, public types, constructors, and constants from the `types` package are now exported via the `cedar` package as well.
 
 ### Upgrading from 0.3.x to 0.4.x
 

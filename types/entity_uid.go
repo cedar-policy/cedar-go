@@ -18,6 +18,7 @@ type EntityUID struct {
 	ID   String
 }
 
+// NewEntityUID returns an EntityUID given an EntityType and identifier
 func NewEntityUID(typ EntityType, id String) EntityUID {
 	return EntityUID{
 		Type: typ,
