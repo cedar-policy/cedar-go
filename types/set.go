@@ -16,8 +16,10 @@ type Set struct {
 
 // NewSet takes a slice of Values and stores a clone of the values internally.
 func NewSet(v []Value) Set {
-	set := make(map[uint64]Value, len(v))
-
+	var set map[uint64]Value
+	if v != nil {
+		set = make(map[uint64]Value, len(v))
+	}
 	for _, vv := range v {
 		hash := vv.hash()
 

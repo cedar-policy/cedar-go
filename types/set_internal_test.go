@@ -85,7 +85,9 @@ func TestSet(t *testing.T) {
 			t.Parallel()
 			m1 := Set{}
 			m2 := NewSet([]Value{})
+			m3 := NewSet(nil)
 			testutil.Equals(t, m1.hash(), m2.hash())
+			testutil.Equals(t, m2.hash(), m3.hash())
 		})
 
 		// These tests don't necessarily hold for all values of Set, but we want to ensure we are considering

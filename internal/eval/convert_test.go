@@ -105,7 +105,7 @@ func TestToEval(t *testing.T) {
 		{
 			"context",
 			ast.Context(),
-			types.NewRecord(types.RecordMap{}),
+			types.Record{},
 			testutil.OK,
 		},
 		{
@@ -354,7 +354,7 @@ func TestToEval(t *testing.T) {
 				Principal: types.NewEntityUID("Actor", "principal"),
 				Action:    types.NewEntityUID("Action", "test"),
 				Resource:  types.NewEntityUID("Resource", "database"),
-				Context:   types.NewRecord(types.RecordMap{}),
+				Context:   types.Record{},
 			}))
 			tt.err(t, err)
 			testutil.Equals(t, out, tt.out)

@@ -13,8 +13,8 @@ func TestSet(t *testing.T) {
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
-		empty := types.NewSet([]types.Value{})
-		empty2 := types.NewSet([]types.Value{})
+		empty := types.Set{}
+		empty2 := types.Set{}
 		oneTrue := types.NewSet([]types.Value{types.Boolean(true)})
 		oneTrue2 := types.NewSet([]types.Value{types.Boolean(true)})
 		oneFalse := types.NewSet([]types.Value{types.Boolean(false)})
@@ -46,7 +46,7 @@ func TestSet(t *testing.T) {
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		testutil.Equals(t, types.NewSet([]types.Value{}).String(), "[]")
+		testutil.Equals(t, types.Set{}.String(), "[]")
 		testutil.Equals(
 			t,
 			types.NewSet([]types.Value{types.Boolean(true), types.Long(1)}).String(),
@@ -56,7 +56,7 @@ func TestSet(t *testing.T) {
 	t.Run("Len", func(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(t, types.Set{}.Len(), 0)
-		testutil.Equals(t, types.NewSet([]types.Value{}).Len(), 0)
+		testutil.Equals(t, types.Set{}.Len(), 0)
 		testutil.Equals(t, types.NewSet([]types.Value{types.Long(1)}).Len(), 1)
 		testutil.Equals(t, types.NewSet([]types.Value{types.Long(1), types.Long(2)}).Len(), 2)
 	})
@@ -138,6 +138,9 @@ func TestSet(t *testing.T) {
 		t.Parallel()
 
 		s := types.Set{}.Slice()
+		testutil.Equals(t, s, nil)
+
+		s = types.NewSet(nil).Slice()
 		testutil.Equals(t, s, nil)
 
 		s = types.NewSet([]types.Value{}).Slice()

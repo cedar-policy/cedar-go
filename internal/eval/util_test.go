@@ -188,7 +188,7 @@ func TestTypeName(t *testing.T) {
 		{"ip", types.IPAddr{}, "IP"},
 		{"long", types.Long(42), "long"},
 		{"record", types.Record{}, "record"},
-		{"set", types.NewSet([]types.Value{}), "set"},
+		{"set", types.Set{}, "set"},
 		{"string", types.String("test"), "string"},
 		{"nil", nil, "unknown type"},
 	}

@@ -36,7 +36,11 @@ func NewRecord(m RecordMap) Record {
 		hashVal = h.Sum64()
 	}
 
-	return Record{m: maps.Clone(m), hashVal: hashVal}
+	if m != nil {
+		m = maps.Clone(m)
+	}
+
+	return Record{m: m, hashVal: hashVal}
 }
 
 func (r Record) Len() int {
@@ -65,6 +69,9 @@ func (r Record) Get(s String) (Value, bool) {
 
 // Map returns a clone of the Record's internal RecordMap which is safe to mutate.
 func (r Record) Map() RecordMap {
+	if r.m == nil {
+		return nil
+	}
 	return maps.Clone(r.m)
 }
 

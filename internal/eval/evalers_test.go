@@ -1285,7 +1285,7 @@ func TestSetLiteralNode(t *testing.T) {
 		result types.Value
 		err    error
 	}{
-		{"empty", []Evaler{}, types.NewSet([]types.Value{}), nil},
+		{"empty", []Evaler{}, types.Set{}, nil},
 		{"errorNode", []Evaler{newErrorEval(errTest)}, zeroValue(), errTest},
 		{"nested",
 			[]Evaler{
@@ -1328,7 +1328,7 @@ func TestContainsNode(t *testing.T) {
 		}{
 			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
 			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Long(0)), ErrType},
-			{"RhsError", newLiteralEval(types.NewSet([]types.Value{})), newErrorEval(errTest), errTest},
+			{"RhsError", newLiteralEval(types.Set{}), newErrorEval(errTest), errTest},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1342,7 +1342,7 @@ func TestContainsNode(t *testing.T) {
 		}
 	}
 	{
-		empty := types.NewSet([]types.Value{})
+		empty := types.Set{}
 		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
 		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
 
@@ -1380,10 +1380,10 @@ func TestContainsAllNode(t *testing.T) {
 			lhs, rhs Evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.NewSet([]types.Value{})), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.NewSet([]types.Value{})), ErrType},
-			{"RhsError", newLiteralEval(types.NewSet([]types.Value{})), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.NewSet([]types.Value{})), newLiteralEval(types.Long(0)), ErrType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Set{}), errTest},
+			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Set{}), ErrType},
+			{"RhsError", newLiteralEval(types.Set{}), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Set{}), newLiteralEval(types.Long(0)), ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1397,7 +1397,7 @@ func TestContainsAllNode(t *testing.T) {
 		}
 	}
 	{
-		empty := types.NewSet([]types.Value{})
+		empty := types.Set{}
 		trueOnly := types.NewSet([]types.Value{types.True})
 		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
 		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
@@ -1434,10 +1434,10 @@ func TestContainsAnyNode(t *testing.T) {
 			lhs, rhs Evaler
 			err      error
 		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.NewSet([]types.Value{})), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.NewSet([]types.Value{})), ErrType},
-			{"RhsError", newLiteralEval(types.NewSet([]types.Value{})), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.NewSet([]types.Value{})), newLiteralEval(types.Long(0)), ErrType},
+			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Set{}), errTest},
+			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Set{}), ErrType},
+			{"RhsError", newLiteralEval(types.Set{}), newErrorEval(errTest), errTest},
+			{"RhsTypeError", newLiteralEval(types.Set{}), newLiteralEval(types.Long(0)), ErrType},
 		}
 		for _, tt := range tests {
 			tt := tt
@@ -1451,7 +1451,7 @@ func TestContainsAnyNode(t *testing.T) {
 		}
 	}
 	{
-		empty := types.NewSet([]types.Value{})
+		empty := types.Set{}
 		trueOnly := types.NewSet([]types.Value{types.True})
 		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
 		trueAndTwo := types.NewSet([]types.Value{types.True, types.Long(2)})
@@ -1513,7 +1513,7 @@ func TestRecordLiteralNode(t *testing.T) {
 		result types.Value
 		err    error
 	}{
-		{"empty", map[types.String]Evaler{}, types.NewRecord(types.RecordMap{}), nil},
+		{"empty", map[types.String]Evaler{}, types.Record{}, nil},
 		{"errorNode", map[types.String]Evaler{"foo": newErrorEval(errTest)}, zeroValue(), errTest},
 		{"ok",
 			map[types.String]Evaler{
@@ -1548,7 +1548,7 @@ func TestAttributeAccessNode(t *testing.T) {
 		{"RecordError", newErrorEval(errTest), "foo", zeroValue(), errTest},
 		{"RecordTypeError", newLiteralEval(types.True), "foo", zeroValue(), ErrType},
 		{"UnknownAttribute",
-			newLiteralEval(types.NewRecord(types.RecordMap{})),
+			newLiteralEval(types.Record{}),
 			"foo",
 			zeroValue(),
 			errAttributeAccess},
@@ -1610,7 +1610,7 @@ func TestHasNode(t *testing.T) {
 		{"RecordError", newErrorEval(errTest), "foo", zeroValue(), errTest},
 		{"RecordTypeError", newLiteralEval(types.True), "foo", zeroValue(), ErrType},
 		{"UnknownAttribute",
-			newLiteralEval(types.NewRecord(types.RecordMap{})),
+			newLiteralEval(types.Record{}),
 			"foo",
 			types.False,
 			nil},
@@ -1918,7 +1918,7 @@ func TestInNode(t *testing.T) {
 		{
 			"LhsError",
 			newErrorEval(errTest),
-			newLiteralEval(types.NewSet([]types.Value{})),
+			newLiteralEval(types.Set{}),
 			map[string][]string{},
 			zeroValue(),
 			errTest,
@@ -1926,7 +1926,7 @@ func TestInNode(t *testing.T) {
 		{
 			"LhsTypeError",
 			newLiteralEval(types.String("foo")),
-			newLiteralEval(types.NewSet([]types.Value{})),
+			newLiteralEval(types.Set{}),
 			map[string][]string{},
 			zeroValue(),
 			ErrType,
@@ -2038,7 +2038,7 @@ func TestIsInNode(t *testing.T) {
 			"LhsError",
 			newErrorEval(errTest),
 			"human",
-			newLiteralEval(types.NewSet([]types.Value{})),
+			newLiteralEval(types.Set{}),
 			map[string][]string{},
 			zeroValue(),
 			errTest,
@@ -2047,7 +2047,7 @@ func TestIsInNode(t *testing.T) {
 			"LhsTypeError",
 			newLiteralEval(types.String("foo")),
 			"human",
-			newLiteralEval(types.NewSet([]types.Value{})),
+			newLiteralEval(types.Set{}),
 			map[string][]string{},
 			zeroValue(),
 			ErrType,
