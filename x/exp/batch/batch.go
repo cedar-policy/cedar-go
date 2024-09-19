@@ -329,34 +329,26 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 			return v, true
 		}
 	case types.Record:
-		hasDeltas := false
-
-		// First pass, check for deltas
-		t.Iterate(func(_ types.String, vv types.Value) bool {
-			if _, delta := cloneSub(vv, k, v); delta {
-				hasDeltas = true
-				return false
+		var newMap types.RecordMap
+		t.Iterate(func(kk types.String, vv types.Value) bool {
+			if vv, delta := cloneSub(vv, k, v); delta && newMap == nil {
+				if newMap == nil {
+					newMap = t.Map()
+				}
+				newMap[kk] = vv
 			}
 			return true
 		})
 
-		// If no deltas, just return the input Value
-		if !hasDeltas {
+		if newMap == nil {
 			return t, false
 		}
-
-		// If there were deltas, build a new Record
-		newMap := make(types.RecordMap, t.Len())
-		t.Iterate(func(kk types.String, vv types.Value) bool {
-			vv, _ = cloneSub(vv, k, v)
-			newMap[kk] = vv
-			return true
-		})
 		return types.NewRecord(newMap), true
 	case types.Set:
 		hasDeltas := false
 
-		// First pass, check for deltas
+		// Look for deltas. Unfortunately, due to the indeterminate nature of the set iteration order,
+		// we can't pull the same trick as we do for Records above
 		t.Iterate(func(vv types.Value) bool {
 			if _, delta := cloneSub(vv, k, v); delta {
 				hasDeltas = true
@@ -377,6 +369,7 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 			newSlice = append(newSlice, vv)
 			return true
 		})
+
 		return types.NewSet(newSlice), true
 	}
 	return r, false
