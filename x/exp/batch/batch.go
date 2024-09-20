@@ -10,6 +10,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/eval"
+	"github.com/cedar-policy/cedar-go/internal/sets"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -103,18 +104,24 @@ var errInvalidPart = fmt.Errorf("invalid part")
 // The result passed to the callback must be used / cloned immediately and not modified.
 func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback) error {
 	be := &batchEvaler{}
-	found := map[types.String]struct{}{}
-	findVariables(found, request.Principal)
-	findVariables(found, request.Action)
-	findVariables(found, request.Resource)
-	findVariables(found, request.Context)
-	for key := range found {
+	var found sets.MapSet[types.String]
+	findVariables(&found, request.Principal)
+	findVariables(&found, request.Action)
+	findVariables(&found, request.Resource)
+	findVariables(&found, request.Context)
+	var err error
+	found.Iterate(func(key types.String) bool {
 		if _, ok := request.Variables[key]; !ok {
-			return fmt.Errorf("%w: %v", errUnboundVariable, key)
+			err = fmt.Errorf("%w: %v", errUnboundVariable, key)
+			return false
 		}
+		return true
+	})
+	if err != nil {
+		return err
 	}
 	for k := range request.Variables {
-		if _, ok := found[k]; !ok {
+		if !found.Contains(k) {
 			return fmt.Errorf("%w: %v", errUnusedVariable, k)
 		}
 	}
@@ -375,11 +382,11 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 	return r, false
 }
 
-func findVariables(found map[types.String]struct{}, r types.Value) {
+func findVariables(found *sets.MapSet[types.String], r types.Value) {
 	switch t := r.(type) {
 	case types.EntityUID:
 		if key, ok := eval.ToVariable(t); ok {
-			found[key] = struct{}{}
+			found.Add(key)
 		}
 	case types.Record:
 		t.Iterate(func(_ types.String, vv types.Value) bool {

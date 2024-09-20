@@ -10,6 +10,7 @@ import (
 	"github.com/cedar-policy/cedar-go"
 	publicast "github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/internal/sets"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -663,22 +664,22 @@ func TestFindVariables(t *testing.T) {
 	tests := []struct {
 		name string
 		in   types.Value
-		out  map[types.String]struct{}
+		out  []types.String
 	}{
-		{"record", types.NewRecord(types.RecordMap{"key": Variable("bananas")}), map[types.String]struct{}{"bananas": {}}},
-		{"set", types.NewSet([]types.Value{Variable("bananas")}), map[types.String]struct{}{"bananas": {}}},
-		{"dupes", types.NewSet([]types.Value{Variable("bananas"), Variable("bananas")}), map[types.String]struct{}{"bananas": {}}},
-		{"none", types.String("test"), map[types.String]struct{}{}},
-		{"multi", types.NewSet([]types.Value{Variable("bananas"), Variable("test")}), map[types.String]struct{}{"bananas": {}, "test": {}}},
+		{"record", types.NewRecord(types.RecordMap{"key": Variable("bananas")}), []types.String{"bananas"}},
+		{"set", types.NewSet([]types.Value{Variable("bananas")}), []types.String{"bananas"}},
+		{"dupes", types.NewSet([]types.Value{Variable("bananas"), Variable("bananas")}), []types.String{"bananas"}},
+		{"none", types.String("test"), nil},
+		{"multi", types.NewSet([]types.Value{Variable("bananas"), Variable("test")}), []types.String{"bananas", "test"}},
 	}
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out := map[types.String]struct{}{}
-			findVariables(out, tt.in)
-			testutil.Equals(t, out, tt.out)
+			var out sets.MapSet[types.String]
+			findVariables(&out, tt.in)
+			testutil.Equals(t, out, sets.NewMapSetFromSlice(tt.out))
 		})
 	}
 
