@@ -816,7 +816,7 @@ func (p *parser) expressions(endOfListMarker string) ([]ast.Node, error) {
 func (p *parser) record() (ast.Node, error) {
 	var res ast.Node
 	var elements ast.Pairs
-	known := map[string]struct{}{}
+	var known sets.MapSet[string]
 	for {
 		t := p.peek()
 		if t.Text == "}" {
@@ -833,10 +833,10 @@ func (p *parser) record() (ast.Node, error) {
 			return res, err
 		}
 
-		if _, ok := known[k]; ok {
+		if known.Contains(k) {
 			return res, p.errorf("duplicate key: %v", k)
 		}
-		known[k] = struct{}{}
+		known.Add(k)
 		elements = append(elements, ast.Pair{Key: types.String(k), Value: v})
 	}
 }
