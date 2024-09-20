@@ -120,7 +120,7 @@ func (v Record) MarshalJSON() ([]byte, error) {
 		w.Write(kb)
 		w.WriteByte(':')
 		vv := v.m[kk]
-		vb, err := vv.ExplicitMarshalJSON()
+		vb, err := json.Marshal(vv)
 		if err != nil {
 			return nil, err
 		}
@@ -129,10 +129,6 @@ func (v Record) MarshalJSON() ([]byte, error) {
 	w.WriteByte('}')
 	return w.Bytes(), nil
 }
-
-// ExplicitMarshalJSON marshals the Record into JSON, the marshaller uses the
-// explicit JSON form for all the values in the Record.
-func (v Record) ExplicitMarshalJSON() ([]byte, error) { return v.MarshalJSON() }
 
 // String produces a string representation of the Record, e.g. `{"a":1,"b":2,"c":3}`.
 func (r Record) String() string { return string(r.MarshalCedar()) }

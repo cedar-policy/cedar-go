@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/json"
 	"hash/fnv"
 	"strconv"
 )
@@ -13,9 +12,6 @@ func (a String) Equal(bi Value) bool {
 	b, ok := bi.(String)
 	return ok && a == b
 }
-
-// ExplicitMarshalJSON marshals the String into JSON.
-func (v String) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
 
 // String produces an unquoted string representation of the String, e.g. `hello`.
 func (v String) String() string {

@@ -1,6 +1,8 @@
 package json
 
 import (
+	"encoding/json"
+
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -13,16 +15,18 @@ type policyJSON struct {
 	Conditions  []conditionJSON   `json:"conditions,omitempty"`
 }
 
+// scopeInJSON uses the implicit form of EntityUID JSON serialization to match the Rust SDK
 type scopeInJSON struct {
-	Entity types.EntityUID `json:"entity"`
+	Entity types.ImplicitlyMarshaledEntityUID `json:"entity"`
 }
 
+// scopeJSON uses the implicit form of EntityUID JSON serialization to match the Rust SDK
 type scopeJSON struct {
-	Op         string            `json:"op"`
-	Entity     *types.EntityUID  `json:"entity,omitempty"`
-	Entities   []types.EntityUID `json:"entities,omitempty"`
-	EntityType string            `json:"entity_type,omitempty"`
-	In         *scopeInJSON      `json:"in,omitempty"`
+	Op         string                               `json:"op"`
+	Entity     *types.ImplicitlyMarshaledEntityUID  `json:"entity,omitempty"`
+	Entities   []types.ImplicitlyMarshaledEntityUID `json:"entities,omitempty"`
+	EntityType string                               `json:"entity_type,omitempty"`
+	In         *scopeInJSON                         `json:"in,omitempty"`
 }
 
 type conditionJSON struct {
@@ -72,8 +76,9 @@ type valueJSON struct {
 }
 
 func (e *valueJSON) MarshalJSON() ([]byte, error) {
-	return e.v.ExplicitMarshalJSON()
+	return json.Marshal(e.v)
 }
+
 func (e *valueJSON) UnmarshalJSON(b []byte) error {
 	return types.UnmarshalJSON(b, &e.v)
 }

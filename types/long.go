@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -28,9 +27,6 @@ func (a Long) LessThanOrEqual(bi Value) (bool, error) {
 	}
 	return a <= b, nil
 }
-
-// ExplicitMarshalJSON marshals the Long into JSON.
-func (v Long) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
 
 // String produces a string representation of the Long, e.g. `42`.
 func (v Long) String() string { return fmt.Sprint(int64(v)) }

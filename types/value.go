@@ -18,10 +18,6 @@ type Value interface {
 	fmt.Stringer
 	// MarshalCedar produces a valid MarshalCedar language representation of the Value.
 	MarshalCedar() []byte
-	// ExplicitMarshalJSON marshals the Value into JSON using the explicit (if
-	// applicable) JSON form, which is necessary for marshalling values within
-	// Sets or Records where the type is not defined.
-	ExplicitMarshalJSON() ([]byte, error)
 	Equal(Value) bool
 	hash() uint64
 }

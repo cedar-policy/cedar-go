@@ -129,9 +129,8 @@ func (v *Set) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// MarshalJSON marshals the Set into JSON, the marshaller uses the explicit JSON
-// form for all the values in the Set and always orders elements by their hash
-// hash order, which may differ from the original order.
+// MarshalJSON marshals the Set into JSON.
+// Set elements are rendered in hash order, which may differ from the original order.
 func (v Set) MarshalJSON() ([]byte, error) {
 	w := &bytes.Buffer{}
 	w.WriteByte('[')
@@ -141,7 +140,7 @@ func (v Set) MarshalJSON() ([]byte, error) {
 		if i != 0 {
 			w.WriteByte(',')
 		}
-		b, err := v.s[k].ExplicitMarshalJSON()
+		b, err := json.Marshal(v.s[k])
 		if err != nil {
 			return nil, err
 		}
@@ -150,10 +149,6 @@ func (v Set) MarshalJSON() ([]byte, error) {
 	w.WriteByte(']')
 	return w.Bytes(), nil
 }
-
-// ExplicitMarshalJSON marshals the Set into JSON, the marshaller uses the
-// explicit JSON form for all the values in the Set.
-func (v Set) ExplicitMarshalJSON() ([]byte, error) { return v.MarshalJSON() }
 
 // String produces a string representation of the Set, e.g. `[1,2,3]`.
 func (v Set) String() string { return string(v.MarshalCedar()) }

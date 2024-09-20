@@ -25,17 +25,17 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 		if s.Entity == nil {
 			return nil, fmt.Errorf("missing entity")
 		}
-		return ast.Scope{}.Eq(*s.Entity), nil
+		return ast.Scope{}.Eq(types.EntityUID(*s.Entity)), nil
 	case "in":
 		if s.Entity == nil {
 			return nil, fmt.Errorf("missing entity")
 		}
-		return ast.Scope{}.In(*s.Entity), nil
+		return ast.Scope{}.In(types.EntityUID(*s.Entity)), nil
 	case "is":
 		if s.In == nil {
 			return ast.Scope{}.Is(types.EntityType(s.EntityType)), nil
 		}
-		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), s.In.Entity), nil
+		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), types.EntityUID(s.In.Entity)), nil
 	}
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }
@@ -48,12 +48,16 @@ func (s *scopeJSON) ToActionNode() (ast.IsActionScopeNode, error) {
 		if s.Entity == nil {
 			return nil, fmt.Errorf("missing entity")
 		}
-		return ast.Scope{}.Eq(*s.Entity), nil
+		return ast.Scope{}.Eq(types.EntityUID(*s.Entity)), nil
 	case "in":
 		if s.Entity != nil {
-			return ast.Scope{}.In(*s.Entity), nil
+			return ast.Scope{}.In(types.EntityUID(*s.Entity)), nil
 		}
-		return ast.Scope{}.InSet(s.Entities), nil
+		es := make([]types.EntityUID, len(s.Entities))
+		for i, e := range s.Entities {
+			es[i] = types.EntityUID(e)
+		}
+		return ast.Scope{}.InSet(es), nil
 	}
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }

@@ -176,11 +176,8 @@ func (v *Decimal) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// ExplicitMarshalJSON marshals the Decimal into JSON using the implicit form.
-func (v Decimal) MarshalJSON() ([]byte, error) { return []byte(`"` + v.String() + `"`), nil }
-
-// ExplicitMarshalJSON marshals the Decimal into JSON using the explicit form.
-func (v Decimal) ExplicitMarshalJSON() ([]byte, error) {
+// MarshalJSON marshals the Decimal into JSON using the explicit form.
+func (v Decimal) MarshalJSON() ([]byte, error) {
 	return json.Marshal(extValueJSON{
 		Extn: &extn{
 			Fn:  "decimal",

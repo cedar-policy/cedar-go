@@ -62,16 +62,8 @@ func (v *EntityUID) UnmarshalJSON(b []byte) error {
 	return errJSONEntityNotFound
 }
 
-// ExplicitMarshalJSON marshals the EntityUID into JSON using the implicit form.
+// MarshalJSON marshals the EntityUID into JSON using the explicit form.
 func (v EntityUID) MarshalJSON() ([]byte, error) {
-	return json.Marshal(entityValueJSON{
-		Type: (*string)(&v.Type),
-		ID:   (*string)(&v.ID),
-	})
-}
-
-// ExplicitMarshalJSON marshals the EntityUID into JSON using the explicit form.
-func (v EntityUID) ExplicitMarshalJSON() ([]byte, error) {
 	return json.Marshal(entityValueJSON{
 		Entity: &extEntity{
 			Type: string(v.Type),
@@ -85,4 +77,17 @@ func (v EntityUID) hash() uint64 {
 	_, _ = h.Write([]byte(v.Type))
 	_, _ = h.Write([]byte(v.ID))
 	return h.Sum64()
+}
+
+// ImplicitlyMarshaledEntityUID exists to allow the marshaling of the EntityUID into JSON using the implicit form. Users
+// can opt in to this form if they know that this EntityUID will be serialized to a place where its type will be
+// unambiguous.
+type ImplicitlyMarshaledEntityUID EntityUID
+
+func (i ImplicitlyMarshaledEntityUID) MarshalJSON() ([]byte, error) {
+	s := struct {
+		Type EntityType `json:"type"`
+		ID   String     `json:"id"`
+	}{i.Type, i.ID}
+	return json.Marshal(s)
 }

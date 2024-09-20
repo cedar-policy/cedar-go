@@ -1,9 +1,5 @@
 package types
 
-import (
-	"encoding/json"
-)
-
 // A Boolean is a value that is either true or false.
 type Boolean bool
 
@@ -27,9 +23,6 @@ func (v Boolean) MarshalCedar() []byte {
 	}
 	return []byte("false")
 }
-
-// ExplicitMarshalJSON marshals the Boolean into JSON.
-func (v Boolean) ExplicitMarshalJSON() ([]byte, error) { return json.Marshal(v) }
 
 func (v Boolean) hash() uint64 {
 	if v {

@@ -85,7 +85,7 @@ func TestJSON_Value(t *testing.T) {
 
 			// Now assert that when we Marshal/Unmarshal that value, we still
 			// have what we started with
-			gotJSON, err := (*ptr).ExplicitMarshalJSON()
+			gotJSON, err := json.Marshal(ptr)
 			testutil.OK(t, err)
 			var gotRetry Value
 			ptr = &gotRetry
@@ -534,51 +534,69 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 func TestJSONMarshal(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name        string
-		in          Value
-		outExplicit string
-		outImplicit string
+		name string
+		in   Value
+		out  string
 	}{
-		{"record", NewRecord(RecordMap{
-			"ak": String("av"),
-			"ck": String("cv"),
-			"bk": String("bv"),
-		}), `{"ak":"av","bk":"bv","ck":"cv"}`, `{"ak":"av","bk":"bv","ck":"cv"}`},
-		{"recordWithExt", NewRecord(RecordMap{
-			"ip": mustIPValue("222.222.222.7"),
-		}), `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`, `{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`},
-		{"set", NewSet([]Value{
-			String("av"),
-			String("cv"),
-			String("bv"),
-		}), `["cv","bv","av"]`, `["cv","bv","av"]`},
-		{"setWithExt", NewSet([]Value{mustIPValue("222.222.222.7")}),
-			`[{"__extn":{"fn":"ip","arg":"222.222.222.7"}}]`, `[{"__extn":{"fn":"ip","arg":"222.222.222.7"}}]`},
-		{"entity", EntityUID{"User", "alice"}, `{"__entity":{"type":"User","id":"alice"}}`, `{"type":"User","id":"alice"}`},
-		{"ip", mustIPValue("222.222.222.7"), `{"__extn":{"fn":"ip","arg":"222.222.222.7"}}`, `"222.222.222.7"`},
-		{"decimal", mustDecimalValue("33.57"), `{"__extn":{"fn":"decimal","arg":"33.57"}}`, `"33.57"`},
+		{
+			"record",
+			NewRecord(RecordMap{
+				"ak": String("av"),
+				"ck": String("cv"),
+				"bk": String("bv"),
+			}),
+			`{"ak":"av","bk":"bv","ck":"cv"}`,
+		},
+		{
+			"recordWithExt",
+			NewRecord(RecordMap{
+				"ip": mustIPValue("222.222.222.7"),
+			}),
+			`{"ip":{"__extn":{"fn":"ip","arg":"222.222.222.7"}}}`,
+		},
+		{
+			"set",
+			NewSet([]Value{
+				String("av"),
+				String("cv"),
+				String("bv"),
+			}),
+			`["cv","bv","av"]`,
+		},
+		{
+			"entity",
+			EntityUID{"User", "alice"},
+			`{"__entity":{"type":"User","id":"alice"}}`,
+		},
+		{
+			"ip",
+			mustIPValue("222.222.222.7"),
+			`{"__extn":{"fn":"ip","arg":"222.222.222.7"}}`,
+		},
+		{
+			"decimal",
+			mustDecimalValue("33.57"),
+			`{"__extn":{"fn":"decimal","arg":"33.57"}}`,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			outExplicit, err := tt.in.ExplicitMarshalJSON()
+			out, err := json.Marshal(tt.in)
 			testutil.OK(t, err)
-			testutil.Equals(t, string(outExplicit), tt.outExplicit)
-			outImplicit, err := json.Marshal(tt.in)
-			testutil.OK(t, err)
-			testutil.Equals(t, string(outImplicit), tt.outImplicit)
+			testutil.Equals(t, string(out), tt.out)
 		})
 	}
 }
 
 type jsonErr struct{}
 
-func (j *jsonErr) String() string                       { return "" }
-func (j *jsonErr) MarshalCedar() []byte                 { return nil }
-func (j *jsonErr) Equal(Value) bool                     { return false }
-func (j *jsonErr) ExplicitMarshalJSON() ([]byte, error) { return nil, fmt.Errorf("jsonErr") }
-func (j *jsonErr) hash() uint64                         { return 0 }
+func (j *jsonErr) String() string               { return "" }
+func (j *jsonErr) MarshalCedar() []byte         { return nil }
+func (j *jsonErr) Equal(Value) bool             { return false }
+func (j *jsonErr) MarshalJSON() ([]byte, error) { return nil, fmt.Errorf("jsonErr") }
+func (j *jsonErr) hash() uint64                 { return 0 }
 
 func TestJSONSet(t *testing.T) {
 	t.Parallel()

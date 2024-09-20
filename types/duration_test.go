@@ -177,7 +177,6 @@ func TestDuration(t *testing.T) {
 		t.Parallel()
 		bs, err := types.FromStdDuration(42 * time.Millisecond).MarshalJSON()
 		testutil.OK(t, err)
-		testutil.Equals(t, string(bs), `"42ms"`)
+		testutil.Equals(t, string(bs), `{"__extn":{"fn":"duration","arg":"42ms"}}`)
 	})
-
 }
