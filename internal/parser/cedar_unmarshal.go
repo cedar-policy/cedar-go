@@ -8,6 +8,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
+	"github.com/cedar-policy/cedar-go/internal/sets"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -127,10 +128,10 @@ func (p *parser) errorf(s string, args ...interface{}) error {
 
 func (p *parser) annotations() (ast.Annotations, error) {
 	var res ast.Annotations
-	known := map[string]struct{}{}
+	var known sets.MapSet[string]
 	for p.peek().Text == "@" {
 		p.advance()
-		err := p.annotation(&res, known)
+		err := p.annotation(&res, &known)
 		if err != nil {
 			return res, err
 		}
@@ -139,11 +140,11 @@ func (p *parser) annotations() (ast.Annotations, error) {
 
 }
 
-func (p *parser) annotation(a *ast.Annotations, known map[string]struct{}) error {
+func (p *parser) annotation(a *ast.Annotations, known *sets.MapSet[string]) error {
 	var err error
 	t := p.advance()
-	// As of 2024-09-13, the ability to use reserved keywords is not documented in the Cedar schema. The ability to use
-	// reserved keywords was added in this commit:
+	// As of 2024-09-13, the ability to use reserved keywords for annotation keys is not documented in the Cedar schema.
+	// This ability was added to the Rust implementation in this commit:
 	// https://github.com/cedar-policy/cedar/commit/5f62c6df06b59abc5634d6668198a826839c6fb7
 	if !(t.isIdent() || t.isReservedKeyword()) {
 		return p.errorf("expected ident or reserved keyword")
@@ -152,10 +153,10 @@ func (p *parser) annotation(a *ast.Annotations, known map[string]struct{}) error
 	if err = p.exact("("); err != nil {
 		return err
 	}
-	if _, ok := known[name]; ok {
+	if known.Contains(name) {
 		return p.errorf("duplicate annotation: @%s", name)
 	}
-	known[name] = struct{}{}
+	known.Add(name)
 	t = p.advance()
 	if !t.isString() {
 		return p.errorf("expected string")
