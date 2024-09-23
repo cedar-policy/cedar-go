@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"slices"
 	"testing"
 
@@ -13,11 +12,10 @@ type colliderValue struct {
 	HashVal uint64
 }
 
-func (c colliderValue) String() string                       { return "" }
-func (c colliderValue) MarshalCedar() []byte                 { return nil }
-func (c colliderValue) Equal(v Value) bool                   { return v.Equal(c.Value) }
-func (c colliderValue) ExplicitMarshalJSON() ([]byte, error) { return nil, fmt.Errorf("colliderValue") }
-func (c colliderValue) hash() uint64                         { return c.HashVal }
+func (c colliderValue) String() string       { return "" }
+func (c colliderValue) MarshalCedar() []byte { return nil }
+func (c colliderValue) Equal(v Value) bool   { return v.Equal(c.Value) }
+func (c colliderValue) hash() uint64         { return c.HashVal }
 
 func TestSet(t *testing.T) {
 	t.Parallel()

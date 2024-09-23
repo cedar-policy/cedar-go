@@ -36,14 +36,14 @@ func TestEntitiesJSON(t *testing.T) {
 		}
 		ent2 := &types.Entity{
 			UID:        types.NewEntityUID("Type", "id2"),
-			Parents:    []types.EntityUID{},
+			Parents:    []types.EntityUID{ent.UID},
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
 		e[ent.UID] = ent
 		e[ent2.UID] = ent2
 		b, err := e.MarshalJSON()
 		testutil.OK(t, err)
-		testutil.Equals(t, string(b), `[{"uid":{"type":"Type","id":"id"},"attrs":{"key":42}},{"uid":{"type":"Type","id":"id2"},"attrs":{"key":42}}]`)
+		testutil.Equals(t, string(b), `[{"uid":{"type":"Type","id":"id"},"parents":[],"attrs":{"key":42}},{"uid":{"type":"Type","id":"id2"},"parents":[{"type":"Type","id":"id"}],"attrs":{"key":42}}]`)
 	})
 
 	t.Run("Unmarshal", func(t *testing.T) {

@@ -286,16 +286,8 @@ func (a *Datetime) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// MarshalJSON implements the encoding/json.Marshaler interface
-//
-// It produces the direct representation of a Cedar Datetime.
+// MarshalJSON marshals a Cedar Datetime with the explicit representation
 func (a Datetime) MarshalJSON() ([]byte, error) {
-	return []byte(`datetime("` + a.String() + `")`), nil
-}
-
-// ExplicitMarshalJSON Marshal's a Cedar Datetime with the explicit
-// representation
-func (a Datetime) ExplicitMarshalJSON() ([]byte, error) {
 	return json.Marshal(extValueJSON{
 		Extn: &extn{
 			Fn:  "datetime",

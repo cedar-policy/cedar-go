@@ -198,6 +198,6 @@ func TestDatetime(t *testing.T) {
 		t.Parallel()
 		bs, err := types.FromStdTime(time.UnixMilli(42)).MarshalJSON()
 		testutil.OK(t, err)
-		testutil.Equals(t, string(bs), `datetime("1970-01-01T00:00:00.042Z")`)
+		testutil.Equals(t, string(bs), `{"__extn":{"fn":"datetime","arg":"1970-01-01T00:00:00.042Z"}}`)
 	})
 }

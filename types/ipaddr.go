@@ -131,11 +131,8 @@ func (v *IPAddr) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// ExplicitMarshalJSON marshals the IPAddr into JSON using the implicit form.
-func (v IPAddr) MarshalJSON() ([]byte, error) { return []byte(`"` + v.String() + `"`), nil }
-
-// ExplicitMarshalJSON marshals the IPAddr into JSON using the explicit form.
-func (v IPAddr) ExplicitMarshalJSON() ([]byte, error) {
+// MarshalJSON marshals the IPAddr into JSON using the explicit form.
+func (v IPAddr) MarshalJSON() ([]byte, error) {
 	if v.Prefix().Bits() == v.Prefix().Addr().BitLen() {
 		return json.Marshal(extValueJSON{
 			Extn: &extn{

@@ -255,11 +255,8 @@ func (v *Duration) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// MarshalJSON marshals the Duration into JSON using the implicit form.
-func (v Duration) MarshalJSON() ([]byte, error) { return []byte(`"` + v.String() + `"`), nil }
-
-// ExplicitMarshalJSON marshals the Decimal into JSON using the explicit form.
-func (v Duration) ExplicitMarshalJSON() ([]byte, error) {
+// MarshalJSON marshals the Duration into JSON using the explicit form.
+func (v Duration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(extValueJSON{
 		Extn: &extn{
 			Fn:  "duration",

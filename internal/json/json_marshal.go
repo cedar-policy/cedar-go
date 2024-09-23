@@ -15,17 +15,21 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		return
 	case ast.ScopeTypeEq:
 		s.Op = "=="
-		e := t.Entity
+		e := types.ImplicitlyMarshaledEntityUID(t.Entity)
 		s.Entity = &e
 		return
 	case ast.ScopeTypeIn:
 		s.Op = "in"
-		e := t.Entity
+		e := types.ImplicitlyMarshaledEntityUID(t.Entity)
 		s.Entity = &e
 		return
 	case ast.ScopeTypeInSet:
 		s.Op = "in"
-		s.Entities = t.Entities
+		es := make([]types.ImplicitlyMarshaledEntityUID, len(t.Entities))
+		for i, e := range t.Entities {
+			es[i] = types.ImplicitlyMarshaledEntityUID(e)
+		}
+		s.Entities = es
 		return
 	case ast.ScopeTypeIs:
 		s.Op = "is"
@@ -35,7 +39,7 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		s.Op = "is"
 		s.EntityType = string(t.Type)
 		s.In = &scopeInJSON{
-			Entity: t.Entity,
+			Entity: types.ImplicitlyMarshaledEntityUID(t.Entity),
 		}
 		return
 	default:
