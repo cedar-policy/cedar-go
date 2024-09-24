@@ -1485,7 +1485,7 @@ func TestContainsAnyNode(t *testing.T) {
 	t.Run("not quadratic", func(t *testing.T) {
 		t.Parallel()
 
-		// Make two totally disjoint mapset to force a worst case search
+		// Make two totally disjoint sets to force a worst case search
 		setSize := 200000
 		set1 := make([]types.Value, setSize)
 		set2 := make([]types.Value, setSize)
