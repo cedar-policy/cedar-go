@@ -13,6 +13,12 @@ var peppercorn = struct{}{}
 
 // MapSet is a struct that adds some convenience to the otherwise cumbersome map[T]struct{} idiom used in Go to
 // implement mapset of comparable types.
+//
+// Note: the zero value of MapSet[T] (i.e. MapSet[T]{}) is fully usable and avoids unnecessary allocations in the case
+// where nothing gets added to the MapSet. However, take care in using it, especially when passing it by value to other
+// functions. If passed by value, mutating operations (e.g. Add(), Remove()) in the called function will persist in the
+// calling function's version if the MapSet[T] has been changed from the zero value prior to the call.
+// See the "zero value" test for an example.
 type MapSet[T comparable] struct {
 	m map[T]struct{}
 }
