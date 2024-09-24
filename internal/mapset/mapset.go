@@ -17,11 +17,11 @@ type MapSet[T comparable] struct {
 	m map[T]struct{}
 }
 
-// New returns a MapSet ready for use. Optionally, a desired size for the MapSet can be passed as an argument,
+// Make returns a MapSet ready for use. Optionally, a desired size for the MapSet can be passed as an argument,
 // as in the argument to make() for a map type.
-func New[T comparable](args ...int) *MapSet[T] {
+func Make[T comparable](args ...int) *MapSet[T] {
 	if len(args) > 1 {
-		panic(fmt.Sprintf("too many arguments passed to New(). got: %v, expected 0 or 1", len(args)))
+		panic(fmt.Sprintf("too many arguments passed to Make(). got: %v, expected 0 or 1", len(args)))
 	}
 
 	var size int
@@ -34,7 +34,7 @@ func New[T comparable](args ...int) *MapSet[T] {
 
 // FromSlice creates a MapSet of size len(items) and calls AddSlice(items) on it.
 func FromSlice[T comparable](items []T) *MapSet[T] {
-	h := New[T](len(items))
+	h := Make[T](len(items))
 	h.AddSlice(items)
 	return h
 }
@@ -87,7 +87,7 @@ type Container[T comparable] interface {
 
 // Intersection returns the items common to both h and o.
 func (h MapSet[T]) Intersection(o Container[T]) *MapSet[T] {
-	intersection := New[T]()
+	intersection := Make[T]()
 	for item := range h.m {
 		if o.Contains(item) {
 			intersection.Add(item)

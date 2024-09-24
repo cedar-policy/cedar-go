@@ -1061,7 +1061,7 @@ func doInEval(env *Env, lhs types.EntityUID, rhs types.Value) (types.Value, erro
 	case types.EntityUID:
 		return types.Boolean(entityInOne(env, lhs, rhsv)), nil
 	case types.Set:
-		query := mapset.New[types.EntityUID](rhsv.Len())
+		query := mapset.Make[types.EntityUID](rhsv.Len())
 		var err error
 		rhsv.Iterate(func(rhv types.Value) bool {
 			var e types.EntityUID

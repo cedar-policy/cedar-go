@@ -14,29 +14,29 @@ func hashSetMustNotContain[T comparable](t *testing.T, s *MapSet[T], item T) {
 
 func TestHashSet(t *testing.T) {
 	t.Run("empty set contains nothing", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		testutil.Equals(t, s.Len(), 0)
 		hashSetMustNotContain(t, s, 1)
 
-		s = New[int](10)
+		s = Make[int](10)
 		testutil.Equals(t, s.Len(), 0)
 		hashSetMustNotContain(t, s, 1)
 	})
 
 	t.Run("add => contains", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		s.Add(1)
 		testutil.Equals(t, s.Contains(1), true)
 	})
 
 	t.Run("add twice", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		testutil.Equals(t, s.Add(1), true)
 		testutil.Equals(t, s.Add(1), false)
 	})
 
 	t.Run("add slice", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		s.AddSlice([]int{1, 2})
 		testutil.Equals(t, s.Contains(1), true)
 		testutil.Equals(t, s.Contains(2), true)
@@ -44,45 +44,45 @@ func TestHashSet(t *testing.T) {
 	})
 
 	t.Run("add same slice", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		testutil.Equals(t, s.AddSlice([]int{1, 2}), true)
 		testutil.Equals(t, s.AddSlice([]int{1, 2}), false)
 	})
 
 	t.Run("add disjoint slices", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		testutil.Equals(t, s.AddSlice([]int{1, 2}), true)
 		testutil.Equals(t, s.AddSlice([]int{3, 4}), true)
 		testutil.Equals(t, s.AddSlice([]int{1, 2, 3, 4}), false)
 	})
 
 	t.Run("add overlapping slices", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		testutil.Equals(t, s.AddSlice([]int{1, 2}), true)
 		testutil.Equals(t, s.AddSlice([]int{2, 3}), true)
 		testutil.Equals(t, s.AddSlice([]int{1, 3}), false)
 	})
 
 	t.Run("remove nonexistent", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		testutil.Equals(t, s.Remove(1), false)
 	})
 
 	t.Run("remove existing", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		s.Add(1)
 		testutil.Equals(t, s.Remove(1), true)
 	})
 
 	t.Run("remove => !contains", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		s.Add(1)
 		s.Remove(1)
 		testutil.FatalIf(t, s.Contains(1), "set unexpectedly contained item")
 	})
 
 	t.Run("remove slice", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		s.AddSlice([]int{1, 2, 3})
 		s.RemoveSlice([]int{1, 2})
 		hashSetMustNotContain(t, s, 1)
@@ -91,12 +91,12 @@ func TestHashSet(t *testing.T) {
 	})
 
 	t.Run("remove non-existent slice", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		testutil.Equals(t, s.RemoveSlice([]int{1, 2}), false)
 	})
 
 	t.Run("remove overlapping slice", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		s.Add(1)
 		testutil.Equals(t, s.RemoveSlice([]int{1, 2}), true)
 		testutil.Equals(t, s.RemoveSlice([]int{1, 2}), false)
@@ -111,10 +111,10 @@ func TestHashSet(t *testing.T) {
 	})
 
 	t.Run("slice", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 		testutil.Equals(t, s.Slice(), []int{})
 
-		s = New[int](10)
+		s = Make[int](10)
 		testutil.Equals(t, s.Slice(), []int{})
 
 		inSlice := []int{1, 2, 3}
@@ -145,7 +145,7 @@ func TestHashSet(t *testing.T) {
 	t.Run("iterate", func(t *testing.T) {
 		s1 := FromSlice([]int{1, 2, 3})
 
-		s2 := New[int]()
+		s2 := Make[int]()
 		s1.Iterate(func(item int) bool {
 			s2.Add(item)
 			return true
@@ -198,7 +198,7 @@ func TestHashSet(t *testing.T) {
 	})
 
 	t.Run("encode nil set", func(t *testing.T) {
-		s := New[int]()
+		s := Make[int]()
 
 		out, err := json.Marshal(s)
 
@@ -263,7 +263,7 @@ func TestHashSet(t *testing.T) {
 			}
 		}()
 
-		New[int](0, 1)
+		Make[int](0, 1)
 	})
 
 	// The zero value MapSet is usable, but care must be taken to ensure that it is not mutated when passed by value

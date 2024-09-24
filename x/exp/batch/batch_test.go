@@ -677,7 +677,7 @@ func TestFindVariables(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out := mapset.New[types.String]()
+			out := mapset.Make[types.String]()
 			findVariables(out, tt.in)
 			testutil.Equals(t, out, mapset.FromSlice(tt.out))
 		})
