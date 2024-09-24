@@ -130,22 +130,14 @@ func TestHashSet(t *testing.T) {
 		s1 := FromItems(1, 2, 3)
 		s2 := FromItems(2, 3, 4)
 
-		s3 := s1.Intersection(s2)
-		testutil.Equals(t, s3, FromItems(2, 3))
-
-		s4 := s1.Intersection(s2)
-		testutil.Equals(t, s4, FromItems(2, 3))
+		testutil.Equals(t, s1.Intersects(s2), true)
 	})
 
 	t.Run("intersection disjoint", func(t *testing.T) {
 		s1 := FromItems(1, 2)
 		s2 := FromItems(3, 4)
 
-		s3 := s1.Intersection(s2)
-		testutil.Equals(t, s3.Len(), 0)
-
-		s4 := s1.Intersection(s2)
-		testutil.Equals(t, s4.Len(), 0)
+		testutil.Equals(t, s1.Intersects(s2), false)
 	})
 
 	t.Run("encode nil set", func(t *testing.T) {

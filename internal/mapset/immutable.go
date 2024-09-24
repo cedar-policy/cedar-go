@@ -15,9 +15,9 @@ func (h ImmutableMapSet[T]) Contains(item T) bool {
 	return MapSet[T](h).Contains(item)
 }
 
-// Intersection returns the items common to both h and o.
-func (h ImmutableMapSet[T]) Intersection(o Container[T]) ImmutableMapSet[T] {
-	return ImmutableMapSet[T](*MapSet[T](h).Intersection(o))
+// Intersects returns whether any items in this set exist in o
+func (h ImmutableMapSet[T]) Intersects(o Container[T]) bool {
+	return MapSet[T](h).Intersects(o)
 }
 
 // Iterate the items in the set, calling callback for each item. If the callback returns false, iteration is halted.

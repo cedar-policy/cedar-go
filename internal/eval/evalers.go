@@ -1022,7 +1022,7 @@ func entityInSet(env *Env, entity types.EntityUID, parents mapset.Container[type
 	var candidate = entity
 	for {
 		if fe, ok := env.Entities[candidate]; ok {
-			if fe.Parents.Intersection(parents).Len() > 0 {
+			if fe.Parents.Intersects(parents) {
 				return true
 			}
 			fe.Parents.Iterate(func(k types.EntityUID) bool {

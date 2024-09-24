@@ -69,15 +69,14 @@ type Container[T comparable] interface {
 	Contains(T) bool
 }
 
-// Intersection returns the items common to both h and o.
-func (h MapSet[T]) Intersection(o Container[T]) *MapSet[T] {
-	intersection := Make[T]()
+// Intersects returns whether any items in this set exist in o
+func (h MapSet[T]) Intersects(o Container[T]) bool {
 	for item := range h.m {
 		if o.Contains(item) {
-			intersection.Add(item)
+			return true
 		}
 	}
-	return intersection
+	return false
 }
 
 // Iterate the items in the set, calling callback for each item. If the callback returns false, iteration is halted.
