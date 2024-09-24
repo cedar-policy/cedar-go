@@ -7,7 +7,7 @@ import (
 type ImmutableMapSet[T comparable] MapSet[T]
 
 func Immutable[T comparable](args ...T) ImmutableMapSet[T] {
-	return ImmutableMapSet[T](*FromSlice(args))
+	return ImmutableMapSet[T](*FromItems(args...))
 }
 
 // Contains returns whether the item exists in the set

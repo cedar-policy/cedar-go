@@ -54,7 +54,7 @@ func TestHashSet(t *testing.T) {
 	})
 
 	t.Run("new from slice", func(t *testing.T) {
-		s := FromSlice([]int{1, 2, 2, 3})
+		s := FromItems(1, 2, 2, 3)
 		testutil.Equals(t, s.Len(), 3)
 		testutil.Equals(t, s.Contains(1), true)
 		testutil.Equals(t, s.Contains(2), true)
@@ -69,17 +69,17 @@ func TestHashSet(t *testing.T) {
 		testutil.Equals(t, s.Slice(), []int{})
 
 		inSlice := []int{1, 2, 3}
-		s = FromSlice(inSlice)
+		s = FromItems(inSlice...)
 		outSlice := s.Slice()
 		slices.Sort(outSlice)
 		testutil.Equals(t, inSlice, outSlice)
 	})
 
 	t.Run("equal", func(t *testing.T) {
-		s1 := FromSlice([]int{1, 2, 3})
+		s1 := FromItems(1, 2, 3)
 		testutil.Equals(t, s1.Equal(s1), true)
 
-		s2 := FromSlice([]int{1, 2, 3})
+		s2 := FromItems(1, 2, 3)
 		testutil.Equals(t, s1.Equal(s2), true)
 
 		s2.Add(4)
@@ -94,7 +94,7 @@ func TestHashSet(t *testing.T) {
 	})
 
 	t.Run("iterate", func(t *testing.T) {
-		s1 := FromSlice([]int{1, 2, 3})
+		s1 := FromItems(1, 2, 3)
 
 		s2 := Make[int]()
 		s1.Iterate(func(item int) bool {
@@ -106,7 +106,7 @@ func TestHashSet(t *testing.T) {
 	})
 
 	t.Run("iterate break early", func(t *testing.T) {
-		s1 := FromSlice([]int{1, 2, 3})
+		s1 := FromItems(1, 2, 3)
 
 		i := 0
 		var items []int
@@ -127,19 +127,19 @@ func TestHashSet(t *testing.T) {
 	})
 
 	t.Run("intersection with overlap", func(t *testing.T) {
-		s1 := FromSlice([]int{1, 2, 3})
-		s2 := FromSlice([]int{2, 3, 4})
+		s1 := FromItems(1, 2, 3)
+		s2 := FromItems(2, 3, 4)
 
 		s3 := s1.Intersection(s2)
-		testutil.Equals(t, s3, FromSlice([]int{2, 3}))
+		testutil.Equals(t, s3, FromItems(2, 3))
 
 		s4 := s1.Intersection(s2)
-		testutil.Equals(t, s4, FromSlice([]int{2, 3}))
+		testutil.Equals(t, s4, FromItems(2, 3))
 	})
 
 	t.Run("intersection disjoint", func(t *testing.T) {
-		s1 := FromSlice([]int{1, 2})
-		s2 := FromSlice([]int{3, 4})
+		s1 := FromItems(1, 2)
+		s2 := FromItems(3, 4)
 
 		s3 := s1.Intersection(s2)
 		testutil.Equals(t, s3.Len(), 0)
@@ -158,7 +158,7 @@ func TestHashSet(t *testing.T) {
 	})
 
 	t.Run("encode json", func(t *testing.T) {
-		s := FromSlice([]int{1, 2, 3})
+		s := FromItems(1, 2, 3)
 
 		out, err := json.Marshal(s)
 
@@ -179,7 +179,7 @@ func TestHashSet(t *testing.T) {
 		var s1 MapSet[int]
 		err := s1.UnmarshalJSON([]byte("[2,3,1,2]"))
 		testutil.OK(t, err)
-		testutil.Equals(t, &s1, FromSlice([]int{1, 2, 3}))
+		testutil.Equals(t, &s1, FromItems(1, 2, 3))
 	})
 
 	t.Run("decode json empty", func(t *testing.T) {

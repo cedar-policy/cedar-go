@@ -32,8 +32,8 @@ func Make[T comparable](args ...int) *MapSet[T] {
 	return &MapSet[T]{m: make(map[T]struct{}, size)}
 }
 
-// FromSlice creates a MapSet of size len(items) and calls Add for each of the items to it.
-func FromSlice[T comparable](items []T) *MapSet[T] {
+// FromItems creates a MapSet of size len(items) and calls Add for each of the items to it.
+func FromItems[T comparable](items ...T) *MapSet[T] {
 	h := Make[T](len(items))
 	for _, i := range items {
 		h.Add(i)
@@ -131,6 +131,6 @@ func (h *MapSet[T]) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*h = *FromSlice(s)
+	*h = *FromItems(s...)
 	return nil
 }
