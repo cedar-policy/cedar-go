@@ -141,7 +141,7 @@ func partialScopeEval(env *Env, ent types.Value, in ast.IsScopeNode) (evaled boo
 	case ast.ScopeTypeIn:
 		return true, entityInOne(env, e, t.Entity)
 	case ast.ScopeTypeInSet:
-		set := mapset.FromSlice(t.Entities)
+		set := mapset.Immutable(t.Entities...)
 		return true, entityInSet(env, e, set)
 	case ast.ScopeTypeIs:
 		return true, e.Type == t.Type

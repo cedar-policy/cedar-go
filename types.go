@@ -3,6 +3,7 @@ package cedar
 import (
 	"time"
 
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -86,15 +87,9 @@ func NewEntityUID(typ EntityType, id String) EntityUID {
 	return types.NewEntityUID(typ, id)
 }
 
-// NewEntityUIDSet returns an EntityUIDSet ready for use. Optionally, a desired size for the set can be passed as an
-// argument, as in the argument to make() for a map type.
-func NewEntityUIDSet(args ...int) *EntityUIDSet {
-	return types.NewEntityUIDSet(args...)
-}
-
-// NewEntityUIDSetFromSlice creates an EntityUIDSet of size len(items) and calls AddSlice(items) on it.
-func NewEntityUIDSetFromSlice(items []EntityUID) *EntityUIDSet {
-	return types.NewEntityUIDSetFromSlice(items)
+// NewEntityUIDSet returns an immutable EntityUIDSet ready for use.
+func NewEntityUIDSet(args ...EntityUID) EntityUIDSet {
+	return mapset.Immutable[EntityUID](args...)
 }
 
 // NewPattern permits for the programmatic construction of a Pattern out of a slice of pattern components.

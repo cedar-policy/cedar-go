@@ -1013,7 +1013,7 @@ func entityInOneWork(env *Env, entity types.EntityUID, parent types.EntityUID) b
 	}
 }
 
-func entityInSet(env *Env, entity types.EntityUID, parents *types.EntityUIDSet) bool {
+func entityInSet(env *Env, entity types.EntityUID, parents mapset.Container[types.EntityUID]) bool {
 	if parents.Contains(entity) {
 		return true
 	}

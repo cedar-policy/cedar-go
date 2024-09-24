@@ -36,12 +36,9 @@ func TestEntityUIDSet(t *testing.T) {
 	t.Parallel()
 
 	t.Run("new empty set", func(t *testing.T) {
-		emptySets := []*types.EntityUIDSet{
+		emptySets := []types.EntityUIDSet{
+			types.EntityUIDSet{},
 			types.NewEntityUIDSet(),
-			types.NewEntityUIDSet(0),
-			types.NewEntityUIDSet(1),
-			types.NewEntityUIDSetFromSlice(nil),
-			types.NewEntityUIDSetFromSlice([]types.EntityUID{}),
 		}
 
 		for _, es := range emptySets {
@@ -51,17 +48,15 @@ func TestEntityUIDSet(t *testing.T) {
 		}
 	})
 
-	t.Run("new set from slice", func(t *testing.T) {
+	t.Run("new set", func(t *testing.T) {
 		a := types.NewEntityUID("typeA", "1")
 		b := types.NewEntityUID("typeB", "2")
 		o := types.NewEntityUID("typeO", "2")
-		s1 := types.NewEntityUIDSet()
-		s1.Add(a)
-		s1.Add(b)
-		s1.Add(o)
+		s := types.NewEntityUIDSet(a, b, o)
 
-		s2 := types.NewEntityUIDSetFromSlice([]types.EntityUID{o, b, a})
-
-		testutil.Equals(t, s1.Equal(s2), true)
+		testutil.Equals(t, s.Len(), 3)
+		testutil.Equals(t, s.Contains(a), true)
+		testutil.Equals(t, s.Contains(b), true)
+		testutil.Equals(t, s.Contains(o), true)
 	})
 }

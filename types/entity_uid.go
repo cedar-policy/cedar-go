@@ -94,15 +94,9 @@ func (i ImplicitlyMarshaledEntityUID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s)
 }
 
-type EntityUIDSet = mapset.MapSet[EntityUID]
+type EntityUIDSet = mapset.ImmutableMapSet[EntityUID]
 
-// NewEntityUIDSet returns an EntityUIDSet ready for use. Optionally, a desired size for the EntityUIDSet can be passed
-// as an argument, as in the argument to make() for a map type.
-func NewEntityUIDSet(args ...int) *EntityUIDSet {
-	return mapset.New[EntityUID](args...)
-}
-
-// NewEntityUIDSetFromSlice creates a EntityUIDSet of size len(items) and calls AddSlice(items) on it.
-func NewEntityUIDSetFromSlice(items []EntityUID) *EntityUIDSet {
-	return mapset.FromSlice[EntityUID](items)
+// NewEntityUIDSet returns an immutable EntityUIDSet ready for use.
+func NewEntityUIDSet(args ...EntityUID) EntityUIDSet {
+	return mapset.Immutable[EntityUID](args...)
 }

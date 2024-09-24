@@ -139,7 +139,7 @@ func TestIsAuthorized(t *testing.T) {
 			Entities: cedar.Entities{
 				cuzco: &cedar.Entity{
 					UID:     cuzco,
-					Parents: *cedar.NewEntityUIDSetFromSlice([]cedar.EntityUID{cedar.NewEntityUID("parent", "bob")}),
+					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("parent", "bob")),
 				},
 			},
 			Principal: cuzco,
@@ -166,7 +166,7 @@ func TestIsAuthorized(t *testing.T) {
 			Entities: cedar.Entities{
 				cuzco: &cedar.Entity{
 					UID:     cuzco,
-					Parents: *cedar.NewEntityUIDSetFromSlice([]cedar.EntityUID{cedar.NewEntityUID("team", "osiris")}),
+					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("team", "osiris")),
 				},
 			},
 			Principal: cuzco,
@@ -193,7 +193,7 @@ func TestIsAuthorized(t *testing.T) {
 			Entities: cedar.Entities{
 				dropTable: &cedar.Entity{
 					UID:     dropTable,
-					Parents: *cedar.NewEntityUIDSetFromSlice([]cedar.EntityUID{cedar.NewEntityUID("scary", "stuff")}),
+					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("scary", "stuff")),
 				},
 			},
 			Principal: cuzco,
@@ -209,7 +209,7 @@ func TestIsAuthorized(t *testing.T) {
 			Entities: cedar.Entities{
 				dropTable: &cedar.Entity{
 					UID:     dropTable,
-					Parents: *cedar.NewEntityUIDSetFromSlice([]cedar.EntityUID{cedar.NewEntityUID("scary", "stuff")}),
+					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("scary", "stuff")),
 				},
 			},
 			Principal: cuzco,
@@ -754,7 +754,7 @@ func TestIsAuthorized(t *testing.T) {
 			Entities: cedar.Entities{
 				cedar.NewEntityUID("Resource", "table"): &cedar.Entity{
 					UID:     cedar.NewEntityUID("Resource", "table"),
-					Parents: *cedar.NewEntityUIDSetFromSlice([]cedar.EntityUID{cedar.NewEntityUID("Parent", "id")}),
+					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("Parent", "id")),
 				},
 			},
 			Principal: cedar.NewEntityUID("Actor", "cuzco"),
