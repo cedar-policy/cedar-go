@@ -6,7 +6,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
-	"github.com/cedar-policy/cedar-go/internal/sets"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -988,7 +988,7 @@ func entityInOneWork(env *Env, entity types.EntityUID, parent types.EntityUID) b
 	if entity == parent {
 		return true
 	}
-	var known sets.MapSet[types.EntityUID]
+	var known mapset.MapSet[types.EntityUID]
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
@@ -1013,11 +1013,11 @@ func entityInOneWork(env *Env, entity types.EntityUID, parent types.EntityUID) b
 	}
 }
 
-func entityInSet(env *Env, entity types.EntityUID, parents types.EntityUIDSet) bool {
+func entityInSet(env *Env, entity types.EntityUID, parents *types.EntityUIDSet) bool {
 	if parents.Contains(entity) {
 		return true
 	}
-	var known sets.MapSet[types.EntityUID]
+	var known mapset.MapSet[types.EntityUID]
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
@@ -1061,7 +1061,7 @@ func doInEval(env *Env, lhs types.EntityUID, rhs types.Value) (types.Value, erro
 	case types.EntityUID:
 		return types.Boolean(entityInOne(env, lhs, rhsv)), nil
 	case types.Set:
-		query := sets.NewMapSet[types.EntityUID](rhsv.Len())
+		query := mapset.New[types.EntityUID](rhsv.Len())
 		var err error
 		rhsv.Iterate(func(rhv types.Value) bool {
 			var e types.EntityUID

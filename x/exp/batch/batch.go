@@ -10,7 +10,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/eval"
-	"github.com/cedar-policy/cedar-go/internal/sets"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -104,7 +104,7 @@ var errInvalidPart = fmt.Errorf("invalid part")
 // The result passed to the callback must be used / cloned immediately and not modified.
 func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback) error {
 	be := &batchEvaler{}
-	var found sets.MapSet[types.String]
+	var found mapset.MapSet[types.String]
 	findVariables(&found, request.Principal)
 	findVariables(&found, request.Action)
 	findVariables(&found, request.Resource)
@@ -382,7 +382,7 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 	return r, false
 }
 
-func findVariables(found *sets.MapSet[types.String], r types.Value) {
+func findVariables(found *mapset.MapSet[types.String], r types.Value) {
 	switch t := r.(type) {
 	case types.EntityUID:
 		if key, ok := eval.ToVariable(t); ok {

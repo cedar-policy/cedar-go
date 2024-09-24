@@ -10,7 +10,7 @@ import (
 	"github.com/cedar-policy/cedar-go"
 	publicast "github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/ast"
-	"github.com/cedar-policy/cedar-go/internal/sets"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -677,9 +677,9 @@ func TestFindVariables(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			var out sets.MapSet[types.String]
-			findVariables(&out, tt.in)
-			testutil.Equals(t, out, sets.NewMapSetFromSlice(tt.out))
+			out := mapset.New[types.String]()
+			findVariables(out, tt.in)
+			testutil.Equals(t, out, mapset.FromSlice(tt.out))
 		})
 	}
 

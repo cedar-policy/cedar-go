@@ -36,7 +36,7 @@ func TestEntityUIDSet(t *testing.T) {
 	t.Parallel()
 
 	t.Run("new empty set", func(t *testing.T) {
-		emptySets := []types.EntityUIDSet{
+		emptySets := []*types.EntityUIDSet{
 			types.NewEntityUIDSet(),
 			types.NewEntityUIDSet(0),
 			types.NewEntityUIDSet(1),

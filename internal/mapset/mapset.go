@@ -1,4 +1,4 @@
-package sets
+package mapset
 
 import (
 	"encoding/json"
@@ -12,16 +12,16 @@ import (
 var peppercorn = struct{}{}
 
 // MapSet is a struct that adds some convenience to the otherwise cumbersome map[T]struct{} idiom used in Go to
-// implement sets of comparable types.
+// implement mapset of comparable types.
 type MapSet[T comparable] struct {
 	m map[T]struct{}
 }
 
-// NewMapSet returns a MapSet ready for use. Optionally, a desired size for the MapSet can be passed as an argument,
+// New returns a MapSet ready for use. Optionally, a desired size for the MapSet can be passed as an argument,
 // as in the argument to make() for a map type.
-func NewMapSet[T comparable](args ...int) MapSet[T] {
+func New[T comparable](args ...int) *MapSet[T] {
 	if len(args) > 1 {
-		panic(fmt.Sprintf("too many arguments passed to NewMapSet(). got: %v, expected 0 or 1", len(args)))
+		panic(fmt.Sprintf("too many arguments passed to New(). got: %v, expected 0 or 1", len(args)))
 	}
 
 	var size int
@@ -29,17 +29,12 @@ func NewMapSet[T comparable](args ...int) MapSet[T] {
 		size = args[0]
 	}
 
-	var m map[T]struct{}
-	if size > 0 {
-		m = make(map[T]struct{}, size)
-	}
-
-	return MapSet[T]{m: m}
+	return &MapSet[T]{m: make(map[T]struct{}, size)}
 }
 
-// NewMapSetFromSlice creates a MapSet of size len(items) and calls AddSlice(items) on it.
-func NewMapSetFromSlice[T comparable](items []T) MapSet[T] {
-	h := NewMapSet[T](len(items))
+// FromSlice creates a MapSet of size len(items) and calls AddSlice(items) on it.
+func FromSlice[T comparable](items []T) *MapSet[T] {
+	h := New[T](len(items))
 	h.AddSlice(items)
 	return h
 }
@@ -87,8 +82,8 @@ func (h MapSet[T]) Contains(item T) bool {
 }
 
 // Intersection returns the items common to both h and o.
-func (h MapSet[T]) Intersection(o MapSet[T]) MapSet[T] {
-	intersection := NewMapSet[T]()
+func (h MapSet[T]) Intersection(o *MapSet[T]) *MapSet[T] {
+	intersection := New[T]()
 	for item := range h.m {
 		if o.Contains(item) {
 			intersection.Add(item)
@@ -120,7 +115,7 @@ func (h MapSet[T]) Len() int {
 }
 
 // Equal returns whether the same items exist in both h and o
-func (h MapSet[T]) Equal(o MapSet[T]) bool {
+func (h MapSet[T]) Equal(o *MapSet[T]) bool {
 	if len(h.m) != len(o.m) {
 		return false
 	}
@@ -148,6 +143,6 @@ func (h *MapSet[T]) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	*h = NewMapSetFromSlice(s)
+	*h = *FromSlice(s)
 	return nil
 }

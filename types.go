@@ -88,12 +88,12 @@ func NewEntityUID(typ EntityType, id String) EntityUID {
 
 // NewEntityUIDSet returns an EntityUIDSet ready for use. Optionally, a desired size for the set can be passed as an
 // argument, as in the argument to make() for a map type.
-func NewEntityUIDSet(args ...int) EntityUIDSet {
+func NewEntityUIDSet(args ...int) *EntityUIDSet {
 	return types.NewEntityUIDSet(args...)
 }
 
 // NewEntityUIDSetFromSlice creates an EntityUIDSet of size len(items) and calls AddSlice(items) on it.
-func NewEntityUIDSetFromSlice(items []EntityUID) EntityUIDSet {
+func NewEntityUIDSetFromSlice(items []EntityUID) *EntityUIDSet {
 	return types.NewEntityUIDSetFromSlice(items)
 }
 

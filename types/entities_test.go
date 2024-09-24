@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/internal/sets"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -43,12 +43,12 @@ func TestEntitiesJSON(t *testing.T) {
 		e := types.Entities{}
 		ent := &types.Entity{
 			UID:        types.NewEntityUID("Type", "id"),
-			Parents:    sets.MapSet[types.EntityUID]{},
+			Parents:    mapset.MapSet[types.EntityUID]{},
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
 		ent2 := &types.Entity{
 			UID:        types.NewEntityUID("Type", "id2"),
-			Parents:    sets.NewMapSetFromSlice([]types.EntityUID{ent.UID}),
+			Parents:    *mapset.FromSlice([]types.EntityUID{ent.UID}),
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
 		e[ent.UID] = ent
@@ -71,7 +71,7 @@ func TestEntitiesJSON(t *testing.T) {
 		want := types.Entities{}
 		ent := &types.Entity{
 			UID:        types.NewEntityUID("Type", "id"),
-			Parents:    sets.MapSet[types.EntityUID]{},
+			Parents:    *types.NewEntityUIDSet(),
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
 		want[ent.UID] = ent

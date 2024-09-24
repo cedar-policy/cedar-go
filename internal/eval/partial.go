@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
-	"github.com/cedar-policy/cedar-go/internal/sets"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -141,7 +141,7 @@ func partialScopeEval(env *Env, ent types.Value, in ast.IsScopeNode) (evaled boo
 	case ast.ScopeTypeIn:
 		return true, entityInOne(env, e, t.Entity)
 	case ast.ScopeTypeInSet:
-		set := sets.NewMapSetFromSlice(t.Entities)
+		set := mapset.FromSlice(t.Entities)
 		return true, entityInSet(env, e, set)
 	case ast.ScopeTypeIs:
 		return true, e.Type == t.Type

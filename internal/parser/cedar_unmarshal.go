@@ -8,7 +8,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
-	"github.com/cedar-policy/cedar-go/internal/sets"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -128,7 +128,7 @@ func (p *parser) errorf(s string, args ...interface{}) error {
 
 func (p *parser) annotations() (ast.Annotations, error) {
 	var res ast.Annotations
-	var known sets.MapSet[string]
+	var known mapset.MapSet[string]
 	for p.peek().Text == "@" {
 		p.advance()
 		err := p.annotation(&res, &known)
@@ -140,7 +140,7 @@ func (p *parser) annotations() (ast.Annotations, error) {
 
 }
 
-func (p *parser) annotation(a *ast.Annotations, known *sets.MapSet[string]) error {
+func (p *parser) annotation(a *ast.Annotations, known *mapset.MapSet[string]) error {
 	var err error
 	t := p.advance()
 	// As of 2024-09-13, the ability to use reserved keywords for annotation keys is not documented in the Cedar schema.
@@ -816,7 +816,7 @@ func (p *parser) expressions(endOfListMarker string) ([]ast.Node, error) {
 func (p *parser) record() (ast.Node, error) {
 	var res ast.Node
 	var elements ast.Pairs
-	var known sets.MapSet[string]
+	var known mapset.MapSet[string]
 	for {
 		t := p.peek()
 		if t.Text == "}" {

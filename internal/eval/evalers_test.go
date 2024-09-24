@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/internal/parser"
-	"github.com/cedar-policy/cedar-go/internal/sets"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -1486,7 +1486,7 @@ func TestContainsAnyNode(t *testing.T) {
 	t.Run("not quadratic", func(t *testing.T) {
 		t.Parallel()
 
-		// Make two totally disjoint sets to force a worst case search
+		// Make two totally disjoint mapset to force a worst case search
 		setSize := 200000
 		set1 := make([]types.Value, setSize)
 		set2 := make([]types.Value, setSize)
@@ -1834,20 +1834,20 @@ func TestEntityIn(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			var rhs sets.MapSet[types.EntityUID]
+			rhs := types.NewEntityUIDSet(len(tt.rhs))
 			for _, v := range tt.rhs {
 				rhs.Add(strEnt(v))
 			}
 			entityMap := types.Entities{}
 			for k, p := range tt.parents {
-				var ps sets.MapSet[types.EntityUID]
+				ps := types.NewEntityUIDSet(len(p))
 				for _, pp := range p {
 					ps.Add(strEnt(pp))
 				}
 				uid := strEnt(k)
 				entityMap[uid] = &types.Entity{
 					UID:     uid,
-					Parents: ps,
+					Parents: *ps,
 				}
 			}
 			res := entityInSet(&Env{Entities: entityMap}, strEnt(tt.lhs), rhs)
@@ -1861,26 +1861,26 @@ func TestEntityIn(t *testing.T) {
 
 		entityMap := types.Entities{}
 		for i := 0; i < 100; i++ {
-			p := sets.NewMapSetFromSlice([]types.EntityUID{
+			p := mapset.FromSlice([]types.EntityUID{
 				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "1"),
 				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "2"),
 			})
 			uid1 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "1")
 			entityMap[uid1] = &types.Entity{
 				UID:     uid1,
-				Parents: p,
+				Parents: *p,
 			}
 			uid2 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "2")
 			entityMap[uid2] = &types.Entity{
 				UID:     uid2,
-				Parents: p,
+				Parents: *p,
 			}
 
 		}
 		res := entityInSet(
 			&Env{Entities: entityMap},
 			types.NewEntityUID("0", "1"),
-			sets.NewMapSetFromSlice([]types.EntityUID{types.NewEntityUID("0", "3")}),
+			mapset.FromSlice([]types.EntityUID{types.NewEntityUID("0", "3")}),
 		)
 		testutil.Equals(t, res, false)
 	})
@@ -2010,14 +2010,14 @@ func TestInNode(t *testing.T) {
 			n := newInEval(tt.lhs, tt.rhs)
 			entityMap := types.Entities{}
 			for k, p := range tt.parents {
-				var ps sets.MapSet[types.EntityUID]
+				ps := types.NewEntityUIDSet(len(p))
 				for _, pp := range p {
 					ps.Add(strEnt(pp))
 				}
 				uid := strEnt(k)
 				entityMap[uid] = &types.Entity{
 					UID:     uid,
-					Parents: ps,
+					Parents: *ps,
 				}
 			}
 			ec := InitEnv(&Env{Entities: entityMap})
@@ -2150,14 +2150,14 @@ func TestIsInNode(t *testing.T) {
 			n := newIsInEval(tt.lhs, tt.is, tt.rhs)
 			entityMap := types.Entities{}
 			for k, p := range tt.parents {
-				var ps sets.MapSet[types.EntityUID]
+				ps := types.NewEntityUIDSet(len(p))
 				for _, pp := range p {
 					ps.Add(strEnt(pp))
 				}
 				uid := strEnt(k)
 				entityMap[uid] = &types.Entity{
 					UID:     uid,
-					Parents: ps,
+					Parents: *ps,
 				}
 			}
 			ec := InitEnv(&Env{Entities: entityMap})

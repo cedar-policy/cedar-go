@@ -89,7 +89,7 @@ func (s Set) Slice() []Value {
 	return maps.Values(s.s)
 }
 
-// Equal returns true if the sets are Equal.
+// Equal returns true if the mapset are Equal.
 func (as Set) Equal(bi Value) bool {
 	bs, ok := bi.(Set)
 	if !ok {

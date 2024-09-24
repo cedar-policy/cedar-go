@@ -5,7 +5,7 @@ import (
 	"hash/fnv"
 	"strconv"
 
-	"github.com/cedar-policy/cedar-go/internal/sets"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 )
 
 // Path is a series of idents separated by ::
@@ -94,15 +94,15 @@ func (i ImplicitlyMarshaledEntityUID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s)
 }
 
-type EntityUIDSet = sets.MapSet[EntityUID]
+type EntityUIDSet = mapset.MapSet[EntityUID]
 
 // NewEntityUIDSet returns an EntityUIDSet ready for use. Optionally, a desired size for the EntityUIDSet can be passed
 // as an argument, as in the argument to make() for a map type.
-func NewEntityUIDSet(args ...int) EntityUIDSet {
-	return sets.NewMapSet[EntityUID](args...)
+func NewEntityUIDSet(args ...int) *EntityUIDSet {
+	return mapset.New[EntityUID](args...)
 }
 
 // NewEntityUIDSetFromSlice creates a EntityUIDSet of size len(items) and calls AddSlice(items) on it.
-func NewEntityUIDSetFromSlice(items []EntityUID) EntityUIDSet {
-	return sets.NewMapSetFromSlice[EntityUID](items)
+func NewEntityUIDSetFromSlice(items []EntityUID) *EntityUIDSet {
+	return mapset.FromSlice[EntityUID](items)
 }
