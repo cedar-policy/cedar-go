@@ -81,8 +81,12 @@ func (h MapSet[T]) Contains(item T) bool {
 	return exists
 }
 
+type Container[T comparable] interface {
+	Contains(T) bool
+}
+
 // Intersection returns the items common to both h and o.
-func (h MapSet[T]) Intersection(o *MapSet[T]) *MapSet[T] {
+func (h MapSet[T]) Intersection(o Container[T]) *MapSet[T] {
 	intersection := New[T]()
 	for item := range h.m {
 		if o.Contains(item) {

@@ -8,17 +8,19 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
-func mustNotContain[T comparable](t *testing.T, s *MapSet[T], item T) {
+func hashSetMustNotContain[T comparable](t *testing.T, s *MapSet[T], item T) {
 	testutil.FatalIf(t, s.Contains(item), "set %v unexpectedly contained item %v", s, 1)
 }
 
 func TestHashSet(t *testing.T) {
 	t.Run("empty set contains nothing", func(t *testing.T) {
 		s := New[int]()
-		mustNotContain(t, s, 1)
+		testutil.Equals(t, s.Len(), 0)
+		hashSetMustNotContain(t, s, 1)
 
 		s = New[int](10)
-		mustNotContain(t, s, 1)
+		testutil.Equals(t, s.Len(), 0)
+		hashSetMustNotContain(t, s, 1)
 	})
 
 	t.Run("add => contains", func(t *testing.T) {
@@ -38,7 +40,7 @@ func TestHashSet(t *testing.T) {
 		s.AddSlice([]int{1, 2})
 		testutil.Equals(t, s.Contains(1), true)
 		testutil.Equals(t, s.Contains(2), true)
-		mustNotContain(t, s, 3)
+		hashSetMustNotContain(t, s, 3)
 	})
 
 	t.Run("add same slice", func(t *testing.T) {
@@ -83,8 +85,8 @@ func TestHashSet(t *testing.T) {
 		s := New[int]()
 		s.AddSlice([]int{1, 2, 3})
 		s.RemoveSlice([]int{1, 2})
-		mustNotContain(t, s, 1)
-		mustNotContain(t, s, 2)
+		hashSetMustNotContain(t, s, 1)
+		hashSetMustNotContain(t, s, 2)
 		testutil.Equals(t, s.Contains(3), true)
 	})
 
@@ -268,7 +270,7 @@ func TestHashSet(t *testing.T) {
 	// because those mutations may or may not be reflected in the caller's version of the MapSet.
 	t.Run("zero value", func(t *testing.T) {
 		s := MapSet[int]{}
-		mustNotContain(t, &s, 1)
+		hashSetMustNotContain(t, &s, 1)
 		testutil.Equals(t, s.Slice(), nil)
 
 		addByValue := func(m MapSet[int], val int) {
