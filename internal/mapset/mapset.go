@@ -32,10 +32,12 @@ func Make[T comparable](args ...int) *MapSet[T] {
 	return &MapSet[T]{m: make(map[T]struct{}, size)}
 }
 
-// FromSlice creates a MapSet of size len(items) and calls AddSlice(items) on it.
+// FromSlice creates a MapSet of size len(items) and calls Add for each of the items to it.
 func FromSlice[T comparable](items []T) *MapSet[T] {
 	h := Make[T](len(items))
-	h.AddSlice(items)
+	for _, i := range items {
+		h.Add(i)
+	}
 	return h
 }
 
@@ -50,29 +52,11 @@ func (h *MapSet[T]) Add(item T) bool {
 	return !exists
 }
 
-// AddSlice adds a slice of items to the set, returning true if any new items were added to the set.
-func (h *MapSet[T]) AddSlice(items []T) bool {
-	modified := false
-	for _, i := range items {
-		modified = h.Add(i) || modified
-	}
-	return modified
-}
-
 // Remove an item from the Set. Returns true if the item existed in the set.
 func (h *MapSet[T]) Remove(item T) bool {
 	_, exists := h.m[item]
 	delete(h.m, item)
 	return exists
-}
-
-// RemoveSlice removes a slice of items from the set, returning true if any items existed in the set.
-func (h *MapSet[T]) RemoveSlice(items []T) bool {
-	modified := false
-	for _, i := range items {
-		modified = h.Remove(i) || modified
-	}
-	return modified
 }
 
 // Contains returns whether the item exists in the set
