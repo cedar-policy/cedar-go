@@ -1833,9 +1833,9 @@ func TestEntityIn(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rhs := map[types.EntityUID]struct{}{}
+			var rhs []types.EntityUID
 			for _, v := range tt.rhs {
-				rhs[strEnt(v)] = struct{}{}
+				rhs = append(rhs, strEnt(v))
 			}
 			entityMap := types.Entities{}
 			for k, p := range tt.parents {
@@ -1846,10 +1846,10 @@ func TestEntityIn(t *testing.T) {
 				uid := strEnt(k)
 				entityMap[uid] = &types.Entity{
 					UID:     uid,
-					Parents: ps,
+					Parents: types.NewEntityUIDSet(ps...),
 				}
 			}
-			res := entityInSet(&Env{Entities: entityMap}, strEnt(tt.lhs), rhs)
+			res := entityInSet(&Env{Entities: entityMap}, strEnt(tt.lhs), types.NewEntityUIDSet(rhs...))
 			testutil.Equals(t, res, tt.result)
 		})
 	}
@@ -1860,10 +1860,10 @@ func TestEntityIn(t *testing.T) {
 
 		entityMap := types.Entities{}
 		for i := 0; i < 100; i++ {
-			p := []types.EntityUID{
+			p := types.NewEntityUIDSet(
 				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "1"),
 				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "2"),
-			}
+			)
 			uid1 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "1")
 			entityMap[uid1] = &types.Entity{
 				UID:     uid1,
@@ -1876,7 +1876,11 @@ func TestEntityIn(t *testing.T) {
 			}
 
 		}
-		res := entityInSet(&Env{Entities: entityMap}, types.NewEntityUID("0", "1"), map[types.EntityUID]struct{}{types.NewEntityUID("0", "3"): {}})
+		res := entityInSet(
+			&Env{Entities: entityMap},
+			types.NewEntityUID("0", "1"),
+			types.NewEntityUIDSet(types.NewEntityUID("0", "3")),
+		)
 		testutil.Equals(t, res, false)
 	})
 }
@@ -2012,7 +2016,7 @@ func TestInNode(t *testing.T) {
 				uid := strEnt(k)
 				entityMap[uid] = &types.Entity{
 					UID:     uid,
-					Parents: ps,
+					Parents: types.NewEntityUIDSet(ps...),
 				}
 			}
 			ec := InitEnv(&Env{Entities: entityMap})
@@ -2152,7 +2156,7 @@ func TestIsInNode(t *testing.T) {
 				uid := strEnt(k)
 				entityMap[uid] = &types.Entity{
 					UID:     uid,
-					Parents: ps,
+					Parents: types.NewEntityUIDSet(ps...),
 				}
 			}
 			ec := InitEnv(&Env{Entities: entityMap})

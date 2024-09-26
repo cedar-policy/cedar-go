@@ -6,6 +6,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -973,11 +974,6 @@ func newInEval(lhs, rhs Evaler) Evaler {
 	return &inEval{lhs: lhs, rhs: rhs}
 }
 
-func hasKnown(known map[types.EntityUID]struct{}, k types.EntityUID) bool {
-	_, ok := known[k]
-	return ok
-}
-
 func entityInOne(env *Env, entity types.EntityUID, parent types.EntityUID) bool {
 	key := inKey{a: entity, b: parent}
 	if cached, ok := env.inCache[key]; ok {
@@ -987,31 +983,28 @@ func entityInOne(env *Env, entity types.EntityUID, parent types.EntityUID) bool 
 	env.inCache[key] = result
 	return result
 }
+
 func entityInOneWork(env *Env, entity types.EntityUID, parent types.EntityUID) bool {
 	if entity == parent {
 		return true
 	}
-	var known map[types.EntityUID]struct{}
+	var known mapset.MapSet[types.EntityUID]
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
 		if fe, ok := env.Entities[candidate]; ok {
-			for _, k := range fe.Parents {
-				if k == parent {
+			if fe.Parents.Contains(parent) {
+				return true
+			}
+			fe.Parents.Iterate(func(k types.EntityUID) bool {
+				p, ok := env.Entities[k]
+				if !ok || p.Parents.Len() == 0 || k == entity || known.Contains(k) {
 					return true
 				}
-			}
-			for _, k := range fe.Parents {
-				p, ok := env.Entities[k]
-				if !ok || len(p.Parents) == 0 || k == entity || hasKnown(known, k) {
-					continue
-				}
 				todo = append(todo, k)
-				if known == nil {
-					known = map[types.EntityUID]struct{}{}
-				}
-				known[k] = struct{}{}
-			}
+				known.Add(k)
+				return true
+			})
 		}
 		if len(todo) == 0 {
 			return false
@@ -1020,31 +1013,27 @@ func entityInOneWork(env *Env, entity types.EntityUID, parent types.EntityUID) b
 	}
 }
 
-func entityInSet(env *Env, entity types.EntityUID, parents map[types.EntityUID]struct{}) bool {
-	if _, ok := parents[entity]; ok {
+func entityInSet(env *Env, entity types.EntityUID, parents mapset.Container[types.EntityUID]) bool {
+	if parents.Contains(entity) {
 		return true
 	}
-	var known map[types.EntityUID]struct{}
+	var known mapset.MapSet[types.EntityUID]
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
 		if fe, ok := env.Entities[candidate]; ok {
-			for _, k := range fe.Parents {
-				if _, ok := parents[k]; ok {
+			if fe.Parents.Intersects(parents) {
+				return true
+			}
+			fe.Parents.Iterate(func(k types.EntityUID) bool {
+				p, ok := env.Entities[k]
+				if !ok || p.Parents.Len() == 0 || k == entity || known.Contains(k) {
 					return true
 				}
-			}
-			for _, k := range fe.Parents {
-				p, ok := env.Entities[k]
-				if !ok || len(p.Parents) == 0 || k == entity || hasKnown(known, k) {
-					continue
-				}
 				todo = append(todo, k)
-				if known == nil {
-					known = map[types.EntityUID]struct{}{}
-				}
-				known[k] = struct{}{}
-			}
+				known.Add(k)
+				return true
+			})
 		}
 		if len(todo) == 0 {
 			return false
@@ -1072,14 +1061,14 @@ func doInEval(env *Env, lhs types.EntityUID, rhs types.Value) (types.Value, erro
 	case types.EntityUID:
 		return types.Boolean(entityInOne(env, lhs, rhsv)), nil
 	case types.Set:
-		query := make(map[types.EntityUID]struct{}, rhsv.Len())
+		query := mapset.Make[types.EntityUID](rhsv.Len())
 		var err error
 		rhsv.Iterate(func(rhv types.Value) bool {
 			var e types.EntityUID
 			if e, err = ValueToEntity(rhv); err != nil {
 				return false
 			}
-			query[e] = struct{}{}
+			query.Add(e)
 			return true
 		})
 		if err != nil {

@@ -3,6 +3,7 @@ package cedar
 import (
 	"time"
 
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
@@ -32,6 +33,7 @@ type String = types.String
 type Entities = types.Entities
 type Entity = types.Entity
 type EntityType = types.EntityType
+type EntityUIDSet = types.EntityUIDSet
 type Pattern = types.Pattern
 type Wildcard = types.Wildcard
 
@@ -83,6 +85,11 @@ func FromStdTime(t time.Time) Datetime {
 // NewEntityUID returns an EntityUID given an EntityType and identifier
 func NewEntityUID(typ EntityType, id String) EntityUID {
 	return types.NewEntityUID(typ, id)
+}
+
+// NewEntityUIDSet returns an immutable EntityUIDSet ready for use.
+func NewEntityUIDSet(args ...EntityUID) EntityUIDSet {
+	return mapset.Immutable[EntityUID](args...)
 }
 
 // NewPattern permits for the programmatic construction of a Pattern out of a slice of pattern components.

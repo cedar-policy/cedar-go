@@ -31,19 +31,23 @@ func TestEntitiesJSON(t *testing.T) {
 		e := types.Entities{}
 		ent := &types.Entity{
 			UID:        types.NewEntityUID("Type", "id"),
-			Parents:    []types.EntityUID{},
+			Parents:    types.EntityUIDSet{},
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
 		ent2 := &types.Entity{
 			UID:        types.NewEntityUID("Type", "id2"),
-			Parents:    []types.EntityUID{ent.UID},
+			Parents:    types.NewEntityUIDSet(ent.UID),
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
 		e[ent.UID] = ent
 		e[ent2.UID] = ent2
-		b, err := e.MarshalJSON()
-		testutil.OK(t, err)
-		testutil.Equals(t, string(b), `[{"uid":{"type":"Type","id":"id"},"parents":[],"attrs":{"key":42}},{"uid":{"type":"Type","id":"id2"},"parents":[{"type":"Type","id":"id"}],"attrs":{"key":42}}]`)
+		testutil.JSONMarshalsTo(
+			t,
+			e,
+			`[
+				{"uid": {"type": "Type", "id": "id"}, "parents": [], "attrs": {"key": 42}},
+				{"uid": {"type": "Type" ,"id" :"id2"}, "parents": [{"type":"Type","id":"id"}], "attrs": {"key": 42}}
+			]`)
 	})
 
 	t.Run("Unmarshal", func(t *testing.T) {
@@ -55,7 +59,7 @@ func TestEntitiesJSON(t *testing.T) {
 		want := types.Entities{}
 		ent := &types.Entity{
 			UID:        types.NewEntityUID("Type", "id"),
-			Parents:    []types.EntityUID{},
+			Parents:    types.NewEntityUIDSet(),
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
 		want[ent.UID] = ent
@@ -68,25 +72,4 @@ func TestEntitiesJSON(t *testing.T) {
 		err := e.UnmarshalJSON([]byte(`!@#$`))
 		testutil.Error(t, err)
 	})
-}
-
-func TestEntityIsZero(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name string
-		uid  types.EntityUID
-		want bool
-	}{
-		{"empty", types.EntityUID{}, true},
-		{"empty-type", types.NewEntityUID("one", ""), false},
-		{"empty-id", types.NewEntityUID("", "one"), false},
-		{"not-empty", types.NewEntityUID("one", "two"), false},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			testutil.Equals(t, tt.uid.IsZero(), tt.want)
-		})
-	}
 }

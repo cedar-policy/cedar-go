@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"hash/fnv"
 	"strconv"
+
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 )
 
 // Path is a series of idents separated by ::
@@ -90,4 +92,11 @@ func (i ImplicitlyMarshaledEntityUID) MarshalJSON() ([]byte, error) {
 		ID   String     `json:"id"`
 	}{i.Type, i.ID}
 	return json.Marshal(s)
+}
+
+type EntityUIDSet = mapset.ImmutableMapSet[EntityUID]
+
+// NewEntityUIDSet returns an immutable EntityUIDSet ready for use.
+func NewEntityUIDSet(args ...EntityUID) EntityUIDSet {
+	return mapset.Immutable[EntityUID](args...)
 }
