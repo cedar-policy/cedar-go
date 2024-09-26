@@ -34,7 +34,7 @@ func TestImmutableHashSet(t *testing.T) {
 	t.Run("deduplicate elements", func(t *testing.T) {
 		s := Immutable[int](1, 1)
 		testutil.Equals(t, s.Contains(1), true)
-		testutil.Equals(t, s.Contains(2), false)
+		testutil.Equals(t, s.Len(), 1)
 	})
 
 	t.Run("slice", func(t *testing.T) {

@@ -91,6 +91,7 @@ func TestHashSet(t *testing.T) {
 		s1.Add(4)
 		s1.Remove(3)
 		testutil.Equals(t, s1.Equal(s2), true)
+		testutil.Equals(t, s2.Equal(s1), true)
 	})
 
 	t.Run("iterate", func(t *testing.T) {
@@ -222,7 +223,7 @@ func TestHashSet(t *testing.T) {
 	// because those mutations may or may not be reflected in the caller's version of the MapSet.
 	t.Run("zero value", func(t *testing.T) {
 		s := MapSet[int]{}
-		hashSetMustNotContain(t, &s, 1)
+		hashSetMustNotContain(t, &s, 0)
 		testutil.Equals(t, s.Slice(), nil)
 
 		addByValue := func(m MapSet[int], val int) {

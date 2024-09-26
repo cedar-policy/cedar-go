@@ -55,9 +55,11 @@ func (h *MapSet[T]) Add(item T) bool {
 		h.m = map[T]struct{}{}
 	}
 
-	_, exists := h.m[item]
+	if _, exists := h.m[item]; exists {
+		return false
+	}
 	h.m[item] = peppercorn
-	return !exists
+	return true
 }
 
 // Remove an item from the Set. Returns true if the item existed in the set.

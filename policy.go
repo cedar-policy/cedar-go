@@ -97,7 +97,7 @@ func (p *Policy) Position() Position {
 	return Position(p.ast.Position)
 }
 
-// SetFilename mapset the filename of this policy.
+// SetFilename sets the filename of this policy.
 func (p *Policy) SetFilename(fileName string) {
 	p.ast.Position.Filename = fileName
 }
