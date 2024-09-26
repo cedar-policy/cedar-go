@@ -41,7 +41,7 @@ func (h ImmutableMapSet[T]) Equal(o ImmutableMapSet[T]) bool {
 	return MapSet[T](h).Equal(&om)
 }
 
-// MarshalJSON serializes an ImmutableMapSet as a JSON array. Order is non-deterministic.
+// MarshalJSON serializes a MapSet as a JSON array. Elements are ordered lexicographically by their marshaled value.
 func (h ImmutableMapSet[T]) MarshalJSON() ([]byte, error) {
 	return MapSet[T](h).MarshalJSON()
 }

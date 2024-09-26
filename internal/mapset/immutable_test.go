@@ -121,17 +121,8 @@ func TestImmutableHashSet(t *testing.T) {
 
 		out, err := json.Marshal(s)
 
-		correctOutputs := []string{
-			"[1,2,3]",
-			"[1,3,2]",
-			"[2,1,3]",
-			"[2,3,1]",
-			"[3,1,2]",
-			"[3,2,1]",
-		}
-
 		testutil.OK(t, err)
-		testutil.FatalIf(t, !slices.Contains(correctOutputs, string(out)), "%v is not a valid output", string(out))
+		testutil.Equals(t, string(out), "[1,2,3]")
 	})
 
 	t.Run("decode json", func(t *testing.T) {

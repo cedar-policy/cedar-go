@@ -149,22 +149,31 @@ func TestHashSet(t *testing.T) {
 		testutil.Equals(t, string(out), "[]")
 	})
 
-	t.Run("encode json", func(t *testing.T) {
-		s := FromItems(1, 2, 3)
+	t.Run("encode json one int", func(t *testing.T) {
+		s := FromItems(1)
 
 		out, err := json.Marshal(s)
 
-		correctOutputs := []string{
-			"[1,2,3]",
-			"[1,3,2]",
-			"[2,1,3]",
-			"[2,3,1]",
-			"[3,1,2]",
-			"[3,2,1]",
-		}
+		testutil.OK(t, err)
+		testutil.Equals(t, string(out), "[1]")
+	})
+
+	t.Run("encode json multiple int", func(t *testing.T) {
+		s := FromItems(3, 2, 1)
+
+		out, err := json.Marshal(s)
 
 		testutil.OK(t, err)
-		testutil.FatalIf(t, !slices.Contains(correctOutputs, string(out)), "%v is not a valid output", string(out))
+		testutil.Equals(t, string(out), "[1,2,3]")
+	})
+
+	t.Run("encode json multiple string", func(t *testing.T) {
+		s := FromItems("1", "2", "3")
+
+		out, err := json.Marshal(s)
+
+		testutil.OK(t, err)
+		testutil.Equals(t, string(out), `["1","2","3"]`)
 	})
 
 	t.Run("decode json", func(t *testing.T) {

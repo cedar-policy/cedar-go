@@ -1,8 +1,10 @@
 package mapset
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"golang.org/x/exp/maps"
 )
@@ -121,12 +123,23 @@ func (h MapSet[T]) Equal(o *MapSet[T]) bool {
 	return true
 }
 
-// MarshalJSON serializes a MapSet as a JSON array. Order is non-deterministic.
+// MarshalJSON serializes a MapSet as a JSON array. Elements are ordered lexicographically by their marshaled value.
 func (h MapSet[T]) MarshalJSON() ([]byte, error) {
 	if h.m == nil {
 		return []byte("[]"), nil
 	}
-	return json.Marshal(h.Slice())
+
+	elems := h.Slice()
+	marshaledElems := make([][]byte, 0, len(elems))
+	for _, elem := range elems {
+		b, err := json.Marshal(elem)
+		if err != nil {
+			return nil, err
+		}
+		marshaledElems = append(marshaledElems, b)
+	}
+	slices.SortFunc(marshaledElems, func(a, b []byte) int { return slices.Compare(a, b) })
+	return slices.Concat([]byte{'['}, bytes.Join(marshaledElems, []byte{','}), []byte{']'}), nil
 }
 
 // UnmarshalJSON deserializes a MapSet from a JSON array.
