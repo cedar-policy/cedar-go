@@ -27,3 +27,31 @@ func TestEntityIsZero(t *testing.T) {
 		})
 	}
 }
+
+func TestEntityMarshalJSON(t *testing.T) {
+	t.Parallel()
+	e := types.Entity{
+		UID: types.NewEntityUID("FooType", "1"),
+		Parents: types.NewEntityUIDSet(
+			types.NewEntityUID("BazType", "1"),
+			types.NewEntityUID("BarType", "2"),
+			types.NewEntityUID("BarType", "1"),
+			types.NewEntityUID("QuuxType", "30"),
+			types.NewEntityUID("QuuxType", "3"),
+		),
+		Attributes: types.Record{},
+	}
+
+	testutil.JSONMarshalsTo(t, e,
+		`{
+			"uid": {"type":"FooType","id":"1"},
+			"parents": [
+				{"type":"BarType","id":"1"},
+				{"type":"BarType","id":"2"},
+				{"type":"BazType","id":"1"},
+				{"type":"QuuxType","id":"3"},
+				{"type":"QuuxType","id":"30"}
+			],
+			"attrs":{}
+		}`)
+}

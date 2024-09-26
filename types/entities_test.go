@@ -1,7 +1,6 @@
 package types_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -25,16 +24,6 @@ func TestEntities(t *testing.T) {
 
 }
 
-func assertJSONEquals(t *testing.T, e any, want string) {
-	b, err := json.MarshalIndent(e, "", "\t")
-	testutil.OK(t, err)
-
-	var wantBuf bytes.Buffer
-	err = json.Indent(&wantBuf, []byte(want), "", "\t")
-	testutil.OK(t, err)
-	testutil.Equals(t, string(b), wantBuf.String())
-}
-
 func TestEntitiesJSON(t *testing.T) {
 	t.Parallel()
 	t.Run("Marshal", func(t *testing.T) {
@@ -52,7 +41,7 @@ func TestEntitiesJSON(t *testing.T) {
 		}
 		e[ent.UID] = ent
 		e[ent2.UID] = ent2
-		assertJSONEquals(
+		testutil.JSONMarshalsTo(
 			t,
 			e,
 			`[

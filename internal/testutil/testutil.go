@@ -1,6 +1,8 @@
 package testutil
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"reflect"
 )
@@ -59,4 +61,16 @@ func Panic(t TB, f func()) {
 		}
 	}()
 	f()
+}
+
+// JSONMarshalsTo asserts that obj marshals as JSON to the given string, allowing for formatting differences and
+// displaying an easy-to-read diff.
+func JSONMarshalsTo[T any](t TB, obj T, want string) {
+	b, err := json.MarshalIndent(obj, "", "\t")
+	OK(t, err)
+
+	var wantBuf bytes.Buffer
+	err = json.Indent(&wantBuf, []byte(want), "", "\t")
+	OK(t, err)
+	Equals(t, string(b), wantBuf.String())
 }

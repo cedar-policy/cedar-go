@@ -1,6 +1,10 @@
 package types
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"slices"
+	"strings"
+)
 
 // An Entity defines the parents and attributes for an EntityUID.
 type Entity struct {
@@ -16,6 +20,13 @@ func (e Entity) MarshalJSON() ([]byte, error) {
 	e.Parents.Iterate(func(p EntityUID) bool {
 		parents = append(parents, ImplicitlyMarshaledEntityUID(p))
 		return true
+	})
+	slices.SortFunc(parents, func(a, b ImplicitlyMarshaledEntityUID) int {
+		if cmp := strings.Compare(string(a.Type), string(b.Type)); cmp != 0 {
+			return cmp
+		}
+
+		return strings.Compare(string(a.ID), string(b.ID))
 	})
 
 	m := struct {
