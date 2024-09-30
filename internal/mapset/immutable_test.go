@@ -60,6 +60,16 @@ func TestImmutableHashSet(t *testing.T) {
 		testutil.Equals(t, s1.Equal(s3), false)
 	})
 
+	t.Run("equality of MapSet and ImmutableMapSet", func(t *testing.T) {
+		s1 := FromItems(1, 2, 3, 4)
+		s2 := Immutable(1, 2, 3, 4)
+		s3 := Immutable(1, 2, 3)
+		testutil.Equals(t, s1.Equal(s2), true)
+		testutil.Equals(t, s2.Equal(s1), true)
+		testutil.Equals(t, s1.Equal(s3), false)
+		testutil.Equals(t, s3.Equal(s1), false)
+	})
+
 	t.Run("iterate", func(t *testing.T) {
 		s1 := Immutable(1, 2, 3)
 
