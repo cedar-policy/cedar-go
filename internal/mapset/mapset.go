@@ -77,6 +77,7 @@ func (h MapSet[T]) Contains(item T) bool {
 
 type Container[T comparable] interface {
 	Contains(T) bool
+	Len() int
 }
 
 // Intersects returns whether any items in this set exist in o
@@ -112,8 +113,8 @@ func (h MapSet[T]) Len() int {
 }
 
 // Equal returns whether the same items exist in both h and o
-func (h MapSet[T]) Equal(o *MapSet[T]) bool {
-	if len(h.m) != len(o.m) {
+func (h MapSet[T]) Equal(o Container[T]) bool {
+	if len(h.m) != o.Len() {
 		return false
 	}
 

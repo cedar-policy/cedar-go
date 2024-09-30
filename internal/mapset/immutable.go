@@ -36,9 +36,8 @@ func (h ImmutableMapSet[T]) Len() int {
 }
 
 // Equal returns whether the same items exist in both h and o
-func (h ImmutableMapSet[T]) Equal(o ImmutableMapSet[T]) bool {
-	om := MapSet[T](o)
-	return MapSet[T](h).Equal(&om)
+func (h ImmutableMapSet[T]) Equal(o Container[T]) bool {
+	return MapSet[T](h).Equal(o)
 }
 
 // MarshalJSON serializes a MapSet as a JSON array. Elements are ordered lexicographically by their marshaled value.
