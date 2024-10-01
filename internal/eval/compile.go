@@ -11,7 +11,7 @@ type BoolEvaler struct {
 	eval Evaler
 }
 
-func (e *BoolEvaler) Eval(env *Env) (types.Boolean, error) {
+func (e *BoolEvaler) Eval(env Env) (types.Boolean, error) {
 	v, err := e.eval.Eval(env)
 	if err != nil {
 		return false, err

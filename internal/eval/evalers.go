@@ -25,34 +25,13 @@ type Env struct {
 	Entities                    types.Entities
 	Principal, Action, Resource types.Value
 	Context                     types.Value
-
-	inCache map[inKey]bool
-}
-
-type inKey struct {
-	a, b types.EntityUID
-}
-
-func NewEnv() *Env {
-	return InitEnv(&Env{})
-}
-
-func InitEnv(in *Env) *Env {
-	// add caches if applicable
-	in.inCache = map[inKey]bool{}
-	return in
-}
-
-func InitEnvWithCacheFrom(in *Env, parent *Env) *Env {
-	in.inCache = parent.inCache
-	return in
 }
 
 type Evaler interface {
-	Eval(*Env) (types.Value, error)
+	Eval(Env) (types.Value, error)
 }
 
-func evalBool(n Evaler, env *Env) (types.Boolean, error) {
+func evalBool(n Evaler, env Env) (types.Boolean, error) {
 	v, err := n.Eval(env)
 	if err != nil {
 		return false, err
@@ -64,7 +43,7 @@ func evalBool(n Evaler, env *Env) (types.Boolean, error) {
 	return b, nil
 }
 
-func evalLong(n Evaler, env *Env) (types.Long, error) {
+func evalLong(n Evaler, env Env) (types.Long, error) {
 	v, err := n.Eval(env)
 	if err != nil {
 		return 0, err
@@ -76,7 +55,7 @@ func evalLong(n Evaler, env *Env) (types.Long, error) {
 	return l, nil
 }
 
-func evalComparableValue(n Evaler, env *Env) (ComparableValue, error) {
+func evalComparableValue(n Evaler, env Env) (ComparableValue, error) {
 	v, err := n.Eval(env)
 	if err != nil {
 		return nil, err
@@ -88,7 +67,7 @@ func evalComparableValue(n Evaler, env *Env) (ComparableValue, error) {
 	return l, nil
 }
 
-func evalString(n Evaler, env *Env) (types.String, error) {
+func evalString(n Evaler, env Env) (types.String, error) {
 	v, err := n.Eval(env)
 	if err != nil {
 		return "", err
@@ -100,7 +79,7 @@ func evalString(n Evaler, env *Env) (types.String, error) {
 	return s, nil
 }
 
-func evalSet(n Evaler, env *Env) (types.Set, error) {
+func evalSet(n Evaler, env Env) (types.Set, error) {
 	v, err := n.Eval(env)
 	if err != nil {
 		return types.Set{}, err
@@ -112,7 +91,7 @@ func evalSet(n Evaler, env *Env) (types.Set, error) {
 	return s, nil
 }
 
-func evalEntity(n Evaler, env *Env) (types.EntityUID, error) {
+func evalEntity(n Evaler, env Env) (types.EntityUID, error) {
 	v, err := n.Eval(env)
 	if err != nil {
 		return types.EntityUID{}, err
@@ -124,7 +103,7 @@ func evalEntity(n Evaler, env *Env) (types.EntityUID, error) {
 	return e, nil
 }
 
-func evalDatetime(n Evaler, env *Env) (types.Datetime, error) {
+func evalDatetime(n Evaler, env Env) (types.Datetime, error) {
 	v, err := n.Eval(env)
 	if err != nil {
 		return types.Datetime{}, err
@@ -136,7 +115,7 @@ func evalDatetime(n Evaler, env *Env) (types.Datetime, error) {
 	return d, nil
 }
 
-func evalDecimal(n Evaler, env *Env) (types.Decimal, error) {
+func evalDecimal(n Evaler, env Env) (types.Decimal, error) {
 	v, err := n.Eval(env)
 	if err != nil {
 		return types.Decimal{}, err
@@ -148,7 +127,7 @@ func evalDecimal(n Evaler, env *Env) (types.Decimal, error) {
 	return d, nil
 }
 
-func evalDuration(n Evaler, env *Env) (types.Duration, error) {
+func evalDuration(n Evaler, env Env) (types.Duration, error) {
 	v, err := n.Eval(env)
 	if err != nil {
 		return types.Duration{}, err
@@ -160,7 +139,7 @@ func evalDuration(n Evaler, env *Env) (types.Duration, error) {
 	return d, nil
 }
 
-func evalIP(n Evaler, env *Env) (types.IPAddr, error) {
+func evalIP(n Evaler, env Env) (types.IPAddr, error) {
 	v, err := n.Eval(env)
 
 	if err != nil {
@@ -184,7 +163,7 @@ func newErrorEval(err error) *errorEval {
 	}
 }
 
-func (n *errorEval) Eval(_ *Env) (types.Value, error) {
+func (n *errorEval) Eval(Env) (types.Value, error) {
 	return zeroValue(), n.err
 }
 
@@ -197,7 +176,7 @@ func newLiteralEval(value types.Value) *literalEval {
 	return &literalEval{value: value}
 }
 
-func (n *literalEval) Eval(_ *Env) (types.Value, error) {
+func (n *literalEval) Eval(Env) (types.Value, error) {
 	return n.value, nil
 }
 
@@ -214,7 +193,7 @@ func newOrEval(lhs Evaler, rhs Evaler) Evaler {
 	}
 }
 
-func (n *orEval) Eval(env *Env) (types.Value, error) {
+func (n *orEval) Eval(env Env) (types.Value, error) {
 	v, err := n.lhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
@@ -250,7 +229,7 @@ func newAndEval(lhs Evaler, rhs Evaler) Evaler {
 	}
 }
 
-func (n *andEval) Eval(env *Env) (types.Value, error) {
+func (n *andEval) Eval(env Env) (types.Value, error) {
 	v, err := n.lhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
@@ -284,7 +263,7 @@ func newNotEval(inner Evaler) Evaler {
 	}
 }
 
-func (n *notEval) Eval(env *Env) (types.Value, error) {
+func (n *notEval) Eval(env Env) (types.Value, error) {
 	v, err := n.inner.Eval(env)
 	if err != nil {
 		return zeroValue(), err
@@ -353,7 +332,7 @@ func newAddEval(lhs Evaler, rhs Evaler) Evaler {
 	}
 }
 
-func (n *addEval) Eval(env *Env) (types.Value, error) {
+func (n *addEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -382,7 +361,7 @@ func newSubtractEval(lhs Evaler, rhs Evaler) Evaler {
 	}
 }
 
-func (n *subtractEval) Eval(env *Env) (types.Value, error) {
+func (n *subtractEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -411,7 +390,7 @@ func newMultiplyEval(lhs Evaler, rhs Evaler) Evaler {
 	}
 }
 
-func (n *multiplyEval) Eval(env *Env) (types.Value, error) {
+func (n *multiplyEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -438,7 +417,7 @@ func newNegateEval(inner Evaler) Evaler {
 	}
 }
 
-func (n *negateEval) Eval(env *Env) (types.Value, error) {
+func (n *negateEval) Eval(env Env) (types.Value, error) {
 	inner, err := evalLong(n.inner, env)
 	if err != nil {
 		return zeroValue(), err
@@ -463,7 +442,7 @@ func newLongLessThanEval(lhs Evaler, rhs Evaler) Evaler {
 	}
 }
 
-func (n *longLessThanEval) Eval(env *Env) (types.Value, error) {
+func (n *longLessThanEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -488,7 +467,7 @@ func newLongLessThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	}
 }
 
-func (n *longLessThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+func (n *longLessThanOrEqualEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -513,7 +492,7 @@ func newLongGreaterThanEval(lhs Evaler, rhs Evaler) Evaler {
 	}
 }
 
-func (n *longGreaterThanEval) Eval(env *Env) (types.Value, error) {
+func (n *longGreaterThanEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -538,7 +517,7 @@ func newLongGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	}
 }
 
-func (n *longGreaterThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+func (n *longGreaterThanOrEqualEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalLong(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -563,7 +542,7 @@ func newDecimalLessThanEval(lhs Evaler, rhs Evaler) *decimalLessThanEval {
 	}
 }
 
-func (n *decimalLessThanEval) Eval(env *Env) (types.Value, error) {
+func (n *decimalLessThanEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDecimal(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -588,7 +567,7 @@ func newDecimalLessThanOrEqualEval(lhs Evaler, rhs Evaler) *decimalLessThanOrEqu
 	}
 }
 
-func (n *decimalLessThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+func (n *decimalLessThanOrEqualEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDecimal(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -613,7 +592,7 @@ func newDecimalGreaterThanEval(lhs Evaler, rhs Evaler) *decimalGreaterThanEval {
 	}
 }
 
-func (n *decimalGreaterThanEval) Eval(env *Env) (types.Value, error) {
+func (n *decimalGreaterThanEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDecimal(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -638,7 +617,7 @@ func newDecimalGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *decimalGreaterTha
 	}
 }
 
-func (n *decimalGreaterThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+func (n *decimalGreaterThanOrEqualEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDecimal(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -665,7 +644,7 @@ func newIfThenElseEval(if_, then, else_ Evaler) *ifThenElseEval {
 	}
 }
 
-func (n *ifThenElseEval) Eval(env *Env) (types.Value, error) {
+func (n *ifThenElseEval) Eval(env Env) (types.Value, error) {
 	cond, err := evalBool(n.if_, env)
 	if err != nil {
 		return zeroValue(), err
@@ -688,7 +667,7 @@ func newEqualEval(lhs, rhs Evaler) Evaler {
 	}
 }
 
-func (n *equalEval) Eval(env *Env) (types.Value, error) {
+func (n *equalEval) Eval(env Env) (types.Value, error) {
 	lv, err := n.lhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
@@ -712,7 +691,7 @@ func newNotEqualEval(lhs, rhs Evaler) Evaler {
 	}
 }
 
-func (n *notEqualEval) Eval(env *Env) (types.Value, error) {
+func (n *notEqualEval) Eval(env Env) (types.Value, error) {
 	lv, err := n.lhs.Eval(env)
 	if err != nil {
 		return zeroValue(), err
@@ -733,7 +712,7 @@ func newSetLiteralEval(elements []Evaler) *setLiteralEval {
 	return &setLiteralEval{elements: elements}
 }
 
-func (n *setLiteralEval) Eval(env *Env) (types.Value, error) {
+func (n *setLiteralEval) Eval(env Env) (types.Value, error) {
 	vals := make([]types.Value, len(n.elements))
 	for i, e := range n.elements {
 		v, err := e.Eval(env)
@@ -757,7 +736,7 @@ func newContainsEval(lhs, rhs Evaler) Evaler {
 	}
 }
 
-func (n *containsEval) Eval(env *Env) (types.Value, error) {
+func (n *containsEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalSet(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -781,7 +760,7 @@ func newContainsAllEval(lhs, rhs Evaler) Evaler {
 	}
 }
 
-func (n *containsAllEval) Eval(env *Env) (types.Value, error) {
+func (n *containsAllEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalSet(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -813,7 +792,7 @@ func newContainsAnyEval(lhs, rhs Evaler) Evaler {
 	}
 }
 
-func (n *containsAnyEval) Eval(env *Env) (types.Value, error) {
+func (n *containsAnyEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalSet(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -842,7 +821,7 @@ func newRecordLiteralEval(elements map[types.String]Evaler) *recordLiteralEval {
 	return &recordLiteralEval{elements: elements}
 }
 
-func (n *recordLiteralEval) Eval(env *Env) (types.Value, error) {
+func (n *recordLiteralEval) Eval(env Env) (types.Value, error) {
 	vals := types.RecordMap{}
 	for k, en := range n.elements {
 		v, err := en.Eval(env)
@@ -864,7 +843,7 @@ func newAttributeAccessEval(record Evaler, attribute types.String) *attributeAcc
 	return &attributeAccessEval{object: record, attribute: attribute}
 }
 
-func (n *attributeAccessEval) Eval(env *Env) (types.Value, error) {
+func (n *attributeAccessEval) Eval(env Env) (types.Value, error) {
 	v, err := n.object.Eval(env)
 	if err != nil {
 		return zeroValue(), err
@@ -905,7 +884,7 @@ func newHasEval(record Evaler, attribute types.String) *hasEval {
 	return &hasEval{object: record, attribute: attribute}
 }
 
-func (n *hasEval) Eval(env *Env) (types.Value, error) {
+func (n *hasEval) Eval(env Env) (types.Value, error) {
 	v, err := n.object.Eval(env)
 	if err != nil {
 		return zeroValue(), err
@@ -935,7 +914,7 @@ func newLikeEval(lhs Evaler, pattern types.Pattern) *likeEval {
 	return &likeEval{lhs: lhs, pattern: pattern}
 }
 
-func (l *likeEval) Eval(env *Env) (types.Value, error) {
+func (l *likeEval) Eval(env Env) (types.Value, error) {
 	v, err := evalString(l.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -952,7 +931,7 @@ func newVariableEval(variableName types.String) *variableEval {
 	return &variableEval{variableName: variableName}
 }
 
-func (n *variableEval) Eval(env *Env) (types.Value, error) {
+func (n *variableEval) Eval(env Env) (types.Value, error) {
 	switch n.variableName {
 	case consts.Principal:
 		return env.Principal, nil
@@ -974,17 +953,7 @@ func newInEval(lhs, rhs Evaler) Evaler {
 	return &inEval{lhs: lhs, rhs: rhs}
 }
 
-func entityInOne(env *Env, entity types.EntityUID, parent types.EntityUID) bool {
-	key := inKey{a: entity, b: parent}
-	if cached, ok := env.inCache[key]; ok {
-		return cached
-	}
-	result := entityInOneWork(env, entity, parent)
-	env.inCache[key] = result
-	return result
-}
-
-func entityInOneWork(env *Env, entity types.EntityUID, parent types.EntityUID) bool {
+func entityInOne(env Env, entity types.EntityUID, parent types.EntityUID) bool {
 	if entity == parent {
 		return true
 	}
@@ -1013,7 +982,7 @@ func entityInOneWork(env *Env, entity types.EntityUID, parent types.EntityUID) b
 	}
 }
 
-func entityInSet(env *Env, entity types.EntityUID, parents mapset.Container[types.EntityUID]) bool {
+func entityInSet(env Env, entity types.EntityUID, parents mapset.Container[types.EntityUID]) bool {
 	if parents.Contains(entity) {
 		return true
 	}
@@ -1042,7 +1011,7 @@ func entityInSet(env *Env, entity types.EntityUID, parents mapset.Container[type
 	}
 }
 
-func (n *inEval) Eval(env *Env) (types.Value, error) {
+func (n *inEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalEntity(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1056,7 +1025,7 @@ func (n *inEval) Eval(env *Env) (types.Value, error) {
 	return doInEval(env, lhs, rhs)
 }
 
-func doInEval(env *Env, lhs types.EntityUID, rhs types.Value) (types.Value, error) {
+func doInEval(env Env, lhs types.EntityUID, rhs types.Value) (types.Value, error) {
 	switch rhsv := rhs.(type) {
 	case types.EntityUID:
 		return types.Boolean(entityInOne(env, lhs, rhsv)), nil
@@ -1090,7 +1059,7 @@ func newIsEval(lhs Evaler, rhs types.EntityType) *isEval {
 	return &isEval{lhs: lhs, rhs: rhs}
 }
 
-func (n *isEval) Eval(env *Env) (types.Value, error) {
+func (n *isEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalEntity(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1108,7 +1077,7 @@ func newIsInEval(lhs Evaler, is types.EntityType, rhs Evaler) Evaler {
 	return &isInEval{lhs: lhs, is: is, rhs: rhs}
 }
 
-func (n *isInEval) Eval(env *Env) (types.Value, error) {
+func (n *isInEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalEntity(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1132,7 +1101,7 @@ func newDecimalLiteralEval(literal Evaler) *decimalLiteralEval {
 	return &decimalLiteralEval{literal: literal}
 }
 
-func (n *decimalLiteralEval) Eval(env *Env) (types.Value, error) {
+func (n *decimalLiteralEval) Eval(env Env) (types.Value, error) {
 	literal, err := evalString(n.literal, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1155,7 +1124,7 @@ func newDatetimeLiteralEval(literal Evaler) *datetimeLiteralEval {
 	return &datetimeLiteralEval{literal: literal}
 }
 
-func (n *datetimeLiteralEval) Eval(env *Env) (types.Value, error) {
+func (n *datetimeLiteralEval) Eval(env Env) (types.Value, error) {
 	literal, err := evalString(n.literal, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1177,7 +1146,7 @@ func newDurationLiteralEval(literal Evaler) *durationLiteralEval {
 	return &durationLiteralEval{literal: literal}
 }
 
-func (n *durationLiteralEval) Eval(env *Env) (types.Value, error) {
+func (n *durationLiteralEval) Eval(env Env) (types.Value, error) {
 	literal, err := evalString(n.literal, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1199,7 +1168,7 @@ func newIPLiteralEval(literal Evaler) *ipLiteralEval {
 	return &ipLiteralEval{literal: literal}
 }
 
-func (n *ipLiteralEval) Eval(env *Env) (types.Value, error) {
+func (n *ipLiteralEval) Eval(env Env) (types.Value, error) {
 	literal, err := evalString(n.literal, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1230,7 +1199,7 @@ func newIPTestEval(object Evaler, test ipTestType) *ipTestEval {
 	return &ipTestEval{object: object, test: test}
 }
 
-func (n *ipTestEval) Eval(env *Env) (types.Value, error) {
+func (n *ipTestEval) Eval(env Env) (types.Value, error) {
 	i, err := evalIP(n.object, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1248,7 +1217,7 @@ func newIPIsInRangeEval(lhs, rhs Evaler) *ipIsInRangeEval {
 	return &ipIsInRangeEval{lhs: lhs, rhs: rhs}
 }
 
-func (n *ipIsInRangeEval) Eval(env *Env) (types.Value, error) {
+func (n *ipIsInRangeEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalIP(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1339,7 +1308,7 @@ func newComparableValueLessThanEval(lhs Evaler, rhs Evaler) *comparableValueLess
 	}
 }
 
-func (n *comparableValueLessThanEval) Eval(env *Env) (types.Value, error) {
+func (n *comparableValueLessThanEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalComparableValue(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1370,7 +1339,7 @@ func newComparableValueGreaterThanEval(lhs Evaler, rhs Evaler) *comparableValueG
 	}
 }
 
-func (n *comparableValueGreaterThanEval) Eval(env *Env) (types.Value, error) {
+func (n *comparableValueGreaterThanEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalComparableValue(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1399,7 +1368,7 @@ func newComparableValueLessThanOrEqualEval(lhs Evaler, rhs Evaler) *comparableVa
 	}
 }
 
-func (n *comparableValueLessThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+func (n *comparableValueLessThanOrEqualEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalComparableValue(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1428,7 +1397,7 @@ func newComparableValueGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *comparabl
 	}
 }
 
-func (n *comparableValueGreaterThanOrEqualEval) Eval(env *Env) (types.Value, error) {
+func (n *comparableValueGreaterThanOrEqualEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalComparableValue(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1452,7 +1421,7 @@ func newToDateEval(lhs Evaler) *toDateEval {
 	return &toDateEval{lhs: lhs}
 }
 
-func (n *toDateEval) Eval(env *Env) (types.Value, error) {
+func (n *toDateEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDatetime(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1468,7 +1437,7 @@ func newToTimeEval(lhs Evaler) *toTimeEval {
 	return &toTimeEval{lhs: lhs}
 }
 
-func (n *toTimeEval) Eval(env *Env) (types.Value, error) {
+func (n *toTimeEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDatetime(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1484,7 +1453,7 @@ func newToMillisecondsEval(lhs Evaler) *toMillisecondsEval {
 	return &toMillisecondsEval{lhs: lhs}
 }
 
-func (n *toMillisecondsEval) Eval(env *Env) (types.Value, error) {
+func (n *toMillisecondsEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDuration(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1500,7 +1469,7 @@ func newToSecondsEval(lhs Evaler) *toSecondsEval {
 	return &toSecondsEval{lhs: lhs}
 }
 
-func (n *toSecondsEval) Eval(env *Env) (types.Value, error) {
+func (n *toSecondsEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDuration(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1516,7 +1485,7 @@ func newToMinutesEval(lhs Evaler) *toMinutesEval {
 	return &toMinutesEval{lhs: lhs}
 }
 
-func (n *toMinutesEval) Eval(env *Env) (types.Value, error) {
+func (n *toMinutesEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDuration(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1532,7 +1501,7 @@ func newToHoursEval(lhs Evaler) *toHoursEval {
 	return &toHoursEval{lhs: lhs}
 }
 
-func (n *toHoursEval) Eval(env *Env) (types.Value, error) {
+func (n *toHoursEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDuration(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1548,7 +1517,7 @@ func newToDaysEval(lhs Evaler) *toDaysEval {
 	return &toDaysEval{lhs: lhs}
 }
 
-func (n *toDaysEval) Eval(env *Env) (types.Value, error) {
+func (n *toDaysEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDuration(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1565,7 +1534,7 @@ func newOffsetEval(lhs Evaler, rhs Evaler) *offsetEval {
 	return &offsetEval{lhs: lhs, rhs: rhs}
 }
 
-func (n *offsetEval) Eval(env *Env) (types.Value, error) {
+func (n *offsetEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDatetime(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err
@@ -1586,7 +1555,7 @@ func newDurationSinceEval(lhs Evaler, rhs Evaler) *durationSinceEval {
 	return &durationSinceEval{lhs: lhs, rhs: rhs}
 }
 
-func (n *durationSinceEval) Eval(env *Env) (types.Value, error) {
+func (n *durationSinceEval) Eval(env Env) (types.Value, error) {
 	lhs, err := evalDatetime(n.lhs, env)
 	if err != nil {
 		return zeroValue(), err

@@ -350,12 +350,12 @@ func TestToEval(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			e := toEval(tt.in.AsIsNode())
-			out, err := e.Eval(InitEnv(&Env{
+			out, err := e.Eval(Env{
 				Principal: types.NewEntityUID("Actor", "principal"),
 				Action:    types.NewEntityUID("Action", "test"),
 				Resource:  types.NewEntityUID("Resource", "database"),
 				Context:   types.Record{},
-			}))
+			})
 			tt.err(t, err)
 			testutil.Equals(t, out, tt.out)
 		})

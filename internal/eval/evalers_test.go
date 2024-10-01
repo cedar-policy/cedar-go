@@ -61,7 +61,7 @@ func TestOrNode(t *testing.T) {
 			t.Run(fmt.Sprintf("%v%v", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
 				n := newOrEval(newLiteralEval(types.Boolean(tt.lhs)), newLiteralEval(types.Boolean(tt.rhs)))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -72,7 +72,7 @@ func TestOrNode(t *testing.T) {
 		t.Parallel()
 		n := newOrEval(
 			newLiteralEval(types.True), newLiteralEval(types.Long(1)))
-		v, err := n.Eval(NewEnv())
+		v, err := n.Eval(Env{})
 		testutil.OK(t, err)
 		AssertBoolValue(t, v, true)
 	})
@@ -93,7 +93,7 @@ func TestOrNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newOrEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -116,7 +116,7 @@ func TestAndNode(t *testing.T) {
 			t.Run(fmt.Sprintf("%v%v", tt.lhs, tt.rhs), func(t *testing.T) {
 				t.Parallel()
 				n := newAndEval(newLiteralEval(types.Boolean(tt.lhs)), newLiteralEval(types.Boolean(tt.rhs)))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -127,7 +127,7 @@ func TestAndNode(t *testing.T) {
 		t.Parallel()
 		n := newAndEval(
 			newLiteralEval(types.False), newLiteralEval(types.Long(1)))
-		v, err := n.Eval(NewEnv())
+		v, err := n.Eval(Env{})
 		testutil.OK(t, err)
 		AssertBoolValue(t, v, false)
 	})
@@ -148,7 +148,7 @@ func TestAndNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newAndEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -169,7 +169,7 @@ func TestNotNode(t *testing.T) {
 			t.Run(fmt.Sprintf("%v", tt.arg), func(t *testing.T) {
 				t.Parallel()
 				n := newNotEval(newLiteralEval(types.Boolean(tt.arg)))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -190,7 +190,7 @@ func TestNotNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newNotEval(tt.arg)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -370,7 +370,7 @@ func TestAddNode(t *testing.T) {
 	t.Run("Basic", func(t *testing.T) {
 		t.Parallel()
 		n := newAddEval(newLiteralEval(types.Long(1)), newLiteralEval(types.Long(2)))
-		v, err := n.Eval(NewEnv())
+		v, err := n.Eval(Env{})
 		testutil.OK(t, err)
 		AssertLongValue(t, v, 3)
 	})
@@ -398,7 +398,7 @@ func TestAddNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newAddEval(tt.lhs, tt.rhs)
-			_, err := n.Eval(NewEnv())
+			_, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 		})
 	}
@@ -409,7 +409,7 @@ func TestSubtractNode(t *testing.T) {
 	t.Run("Basic", func(t *testing.T) {
 		t.Parallel()
 		n := newSubtractEval(newLiteralEval(types.Long(1)), newLiteralEval(types.Long(2)))
-		v, err := n.Eval(NewEnv())
+		v, err := n.Eval(Env{})
 		testutil.OK(t, err)
 		AssertLongValue(t, v, -1)
 	})
@@ -437,7 +437,7 @@ func TestSubtractNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newSubtractEval(tt.lhs, tt.rhs)
-			_, err := n.Eval(NewEnv())
+			_, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 		})
 	}
@@ -448,7 +448,7 @@ func TestMultiplyNode(t *testing.T) {
 	t.Run("Basic", func(t *testing.T) {
 		t.Parallel()
 		n := newMultiplyEval(newLiteralEval(types.Long(-3)), newLiteralEval(types.Long(2)))
-		v, err := n.Eval(NewEnv())
+		v, err := n.Eval(Env{})
 		testutil.OK(t, err)
 		AssertLongValue(t, v, -6)
 	})
@@ -476,7 +476,7 @@ func TestMultiplyNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newMultiplyEval(tt.lhs, tt.rhs)
-			_, err := n.Eval(NewEnv())
+			_, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 		})
 	}
@@ -487,7 +487,7 @@ func TestNegateNode(t *testing.T) {
 	t.Run("Basic", func(t *testing.T) {
 		t.Parallel()
 		n := newNegateEval(newLiteralEval(types.Long(-3)))
-		v, err := n.Eval(NewEnv())
+		v, err := n.Eval(Env{})
 		testutil.OK(t, err)
 		AssertLongValue(t, v, 3)
 	})
@@ -506,7 +506,7 @@ func TestNegateNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newNegateEval(tt.arg)
-			_, err := n.Eval(NewEnv())
+			_, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 		})
 	}
@@ -535,7 +535,7 @@ func TestLongLessThanNode(t *testing.T) {
 				t.Parallel()
 				n := newLongLessThanEval(
 					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -557,7 +557,7 @@ func TestLongLessThanNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newLongLessThanEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -587,7 +587,7 @@ func TestLongLessThanOrEqualNode(t *testing.T) {
 				t.Parallel()
 				n := newLongLessThanOrEqualEval(
 					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -609,7 +609,7 @@ func TestLongLessThanOrEqualNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newLongLessThanOrEqualEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -639,7 +639,7 @@ func TestLongGreaterThanNode(t *testing.T) {
 				t.Parallel()
 				n := newLongGreaterThanEval(
 					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -661,7 +661,7 @@ func TestLongGreaterThanNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newLongGreaterThanEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -691,7 +691,7 @@ func TestLongGreaterThanOrEqualNode(t *testing.T) {
 				t.Parallel()
 				n := newLongGreaterThanOrEqualEval(
 					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -713,7 +713,7 @@ func TestLongGreaterThanOrEqualNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newLongGreaterThanOrEqualEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -748,7 +748,7 @@ func TestDecimalLessThanNode(t *testing.T) {
 				testutil.OK(t, err)
 				rhsv := rhsd
 				n := newDecimalLessThanEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -770,7 +770,7 @@ func TestDecimalLessThanNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newDecimalLessThanEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -805,7 +805,7 @@ func TestDecimalLessThanOrEqualNode(t *testing.T) {
 				testutil.OK(t, err)
 				rhsv := rhsd
 				n := newDecimalLessThanOrEqualEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -827,7 +827,7 @@ func TestDecimalLessThanOrEqualNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newDecimalLessThanOrEqualEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -862,7 +862,7 @@ func TestDecimalGreaterThanNode(t *testing.T) {
 				testutil.OK(t, err)
 				rhsv := rhsd
 				n := newDecimalGreaterThanEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -884,7 +884,7 @@ func TestDecimalGreaterThanNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newDecimalGreaterThanEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -919,7 +919,7 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 				testutil.OK(t, err)
 				rhsv := rhsd
 				n := newDecimalGreaterThanOrEqualEval(newLiteralEval(lhsv), newLiteralEval(rhsv))
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -941,7 +941,7 @@ func TestDecimalGreaterThanOrEqualNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newDecimalGreaterThanOrEqualEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(NewEnv())
+				_, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 			})
 		}
@@ -1182,7 +1182,7 @@ func TestComparableValueComparisonNodes(t *testing.T) {
 			t.Run(fmt.Sprintf("%v_%s_%v", tt.lhs, tc.name, tt.rhs), func(t *testing.T) {
 				t.Parallel()
 				n := tc.evaler(toEvaler(tt.lhs), toEvaler(tt.rhs))
-				v, err := n.Eval(&Env{})
+				v, err := n.Eval(Env{})
 				if tt.wantErr == nil {
 					testutil.OK(t, err)
 					AssertBoolValue(t, v, tt.result)
@@ -1218,7 +1218,7 @@ func TestIfThenElseNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newIfThenElseEval(tt.if_, tt.then, tt.else_)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			testutil.Equals(t, v, tt.result)
 		})
@@ -1244,7 +1244,7 @@ func TestEqualNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newEqualEval(tt.lhs, tt.rhs)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -1270,7 +1270,7 @@ func TestNotEqualNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newNotEqualEval(tt.lhs, tt.rhs)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -1311,7 +1311,7 @@ func TestSetLiteralNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newSetLiteralEval(tt.elems)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -1335,7 +1335,7 @@ func TestContainsNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newContainsEval(tt.lhs, tt.rhs)
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 				AssertZeroValue(t, v)
 			})
@@ -1364,7 +1364,7 @@ func TestContainsNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newContainsEval(tt.lhs, tt.rhs)
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -1390,7 +1390,7 @@ func TestContainsAllNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newContainsAllEval(tt.lhs, tt.rhs)
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 				AssertZeroValue(t, v)
 			})
@@ -1418,7 +1418,7 @@ func TestContainsAllNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newContainsAllEval(tt.lhs, tt.rhs)
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -1444,7 +1444,7 @@ func TestContainsAnyNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newContainsAnyEval(tt.lhs, tt.rhs)
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.ErrorIs(t, err, tt.err)
 				AssertZeroValue(t, v)
 			})
@@ -1475,7 +1475,7 @@ func TestContainsAnyNode(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
 				n := newContainsAnyEval(tt.lhs, tt.rhs)
-				v, err := n.Eval(NewEnv())
+				v, err := n.Eval(Env{})
 				testutil.OK(t, err)
 				AssertBoolValue(t, v, tt.result)
 			})
@@ -1498,7 +1498,7 @@ func TestContainsAnyNode(t *testing.T) {
 		n := newContainsAnyEval(newLiteralEval(types.NewSet(set1)), newLiteralEval(types.NewSet(set2)))
 
 		// This call would take several minutes if the evaluation of ContainsAny was quadratic
-		val, err := n.Eval(NewEnv())
+		val, err := n.Eval(Env{})
 
 		testutil.OK(t, err)
 		testutil.Equals(t, val.(types.Boolean), types.False)
@@ -1529,7 +1529,7 @@ func TestRecordLiteralNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newRecordLiteralEval(tt.elems)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -1587,11 +1587,11 @@ func TestAttributeAccessNode(t *testing.T) {
 				UID:        types.NewEntityUID("knownType", "knownID"),
 				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
-			v, err := n.Eval(InitEnv(&Env{
+			v, err := n.Eval(Env{
 				Entities: types.Entities{
 					entity.UID: entity,
 				},
-			}))
+			})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -1644,11 +1644,11 @@ func TestHasNode(t *testing.T) {
 				UID:        types.NewEntityUID("knownType", "knownID"),
 				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
-			v, err := n.Eval(InitEnv(&Env{
+			v, err := n.Eval(Env{
 				Entities: types.Entities{
 					entity.UID: entity,
 				},
-			}))
+			})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -1702,7 +1702,7 @@ func TestLikeNode(t *testing.T) {
 			pat, err := parser.ParsePattern(tt.pattern[1 : len(tt.pattern)-1])
 			testutil.OK(t, err)
 			n := newLikeEval(tt.str, pat)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -1739,7 +1739,7 @@ func TestVariableNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newVariableEval(tt.variable)
-			v, err := n.Eval(InitEnv(&tt.env))
+			v, err := n.Eval(tt.env)
 			testutil.OK(t, err)
 			AssertValue(t, v, tt.result)
 		})
@@ -1849,7 +1849,7 @@ func TestEntityIn(t *testing.T) {
 					Parents: types.NewEntityUIDSet(ps...),
 				}
 			}
-			res := entityInSet(&Env{Entities: entityMap}, strEnt(tt.lhs), types.NewEntityUIDSet(rhs...))
+			res := entityInSet(Env{Entities: entityMap}, strEnt(tt.lhs), types.NewEntityUIDSet(rhs...))
 			testutil.Equals(t, res, tt.result)
 		})
 	}
@@ -1877,7 +1877,7 @@ func TestEntityIn(t *testing.T) {
 
 		}
 		res := entityInSet(
-			&Env{Entities: entityMap},
+			Env{Entities: entityMap},
 			types.NewEntityUID("0", "1"),
 			types.NewEntityUIDSet(types.NewEntityUID("0", "3")),
 		)
@@ -1903,7 +1903,7 @@ func TestIsNode(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := newIsEval(tt.lhs, tt.rhs).Eval(NewEnv())
+			got, err := newIsEval(tt.lhs, tt.rhs).Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, got, tt.result)
 		})
@@ -2019,7 +2019,7 @@ func TestInNode(t *testing.T) {
 					Parents: types.NewEntityUIDSet(ps...),
 				}
 			}
-			ec := InitEnv(&Env{Entities: entityMap})
+			ec := Env{Entities: entityMap}
 			v, err := n.Eval(ec)
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
@@ -2159,7 +2159,7 @@ func TestIsInNode(t *testing.T) {
 					Parents: types.NewEntityUIDSet(ps...),
 				}
 			}
-			ec := InitEnv(&Env{Entities: entityMap})
+			ec := Env{Entities: entityMap}
 			v, err := n.Eval(ec)
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
@@ -2185,7 +2185,7 @@ func TestDecimalLiteralNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newDecimalLiteralEval(tt.arg)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2212,7 +2212,7 @@ func TestIPLiteralNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newIPLiteralEval(tt.arg)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2250,7 +2250,7 @@ func TestIPTestNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newIPTestEval(tt.lhs, tt.rhs)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2288,7 +2288,7 @@ func TestIPIsInRangeNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newIPIsInRangeEval(tt.lhs, tt.rhs)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2325,31 +2325,6 @@ func TestCedarString(t *testing.T) {
 	}
 }
 
-func TestCache(t *testing.T) {
-	t.Parallel()
-	env := NewEnv()
-	e1Eval := newLiteralEval(types.NewEntityUID("T", "1"))
-	e2Eval := newLiteralEval(types.NewEntityUID("T", "2"))
-	var res types.Value
-	var err error
-	res, err = newInEval(e1Eval, e1Eval).Eval(env)
-	testutil.OK(t, err)
-	testutil.Equals(t, res, types.Value(types.True))
-
-	res, err = newInEval(e1Eval, e2Eval).Eval(env)
-	testutil.OK(t, err)
-	testutil.Equals(t, res, types.Value(types.False))
-
-	env = InitEnvWithCacheFrom(&Env{}, env)
-	res, err = newInEval(e1Eval, e1Eval).Eval(env)
-	testutil.OK(t, err)
-	testutil.Equals(t, res, types.Value(types.True))
-
-	res, err = newInEval(e1Eval, e2Eval).Eval(env)
-	testutil.OK(t, err)
-	testutil.Equals(t, res, types.Value(types.False))
-}
-
 func TestDatetimeLiteralNode(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -2368,7 +2343,7 @@ func TestDatetimeLiteralNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newDatetimeLiteralEval(tt.arg)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2395,7 +2370,7 @@ func TestDatetimeToDate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newToDateEval(tt.arg)
-			v, err := n.Eval(&Env{})
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2428,7 +2403,7 @@ func TestDatetimeDurationSince(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newDurationSinceEval(tt.lhs, tt.rhs)
-			v, err := n.Eval(&Env{})
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2461,7 +2436,7 @@ func TestDatetimeOffset(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newOffsetEval(tt.lhs, tt.rhs)
-			v, err := n.Eval(&Env{})
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2488,7 +2463,7 @@ func TestDatetimeToTime(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newToTimeEval(tt.arg)
-			v, err := n.Eval(&Env{})
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2513,7 +2488,7 @@ func TestDurationLiteralNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newDurationLiteralEval(tt.arg)
-			v, err := n.Eval(NewEnv())
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2540,7 +2515,7 @@ func TestDurationToMilliseconds(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newToMillisecondsEval(tt.arg)
-			v, err := n.Eval(&Env{})
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2567,7 +2542,7 @@ func TestDurationToSeconds(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newToSecondsEval(tt.arg)
-			v, err := n.Eval(&Env{})
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2594,7 +2569,7 @@ func TestDurationToMinutes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newToMinutesEval(tt.arg)
-			v, err := n.Eval(&Env{})
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2621,7 +2596,7 @@ func TestDurationToHours(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newToHoursEval(tt.arg)
-			v, err := n.Eval(&Env{})
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
@@ -2648,7 +2623,7 @@ func TestDurationToDays(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newToDaysEval(tt.arg)
-			v, err := n.Eval(&Env{})
+			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
