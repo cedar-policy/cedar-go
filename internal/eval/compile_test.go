@@ -12,7 +12,7 @@ import (
 func TestCompile(t *testing.T) {
 	t.Parallel()
 	e := Compile(ast.Permit())
-	res, err := e.Eval(nil)
+	res, err := e.Eval(Env{})
 	testutil.OK(t, err)
 	testutil.Equals(t, res, types.True)
 }
@@ -22,7 +22,7 @@ func TestBoolEvaler(t *testing.T) {
 	t.Run("Happy", func(t *testing.T) {
 		t.Parallel()
 		b := BoolEvaler{eval: newLiteralEval(types.True)}
-		v, err := b.Eval(nil)
+		v, err := b.Eval(Env{})
 		testutil.OK(t, err)
 		testutil.Equals(t, v, true)
 	})
@@ -31,7 +31,7 @@ func TestBoolEvaler(t *testing.T) {
 		t.Parallel()
 		errWant := fmt.Errorf("error")
 		b := BoolEvaler{eval: newErrorEval(errWant)}
-		v, err := b.Eval(nil)
+		v, err := b.Eval(Env{})
 		testutil.ErrorIs(t, err, errWant)
 		testutil.Equals(t, v, false)
 	})
@@ -39,7 +39,7 @@ func TestBoolEvaler(t *testing.T) {
 	t.Run("NonBool", func(t *testing.T) {
 		t.Parallel()
 		b := BoolEvaler{eval: newLiteralEval(types.String("bad"))}
-		v, err := b.Eval(nil)
+		v, err := b.Eval(Env{})
 		testutil.ErrorIs(t, err, ErrType)
 		testutil.Equals(t, v, false)
 	})

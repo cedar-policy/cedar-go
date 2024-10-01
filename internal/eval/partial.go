@@ -45,7 +45,7 @@ func IsIgnore(v types.Value) bool {
 
 // PartialPolicy returns a partially evaluated version of the policy and a boolean indicating if the policy should be kept.
 // (Policies that are determined to evaluate to false are not kept.)
-func PartialPolicy(env *Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
+func PartialPolicy(env Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
 	p2 := *p
 	if p2.Principal, keep = partialPrincipalScope(env, env.Principal, p2.Principal); !keep {
 		return nil, false
@@ -87,7 +87,7 @@ func PartialPolicy(env *Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
 	return &p2, true
 }
 
-func partialPrincipalScope(env *Env, ent types.Value, scope ast.IsPrincipalScopeNode) (ast.IsPrincipalScopeNode, bool) {
+func partialPrincipalScope(env Env, ent types.Value, scope ast.IsPrincipalScopeNode) (ast.IsPrincipalScopeNode, bool) {
 	evaled, result := partialScopeEval(env, ent, scope)
 	switch {
 	case evaled && !result:
@@ -99,7 +99,7 @@ func partialPrincipalScope(env *Env, ent types.Value, scope ast.IsPrincipalScope
 	}
 }
 
-func partialActionScope(env *Env, ent types.Value, scope ast.IsActionScopeNode) (ast.IsActionScopeNode, bool) {
+func partialActionScope(env Env, ent types.Value, scope ast.IsActionScopeNode) (ast.IsActionScopeNode, bool) {
 	evaled, result := partialScopeEval(env, ent, scope)
 	switch {
 	case evaled && !result:
@@ -111,7 +111,7 @@ func partialActionScope(env *Env, ent types.Value, scope ast.IsActionScopeNode) 
 	}
 }
 
-func partialResourceScope(env *Env, ent types.Value, scope ast.IsResourceScopeNode) (ast.IsResourceScopeNode, bool) {
+func partialResourceScope(env Env, ent types.Value, scope ast.IsResourceScopeNode) (ast.IsResourceScopeNode, bool) {
 	evaled, result := partialScopeEval(env, ent, scope)
 	switch {
 	case evaled && !result:
@@ -123,7 +123,7 @@ func partialResourceScope(env *Env, ent types.Value, scope ast.IsResourceScopeNo
 	}
 }
 
-func partialScopeEval(env *Env, ent types.Value, in ast.IsScopeNode) (evaled bool, result bool) {
+func partialScopeEval(env Env, ent types.Value, in ast.IsScopeNode) (evaled bool, result bool) {
 	if IsVariable(ent) {
 		return false, false
 	} else if IsIgnore(ent) {
@@ -156,7 +156,7 @@ var errVariable = fmt.Errorf("variable")
 var errIgnore = fmt.Errorf("ignore")
 
 // NOTE: nodes is modified in place, so be sure to send unique copy in
-func tryPartial(env *Env, nodes []ast.IsNode,
+func tryPartial(env Env, nodes []ast.IsNode,
 	mkEval func(values []types.Value) Evaler,
 	mkNode func(nodes []ast.IsNode) ast.IsNode,
 ) (ast.IsNode, error) {
@@ -196,13 +196,13 @@ func tryPartial(env *Env, nodes []ast.IsNode,
 	return mkNode(nodes), nil
 }
 
-func tryPartialBinary(env *Env, v ast.BinaryNode, mkEval func(a, b Evaler) Evaler, wrap func(b ast.BinaryNode) ast.IsNode) (ast.IsNode, error) {
+func tryPartialBinary(env Env, v ast.BinaryNode, mkEval func(a, b Evaler) Evaler, wrap func(b ast.BinaryNode) ast.IsNode) (ast.IsNode, error) {
 	return tryPartial(env, []ast.IsNode{v.Left, v.Right},
 		func(values []types.Value) Evaler { return mkEval(newLiteralEval(values[0]), newLiteralEval(values[1])) },
 		func(nodes []ast.IsNode) ast.IsNode { return wrap(ast.BinaryNode{Left: nodes[0], Right: nodes[1]}) },
 	)
 }
-func tryPartialUnary(env *Env, v ast.UnaryNode, mkEval func(a Evaler) Evaler, wrap func(b ast.UnaryNode) ast.IsNode) (ast.IsNode, error) {
+func tryPartialUnary(env Env, v ast.UnaryNode, mkEval func(a Evaler) Evaler, wrap func(b ast.UnaryNode) ast.IsNode) (ast.IsNode, error) {
 	return tryPartial(env, []ast.IsNode{v.Arg},
 		func(values []types.Value) Evaler { return mkEval(newLiteralEval(values[0])) },
 		func(nodes []ast.IsNode) ast.IsNode { return wrap(ast.UnaryNode{Arg: nodes[0]}) },
@@ -210,7 +210,7 @@ func tryPartialUnary(env *Env, v ast.UnaryNode, mkEval func(a Evaler) Evaler, wr
 }
 
 // partial takes in an ast.Node and finds does as much as is possible given the context
-func partial(env *Env, n ast.IsNode) (ast.IsNode, error) {
+func partial(env Env, n ast.IsNode) (ast.IsNode, error) {
 	switch v := n.(type) {
 	case ast.NodeTypeAccess:
 		return tryPartial(env,
@@ -400,7 +400,7 @@ func isFalse(in ast.IsNode) bool {
 	return v == types.Boolean(false)
 }
 
-func partialIfThenElse(env *Env, v ast.NodeTypeIfThenElse) (ast.IsNode, error) {
+func partialIfThenElse(env Env, v ast.NodeTypeIfThenElse) (ast.IsNode, error) {
 	if_, ifErr := partial(env, v.If)
 	switch {
 	case errors.Is(ifErr, errVariable):
@@ -428,7 +428,7 @@ func partialIfThenElse(env *Env, v ast.NodeTypeIfThenElse) (ast.IsNode, error) {
 	return ast.NodeTypeIfThenElse{If: if_, Then: then, Else: else_}, nil
 }
 
-func partialAnd(env *Env, v ast.NodeTypeAnd) (ast.IsNode, error) {
+func partialAnd(env Env, v ast.NodeTypeAnd) (ast.IsNode, error) {
 	left, leftErr := partial(env, v.Left)
 	switch {
 	case errors.Is(leftErr, errVariable):
@@ -454,7 +454,7 @@ func partialAnd(env *Env, v ast.NodeTypeAnd) (ast.IsNode, error) {
 	return ast.NodeTypeAnd{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, nil
 }
 
-func partialOr(env *Env, v ast.NodeTypeOr) (ast.IsNode, error) {
+func partialOr(env Env, v ast.NodeTypeOr) (ast.IsNode, error) {
 	left, leftErr := partial(env, v.Left)
 	switch {
 	case errors.Is(leftErr, errVariable):
@@ -496,7 +496,7 @@ func newPartialHasEval(record Evaler, attribute types.String) *partialHasEval {
 	return &partialHasEval{object: record, attribute: attribute}
 }
 
-func (n *partialHasEval) Eval(env *Env) (types.Value, error) {
+func (n *partialHasEval) Eval(env Env) (types.Value, error) {
 	v, err := n.object.Eval(env)
 	if err != nil {
 		return zeroValue(), err
@@ -530,7 +530,7 @@ func newPartialErrorEval(err Evaler) *partialErrorEval {
 	}
 }
 
-func (n *partialErrorEval) Eval(env *Env) (types.Value, error) {
+func (n *partialErrorEval) Eval(env Env) (types.Value, error) {
 	v, err := evalString(n.arg, env)
 	if err != nil {
 		return nil, err

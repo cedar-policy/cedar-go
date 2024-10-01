@@ -62,7 +62,7 @@ type batchEvaler struct {
 	policies map[types.PolicyID]*ast.Policy
 	compiled bool
 	evalers  map[types.PolicyID]*idEvaler
-	env      *eval.Env
+	env      eval.Env
 	callback Callback
 }
 
@@ -146,13 +146,13 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entitie
 	case request.Context == nil:
 		return fmt.Errorf("%w: context", errMissingPart)
 	}
-	be.env = eval.InitEnv(&eval.Env{
+	be.env = eval.Env{
 		Entities:  entityMap,
 		Principal: request.Principal,
 		Action:    request.Action,
 		Resource:  request.Resource,
 		Context:   request.Context,
-	})
+	}
 	be.Values = Values{}
 	for k, v := range request.Variables {
 		be.Variables = append(be.Variables, variableItem{Key: k, Values: v})
@@ -225,7 +225,7 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 	}
 
 	// then loop the current variable
-	loopEnv := *be.env
+	loopEnv := be.env
 	u := be.Variables[0]
 	dummyVal := types.True
 	_, chPrincipal := cloneSub(be.env.Principal, u.Key, dummyVal)
@@ -235,7 +235,7 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 	be.Variables = be.Variables[1:]
 	be.Values = maps.Clone(be.Values)
 	for _, v := range u.Values {
-		*be.env = loopEnv
+		be.env = loopEnv
 		be.Values[u.Key] = v
 		if chPrincipal {
 			be.env.Principal, _ = cloneSub(loopEnv.Principal, u.Key, v)
@@ -281,7 +281,7 @@ func diagnosticAuthzWithCallback(be *batchEvaler) error {
 	return nil
 }
 
-func isAuthorized(ps map[types.PolicyID]*idEvaler, env *eval.Env) (types.Decision, types.Diagnostic) {
+func isAuthorized(ps map[types.PolicyID]*idEvaler, env eval.Env) (types.Decision, types.Diagnostic) {
 	var diag types.Diagnostic
 	var forbids []types.DiagnosticReason
 	var permits []types.DiagnosticReason

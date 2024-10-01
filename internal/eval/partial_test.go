@@ -142,7 +142,7 @@ func TestPartialScopeEval(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			evaled, result := partialScopeEval(InitEnv(&tt.env), tt.ent, tt.in)
+			evaled, result := partialScopeEval(tt.env, tt.ent, tt.in)
 			testutil.Equals(t, evaled, tt.evaled)
 			testutil.Equals(t, result, tt.result)
 		})
@@ -153,7 +153,7 @@ func TestPartialScopeEval(t *testing.T) {
 func TestPartialScopeEvalPanic(t *testing.T) {
 	t.Parallel()
 	testutil.Panic(t, func() {
-		partialScopeEval(NewEnv(), types.NewEntityUID("T", "1"), nil)
+		partialScopeEval(Env{}, types.NewEntityUID("T", "1"), nil)
 	})
 }
 
@@ -162,19 +162,19 @@ func TestPartialPolicy(t *testing.T) {
 	tests := []struct {
 		name string
 		in   *ast.Policy
-		env  *Env
+		env  Env
 		out  *ast.Policy
 		keep bool
 	}{
 		{"smokeTest",
 			ast.Permit(),
-			&Env{},
+			Env{},
 			ast.Permit(),
 			true,
 		},
 		{"principalEqual",
 			ast.Permit().PrincipalEq(types.NewEntityUID("Account", "42")),
-			&Env{
+			Env{
 				Principal: types.NewEntityUID("Account", "42"),
 			},
 			ast.Permit(),
@@ -182,7 +182,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"principalNotEqual",
 			ast.Permit().PrincipalEq(types.NewEntityUID("Account", "42")),
-			&Env{
+			Env{
 				Principal: types.NewEntityUID("Account", "Other"),
 			},
 			nil,
@@ -190,7 +190,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"actionEqual",
 			ast.Permit().ActionEq(types.NewEntityUID("Action", "42")),
-			&Env{
+			Env{
 				Action: types.NewEntityUID("Action", "42"),
 			},
 			ast.Permit(),
@@ -198,7 +198,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"actionNotEqual",
 			ast.Permit().ActionEq(types.NewEntityUID("Action", "42")),
-			&Env{
+			Env{
 				Action: types.NewEntityUID("Action", "Other"),
 			},
 			nil,
@@ -206,7 +206,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"resourceEqual",
 			ast.Permit().ResourceEq(types.NewEntityUID("Resource", "42")),
-			&Env{
+			Env{
 				Resource: types.NewEntityUID("Resource", "42"),
 			},
 			ast.Permit(),
@@ -214,7 +214,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"resourceNotEqual",
 			ast.Permit().ResourceEq(types.NewEntityUID("Resource", "42")),
-			&Env{
+			Env{
 				Resource: types.NewEntityUID("Resource", "Other"),
 			},
 			nil,
@@ -222,37 +222,37 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"conditionOmitTrue",
 			ast.Permit().When(ast.True()),
-			&Env{},
+			Env{},
 			ast.Permit(),
 			true,
 		},
 		{"conditionDropFalse",
 			ast.Permit().When(ast.False()),
-			&Env{},
+			Env{},
 			nil,
 			false,
 		},
 		{"conditionDropError",
 			ast.Permit().When(ast.Long(42).GreaterThan(ast.String("bananas"))),
-			&Env{},
+			Env{},
 			ast.Permit().When(ast.NewNode(extError(errors.New("type error: expected long, got string")))),
 			true,
 		},
 		{"conditionDropTypeError",
 			ast.Permit().When(ast.Long(42)),
-			&Env{},
+			Env{},
 			ast.Permit().When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 			true,
 		},
 		{"conditionKeepUnfolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
-			&Env{Context: Variable("context")},
+			Env{Context: Variable("context")},
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
 			true,
 		},
 		{"conditionOmitTrueFolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
-			&Env{
+			Env{
 				Context: types.Long(43),
 			},
 			ast.Permit(),
@@ -260,7 +260,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"conditionDropFalseFolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
-			&Env{
+			Env{
 				Context: types.Long(41),
 			},
 			nil,
@@ -268,7 +268,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"conditionDropErrorFolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
-			&Env{
+			Env{
 				Context: types.String("bananas"),
 			},
 			ast.Permit().When(ast.NewNode(extError(errors.New("type error: expected long, got string")))),
@@ -276,7 +276,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"contextVariableAccess",
 			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"key": Variable("var"),
 				}),
@@ -287,7 +287,7 @@ func TestPartialPolicy(t *testing.T) {
 
 		{"ignorePermitContext",
 			ast.Permit().When(ast.Context().Equal(ast.Long(42))),
-			&Env{
+			Env{
 				Context: Ignore(),
 			},
 			ast.Permit(),
@@ -295,7 +295,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"ignoreForbidContext",
 			ast.Forbid().When(ast.Context().Equal(ast.Long(42))),
-			&Env{
+			Env{
 				Context: Ignore(),
 			},
 			nil,
@@ -303,7 +303,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"ignorePermitScope",
 			ast.Permit().PrincipalEq(types.NewEntityUID("T", "42")),
-			&Env{
+			Env{
 				Principal: Ignore(),
 			},
 			ast.Permit(),
@@ -311,7 +311,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"ignoreForbidScope",
 			ast.Forbid().PrincipalEq(types.NewEntityUID("T", "42")),
-			&Env{
+			Env{
 				Principal: Ignore(),
 			},
 			ast.Forbid(),
@@ -319,7 +319,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"ignoreAnd",
 			ast.Permit().When(ast.Context().Access("variable").And(ast.Context().Access("ignore").Equal(ast.Long(42)))),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
@@ -330,7 +330,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"ignoreOr",
 			ast.Permit().When(ast.Context().Access("variable").Or(ast.Context().Access("ignore").Equal(ast.Long(42)))),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
@@ -341,7 +341,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"ignoreIfThen",
 			ast.Permit().When(ast.IfThenElse(ast.Context().Access("variable"), ast.Context().Access("ignore").Equal(ast.Long(42)), ast.True())),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
@@ -352,7 +352,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"ignoreIfElse",
 			ast.Permit().When(ast.IfThenElse(ast.Context().Access("variable"), ast.True(), ast.Context().Access("ignore").Equal(ast.Long(42)))),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
@@ -363,7 +363,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"ignoreHas",
 			ast.Permit().When(ast.Context().Has("ignore")),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
@@ -374,7 +374,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"ignoreHasNot",
 			ast.Permit().When(ast.Not(ast.Context().Has("ignore"))),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"ignore":   Ignore(),
 					"variable": Variable("variable"),
@@ -385,7 +385,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"errorShortCircuit",
 			ast.Permit().When(ast.True()).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"variable": Variable("variable"),
 				}),
@@ -395,7 +395,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"errorShortCircuitKept",
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"variable": Variable("variable"),
 				}),
@@ -405,7 +405,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"errorConditionShortCircuit",
 			ast.Permit().When(ast.True()).When(ast.String("test")).When(ast.Context().Access("variable")),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"variable": Variable("variable"),
 				}),
@@ -415,7 +415,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"errorConditionShortCircuitKept",
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test")).When(ast.Context().Access("variable")),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"variable": Variable("variable"),
 				}),
@@ -425,7 +425,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"errorConditionShortCircuitKeptDeeper",
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test")).When(ast.Context().Access("variable")),
-			&Env{
+			Env{
 				Context: types.NewRecord(types.RecordMap{
 					"variable": Variable("variable"),
 				}),
@@ -435,7 +435,7 @@ func TestPartialPolicy(t *testing.T) {
 		},
 		{"keepDeepVariables",
 			ast.Permit().When(ast.True().Equal(ast.False().Equal(ast.Context()))),
-			&Env{
+			Env{
 				Context: Variable("context"),
 			},
 			ast.Permit().When(ast.True().Equal(ast.False().Equal(ast.Context()))),
@@ -446,7 +446,7 @@ func TestPartialPolicy(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, keep := PartialPolicy(InitEnv(tt.env), tt.in)
+			out, keep := PartialPolicy(tt.env, tt.in)
 			if keep {
 				testutil.Equals(t, out, tt.out)
 				// gotP := (*parser.Policy)(out)
@@ -499,7 +499,7 @@ func TestPartialIfThenElse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			n, ok := tt.in.AsIsNode().(ast.NodeTypeIfThenElse)
 			testutil.Equals(t, ok, true)
-			out, err := partialIfThenElse(&Env{
+			out, err := partialIfThenElse(Env{
 				Context: Variable("context"),
 			}, n)
 			tt.errTest(t, err)
@@ -563,7 +563,7 @@ func TestPartialAnd(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			n, ok := tt.in.AsIsNode().(ast.NodeTypeAnd)
 			testutil.Equals(t, ok, true)
-			out, err := partialAnd(&Env{
+			out, err := partialAnd(Env{
 				Context: Variable("context"),
 			}, n)
 			tt.errTest(t, err)
@@ -627,7 +627,7 @@ func TestPartialOr(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			n, ok := tt.in.AsIsNode().(ast.NodeTypeOr)
 			testutil.Equals(t, ok, true)
-			out, err := partialOr(&Env{
+			out, err := partialOr(Env{
 				Context: Variable("context"),
 			}, n)
 			tt.errTest(t, err)
@@ -1196,7 +1196,7 @@ func TestPartialBasic(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, err := partial(InitEnv(&Env{
+			out, err := partial((Env{
 				Principal: Variable("principal"),
 				Action:    Variable("action"),
 				Resource:  Variable("resource"),
@@ -1211,7 +1211,7 @@ func TestPartialBasic(t *testing.T) {
 func TestPartialPanic(t *testing.T) {
 	t.Parallel()
 	testutil.Panic(t, func() {
-		partial(NewEnv(), nil)
+		partial(Env{}, nil)
 	})
 }
 
@@ -1241,7 +1241,7 @@ func TestPartialErrorEval(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, err := tt.in.Eval(InitEnv(&tt.env))
+			out, err := tt.in.Eval(tt.env)
 			testutil.Equals(t, out, tt.out)
 			tt.err(t, err)
 		})
@@ -1288,7 +1288,7 @@ func TestPartialHasEval(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, err := tt.in.Eval(InitEnv(&tt.env))
+			out, err := tt.in.Eval(tt.env)
 			testutil.Equals(t, out, tt.out)
 			tt.err(t, err)
 		})

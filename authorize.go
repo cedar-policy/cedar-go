@@ -19,13 +19,13 @@ const (
 // IsAuthorized uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
 func (p PolicySet) IsAuthorized(entityMap Entities, req Request) (Decision, Diagnostic) {
-	c := eval.InitEnv(&eval.Env{
+	env := eval.Env{
 		Entities:  entityMap,
 		Principal: req.Principal,
 		Action:    req.Action,
 		Resource:  req.Resource,
 		Context:   req.Context,
-	})
+	}
 	var diag Diagnostic
 	var forbids []DiagnosticReason
 	var permits []DiagnosticReason
@@ -35,7 +35,7 @@ func (p PolicySet) IsAuthorized(entityMap Entities, req Request) (Decision, Diag
 	// - For permit, all permits must be run to collect annotations
 	// - For forbid, forbids must be run to collect annotations
 	for id, po := range p.policies {
-		result, err := po.eval.Eval(c)
+		result, err := po.eval.Eval(env)
 		if err != nil {
 			diag.Errors = append(diag.Errors, DiagnosticError{PolicyID: id, Position: po.Position(), Message: err.Error()})
 			continue
