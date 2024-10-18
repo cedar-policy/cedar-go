@@ -5,6 +5,7 @@
 ![Build and Test](https://github.com/cedar-policy/cedar-go/actions/workflows/build_and_test.yml/badge.svg)
 ![golangci-lint](https://github.com/cedar-policy/cedar-go/actions/workflows/golangci-lint.yml/badge.svg)
 ![Nightly Corpus Test](https://github.com/cedar-policy/cedar-go/actions/workflows/corpus.yml/badge.svg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/cedar-policy/cedar-go.svg)](https://pkg.go.dev/github.com/cedar-policy/cedar-go)
 
 This repository contains source code of the Go implementation of the [Cedar](https://www.cedarpolicy.com/) policy language.
 
