@@ -65,7 +65,7 @@ func (p *Policy) ActionInSet(entities ...types.EntityUID) *Policy {
     return p
 }
 
-func (p *Policy) ResourceEq(entity types.EntityUID) *Policy {
+func (p *Policy) ResourceEq(entity types.EntityReference) *Policy {
     p.Resource = Scope{}.Eq(entity)
     return p
 }

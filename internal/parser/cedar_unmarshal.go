@@ -231,13 +231,6 @@ func (p *parser) principal(policy *ast.Policy) error {
 func (p *parser) entity() (types.EntityUID, error) {
     var res types.EntityUID
 
-    if p.peek().Type == TokenOperator && p.peek().Text == "?" {
-        p.advance()
-        t := p.advance()
-
-        return types.EntityUID{Type: types.CedarVariable, ID: "?" + types.String(t.Text)}, nil
-    }
-
     t := p.advance()
     if !t.isIdent() {
         return res, p.errorf("expected ident")
@@ -374,10 +367,11 @@ func (p *parser) resource(policy *ast.Policy) error {
     switch p.peek().Text {
     case "==":
         p.advance()
-        entity, err := p.entity()
+        entity, err := p.entityReference()
         if err != nil {
             return err
         }
+
         policy.ResourceEq(entity)
         return nil
     case "is":
