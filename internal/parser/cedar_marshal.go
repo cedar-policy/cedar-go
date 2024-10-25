@@ -35,7 +35,7 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
     case ast.ScopeTypeAll:
         return ast.True()
     case ast.ScopeTypeEq:
-        //todo: wip: force entity reference convert
+        //todo: should we panic on this? or just trust that the interface is correct?
         rhs, _ := entityReferenceToNode(t.Entity)
 
         return ast.NewNode(varNode).Equal(rhs)
