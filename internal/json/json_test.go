@@ -454,6 +454,14 @@ func TestUnmarshalJSON(t *testing.T) {
             ast.Permit().When(ast.ExtensionCall("ip", ast.String("10.0.0.43")).IsInRange(ast.ExtensionCall("ip", ast.String("10.0.0.42/8")))),
             testutil.OK,
         },
+
+        // template experiment
+        {
+            "principal template variable",
+            `{"effect":"permit","principal":{"op":"==", "slot": "?principal"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+            ast.Permit().PrincipalEq(types.VariableSlot{Name: "?principal"}),
+            testutil.OK,
+        },
     }
 
     for _, tt := range tests {
