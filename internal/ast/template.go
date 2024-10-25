@@ -1,11 +1,11 @@
 package ast
 
 type Template struct {
-  Body Policy
+	Body Policy
 }
 
 type LinkedPolicy struct {
-  TemplateID string
-  LinkID     string
-  Policy     *Policy
+	TemplateID string
+	LinkID     string
+	Policy     *Policy
 }
