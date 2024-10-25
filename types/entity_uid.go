@@ -1,11 +1,11 @@
 package types
 
 import (
-  "encoding/json"
-  "hash/fnv"
-  "strconv"
+	"encoding/json"
+	"hash/fnv"
+	"strconv"
 
-  "github.com/cedar-policy/cedar-go/internal/mapset"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 )
 
 // Path is a series of idents separated by ::
@@ -16,28 +16,28 @@ type EntityType Path
 
 // An EntityUID is the identifier for a principal, action, or resource.
 type EntityUID struct {
-  Type EntityType
-  ID   String
+	Type EntityType
+	ID   String
 }
 
 // NewEntityUID returns an EntityUID given an EntityType and identifier
 func NewEntityUID(typ EntityType, id String) EntityUID {
-  return EntityUID{
-    Type: typ,
-    ID:   id,
-  }
+	return EntityUID{
+		Type: typ,
+		ID:   id,
+	}
 }
 
 // IsZero returns true if the EntityUID has an empty Type and ID.
 func (a EntityUID) IsZero() bool {
-  return a.Type == "" && a.ID == ""
+	return a.Type == "" && a.ID == ""
 }
 
 func (a EntityUID) isEntityReference() {}
 
 func (a EntityUID) Equal(bi Value) bool {
-  b, ok := bi.(EntityUID)
-  return ok && a == b
+	b, ok := bi.(EntityUID)
+	return ok && a == b
 }
 
 // String produces a string representation of the EntityUID, e.g. `Type::"id"`.
@@ -45,42 +45,42 @@ func (v EntityUID) String() string { return string(v.Type) + "::" + strconv.Quot
 
 // MarshalCedar produces a valid MarshalCedar language representation of the EntityUID, e.g. `Type::"id"`.
 func (v EntityUID) MarshalCedar() []byte {
-  return []byte(v.String())
+	return []byte(v.String())
 }
 
 func (v *EntityUID) UnmarshalJSON(b []byte) error {
-  // TODO: review after adding support for schemas
-  var res entityValueJSON
-  if err := json.Unmarshal(b, &res); err != nil {
-    return err
-  }
-  if res.Entity != nil {
-    v.Type = EntityType(res.Entity.Type)
-    v.ID = String(res.Entity.ID)
-    return nil
-  } else if res.Type != nil && res.ID != nil { // require both Type and ID to parse "implicit" JSON
-    v.Type = EntityType(*res.Type)
-    v.ID = String(*res.ID)
-    return nil
-  }
-  return errJSONEntityNotFound
+	// TODO: review after adding support for schemas
+	var res entityValueJSON
+	if err := json.Unmarshal(b, &res); err != nil {
+		return err
+	}
+	if res.Entity != nil {
+		v.Type = EntityType(res.Entity.Type)
+		v.ID = String(res.Entity.ID)
+		return nil
+	} else if res.Type != nil && res.ID != nil { // require both Type and ID to parse "implicit" JSON
+		v.Type = EntityType(*res.Type)
+		v.ID = String(*res.ID)
+		return nil
+	}
+	return errJSONEntityNotFound
 }
 
 // MarshalJSON marshals the EntityUID into JSON using the explicit form.
 func (v EntityUID) MarshalJSON() ([]byte, error) {
-  return json.Marshal(entityValueJSON{
-    Entity: &extEntity{
-      Type: string(v.Type),
-      ID:   string(v.ID),
-    },
-  })
+	return json.Marshal(entityValueJSON{
+		Entity: &extEntity{
+			Type: string(v.Type),
+			ID:   string(v.ID),
+		},
+	})
 }
 
 func (v EntityUID) hash() uint64 {
-  h := fnv.New64()
-  _, _ = h.Write([]byte(v.Type))
-  _, _ = h.Write([]byte(v.ID))
-  return h.Sum64()
+	h := fnv.New64()
+	_, _ = h.Write([]byte(v.Type))
+	_, _ = h.Write([]byte(v.ID))
+	return h.Sum64()
 }
 
 // ImplicitlyMarshaledEntityUID exists to allow the marshaling of the EntityUID into JSON using the implicit form. Users
@@ -89,16 +89,16 @@ func (v EntityUID) hash() uint64 {
 type ImplicitlyMarshaledEntityUID EntityUID
 
 func (i ImplicitlyMarshaledEntityUID) MarshalJSON() ([]byte, error) {
-  s := struct {
-    Type EntityType `json:"type"`
-    ID   String     `json:"id"`
-  }{i.Type, i.ID}
-  return json.Marshal(s)
+	s := struct {
+		Type EntityType `json:"type"`
+		ID   String     `json:"id"`
+	}{i.Type, i.ID}
+	return json.Marshal(s)
 }
 
 type EntityUIDSet = mapset.ImmutableMapSet[EntityUID]
 
 // NewEntityUIDSet returns an immutable EntityUIDSet ready for use.
 func NewEntityUIDSet(args ...EntityUID) EntityUIDSet {
-  return mapset.Immutable[EntityUID](args...)
+	return mapset.Immutable[EntityUID](args...)
 }
