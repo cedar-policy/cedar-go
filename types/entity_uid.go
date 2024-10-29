@@ -33,6 +33,8 @@ func (a EntityUID) IsZero() bool {
 	return a.Type == "" && a.ID == ""
 }
 
+func (a EntityUID) isEntityReference() {}
+
 func (a EntityUID) Equal(bi Value) bool {
 	b, ok := bi.(EntityUID)
 	return ok && a == b

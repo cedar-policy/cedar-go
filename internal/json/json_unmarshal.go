@@ -21,11 +21,19 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 	switch s.Op {
 	case "All":
 		return ast.Scope{}.All(), nil
-	case "==":
-		if s.Entity == nil {
-			return nil, fmt.Errorf("missing entity")
+	case "==": //todo: wip: change other operators and nodes to use this pattern
+		var ref types.EntityReference
+
+		switch {
+		case s.Slot != nil:
+			ref = types.VariableSlot{Name: types.String(*s.Slot)}
+		case s.Entity != nil:
+			ref = types.EntityUID(*s.Entity)
+		default:
+			return nil, fmt.Errorf("missing entity and slot")
 		}
-		return ast.Scope{}.Eq(types.EntityUID(*s.Entity)), nil
+
+		return ast.Scope{}.Eq(ref), nil
 	case "in":
 		if s.Entity == nil {
 			return nil, fmt.Errorf("missing entity")

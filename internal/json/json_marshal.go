@@ -15,8 +15,16 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		return
 	case ast.ScopeTypeEq:
 		s.Op = "=="
-		e := types.ImplicitlyMarshaledEntityUID(t.Entity)
-		s.Entity = &e
+
+		switch ent := t.Entity.(type) {
+		case types.EntityUID:
+			e := types.ImplicitlyMarshaledEntityUID(ent)
+			s.Entity = &e
+		case types.VariableSlot:
+			varName := ent.Name.String()
+			s.Slot = &varName
+		}
+
 		return
 	case ast.ScopeTypeIn:
 		s.Op = "in"

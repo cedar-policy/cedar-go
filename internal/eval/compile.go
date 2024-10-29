@@ -66,7 +66,7 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 	case ast.ScopeTypeAll:
 		return ast.True()
 	case ast.ScopeTypeEq:
-		return ast.NewNode(varNode).Equal(ast.Value(t.Entity))
+		return ast.NewNode(varNode).Equal(entityReferenceToNode(t.Entity))
 	case ast.ScopeTypeIn:
 		return ast.NewNode(varNode).In(ast.Value(t.Entity))
 	case ast.ScopeTypeInSet:
@@ -82,5 +82,17 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 		return ast.NewNode(varNode).IsIn(t.Type, ast.Value(t.Entity))
 	default:
 		panic(fmt.Sprintf("unknown scope type %T", t))
+	}
+}
+
+// todo: should we panic on this? or just trust that the interface is correct?
+func entityReferenceToNode(ef types.EntityReference) ast.Node {
+	switch e := ef.(type) {
+	case types.EntityUID:
+		return ast.Value(e)
+	case types.VariableSlot:
+		panic("variable slot cannot be evaluated, you should instantiate a template-linked policy first")
+	default:
+		panic(fmt.Sprintf("unknown entity reference type %T", e))
 	}
 }

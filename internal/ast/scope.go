@@ -10,7 +10,7 @@ func (s Scope) All() ScopeTypeAll {
 	return ScopeTypeAll{}
 }
 
-func (s Scope) Eq(entity types.EntityUID) ScopeTypeEq {
+func (s Scope) Eq(entity types.EntityReference) ScopeTypeEq {
 	return ScopeTypeEq{Entity: entity}
 }
 
@@ -30,7 +30,7 @@ func (s Scope) IsIn(entityType types.EntityType, entity types.EntityUID) ScopeTy
 	return ScopeTypeIsIn{Type: entityType, Entity: entity}
 }
 
-func (p *Policy) PrincipalEq(entity types.EntityUID) *Policy {
+func (p *Policy) PrincipalEq(entity types.EntityReference) *Policy {
 	p.Principal = Scope{}.Eq(entity)
 	return p
 }
@@ -65,7 +65,7 @@ func (p *Policy) ActionInSet(entities ...types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) ResourceEq(entity types.EntityUID) *Policy {
+func (p *Policy) ResourceEq(entity types.EntityReference) *Policy {
 	p.Resource = Scope{}.Eq(entity)
 	return p
 }
@@ -132,7 +132,7 @@ type ScopeTypeEq struct {
 	PrincipalScopeNode
 	ActionScopeNode
 	ResourceScopeNode
-	Entity types.EntityUID
+	Entity types.EntityReference
 }
 
 type ScopeTypeIn struct {
