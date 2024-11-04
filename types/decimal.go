@@ -125,20 +125,20 @@ func ParseDecimal(s string) (Decimal, error) {
 	}
 }
 
-func (a Decimal) Equal(bi Value) bool {
+func (d Decimal) Equal(bi Value) bool {
 	b, ok := bi.(Decimal)
-	return ok && a == b
+	return ok && d == b
 }
 
 // MarshalCedar produces a valid MarshalCedar language representation of the Decimal, e.g. `decimal("12.34")`.
-func (v Decimal) MarshalCedar() []byte { return []byte(`decimal("` + v.String() + `")`) }
+func (d Decimal) MarshalCedar() []byte { return []byte(`decimal("` + v.String() + `")`) }
 
 // String produces a string representation of the Decimal, e.g. `12.34`.
-func (v Decimal) String() string {
+func (d Decimal) String() string {
 	var res string
-	if v.value < 0 {
+	if d.value < 0 {
 		// Make sure we don't overflow here. Also, go truncates towards zero.
-		integer := v.value / DecimalPrecision
+		integer := d.value / DecimalPrecision
 		decimal := integer*DecimalPrecision - v.value
 		res = fmt.Sprintf("-%d.%04d", -integer, decimal)
 	} else {
@@ -155,7 +155,7 @@ func (v Decimal) String() string {
 	return res[:right]
 }
 
-func (v *Decimal) UnmarshalJSON(b []byte) error {
+func (d *Decimal) UnmarshalJSON(b []byte) error {
 	var arg string
 	if len(b) > 0 && b[0] == '"' {
 		if err := json.Unmarshal(b, &arg); err != nil {
@@ -182,20 +182,20 @@ func (v *Decimal) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	*v = vv
+	*d = vv
 	return nil
 }
 
 // MarshalJSON marshals the Decimal into JSON using the explicit form.
-func (v Decimal) MarshalJSON() ([]byte, error) {
+func (d Decimal) MarshalJSON() ([]byte, error) {
 	return json.Marshal(extValueJSON{
 		Extn: &extn{
 			Fn:  "decimal",
-			Arg: v.String(),
+			Arg: d.String(),
 		},
 	})
 }
 
-func (v Decimal) hash() uint64 {
-	return uint64(v.value)
+func (d Decimal) hash() uint64 {
+	return uint64(d.value)
 }
