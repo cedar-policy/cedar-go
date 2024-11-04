@@ -120,6 +120,15 @@ func TestDecimal(t *testing.T) {
 		testutil.FatalIf(t, zero.Equal(f), "%v Equal to %v", zero, f)
 	})
 
+	t.Run("Cmp", func(t *testing.T) {
+		t.Parallel()
+		one := types.UnsafeDecimal(1)
+		zero := types.UnsafeDecimal(0)
+		testutil.Equals(t, one.Cmp(zero), 1)
+		testutil.Equals(t, one.Cmp(one), 0)
+		testutil.Equals(t, zero.Cmp(one), -1)
+	})
+
 	t.Run("MarshalCedar", func(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(t, string(types.UnsafeDecimal(42).MarshalCedar()), `decimal("42.0")`)

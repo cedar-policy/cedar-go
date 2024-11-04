@@ -1,6 +1,7 @@
 package types
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,13 +13,22 @@ import (
 // more than four digits. In Go this is stored as an int64, the precision is
 // defined by the constant DecimalPrecision.
 type Decimal struct {
-	Value int64
+	value int64
+}
+
+// Cmp returns
+//
+//	-1 if d is less than other,
+//	 0 if d equals other,
+//	+1 if d is greater than other.
+func (d Decimal) Cmp(other Decimal) int {
+	return cmp.Compare(d.value, other.value)
 }
 
 // UnsafeDecimal creates a decimal via unsafe conversion from int, int64, float64.
 // Precision may be lost and overflows may occur.
 func UnsafeDecimal[T int | int64 | float64](v T) Decimal {
-	return Decimal{Value: int64(v * DecimalPrecision)}
+	return Decimal{value: int64(v * DecimalPrecision)}
 }
 
 // DecimalPrecision is the precision of a Decimal.
@@ -109,9 +119,9 @@ func ParseDecimal(s string) (Decimal, error) {
 		// -922337203685477.5808. This isn't technically necessary because the
 		// go spec defines arithmetic to be well-defined when overflowing.
 		// However, doing things this way doesn't hurt, so let's be pedantic.
-		return Decimal{Value: DecimalPrecision*-integer - fraction}, nil
+		return Decimal{value: DecimalPrecision*-integer - fraction}, nil
 	} else {
-		return Decimal{Value: DecimalPrecision*integer + fraction}, nil
+		return Decimal{value: DecimalPrecision*integer + fraction}, nil
 	}
 }
 
@@ -126,13 +136,13 @@ func (v Decimal) MarshalCedar() []byte { return []byte(`decimal("` + v.String() 
 // String produces a string representation of the Decimal, e.g. `12.34`.
 func (v Decimal) String() string {
 	var res string
-	if v.Value < 0 {
+	if v.value < 0 {
 		// Make sure we don't overflow here. Also, go truncates towards zero.
-		integer := v.Value / DecimalPrecision
-		decimal := integer*DecimalPrecision - v.Value
+		integer := v.value / DecimalPrecision
+		decimal := integer*DecimalPrecision - v.value
 		res = fmt.Sprintf("-%d.%04d", -integer, decimal)
 	} else {
-		res = fmt.Sprintf("%d.%04d", v.Value/DecimalPrecision, v.Value%DecimalPrecision)
+		res = fmt.Sprintf("%d.%04d", v.value/DecimalPrecision, v.value%DecimalPrecision)
 	}
 
 	// Trim off up to three trailing zeros.
@@ -187,5 +197,5 @@ func (v Decimal) MarshalJSON() ([]byte, error) {
 }
 
 func (v Decimal) hash() uint64 {
-	return uint64(v.Value)
+	return uint64(v.value)
 }
