@@ -5,15 +5,73 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"unicode"
+
+	"golang.org/x/exp/constraints"
 )
+
+// DecimalPrecision is the precision of a Decimal.
+const DecimalPrecision = 10000
+
+var DecimalMax = Decimal{value: math.MaxInt64}
+var DecimalMin = Decimal{value: math.MinInt64}
 
 // A Decimal is a value with both a whole number part and a decimal part of no
 // more than four digits. In Go this is stored as an int64, the precision is
 // defined by the constant DecimalPrecision.
 type Decimal struct {
 	value int64
+}
+
+func NewDecimal(i int64, exponent int) (Decimal, error) {
+	if exponent < -4 || exponent > 14 {
+		return Decimal{}, fmt.Errorf("%w: exponent value of %v exceeds maximum range of Decimal", ErrDecimal, exponent)
+	}
+
+	var intPart int64
+	var fracPart int64
+	if exponent <= 0 {
+		intPart = i / int64(math.Pow10(-exponent))
+		fracPart = i % int64(math.Pow10(-exponent)) * int64(math.Pow10(4+exponent))
+	} else {
+		intPart = i * int64(math.Pow10(exponent))
+		if i > 0 && intPart < i {
+			return Decimal{}, fmt.Errorf("%w: value %ve%v would overflow", ErrDecimal, i, exponent)
+		} else if i < 0 && intPart > i {
+			return Decimal{}, fmt.Errorf("%w: value %ve%v would underflow", ErrDecimal, i, exponent)
+		}
+	}
+
+	if intPart > 922337203685477 || (intPart == 922337203685477 && fracPart > 5807) {
+		return Decimal{}, fmt.Errorf("%w: value %ve%v would overflow", ErrDecimal, i, exponent)
+	} else if intPart < -922337203685477 || (intPart == -922337203685477 && fracPart < -5808) {
+		return Decimal{}, fmt.Errorf("%w: value %ve%v would underflow", ErrDecimal, i, exponent)
+	}
+
+	return Decimal{value: intPart*DecimalPrecision + fracPart}, nil
+}
+
+func NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error) {
+	return NewDecimal(int64(i), 0)
+}
+
+func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
+	f = f * DecimalPrecision
+	if f > math.MaxInt64 {
+		return Decimal{}, fmt.Errorf("%w: value %v would overflow", ErrDecimal, f)
+	} else if f < math.MinInt64 {
+		return Decimal{}, fmt.Errorf("%w: value %v would underflow", ErrDecimal, f)
+	}
+
+	return NewDecimal(int64(f), -4)
+}
+
+func (d Decimal) ToFloat() float64 {
+	intPart := d.value / DecimalPrecision
+	fracPart := d.value % DecimalPrecision / DecimalPrecision
+	return float64(intPart + fracPart)
 }
 
 // Cmp returns
@@ -24,15 +82,6 @@ type Decimal struct {
 func (d Decimal) Cmp(other Decimal) int {
 	return cmp.Compare(d.value, other.value)
 }
-
-// UnsafeDecimal creates a decimal via unsafe conversion from int, int64, float64.
-// Precision may be lost and overflows may occur.
-func UnsafeDecimal[T int | int64 | float64](v T) Decimal {
-	return Decimal{value: int64(v * DecimalPrecision)}
-}
-
-// DecimalPrecision is the precision of a Decimal.
-const DecimalPrecision = 10000
 
 // ParseDecimal takes a string representation of a decimal number and converts it into a Decimal type.
 func ParseDecimal(s string) (Decimal, error) {
@@ -131,7 +180,7 @@ func (d Decimal) Equal(bi Value) bool {
 }
 
 // MarshalCedar produces a valid MarshalCedar language representation of the Decimal, e.g. `decimal("12.34")`.
-func (d Decimal) MarshalCedar() []byte { return []byte(`decimal("` + v.String() + `")`) }
+func (d Decimal) MarshalCedar() []byte { return []byte(`decimal("` + d.String() + `")`) }
 
 // String produces a string representation of the Decimal, e.g. `12.34`.
 func (d Decimal) String() string {
@@ -139,10 +188,10 @@ func (d Decimal) String() string {
 	if d.value < 0 {
 		// Make sure we don't overflow here. Also, go truncates towards zero.
 		integer := d.value / DecimalPrecision
-		decimal := integer*DecimalPrecision - v.value
+		decimal := integer*DecimalPrecision - d.value
 		res = fmt.Sprintf("-%d.%04d", -integer, decimal)
 	} else {
-		res = fmt.Sprintf("%d.%04d", v.value/DecimalPrecision, v.value%DecimalPrecision)
+		res = fmt.Sprintf("%d.%04d", d.value/DecimalPrecision, d.value%DecimalPrecision)
 	}
 
 	// Trim off up to three trailing zeros.

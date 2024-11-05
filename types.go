@@ -5,6 +5,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
+	"golang.org/x/exp/constraints"
 )
 
 //  _____
@@ -109,8 +110,14 @@ func NewSet(s []types.Value) Set {
 	return types.NewSet(s)
 }
 
-// UnsafeDecimal creates a decimal via unsafe conversion from int, int64, float64.
-// Precision may be lost and overflows may occur.
-func UnsafeDecimal[T int | int64 | float64](v T) Decimal {
-	return types.UnsafeDecimal(v)
+func NewDecimal(i int64, exponent int) (Decimal, error) {
+	return types.NewDecimal(i, exponent)
+}
+
+func NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error) {
+	return types.NewDecimalFromInt(i)
+}
+
+func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
+	return types.NewDecimalFromFloat(f)
 }

@@ -10,7 +10,7 @@ import (
 
 func TestDecimal(t *testing.T) {
 	t.Parallel()
-	{
+	t.Run("ParseDecimal", func(t *testing.T) {
 		tests := []struct{ in, out string }{
 			{"1.2345", "1.2345"},
 			{"1.2340", "1.234"},
@@ -69,9 +69,9 @@ func TestDecimal(t *testing.T) {
 				testutil.Equals(t, d.String(), tt.out)
 			})
 		}
-	}
+	})
 
-	{
+	t.Run("ParseDecimalErrors", func(t *testing.T) {
 		tests := []struct{ in, errStr string }{
 			{"", "error parsing decimal value: string too short"},
 			{"-", "error parsing decimal value: string too short"},
@@ -105,32 +105,185 @@ func TestDecimal(t *testing.T) {
 				testutil.Equals(t, err.Error(), tt.errStr)
 			})
 		}
-	}
+	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
-		one := types.UnsafeDecimal(1)
-		one2 := types.UnsafeDecimal(1)
-		zero := types.UnsafeDecimal(0)
+		one := testutil.Must(types.NewDecimal(1, 0))
+		one2 := testutil.Must(types.NewDecimal(1, 0))
+		zero := testutil.Must(types.NewDecimal(0, 0))
+		max := testutil.Must(types.NewDecimal(9223372036854775807, -4))
+		min := testutil.Must(types.NewDecimal(-9223372036854775808, -4))
 		f := types.Boolean(false)
 		testutil.FatalIf(t, !one.Equal(one), "%v not Equal to %v", one, one)
 		testutil.FatalIf(t, !one.Equal(one2), "%v not Equal to %v", one, one2)
 		testutil.FatalIf(t, one.Equal(zero), "%v Equal to %v", one, zero)
 		testutil.FatalIf(t, zero.Equal(one), "%v Equal to %v", zero, one)
 		testutil.FatalIf(t, zero.Equal(f), "%v Equal to %v", zero, f)
+		testutil.Equals(t, max, types.DecimalMax)
+		testutil.Equals(t, min, types.DecimalMin)
+
 	})
 
 	t.Run("Cmp", func(t *testing.T) {
 		t.Parallel()
-		one := types.UnsafeDecimal(1)
-		zero := types.UnsafeDecimal(0)
+		one := testutil.Must(types.NewDecimal(1, 0))
+		zero := testutil.Must(types.NewDecimal(0, 0))
 		testutil.Equals(t, one.Cmp(zero), 1)
 		testutil.Equals(t, one.Cmp(one), 0)
 		testutil.Equals(t, zero.Cmp(one), -1)
 	})
 
+	t.Run("NewDecimal", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			in   int64
+			exp  int
+			want string
+		}{
+			{9223372036854775807, -4, "922337203685477.5807"},
+			{922337203685477580, -3, "922337203685477.58"},
+			{92233720368547758, -2, "922337203685477.58"},
+			{9223372036854775, -1, "922337203685477.5"},
+			{922337203685477, 0, "922337203685477.0"},
+			{-9223372036854775808, -4, "-922337203685477.5808"},
+			{-922337203685477580, -3, "-922337203685477.58"},
+			{-92233720368547758, -2, "-922337203685477.58"},
+			{-9223372036854775, -1, "-922337203685477.5"},
+			{-922337203685477, 0, "-922337203685477.0"},
+			{92233720368547, 1, "922337203685470.0"},
+			{9223372036854, 2, "922337203685400.0"},
+			{922337203685, 3, "922337203685000.0"},
+			{9, 14, "900000000000000.0"},
+		}
+		for _, tt := range tests {
+			t.Run(tt.want, func(t *testing.T) {
+				t.Parallel()
+				d, err := types.NewDecimal(tt.in, tt.exp)
+				testutil.OK(t, err)
+				testutil.Equals(t, d.String(), tt.want)
+			})
+		}
+	})
+
+	t.Run("NewDecimalOverflow", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			in  int64
+			exp int
+		}{
+			{922337203685477581, -3},
+			{92233720368547759, -2},
+			{9223372036854776, -1},
+			{922337203685478, 0},
+			{92233720368548, 1},
+			{10, 14},
+			{1, 15},
+		}
+		for _, tt := range tests {
+			t.Run(fmt.Sprintf("%ve%v", tt.in, tt.exp), func(t *testing.T) {
+				t.Parallel()
+				_, err := types.NewDecimal(tt.in, tt.exp)
+				testutil.ErrorIs(t, err, types.ErrDecimal)
+			})
+		}
+	})
+
+	t.Run("NewDecimalUnderflow", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			in  int64
+			exp int
+		}{
+			{-922337203685477581, -3},
+			{-92233720368547759, -2},
+			{-9223372036854776, -1},
+			{-922337203685478, 0},
+			{-92233720368548, 1},
+			{-10, 14},
+			{-1, 15},
+		}
+		for _, tt := range tests {
+			t.Run(fmt.Sprintf("%ve%v", tt.in, tt.exp), func(t *testing.T) {
+				t.Parallel()
+				_, err := types.NewDecimal(tt.in, tt.exp)
+				testutil.ErrorIs(t, err, types.ErrDecimal)
+			})
+		}
+	})
+
+	t.Run("NewDecimalFromFloat", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			in   float64
+			want string
+		}{
+			{0.0, "0.0"},
+			{1.0, "1.0"},
+			{-1.0, "-1.0"},
+			{1.23451, "1.2345"},
+			{1.23456, "1.2345"},
+			{12345678901.2345, "12345678901.2345"},
+			{123456789012.3456, "123456789012.3456"},
+			{922337203685477.5807, "922337203685477.5807"},
+			{-922337203685477.5808, "-922337203685477.5808"},
+		}
+		for _, tt := range tests {
+			t.Run(tt.want, func(t *testing.T) {
+				t.Parallel()
+				d, err := types.NewDecimalFromFloat(tt.in)
+				testutil.OK(t, err)
+				testutil.Equals(t, d.String(), tt.want)
+			})
+		}
+	})
+
+	// Above ~16 digits, precision loss in floats becomes a thing and float literals start to be rounded
+	t.Run("NewDecimalFromFloatPrecisionLoss", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			in   float64
+			want string
+		}{
+			{1234567890123.4567, "1234567890123.4568"},
+			{12345678901234.567, "12345678901234.5664"},
+			{123456789012345.67, "123456789012345.6768"},
+			{922337203685477.59, "922337203685477.5807"},   // Surprising overflow allowed...
+			{-922337203685477.59, "-922337203685477.5808"}, // Surprising underflow allowed...
+		}
+		for _, tt := range tests {
+			t.Run(tt.want, func(t *testing.T) {
+				t.Parallel()
+				d, err := types.NewDecimalFromFloat(tt.in)
+				testutil.OK(t, err)
+				testutil.Equals(t, d.String(), tt.want)
+			})
+		}
+	})
+
+	t.Run("NewDecimalFromFloatOverflow", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			in float64
+		}{
+			{922337203685477.6875},
+			{-922337203685477.6876},
+			{1000000000000000.0},
+			{-1000000000000000.0},
+		}
+		for _, tt := range tests {
+			t.Run(fmt.Sprintf("%v", tt.in), func(t *testing.T) {
+				_, err := types.NewDecimalFromFloat(tt.in)
+				testutil.ErrorIs(t, err, types.ErrDecimal)
+			})
+		}
+	})
+
 	t.Run("MarshalCedar", func(t *testing.T) {
 		t.Parallel()
-		testutil.Equals(t, string(types.UnsafeDecimal(42).MarshalCedar()), `decimal("42.0")`)
+		testutil.Equals(
+			t,
+			string(testutil.Must(types.NewDecimal(42, 0)).MarshalCedar()),
+			`decimal("42.0")`)
 	})
 }

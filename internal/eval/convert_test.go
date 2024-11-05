@@ -207,7 +207,7 @@ func TestToEval(t *testing.T) {
 		{
 			"decimal",
 			ast.ExtensionCall("decimal", ast.String("42.42")),
-			types.UnsafeDecimal(42.42),
+			testutil.Must(types.NewDecimal(42, 4200)),
 			testutil.OK,
 		},
 		{
@@ -279,25 +279,25 @@ func TestToEval(t *testing.T) {
 
 		{
 			"lessThan",
-			ast.ExtensionCall("lessThan", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),
+			ast.ExtensionCall("lessThan", ast.Value(testutil.Must(types.NewDecimal(42, 0))), ast.Value(testutil.Must(types.NewDecimalFromInt(43)))),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"lessThanOrEqual",
-			ast.ExtensionCall("lessThanOrEqual", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),
+			ast.ExtensionCall("lessThanOrEqual", ast.Value(testutil.Must(types.NewDecimal(42, 0))), ast.Value(testutil.Must(types.NewDecimalFromInt(43)))),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"greaterThan",
-			ast.ExtensionCall("greaterThan", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),
+			ast.ExtensionCall("greaterThan", ast.Value(testutil.Must(types.NewDecimal(42, 0))), ast.Value(testutil.Must(types.NewDecimalFromInt(43)))),
 			types.False,
 			testutil.OK,
 		},
 		{
 			"greaterThanOrEqual",
-			ast.ExtensionCall("greaterThanOrEqual", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),
+			ast.ExtensionCall("greaterThanOrEqual", ast.Value(testutil.Must(types.NewDecimal(42, 0))), ast.Value(testutil.Must(types.NewDecimalFromInt(43)))),
 			types.False,
 			testutil.OK,
 		},
