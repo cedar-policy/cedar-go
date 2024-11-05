@@ -12,15 +12,15 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-// DecimalPrecision is the precision of a Decimal.
-const DecimalPrecision = 10000
+// decimalPrecision is the precision of a Decimal.
+const decimalPrecision = 10000
 
 var DecimalMax = Decimal{value: math.MaxInt64}
 var DecimalMin = Decimal{value: math.MinInt64}
 
 // A Decimal is a value with both a whole number part and a decimal part of no
 // more than four digits. In Go this is stored as an int64, the precision is
-// defined by the constant DecimalPrecision.
+// defined by the constant decimalPrecision.
 type Decimal struct {
 	value int64
 }
@@ -50,7 +50,7 @@ func NewDecimal(i int64, exponent int) (Decimal, error) {
 		return Decimal{}, fmt.Errorf("%w: value %ve%v would underflow", ErrDecimal, i, exponent)
 	}
 
-	return Decimal{value: intPart*DecimalPrecision + fracPart}, nil
+	return Decimal{value: intPart*decimalPrecision + fracPart}, nil
 }
 
 func NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error) {
@@ -58,7 +58,7 @@ func NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error) {
 }
 
 func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
-	f = f * DecimalPrecision
+	f = f * decimalPrecision
 	if f > math.MaxInt64 {
 		return Decimal{}, fmt.Errorf("%w: value %v would overflow", ErrDecimal, f)
 	} else if f < math.MinInt64 {
@@ -69,8 +69,8 @@ func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
 }
 
 func (d Decimal) ToFloat() float64 {
-	intPart := d.value / DecimalPrecision
-	fracPart := d.value % DecimalPrecision / DecimalPrecision
+	intPart := d.value / decimalPrecision
+	fracPart := d.value % decimalPrecision / decimalPrecision
 	return float64(intPart + fracPart)
 }
 
@@ -168,9 +168,9 @@ func ParseDecimal(s string) (Decimal, error) {
 		// -922337203685477.5808. This isn't technically necessary because the
 		// go spec defines arithmetic to be well-defined when overflowing.
 		// However, doing things this way doesn't hurt, so let's be pedantic.
-		return Decimal{value: DecimalPrecision*-integer - fraction}, nil
+		return Decimal{value: decimalPrecision*-integer - fraction}, nil
 	} else {
-		return Decimal{value: DecimalPrecision*integer + fraction}, nil
+		return Decimal{value: decimalPrecision*integer + fraction}, nil
 	}
 }
 
@@ -187,11 +187,11 @@ func (d Decimal) String() string {
 	var res string
 	if d.value < 0 {
 		// Make sure we don't overflow here. Also, go truncates towards zero.
-		integer := d.value / DecimalPrecision
-		decimal := integer*DecimalPrecision - d.value
+		integer := d.value / decimalPrecision
+		decimal := integer*decimalPrecision - d.value
 		res = fmt.Sprintf("-%d.%04d", -integer, decimal)
 	} else {
-		res = fmt.Sprintf("%d.%04d", d.value/DecimalPrecision, d.value%DecimalPrecision)
+		res = fmt.Sprintf("%d.%04d", d.value/decimalPrecision, d.value%decimalPrecision)
 	}
 
 	// Trim off up to three trailing zeros.

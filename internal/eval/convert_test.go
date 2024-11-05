@@ -207,7 +207,7 @@ func TestToEval(t *testing.T) {
 		{
 			"decimal",
 			ast.ExtensionCall("decimal", ast.String("42.42")),
-			testutil.Must(types.NewDecimal(42, 4200)),
+			testutil.Must(types.NewDecimal(4242, -2)),
 			testutil.OK,
 		},
 		{

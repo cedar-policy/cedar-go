@@ -53,10 +53,6 @@ const (
 	False = types.False
 )
 
-const (
-	DecimalPrecision = types.DecimalPrecision
-)
-
 //   ____                _                   _
 //  / ___|___  _ __  ___| |_ _ __ _   _  ___| |_ ___  _ __ ___
 // | |   / _ \| '_ \/ __| __| '__| | | |/ __| __/ _ \| '__/ __|
