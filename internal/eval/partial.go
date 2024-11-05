@@ -504,7 +504,7 @@ func (n *partialHasEval) Eval(env Env) (types.Value, error) {
 	var record types.Record
 	switch vv := v.(type) {
 	case types.EntityUID:
-		if rec, ok := env.Entities[vv]; ok {
+		if rec, ok := env.Entities.Load(vv); ok {
 			record = rec.Attributes
 		}
 	case types.Record:

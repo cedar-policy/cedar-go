@@ -102,7 +102,7 @@ var errInvalidPart = fmt.Errorf("invalid part")
 //   - It will error in case there are unused variables.
 //
 // The result passed to the callback must be used / cloned immediately and not modified.
-func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback) error {
+func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.EntityLoader, request Request, cb Callback) error {
 	be := &batchEvaler{}
 	var found mapset.MapSet[types.String]
 	findVariables(&found, request.Principal)

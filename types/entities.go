@@ -8,10 +8,23 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+// EntityLoader defines the interface for loading entities from an entity store.
+type EntityLoader interface {
+	Load(EntityUID) (Entity, bool)
+}
+
 // An Entities is a collection of all the Entities that are needed to evaluate
 // authorization requests.  The key is an EntityUID which uniquely identifies
 // the Entity (it must be the same as the UID within the Entity itself.)
 type Entities map[EntityUID]Entity
+
+func (e Entities) Load(k EntityUID) (Entity, bool) {
+	if e == nil {
+		return Entity{}, false
+	}
+	v, ok := e[k]
+	return v, ok
+}
 
 func (e Entities) MarshalJSON() ([]byte, error) {
 	s := maps.Values(e)

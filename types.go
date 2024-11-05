@@ -30,6 +30,7 @@ type String = types.String
 
 // Other Cedar types
 
+type EntityLoader = types.EntityLoader
 type Entities = types.Entities
 type Entity = types.Entity
 type EntityType = types.EntityType
