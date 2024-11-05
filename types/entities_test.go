@@ -29,12 +29,12 @@ func TestEntitiesJSON(t *testing.T) {
 	t.Run("Marshal", func(t *testing.T) {
 		t.Parallel()
 		e := types.Entities{}
-		ent := &types.Entity{
+		ent := types.Entity{
 			UID:        types.NewEntityUID("Type", "id"),
 			Parents:    types.EntityUIDSet{},
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
-		ent2 := &types.Entity{
+		ent2 := types.Entity{
 			UID:        types.NewEntityUID("Type", "id2"),
 			Parents:    types.NewEntityUIDSet(ent.UID),
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
@@ -57,7 +57,7 @@ func TestEntitiesJSON(t *testing.T) {
 		err := json.Unmarshal(b, &e)
 		testutil.OK(t, err)
 		want := types.Entities{}
-		ent := &types.Entity{
+		ent := types.Entity{
 			UID:        types.NewEntityUID("Type", "id"),
 			Parents:    types.NewEntityUIDSet(),
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),

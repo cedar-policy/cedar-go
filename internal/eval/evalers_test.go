@@ -1583,7 +1583,7 @@ func TestAttributeAccessNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newAttributeAccessEval(tt.object, tt.attribute)
-			entity := &types.Entity{
+			entity := types.Entity{
 				UID:        types.NewEntityUID("knownType", "knownID"),
 				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
@@ -1640,7 +1640,7 @@ func TestHasNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newHasEval(tt.record, tt.attribute)
-			entity := &types.Entity{
+			entity := types.Entity{
 				UID:        types.NewEntityUID("knownType", "knownID"),
 				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
@@ -1844,7 +1844,7 @@ func TestEntityIn(t *testing.T) {
 					ps = append(ps, strEnt(pp))
 				}
 				uid := strEnt(k)
-				entityMap[uid] = &types.Entity{
+				entityMap[uid] = types.Entity{
 					UID:     uid,
 					Parents: types.NewEntityUIDSet(ps...),
 				}
@@ -1865,12 +1865,12 @@ func TestEntityIn(t *testing.T) {
 				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "2"),
 			)
 			uid1 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "1")
-			entityMap[uid1] = &types.Entity{
+			entityMap[uid1] = types.Entity{
 				UID:     uid1,
 				Parents: p,
 			}
 			uid2 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "2")
-			entityMap[uid2] = &types.Entity{
+			entityMap[uid2] = types.Entity{
 				UID:     uid2,
 				Parents: p,
 			}
@@ -2014,7 +2014,7 @@ func TestInNode(t *testing.T) {
 					ps = append(ps, strEnt(pp))
 				}
 				uid := strEnt(k)
-				entityMap[uid] = &types.Entity{
+				entityMap[uid] = types.Entity{
 					UID:     uid,
 					Parents: types.NewEntityUIDSet(ps...),
 				}
@@ -2154,7 +2154,7 @@ func TestIsInNode(t *testing.T) {
 					ps = append(ps, strEnt(pp))
 				}
 				uid := strEnt(k)
-				entityMap[uid] = &types.Entity{
+				entityMap[uid] = types.Entity{
 					UID:     uid,
 					Parents: types.NewEntityUIDSet(ps...),
 				}

@@ -11,18 +11,18 @@ import (
 // An Entities is a collection of all the Entities that are needed to evaluate
 // authorization requests.  The key is an EntityUID which uniquely identifies
 // the Entity (it must be the same as the UID within the Entity itself.)
-type Entities map[EntityUID]*Entity
+type Entities map[EntityUID]Entity
 
 func (e Entities) MarshalJSON() ([]byte, error) {
 	s := maps.Values(e)
-	slices.SortFunc(s, func(a, b *Entity) int {
+	slices.SortFunc(s, func(a, b Entity) int {
 		return strings.Compare(a.UID.String(), b.UID.String())
 	})
 	return json.Marshal(s)
 }
 
 func (e *Entities) UnmarshalJSON(b []byte) error {
-	var s []*Entity
+	var s []Entity
 	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}

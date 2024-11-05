@@ -1274,7 +1274,7 @@ func TestPartialHasEval(t *testing.T) {
 		},
 		{"entity",
 			Env{Entities: types.Entities{
-				types.NewEntityUID("T", "1"): &types.Entity{
+				types.NewEntityUID("T", "1"): types.Entity{
 					UID:        types.NewEntityUID("T", "1"),
 					Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 				},
