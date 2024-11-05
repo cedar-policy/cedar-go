@@ -19,12 +19,13 @@ var DecimalMax = Decimal{value: math.MaxInt64}
 var DecimalMin = Decimal{value: math.MinInt64}
 
 // A Decimal is a value with both a whole number part and a decimal part of no
-// more than four digits. In Go this is stored as an int64, the precision is
-// defined by the constant decimalPrecision.
+// more than four digits. A decimal value can range from -922337203685477.5808
+// to 922337203685477.5807.
 type Decimal struct {
 	value int64
 }
 
+// NewDecimal returns a Decimal value of i * 10^exponent.
 func NewDecimal(i int64, exponent int) (Decimal, error) {
 	if exponent < -4 || exponent > 14 {
 		return Decimal{}, fmt.Errorf("%w: exponent value of %v exceeds maximum range of Decimal", ErrDecimal, exponent)
@@ -53,10 +54,19 @@ func NewDecimal(i int64, exponent int) (Decimal, error) {
 	return Decimal{value: intPart*decimalPrecision + fracPart}, nil
 }
 
+// NewDecimalFromInt returns a Decimal with the whole integer value provided
 func NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error) {
 	return NewDecimal(int64(i), 0)
 }
 
+// NewDecimalFromFloat returns a Decimal that approximates the given floating point value.
+// The value of the Decimal is calculated by multiplying it by 10^4, truncating it to
+// an int64 representation to cut off any digits beyond the four allowed, and passing it
+// as an integer to NewDecimal() with -4 as the exponent.
+//
+// WARNING: decimal representations of more than 6 significant digits for float32s and 15
+// significant digits for float64s can be lossy in terms of precision. To create a precise
+// Decimal above those sizes, use the NewDecimal constructor.
 func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
 	f = f * decimalPrecision
 	if f > math.MaxInt64 {
@@ -66,12 +76,6 @@ func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
 	}
 
 	return NewDecimal(int64(f), -4)
-}
-
-func (d Decimal) ToFloat() float64 {
-	intPart := d.value / decimalPrecision
-	fracPart := d.value % decimalPrecision / decimalPrecision
-	return float64(intPart + fracPart)
 }
 
 // Cmp returns

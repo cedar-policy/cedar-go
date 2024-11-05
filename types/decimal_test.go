@@ -166,6 +166,27 @@ func TestDecimal(t *testing.T) {
 		}
 	})
 
+	t.Run("NewDecimalFromInt", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			in   int64
+			want string
+		}{
+			{0, "0.0"},
+			{1, "1.0"},
+			{-1, "-1.0"},
+			{922337203685477, "922337203685477.0"},
+			{-922337203685477, "-922337203685477.0"},
+		}
+		for _, tt := range tests {
+			t.Run(tt.want, func(t *testing.T) {
+				t.Parallel()
+				d, err := types.NewDecimalFromInt(tt.in)
+				testutil.OK(t, err)
+				testutil.Equals(t, d.String(), tt.want)
+			})
+		}
+	})
 	t.Run("NewDecimalOverflow", func(t *testing.T) {
 		t.Parallel()
 		tests := []struct {
@@ -177,6 +198,7 @@ func TestDecimal(t *testing.T) {
 			{9223372036854776, -1},
 			{922337203685478, 0},
 			{92233720368548, 1},
+			{922337203685477581, 2},
 			{10, 14},
 			{1, 15},
 		}
@@ -200,6 +222,7 @@ func TestDecimal(t *testing.T) {
 			{-9223372036854776, -1},
 			{-922337203685478, 0},
 			{-92233720368548, 1},
+			{-922337203685477581, 2},
 			{-10, 14},
 			{-1, 15},
 		}
