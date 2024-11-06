@@ -112,26 +112,26 @@ func TestDecimal(t *testing.T) {
 		one := testutil.Must(types.NewDecimal(1, 0))
 		one2 := testutil.Must(types.NewDecimal(1, 0))
 		zero := testutil.Must(types.NewDecimal(0, 0))
-		max := testutil.Must(types.NewDecimal(9223372036854775807, -4))
-		min := testutil.Must(types.NewDecimal(-9223372036854775808, -4))
 		f := types.Boolean(false)
 		testutil.FatalIf(t, !one.Equal(one), "%v not Equal to %v", one, one)
 		testutil.FatalIf(t, !one.Equal(one2), "%v not Equal to %v", one, one2)
 		testutil.FatalIf(t, one.Equal(zero), "%v Equal to %v", one, zero)
 		testutil.FatalIf(t, zero.Equal(one), "%v Equal to %v", zero, one)
 		testutil.FatalIf(t, zero.Equal(f), "%v Equal to %v", zero, f)
-		testutil.Equals(t, max, types.DecimalMax)
-		testutil.Equals(t, min, types.DecimalMin)
 
+		max := testutil.Must(types.NewDecimal(9223372036854775807, -4))
+		testutil.Equals(t, max, testutil.Must(types.ParseDecimal("922337203685477.5807")))
+		min := testutil.Must(types.NewDecimal(-9223372036854775808, -4))
+		testutil.Equals(t, min, testutil.Must(types.ParseDecimal("-922337203685477.5808")))
 	})
 
-	t.Run("Cmp", func(t *testing.T) {
+	t.Run("Compare", func(t *testing.T) {
 		t.Parallel()
 		one := testutil.Must(types.NewDecimal(1, 0))
 		zero := testutil.Must(types.NewDecimal(0, 0))
-		testutil.Equals(t, one.Cmp(zero), 1)
-		testutil.Equals(t, one.Cmp(one), 0)
-		testutil.Equals(t, zero.Cmp(one), -1)
+		testutil.Equals(t, one.Compare(zero), 1)
+		testutil.Equals(t, one.Compare(one), 0)
+		testutil.Equals(t, zero.Compare(one), -1)
 	})
 
 	t.Run("NewDecimal", func(t *testing.T) {

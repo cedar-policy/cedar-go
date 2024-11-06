@@ -106,14 +106,24 @@ func NewSet(s []types.Value) Set {
 	return types.NewSet(s)
 }
 
+// NewDecimal returns a Decimal value of i * 10^exponent.
 func NewDecimal(i int64, exponent int) (Decimal, error) {
 	return types.NewDecimal(i, exponent)
 }
 
+// NewDecimalFromInt returns a Decimal with the whole integer value provided
 func NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error) {
 	return types.NewDecimalFromInt(i)
 }
 
+// NewDecimalFromFloat returns a Decimal that approximates the given floating point value.
+// The value of the Decimal is calculated by multiplying it by 10^4, truncating it to
+// an int64 representation to cut off any digits beyond the four allowed, and passing it
+// as an integer to NewDecimal() with -4 as the exponent.
+//
+// WARNING: decimal representations of more than 6 significant digits for float32s and 15
+// significant digits for float64s can be lossy in terms of precision. To create a precise
+// Decimal above those sizes, use the NewDecimal constructor.
 func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
 	return types.NewDecimalFromFloat(f)
 }

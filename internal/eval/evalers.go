@@ -572,7 +572,7 @@ func (n *decimalLessThanEval) Eval(env *Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs.Cmp(rhs) == -1), nil
+	return types.Boolean(lhs.Compare(rhs) == -1), nil
 }
 
 // decimalLessThanOrEqualEval
@@ -597,7 +597,7 @@ func (n *decimalLessThanOrEqualEval) Eval(env *Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs.Cmp(rhs) <= 0), nil
+	return types.Boolean(lhs.Compare(rhs) <= 0), nil
 }
 
 // decimalGreaterThanEval
@@ -622,7 +622,7 @@ func (n *decimalGreaterThanEval) Eval(env *Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs.Cmp(rhs) == 1), nil
+	return types.Boolean(lhs.Compare(rhs) == 1), nil
 }
 
 // decimalGreaterThanOrEqualEval
@@ -647,7 +647,7 @@ func (n *decimalGreaterThanOrEqualEval) Eval(env *Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs.Cmp(rhs) >= 0), nil
+	return types.Boolean(lhs.Compare(rhs) >= 0), nil
 }
 
 // ifThenElseEval

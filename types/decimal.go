@@ -15,9 +15,6 @@ import (
 // decimalPrecision is the precision of a Decimal.
 const decimalPrecision = 10000
 
-var DecimalMax = Decimal{value: math.MaxInt64}
-var DecimalMin = Decimal{value: math.MinInt64}
-
 // A Decimal is a value with both a whole number part and a decimal part of no
 // more than four digits. A decimal value can range from -922337203685477.5808
 // to 922337203685477.5807.
@@ -75,15 +72,15 @@ func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
 		return Decimal{}, fmt.Errorf("%w: value %v would underflow", ErrDecimal, f)
 	}
 
-	return NewDecimal(int64(f), -4)
+	return Decimal{int64(f)}, nil
 }
 
-// Cmp returns
+// Compare returns
 //
 //	-1 if d is less than other,
 //	 0 if d equals other,
 //	+1 if d is greater than other.
-func (d Decimal) Cmp(other Decimal) int {
+func (d Decimal) Compare(other Decimal) int {
 	return cmp.Compare(d.value, other.value)
 }
 
