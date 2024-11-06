@@ -125,13 +125,13 @@ func TestDecimal(t *testing.T) {
 
 	})
 
-	t.Run("Cmp", func(t *testing.T) {
+	t.Run("Compare", func(t *testing.T) {
 		t.Parallel()
 		one := testutil.Must(types.NewDecimal(1, 0))
 		zero := testutil.Must(types.NewDecimal(0, 0))
-		testutil.Equals(t, one.Cmp(zero), 1)
-		testutil.Equals(t, one.Cmp(one), 0)
-		testutil.Equals(t, zero.Cmp(one), -1)
+		testutil.Equals(t, one.Compare(zero), 1)
+		testutil.Equals(t, one.Compare(one), 0)
+		testutil.Equals(t, zero.Compare(one), -1)
 	})
 
 	t.Run("NewDecimal", func(t *testing.T) {

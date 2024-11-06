@@ -75,15 +75,15 @@ func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
 		return Decimal{}, fmt.Errorf("%w: value %v would underflow", ErrDecimal, f)
 	}
 
-	return NewDecimal(int64(f), -4)
+	return Decimal{int64(f)}, nil
 }
 
-// Cmp returns
+// Compare returns
 //
 //	-1 if d is less than other,
 //	 0 if d equals other,
 //	+1 if d is greater than other.
-func (d Decimal) Cmp(other Decimal) int {
+func (d Decimal) Compare(other Decimal) int {
 	return cmp.Compare(d.value, other.value)
 }
 
