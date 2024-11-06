@@ -142,6 +142,7 @@ func TestPartialScopeEval(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			tt.env.Entities = types.Entities{}
 			evaled, result := partialScopeEval(tt.env, tt.ent, tt.in)
 			testutil.Equals(t, evaled, tt.evaled)
 			testutil.Equals(t, result, tt.result)
