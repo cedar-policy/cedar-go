@@ -19,9 +19,6 @@ type EntityLoader interface {
 type EntityMap map[EntityUID]Entity
 
 func (e EntityMap) Load(k EntityUID) (Entity, bool) {
-	if e == nil {
-		return Entity{}, false
-	}
 	v, ok := e[k]
 	return v, ok
 }
