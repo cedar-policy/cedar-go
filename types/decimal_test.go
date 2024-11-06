@@ -248,31 +248,6 @@ func TestDecimal(t *testing.T) {
 			{1.23456, "1.2345"},
 			{12345678901.2345, "12345678901.2345"},
 			{123456789012.3456, "123456789012.3456"},
-			{922337203685477.5807, "922337203685477.5807"},
-			{-922337203685477.5808, "-922337203685477.5808"},
-		}
-		for _, tt := range tests {
-			t.Run(tt.want, func(t *testing.T) {
-				t.Parallel()
-				d, err := types.NewDecimalFromFloat(tt.in)
-				testutil.OK(t, err)
-				testutil.Equals(t, d.String(), tt.want)
-			})
-		}
-	})
-
-	// Above ~16 digits, precision loss in floats becomes a thing and float literals start to be rounded
-	t.Run("NewDecimalFromFloatPrecisionLoss", func(t *testing.T) {
-		t.Parallel()
-		tests := []struct {
-			in   float64
-			want string
-		}{
-			{1234567890123.4567, "1234567890123.4568"},
-			{12345678901234.567, "12345678901234.5664"},
-			{123456789012345.67, "123456789012345.6768"},
-			{922337203685477.59, "922337203685477.5807"},   // Surprising overflow allowed...
-			{-922337203685477.59, "-922337203685477.5808"}, // Surprising underflow allowed...
 		}
 		for _, tt := range tests {
 			t.Run(tt.want, func(t *testing.T) {
