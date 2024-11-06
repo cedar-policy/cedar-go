@@ -61,9 +61,12 @@ func (p *PolicySet) Add(policyID PolicyID, policy *Policy) bool {
 	return !exists
 }
 
-// Delete removes a policy from the PolicySet. Deleting a non-existent policy is a no-op.
-func (p *PolicySet) Delete(policyID PolicyID) {
+// Delete removes a policy from the PolicySet. Returns true if a policy with
+// the given ID already existed in the set.
+func (p *PolicySet) Delete(policyID PolicyID) bool {
+	_, exists := p.policies[policyID]
 	delete(p.policies, policyID)
+	return exists
 }
 
 // Map returns a new PolicyMap instance of the policies in the PolicySet.

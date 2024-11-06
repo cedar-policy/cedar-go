@@ -74,8 +74,8 @@ func TestDeletePolicy(t *testing.T) {
 
 		ps := cedar.NewPolicySet()
 
-		// Just verify that this doesn't crash
-		ps.Delete("not a policy")
+		existed := ps.Delete("not a policy")
+		testutil.Equals(t, existed, false)
 	})
 	t.Run("delete existing", func(t *testing.T) {
 		t.Parallel()
@@ -84,7 +84,8 @@ func TestDeletePolicy(t *testing.T) {
 
 		p1 := cedar.NewPolicyFromAST(ast.Forbid())
 		ps.Add("a policy", p1)
-		ps.Delete("a policy")
+		existed := ps.Delete("a policy")
+		testutil.Equals(t, existed, true)
 
 		testutil.Equals(t, ps.Get("a policy"), nil)
 	})
