@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"unicode"
+	"strings"
 
 	"golang.org/x/exp/constraints"
 )
@@ -20,6 +20,18 @@ const decimalPrecision = 10000
 // to 922337203685477.5807.
 type Decimal struct {
 	value int64
+}
+
+// newDecimal returns a Decimal value of the form intPart.tenThousandths. The
+// sign of intPart and tenThousandths should match.
+func newDecimal(intPart int64, tenThousandths int16) (Decimal, error) {
+	if intPart > 922337203685477 || (intPart == 922337203685477 && tenThousandths > 5807) {
+		return Decimal{}, fmt.Errorf("%w: value would overflow", ErrDecimal)
+	} else if intPart < -922337203685477 || (intPart == -922337203685477 && tenThousandths < -5808) {
+		return Decimal{}, fmt.Errorf("%w: value would underflow", ErrDecimal)
+	}
+
+	return Decimal{value: intPart*decimalPrecision + int64(tenThousandths)}, nil
 }
 
 // NewDecimal returns a Decimal value of i * 10^exponent.
@@ -42,13 +54,7 @@ func NewDecimal(i int64, exponent int) (Decimal, error) {
 		}
 	}
 
-	if intPart > 922337203685477 || (intPart == 922337203685477 && fracPart > 5807) {
-		return Decimal{}, fmt.Errorf("%w: value %ve%v would overflow", ErrDecimal, i, exponent)
-	} else if intPart < -922337203685477 || (intPart == -922337203685477 && fracPart < -5808) {
-		return Decimal{}, fmt.Errorf("%w: value %ve%v would underflow", ErrDecimal, i, exponent)
-	}
-
-	return Decimal{value: intPart*decimalPrecision + fracPart}, nil
+	return newDecimal(intPart, int16(fracPart))
 }
 
 // NewDecimalFromInt returns a Decimal with the whole integer value provided
@@ -86,93 +92,39 @@ func (d Decimal) Compare(other Decimal) int {
 
 // ParseDecimal takes a string representation of a decimal number and converts it into a Decimal type.
 func ParseDecimal(s string) (Decimal, error) {
-	// Check for empty string.
-	if len(s) == 0 {
-		return Decimal{}, fmt.Errorf("%w: string too short", ErrDecimal)
+	decimalIndex := strings.Index(s, ".")
+	if decimalIndex < 0 {
+		return Decimal{}, fmt.Errorf("%w: missing decimal point", ErrDecimal)
 	}
-	i := 0
 
-	// Parse an optional '-'.
-	negative := false
-	if s[i] == '-' {
-		negative = true
-		i++
-		if i == len(s) {
-			return Decimal{}, fmt.Errorf("%w: string too short", ErrDecimal)
+	intPart, err := strconv.ParseInt(s[0:decimalIndex], 10, 64)
+	if err != nil {
+		if errors.Is(err, strconv.ErrRange) {
+			return Decimal{}, fmt.Errorf("%w: value would overflow", ErrDecimal)
 		}
+		return Decimal{}, fmt.Errorf("%w: %w", ErrDecimal, err)
 	}
 
-	// Parse the required first digit.
-	c := rune(s[i])
-	if !unicode.IsDigit(c) {
-		return Decimal{}, fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
-	}
-	integer := int64(c - '0')
-	i++
-
-	// Parse any other digits, ending with i pointing to '.'.
-	for ; ; i++ {
-		if i == len(s) {
-			return Decimal{}, fmt.Errorf("%w: string missing decimal point", ErrDecimal)
+	fracPartStr := s[decimalIndex+1:]
+	fracPart, err := strconv.ParseUint(fracPartStr, 10, 16)
+	if err != nil {
+		if errors.Is(err, strconv.ErrRange) {
+			return Decimal{}, fmt.Errorf("%w: fractional part exceeds Decimal precision", ErrDecimal)
 		}
-		c = rune(s[i])
-		if c == '.' {
-			break
-		}
-		if !unicode.IsDigit(c) {
-			return Decimal{}, fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
-		}
-		integer = 10*integer + int64(c-'0')
-		if integer > 922337203685477 {
-			return Decimal{}, fmt.Errorf("%w: overflow", ErrDecimal)
-		}
+		return Decimal{}, fmt.Errorf("%w: %w", ErrDecimal, err)
 	}
 
-	// Advance past the '.'.
-	i++
-
-	// Parse the fraction part
-	fraction := int64(0)
-	fractionDigits := 0
-	for ; i < len(s); i++ {
-		c = rune(s[i])
-		if !unicode.IsDigit(c) {
-			return Decimal{}, fmt.Errorf("%w: unexpected character %s", ErrDecimal, strconv.QuoteRune(c))
-		}
-		fraction = 10*fraction + int64(c-'0')
-		fractionDigits++
+	decimalPlaces := len(fracPartStr)
+	if decimalPlaces > 4 {
+		return Decimal{}, fmt.Errorf("%w: fractional part exceeds Decimal precision", ErrDecimal)
 	}
 
-	// Adjust the fraction part based on how many digits we parsed.
-	switch fractionDigits {
-	case 0:
-		return Decimal{}, fmt.Errorf("%w: missing digits after decimal point", ErrDecimal)
-	case 1:
-		fraction *= 1000
-	case 2:
-		fraction *= 100
-	case 3:
-		fraction *= 10
-	case 4:
-	default:
-		return Decimal{}, fmt.Errorf("%w: too many digits after decimal point", ErrDecimal)
+	tenThousandths := int16(fracPart) * int16(math.Pow10(4-decimalPlaces))
+	if intPart < 0 {
+		tenThousandths = -tenThousandths
 	}
 
-	// Check for overflow before we put the number together.
-	if integer >= 922337203685477 && (fraction > 5808 || (!negative && fraction == 5808)) {
-		return Decimal{}, fmt.Errorf("%w: overflow", ErrDecimal)
-	}
-
-	// Put the number together.
-	if negative {
-		// Doing things in this order keeps us from overflowing when parsing
-		// -922337203685477.5808. This isn't technically necessary because the
-		// go spec defines arithmetic to be well-defined when overflowing.
-		// However, doing things this way doesn't hurt, so let's be pedantic.
-		return Decimal{value: decimalPrecision*-integer - fraction}, nil
-	} else {
-		return Decimal{value: decimalPrecision*integer + fraction}, nil
-	}
+	return newDecimal(intPart, tenThousandths)
 }
 
 func (d Decimal) Equal(bi Value) bool {
