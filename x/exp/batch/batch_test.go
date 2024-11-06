@@ -233,7 +233,7 @@ func TestBatch(t *testing.T) {
 
 			var res []Result
 			ps := cedar.NewPolicySet()
-			ps.Store("0", cedar.NewPolicyFromAST((*publicast.Policy)(tt.policy)))
+			ps.Add("0", cedar.NewPolicyFromAST((*publicast.Policy)(tt.policy)))
 
 			err := Authorize(context.Background(), ps, tt.entities, tt.request, func(br Result) {
 				// Need to clone this because it could be mutated in successive authorizations
@@ -506,7 +506,7 @@ func TestIgnoreReasons(t *testing.T) {
 	for _, p := range pp {
 		pid := types.PolicyID(p.Annotations()["id"])
 		testutil.FatalIf(t, ps.Get(pid) != nil, "policy already exists: %v", pid)
-		ps.Store(pid, p)
+		ps.Add(pid, p)
 	}
 
 	tests := []struct {

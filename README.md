@@ -88,7 +88,7 @@ func main() {
 	}
 
 	ps := cedar.NewPolicySet()
-	ps.Store("policy0", &policy)
+	ps.Add("policy0", &policy)
 
 	var entities types.Entities
 	if err := json.Unmarshal([]byte(entitiesJSON), &entities); err != nil {
