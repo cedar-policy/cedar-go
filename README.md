@@ -58,7 +58,6 @@ import (
 	"log"
 
 	cedar "github.com/cedar-policy/cedar-go"
-	"github.com/cedar-policy/cedar-go/types"
 )
 
 const policyCedar = `permit (
@@ -90,15 +89,17 @@ func main() {
 	ps := cedar.NewPolicySet()
 	ps.Add("policy0", &policy)
 
-	var entities types.Entities
+	var entities cedar.Entities
 	if err := json.Unmarshal([]byte(entitiesJSON), &entities); err != nil {
 		log.Fatal(err)
 	}
 	req := cedar.Request{
-		Principal: types.EntityUID{Type: "User", ID: "alice"},
-		Action:    types.EntityUID{Type: "Action", ID: "view"},
-		Resource:  types.EntityUID{Type: "Photo", ID: "VacationPhoto94.jpg"},
-		Context:   types.Record{},
+		Principal: cedar.NewEntityUID("User", "alice"),
+		Action:    cedar.NewEntityUID("Action", "view"),
+		Resource:  cedar.NewEntityUID("Photo", "VacationPhoto94.jpg"),
+		Context:   cedar.NewRecord(cedar.RecordMap{
+			"demoRequest": cedar.True,
+        }),
 	}
 
 	ok, _ := ps.IsAuthorized(entities, req)
