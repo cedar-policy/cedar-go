@@ -1588,7 +1588,7 @@ func TestAttributeAccessNode(t *testing.T) {
 				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
 			v, err := n.Eval(Env{
-				Entities: types.Entities{
+				Entities: types.EntityMap{
 					entity.UID: entity,
 				},
 			})
@@ -1645,7 +1645,7 @@ func TestHasNode(t *testing.T) {
 				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
 			v, err := n.Eval(Env{
-				Entities: types.Entities{
+				Entities: types.EntityMap{
 					entity.UID: entity,
 				},
 			})
@@ -1837,7 +1837,7 @@ func TestEntityIn(t *testing.T) {
 			for _, v := range tt.rhs {
 				rhs = append(rhs, strEnt(v))
 			}
-			entityMap := types.Entities{}
+			entityMap := types.EntityMap{}
 			for k, p := range tt.parents {
 				var ps []types.EntityUID
 				for _, pp := range p {
@@ -1858,7 +1858,7 @@ func TestEntityIn(t *testing.T) {
 		// This test will run for a very long time (O(2^100)) if there isn't caching.
 		)
 
-		entityMap := types.Entities{}
+		entityMap := types.EntityMap{}
 		for i := 0; i < 100; i++ {
 			p := types.NewEntityUIDSet(
 				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "1"),
@@ -2007,7 +2007,7 @@ func TestInNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newInEval(tt.lhs, tt.rhs)
-			entityMap := types.Entities{}
+			entityMap := types.EntityMap{}
 			for k, p := range tt.parents {
 				var ps []types.EntityUID
 				for _, pp := range p {
@@ -2147,7 +2147,7 @@ func TestIsInNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newIsInEval(tt.lhs, tt.is, tt.rhs)
-			entityMap := types.Entities{}
+			entityMap := types.EntityMap{}
 			for k, p := range tt.parents {
 				var ps []types.EntityUID
 				for _, pp := range p {
