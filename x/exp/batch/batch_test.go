@@ -506,7 +506,9 @@ func TestIgnoreReasons(t *testing.T) {
 	for _, p := range pp {
 		pid := types.PolicyID(p.Annotations()["id"])
 		testutil.FatalIf(t, ps.Get(pid) != nil, "policy already exists: %v", pid)
-		ps.Add(pid, p)
+		if !ps.Add(pid, p) {
+			panic("duplicate policy IDs")
+		}
 	}
 
 	tests := []struct {
