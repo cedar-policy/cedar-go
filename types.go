@@ -31,7 +31,8 @@ type String = types.String
 
 // Other Cedar types
 
-type Entities = types.Entities
+type EntityLoader = types.EntityLoader
+type Entities = types.EntityMap
 type Entity = types.Entity
 type EntityType = types.EntityType
 type EntityUIDSet = types.EntityUIDSet

@@ -12,7 +12,7 @@ func TestEntities(t *testing.T) {
 	t.Parallel()
 	t.Run("Clone", func(t *testing.T) {
 		t.Parallel()
-		e := types.Entities{
+		e := types.EntityMap{
 			types.EntityUID{Type: "A", ID: "A"}: {},
 			types.EntityUID{Type: "A", ID: "B"}: {},
 			types.EntityUID{Type: "B", ID: "A"}: {},
@@ -28,13 +28,13 @@ func TestEntitiesJSON(t *testing.T) {
 	t.Parallel()
 	t.Run("Marshal", func(t *testing.T) {
 		t.Parallel()
-		e := types.Entities{}
-		ent := &types.Entity{
+		e := types.EntityMap{}
+		ent := types.Entity{
 			UID:        types.NewEntityUID("Type", "id"),
 			Parents:    types.EntityUIDSet{},
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 		}
-		ent2 := &types.Entity{
+		ent2 := types.Entity{
 			UID:        types.NewEntityUID("Type", "id2"),
 			Parents:    types.NewEntityUIDSet(ent.UID),
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
@@ -53,11 +53,11 @@ func TestEntitiesJSON(t *testing.T) {
 	t.Run("Unmarshal", func(t *testing.T) {
 		t.Parallel()
 		b := []byte(`[{"uid":{"type":"Type","id":"id"},"parents":[],"attrs":{"key":42}}]`)
-		var e types.Entities
+		var e types.EntityMap
 		err := json.Unmarshal(b, &e)
 		testutil.OK(t, err)
-		want := types.Entities{}
-		ent := &types.Entity{
+		want := types.EntityMap{}
+		ent := types.Entity{
 			UID:        types.NewEntityUID("Type", "id"),
 			Parents:    types.NewEntityUIDSet(),
 			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
@@ -68,7 +68,7 @@ func TestEntitiesJSON(t *testing.T) {
 
 	t.Run("UnmarshalErr", func(t *testing.T) {
 		t.Parallel()
-		var e types.Entities
+		var e types.EntityMap
 		err := e.UnmarshalJSON([]byte(`!@#$`))
 		testutil.Error(t, err)
 	})

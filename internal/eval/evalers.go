@@ -22,7 +22,7 @@ func zeroValue() types.Value {
 }
 
 type Env struct {
-	Entities                    types.Entities
+	Entities                    types.EntityLoader
 	Principal, Action, Resource types.Value
 	Context                     types.Value
 }
@@ -854,7 +854,7 @@ func (n *attributeAccessEval) Eval(env Env) (types.Value, error) {
 		if vv == unspecified {
 			return zeroValue(), fmt.Errorf("cannot access attribute `%s` of %w", n.attribute, errUnspecifiedEntity)
 		}
-		rec, ok := env.Entities[vv]
+		rec, ok := env.Entities.Load(vv)
 		if !ok {
 			return zeroValue(), fmt.Errorf("entity `%v` %w", vv.String(), errEntityNotExist)
 		}
@@ -892,7 +892,7 @@ func (n *hasEval) Eval(env Env) (types.Value, error) {
 	var record types.Record
 	switch vv := v.(type) {
 	case types.EntityUID:
-		if rec, ok := env.Entities[vv]; ok {
+		if rec, ok := env.Entities.Load(vv); ok {
 			record = rec.Attributes
 		}
 	case types.Record:
@@ -961,12 +961,12 @@ func entityInOne(env Env, entity types.EntityUID, parent types.EntityUID) bool {
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
-		if fe, ok := env.Entities[candidate]; ok {
+		if fe, ok := env.Entities.Load(candidate); ok {
 			if fe.Parents.Contains(parent) {
 				return true
 			}
 			fe.Parents.Iterate(func(k types.EntityUID) bool {
-				p, ok := env.Entities[k]
+				p, ok := env.Entities.Load(k)
 				if !ok || p.Parents.Len() == 0 || k == entity || known.Contains(k) {
 					return true
 				}
@@ -990,12 +990,12 @@ func entityInSet(env Env, entity types.EntityUID, parents mapset.Container[types
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
-		if fe, ok := env.Entities[candidate]; ok {
+		if fe, ok := env.Entities.Load(candidate); ok {
 			if fe.Parents.Intersects(parents) {
 				return true
 			}
 			fe.Parents.Iterate(func(k types.EntityUID) bool {
-				p, ok := env.Entities[k]
+				p, ok := env.Entities.Load(k)
 				if !ok || p.Parents.Len() == 0 || k == entity || known.Contains(k) {
 					return true
 				}

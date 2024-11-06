@@ -142,6 +142,7 @@ func TestPartialScopeEval(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			tt.env.Entities = types.EntityMap{}
 			evaled, result := partialScopeEval(tt.env, tt.ent, tt.in)
 			testutil.Equals(t, evaled, tt.evaled)
 			testutil.Equals(t, result, tt.result)
@@ -1273,8 +1274,8 @@ func TestPartialHasEval(t *testing.T) {
 			nil, testutil.Error,
 		},
 		{"entity",
-			Env{Entities: types.Entities{
-				types.NewEntityUID("T", "1"): &types.Entity{
+			Env{Entities: types.EntityMap{
+				types.NewEntityUID("T", "1"): types.Entity{
 					UID:        types.NewEntityUID("T", "1"),
 					Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
 				},

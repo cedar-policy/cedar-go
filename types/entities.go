@@ -8,25 +8,35 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-// An Entities is a collection of all the Entities that are needed to evaluate
+// EntityLoader defines the interface for loading entities from an entity store.
+type EntityLoader interface {
+	Load(EntityUID) (Entity, bool)
+}
+
+// An EntityMap is a collection of all the entities that are needed to evaluate
 // authorization requests.  The key is an EntityUID which uniquely identifies
 // the Entity (it must be the same as the UID within the Entity itself.)
-type Entities map[EntityUID]*Entity
+type EntityMap map[EntityUID]Entity
 
-func (e Entities) MarshalJSON() ([]byte, error) {
+func (e EntityMap) Load(k EntityUID) (Entity, bool) {
+	v, ok := e[k]
+	return v, ok
+}
+
+func (e EntityMap) MarshalJSON() ([]byte, error) {
 	s := maps.Values(e)
-	slices.SortFunc(s, func(a, b *Entity) int {
+	slices.SortFunc(s, func(a, b Entity) int {
 		return strings.Compare(a.UID.String(), b.UID.String())
 	})
 	return json.Marshal(s)
 }
 
-func (e *Entities) UnmarshalJSON(b []byte) error {
-	var s []*Entity
+func (e *EntityMap) UnmarshalJSON(b []byte) error {
+	var s []Entity
 	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}
-	var res = Entities{}
+	var res = EntityMap{}
 	for _, e := range s {
 		res[e.UID] = e
 	}
@@ -34,6 +44,6 @@ func (e *Entities) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (e Entities) Clone() Entities {
+func (e EntityMap) Clone() EntityMap {
 	return maps.Clone(e)
 }

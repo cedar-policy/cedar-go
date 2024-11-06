@@ -105,7 +105,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-requires-entities-success",
 			Policy: `permit(principal,action,resource) when { principal.x == 42 };`,
 			Entities: cedar.Entities{
-				cuzco: &cedar.Entity{
+				cuzco: cedar.Entity{
 					UID:        cuzco,
 					Attributes: cedar.NewRecord(cedar.RecordMap{"x": cedar.Long(42)}),
 				},
@@ -121,7 +121,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-requires-entities-fail",
 			Policy: `permit(principal,action,resource) when { principal.x == 42 };`,
 			Entities: cedar.Entities{
-				cuzco: &cedar.Entity{
+				cuzco: cedar.Entity{
 					UID:        cuzco,
 					Attributes: cedar.NewRecord(cedar.RecordMap{"x": cedar.Long(43)}),
 				},
@@ -137,7 +137,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-requires-entities-parent-success",
 			Policy: `permit(principal,action,resource) when { principal in parent::"bob" };`,
 			Entities: cedar.Entities{
-				cuzco: &cedar.Entity{
+				cuzco: cedar.Entity{
 					UID:     cuzco,
 					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("parent", "bob")),
 				},
@@ -164,7 +164,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-principal-in",
 			Policy: `permit(principal in team::"osiris",action,resource);`,
 			Entities: cedar.Entities{
-				cuzco: &cedar.Entity{
+				cuzco: cedar.Entity{
 					UID:     cuzco,
 					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("team", "osiris")),
 				},
@@ -191,7 +191,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-action-in",
 			Policy: `permit(principal,action in scary::"stuff",resource);`,
 			Entities: cedar.Entities{
-				dropTable: &cedar.Entity{
+				dropTable: cedar.Entity{
 					UID:     dropTable,
 					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("scary", "stuff")),
 				},
@@ -207,7 +207,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-action-in-set",
 			Policy: `permit(principal,action in [scary::"stuff"],resource);`,
 			Entities: cedar.Entities{
-				dropTable: &cedar.Entity{
+				dropTable: cedar.Entity{
 					UID:     dropTable,
 					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("scary", "stuff")),
 				},
@@ -300,7 +300,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "permit-when-relations-has",
 			Policy: `permit(principal,action,resource) when { principal has name };`,
 			Entities: cedar.Entities{
-				cuzco: &cedar.Entity{
+				cuzco: cedar.Entity{
 					UID:        cuzco,
 					Attributes: cedar.NewRecord(cedar.RecordMap{"name": cedar.String("bob")}),
 				},
@@ -752,7 +752,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "when-is-in",
 			Policy: `permit(principal,action,resource) when { resource is Resource in Parent::"id" };`,
 			Entities: cedar.Entities{
-				cedar.NewEntityUID("Resource", "table"): &cedar.Entity{
+				cedar.NewEntityUID("Resource", "table"): cedar.Entity{
 					UID:     cedar.NewEntityUID("Resource", "table"),
 					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("Parent", "id")),
 				},
@@ -768,7 +768,7 @@ func TestIsAuthorized(t *testing.T) {
 			Name:   "rfc-57", // https://github.com/cedar-policy/rfcs/blob/main/text/0057-general-multiplication.md
 			Policy: `permit(principal, action, resource) when { context.foo * principal.bar >= 100 };`,
 			Entities: cedar.Entities{
-				cedar.NewEntityUID("Principal", "1"): &cedar.Entity{
+				cedar.NewEntityUID("Principal", "1"): cedar.Entity{
 					UID:        cedar.NewEntityUID("Principal", "1"),
 					Attributes: cedar.NewRecord(cedar.RecordMap{"bar": cedar.Long(42)}),
 				},
