@@ -721,7 +721,7 @@ func (n *setLiteralEval) Eval(env Env) (types.Value, error) {
 		}
 		vals[i] = v
 	}
-	return types.NewSet(vals), nil
+	return types.NewSet(vals...), nil
 }
 
 // containsEval
