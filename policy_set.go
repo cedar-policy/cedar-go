@@ -61,9 +61,9 @@ func (p *PolicySet) Add(policyID PolicyID, policy *Policy) bool {
 	return !exists
 }
 
-// Delete removes a policy from the PolicySet. Returns true if a policy with
+// Remove removes a policy from the PolicySet. Returns true if a policy with
 // the given ID already existed in the set.
-func (p *PolicySet) Delete(policyID PolicyID) bool {
+func (p *PolicySet) Remove(policyID PolicyID) bool {
 	_, exists := p.policies[policyID]
 	delete(p.policies, policyID)
 	return exists
