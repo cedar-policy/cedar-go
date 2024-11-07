@@ -718,7 +718,7 @@ func TestMarshalExtensions(t *testing.T) {
 	}{
 		{
 			"decimalType",
-			ast.Permit().When(ast.Value(types.UnsafeDecimal(42))),
+			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42)))),
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.0"}]}}]}`,
 		},
 		{

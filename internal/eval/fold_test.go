@@ -21,7 +21,7 @@ func TestFoldNode(t *testing.T) {
 		},
 		{"set-bake",
 			ast.Set(ast.True()),
-			ast.Value(types.NewSet([]types.Value{types.True})),
+			ast.Value(types.NewSet(types.True)),
 		},
 		{"record-fold",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(6).Multiply(ast.Long(7))}}),
@@ -29,7 +29,7 @@ func TestFoldNode(t *testing.T) {
 		},
 		{"set-fold",
 			ast.Set(ast.Long(6).Multiply(ast.Long(7))),
-			ast.Value(types.NewSet([]types.Value{types.Long(42)})),
+			ast.Value(types.NewSet(types.Long(42))),
 		},
 		{"record-blocked",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(6).Multiply(ast.Context())}}),
@@ -205,7 +205,7 @@ func TestFoldPolicy(t *testing.T) {
 		{
 			"valueSetNodes",
 			ast.Permit().When(ast.Set(ast.Long(42), ast.Long(43))),
-			ast.Permit().When(ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43)}))),
+			ast.Permit().When(ast.Value(types.NewSet(types.Long(42), types.Long(43)))),
 		},
 		{
 			"valueRecordElements",
@@ -284,22 +284,22 @@ func TestFoldPolicy(t *testing.T) {
 		},
 		{
 			"opLessThanExt",
-			ast.Permit().When(ast.Value(types.UnsafeDecimal(42)).DecimalLessThan(ast.Value(types.UnsafeDecimal(43)))),
+			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalLessThan(ast.Value(testutil.Must(types.NewDecimalFromInt(43))))),
 			ast.Permit().When(ast.True()),
 		},
 		{
 			"opLessThanOrEqualExt",
-			ast.Permit().When(ast.Value(types.UnsafeDecimal(42)).DecimalLessThanOrEqual(ast.Value(types.UnsafeDecimal(43)))),
+			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalLessThanOrEqual(ast.Value(testutil.Must(types.NewDecimalFromInt(43))))),
 			ast.Permit().When(ast.True()),
 		},
 		{
 			"opGreaterThanExt",
-			ast.Permit().When(ast.Value(types.UnsafeDecimal(42)).DecimalGreaterThan(ast.Value(types.UnsafeDecimal(43)))),
+			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalGreaterThan(ast.Value(testutil.Must(types.NewDecimalFromInt(43))))),
 			ast.Permit().When(ast.False()),
 		},
 		{
 			"opGreaterThanOrEqualExt",
-			ast.Permit().When(ast.Value(types.UnsafeDecimal(42)).DecimalGreaterThanOrEqual(ast.Value(types.UnsafeDecimal(43)))),
+			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalGreaterThanOrEqual(ast.Value(testutil.Must(types.NewDecimalFromInt(43))))),
 			ast.Permit().When(ast.False()),
 		},
 		{

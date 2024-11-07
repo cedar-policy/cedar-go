@@ -42,8 +42,10 @@ func TestUpsertPolicy(t *testing.T) {
 		))
 
 		ps := cedar.NewPolicySet()
-		ps.Store("policy0", policy0)
-		ps.Store("policy1", &policy1)
+		added := ps.Add("policy0", policy0)
+		testutil.Equals(t, added, true)
+		added = ps.Add("policy1", &policy1)
+		testutil.Equals(t, added, true)
 
 		testutil.Equals(t, ps.Get("policy0"), policy0)
 		testutil.Equals(t, ps.Get("policy1"), &policy1)
@@ -55,10 +57,11 @@ func TestUpsertPolicy(t *testing.T) {
 		ps := cedar.NewPolicySet()
 
 		p1 := cedar.NewPolicyFromAST(ast.Forbid())
-		ps.Store("a wavering policy", p1)
+		ps.Add("a wavering policy", p1)
 
 		p2 := cedar.NewPolicyFromAST(ast.Permit())
-		ps.Store("a wavering policy", p2)
+		added := ps.Add("a wavering policy", p2)
+		testutil.Equals(t, added, false)
 
 		testutil.Equals(t, ps.Get("a wavering policy"), p2)
 	})
@@ -71,8 +74,8 @@ func TestDeletePolicy(t *testing.T) {
 
 		ps := cedar.NewPolicySet()
 
-		// Just verify that this doesn't crash
-		ps.Delete("not a policy")
+		existed := ps.Remove("not a policy")
+		testutil.Equals(t, existed, false)
 	})
 	t.Run("delete existing", func(t *testing.T) {
 		t.Parallel()
@@ -80,8 +83,9 @@ func TestDeletePolicy(t *testing.T) {
 		ps := cedar.NewPolicySet()
 
 		p1 := cedar.NewPolicyFromAST(ast.Forbid())
-		ps.Store("a policy", p1)
-		ps.Delete("a policy")
+		ps.Add("a policy", p1)
+		existed := ps.Remove("a policy")
+		testutil.Equals(t, existed, true)
 
 		testutil.Equals(t, ps.Get("a policy"), nil)
 	})
@@ -109,7 +113,7 @@ forbid (
 	ps := cedar.NewPolicySet()
 	for i, p := range policies {
 		p.SetFilename("example.cedar")
-		ps.Store(cedar.PolicyID(fmt.Sprintf("policy%d", i)), p)
+		ps.Add(cedar.PolicyID(fmt.Sprintf("policy%d", i)), p)
 	}
 
 	testutil.Equals(t, ps.Get("policy0").Effect(), cedar.Permit)

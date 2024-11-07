@@ -5,6 +5,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
+	"golang.org/x/exp/constraints"
 )
 
 //  _____
@@ -50,10 +51,6 @@ type Value = types.Value
 const (
 	True  = types.True
 	False = types.False
-)
-
-const (
-	DecimalPrecision = types.DecimalPrecision
 )
 
 //   ____                _                   _
@@ -104,13 +101,29 @@ func NewRecord(r RecordMap) Record {
 	return types.NewRecord(r)
 }
 
-// NewSet returns an immutable Set given a Go slice of Values. Duplicates are removed and order is not preserved.
-func NewSet(s []types.Value) Set {
-	return types.NewSet(s)
+// NewSet returns an immutable Set given a variadic set of Values. Duplicates are removed and order is not preserved.
+func NewSet(s ...types.Value) Set {
+	return types.NewSet(s...)
 }
 
-// UnsafeDecimal creates a decimal via unsafe conversion from int, int64, float64.
-// Precision may be lost and overflows may occur.
-func UnsafeDecimal[T int | int64 | float64](v T) Decimal {
-	return types.UnsafeDecimal(v)
+// NewDecimal returns a Decimal value of i * 10^exponent.
+func NewDecimal(i int64, exponent int) (Decimal, error) {
+	return types.NewDecimal(i, exponent)
+}
+
+// NewDecimalFromInt returns a Decimal with the whole integer value provided
+func NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error) {
+	return types.NewDecimalFromInt(i)
+}
+
+// NewDecimalFromFloat returns a Decimal that approximates the given floating point value.
+// The value of the Decimal is calculated by multiplying it by 10^4, truncating it to
+// an int64 representation to cut off any digits beyond the four allowed, and passing it
+// as an integer to NewDecimal() with -4 as the exponent.
+//
+// WARNING: decimal representations of more than 6 significant digits for float32s and 15
+// significant digits for float64s can be lossy in terms of precision. To create a precise
+// Decimal above those sizes, use the NewDecimal constructor.
+func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
+	return types.NewDecimalFromFloat(f)
 }

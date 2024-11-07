@@ -6,16 +6,20 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
-func TestDecimal(t *testing.T) {
+func TestDecimalInternal(t *testing.T) {
 	t.Parallel()
 	t.Run("hash", func(t *testing.T) {
 		t.Parallel()
 
-		testutil.Equals(t, UnsafeDecimal(42).hash(), UnsafeDecimal(42).hash())
-		testutil.Equals(t, UnsafeDecimal(-42).hash(), UnsafeDecimal(-42).hash())
+		testutil.Equals(t, testutil.Must(NewDecimalFromInt(42)).hash(), testutil.Must(NewDecimalFromInt(42)).hash())
+		testutil.Equals(t, testutil.Must(NewDecimalFromInt(-42)).hash(), testutil.Must(NewDecimalFromInt(-42)).hash())
 
 		// This isn't necessarily true for all values of Decimal, but we want to ensure we aren't just returning the
 		// same hash value for Decimal.hash() for every instance.
-		testutil.FatalIf(t, UnsafeDecimal(42).hash() == UnsafeDecimal(1337).hash(), "unexpected hash collision")
+		testutil.FatalIf(
+			t,
+			testutil.Must(NewDecimal(42, 0)).hash() ==
+				testutil.Must(NewDecimal(1337, 0)).hash(), "unexpected hash collision",
+		)
 	})
 }

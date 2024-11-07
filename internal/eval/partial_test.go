@@ -718,7 +718,7 @@ func TestPartialBasic(t *testing.T) {
 		{
 			"valueSetNodesFold",
 			ast.Set(ast.Long(42), ast.Long(43)),
-			ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43)})),
+			ast.Value(types.NewSet(types.Long(42), types.Long(43))),
 			testutil.OK,
 		},
 		{
@@ -867,19 +867,19 @@ func TestPartialBasic(t *testing.T) {
 		},
 		{
 			"opLessThanExtKeep",
-			ast.Value(types.UnsafeDecimal(42)).DecimalLessThan(ast.Context()),
-			ast.Value(types.UnsafeDecimal(42)).DecimalLessThan(ast.Context()),
+			ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalLessThan(ast.Context()),
+			ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalLessThan(ast.Context()),
 			testutil.OK,
 		},
 		{
 			"opLessThanExtFold",
-			ast.Value(types.UnsafeDecimal(42)).DecimalLessThan(ast.Value(types.UnsafeDecimal(43))),
+			ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalLessThan(ast.Value(testutil.Must(types.NewDecimalFromInt(43)))),
 			ast.True(),
 			testutil.OK,
 		},
 		{
 			"opLessThanExtError",
-			ast.Value(types.UnsafeDecimal(42)).DecimalLessThan(ast.String("test")),
+			ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalLessThan(ast.String("test")),
 			nul,
 			testutil.Error,
 		},
@@ -1102,7 +1102,7 @@ func TestPartialBasic(t *testing.T) {
 		{
 			"opContainsKeep",
 			ast.Set(ast.Long(42)).Contains(ast.Context()),
-			ast.Value(types.NewSet([]types.Value{types.Long(42)})).Contains(ast.Context()),
+			ast.Value(types.NewSet(types.Long(42))).Contains(ast.Context()),
 			testutil.OK,
 		},
 		{
@@ -1120,7 +1120,7 @@ func TestPartialBasic(t *testing.T) {
 		{
 			"opContainsAllKeep",
 			ast.Set(ast.Long(42)).ContainsAll(ast.Context()),
-			ast.Value(types.NewSet([]types.Value{types.Long(42)})).ContainsAll(ast.Context()),
+			ast.Value(types.NewSet(types.Long(42))).ContainsAll(ast.Context()),
 			testutil.OK,
 		},
 		{
@@ -1138,7 +1138,7 @@ func TestPartialBasic(t *testing.T) {
 		{
 			"opContainsAnyKeep",
 			ast.Set(ast.Long(42)).ContainsAny(ast.Context()),
-			ast.Value(types.NewSet([]types.Value{types.Long(42)})).ContainsAny(ast.Context()),
+			ast.Value(types.NewSet(types.Long(42))).ContainsAny(ast.Context()),
 			testutil.OK,
 		},
 		{

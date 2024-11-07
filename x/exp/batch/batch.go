@@ -377,7 +377,7 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 			return true
 		})
 
-		return types.NewSet(newSlice), true
+		return types.NewSet(newSlice...), true
 	}
 	return r, false
 }

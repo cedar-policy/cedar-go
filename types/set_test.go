@@ -15,22 +15,24 @@ func TestSet(t *testing.T) {
 		t.Parallel()
 		empty := types.Set{}
 		empty2 := types.Set{}
-		oneTrue := types.NewSet([]types.Value{types.Boolean(true)})
-		oneTrue2 := types.NewSet([]types.Value{types.Boolean(true)})
-		oneFalse := types.NewSet([]types.Value{types.Boolean(false)})
-		nestedOnce := types.NewSet([]types.Value{empty, oneTrue, oneFalse})
-		nestedOnce2 := types.NewSet([]types.Value{empty, oneTrue, oneFalse})
-		nestedTwice := types.NewSet([]types.Value{empty, oneTrue, oneFalse, nestedOnce})
-		nestedTwice2 := types.NewSet([]types.Value{empty, oneTrue, oneFalse, nestedOnce})
-		oneTwoThree := types.NewSet([]types.Value{
+		empty3 := types.NewSet()
+		oneTrue := types.NewSet(types.Boolean(true))
+		oneTrue2 := types.NewSet(types.Boolean(true))
+		oneFalse := types.NewSet(types.Boolean(false))
+		nestedOnce := types.NewSet(empty, oneTrue, oneFalse)
+		nestedOnce2 := types.NewSet(empty, oneTrue, oneFalse)
+		nestedTwice := types.NewSet(empty, oneTrue, oneFalse, nestedOnce)
+		nestedTwice2 := types.NewSet(empty, oneTrue, oneFalse, nestedOnce)
+		oneTwoThree := types.NewSet(
 			types.Long(1), types.Long(2), types.Long(3),
-		})
-		threeTwoTwoOne := types.NewSet([]types.Value{
+		)
+		threeTwoTwoOne := types.NewSet(
 			types.Long(3), types.Long(2), types.Long(2), types.Long(1),
-		})
+		)
 
 		testutil.FatalIf(t, !empty.Equal(empty), "%v not Equal to %v", empty, empty)
 		testutil.FatalIf(t, !empty.Equal(empty2), "%v not Equal to %v", empty, empty2)
+		testutil.FatalIf(t, !empty.Equal(empty3), "%v not Equal to %v", empty, empty3)
 		testutil.FatalIf(t, !oneTrue.Equal(oneTrue), "%v not Equal to %v", oneTrue, oneTrue)
 		testutil.FatalIf(t, !oneTrue.Equal(oneTrue2), "%v not Equal to %v", oneTrue, oneTrue2)
 		testutil.FatalIf(t, !nestedOnce.Equal(nestedOnce), "%v not Equal to %v", nestedOnce, nestedOnce)
@@ -49,7 +51,7 @@ func TestSet(t *testing.T) {
 		testutil.Equals(t, types.Set{}.String(), "[]")
 		testutil.Equals(
 			t,
-			types.NewSet([]types.Value{types.Boolean(true), types.Long(1)}).String(),
+			types.NewSet(types.Boolean(true), types.Long(1)).String(),
 			"[true, 1]")
 	})
 
@@ -57,8 +59,8 @@ func TestSet(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(t, types.Set{}.Len(), 0)
 		testutil.Equals(t, types.Set{}.Len(), 0)
-		testutil.Equals(t, types.NewSet([]types.Value{types.Long(1)}).Len(), 1)
-		testutil.Equals(t, types.NewSet([]types.Value{types.Long(1), types.Long(2)}).Len(), 2)
+		testutil.Equals(t, types.NewSet(types.Long(1)).Len(), 1)
+		testutil.Equals(t, types.NewSet(types.Long(1), types.Long(2)).Len(), 2)
 	})
 
 	t.Run("IterateEntire", func(t *testing.T) {
@@ -76,7 +78,7 @@ func TestSet(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
-				set := types.NewSet(tt.values)
+				set := types.NewSet(tt.values...)
 
 				var got []types.Value
 				set.Iterate(func(v types.Value) bool {
@@ -99,7 +101,7 @@ func TestSet(t *testing.T) {
 	t.Run("IteratePartial", func(t *testing.T) {
 		t.Parallel()
 
-		set := types.NewSet([]types.Value{types.Long(42), types.Long(1337)})
+		set := types.NewSet(types.Long(42), types.Long(1337))
 
 		// It would be nice to know which element or elements were returned when iteration ends early, but iteration
 		// order for Sets is non-deterministic
@@ -140,30 +142,27 @@ func TestSet(t *testing.T) {
 		s := types.Set{}.Slice()
 		testutil.Equals(t, s, nil)
 
-		s = types.NewSet(nil).Slice()
+		s = types.NewSet().Slice()
 		testutil.Equals(t, s, nil)
 
-		s = types.NewSet([]types.Value{}).Slice()
-		testutil.Equals(t, s, []types.Value{})
-
-		s = types.NewSet([]types.Value{types.True}).Slice()
+		s = types.NewSet(types.True).Slice()
 		testutil.Equals(t, s, []types.Value{types.True})
 
-		s = types.NewSet([]types.Value{types.True, types.False}).Slice()
+		s = types.NewSet(types.True, types.False).Slice()
 		testutil.Equals(t, len(s), 2)
 		testutil.FatalIf(t, !slices.ContainsFunc(s, func(v types.Value) bool { return v.Equal(types.True) }), "")
 		testutil.FatalIf(t, !slices.ContainsFunc(s, func(v types.Value) bool { return v.Equal(types.False) }), "")
 
-		s = types.NewSet([]types.Value{types.True, types.False, types.True}).Slice()
+		s = types.NewSet(types.True, types.False, types.True).Slice()
 		testutil.Equals(t, len(s), 2)
 		testutil.FatalIf(t, !slices.ContainsFunc(s, func(v types.Value) bool { return v.Equal(types.True) }), "")
 		testutil.FatalIf(t, !slices.ContainsFunc(s, func(v types.Value) bool { return v.Equal(types.False) }), "")
 
 		// Show that mutating the returned slice doesn't affect Set's internal state
-		r := types.NewSet([]types.Value{types.True, types.False})
+		r := types.NewSet(types.True, types.False)
 		s = r.Slice()
 		_ = append(s, types.Long(0))
-		testutil.Equals(t, r, types.NewSet([]types.Value{types.True, types.False}))
+		testutil.Equals(t, r, types.NewSet(types.True, types.False))
 	})
 
 	// This test is intended to show the NewSet makes a copy of the Values in the input slice
@@ -173,7 +172,7 @@ func TestSet(t *testing.T) {
 		slice := []types.Value{types.Long(42)}
 		p := &slice[0]
 
-		set := types.NewSet(slice)
+		set := types.NewSet(slice...)
 
 		*p = types.Long(1337)
 
@@ -193,7 +192,7 @@ func TestSet(t *testing.T) {
 	t.Run("no duplicates", func(t *testing.T) {
 		t.Parallel()
 
-		set := types.NewSet([]types.Value{types.Long(42), types.Long(42)})
+		set := types.NewSet(types.Long(42), types.Long(42))
 
 		testutil.Equals(t, set.Len(), 1)
 

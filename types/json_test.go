@@ -66,7 +66,7 @@ func TestJSON_Value(t *testing.T) {
 		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), ErrDecimal},
 		{"badDatetime", `{ "__extn": { "fn": "datetime", "arg": "bad" } }`, zeroValue(), ErrDatetime},
 		{"badDuration", `{ "__extn": { "fn": "duration", "arg": "bad" } }`, zeroValue(), ErrDuration},
-		{"set", `[42]`, NewSet([]Value{Long(42)}), nil},
+		{"set", `[42]`, NewSet(Long(42)), nil},
 		{"record", `{"a":"b"}`, NewRecord(RecordMap{"a": String("b")}), nil},
 		{"bool", `false`, Boolean(false), nil},
 	}
@@ -556,11 +556,11 @@ func TestJSONMarshal(t *testing.T) {
 		},
 		{
 			"set",
-			NewSet([]Value{
+			NewSet(
 				String("av"),
 				String("cv"),
 				String("bv"),
-			}),
+			),
 			`["cv","bv","av"]`,
 		},
 		{
@@ -608,7 +608,7 @@ func TestJSONSet(t *testing.T) {
 	})
 	t.Run("MarshalErr", func(t *testing.T) {
 		t.Parallel()
-		s := NewSet([]Value{&jsonErr{}})
+		s := NewSet(&jsonErr{})
 		_, err := json.Marshal(s)
 		testutil.Error(t, err)
 	})
