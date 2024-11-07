@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -39,7 +40,7 @@ func TestLong(t *testing.T) {
 			{one, zero, false, nil},
 			{zero, one, true, nil},
 			{zero, zero, false, nil},
-			{zero, f, false, types.ErrNotComparable},
+			{zero, f, false, internal.ErrNotComparable},
 		}
 
 		for ti, tt := range tests {
@@ -69,7 +70,7 @@ func TestLong(t *testing.T) {
 			{one, zero, false, nil},
 			{zero, one, true, nil},
 			{zero, zero, true, nil},
-			{zero, f, false, types.ErrNotComparable},
+			{zero, f, false, internal.ErrNotComparable},
 		}
 
 		for ti, tt := range tests {

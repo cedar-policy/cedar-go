@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -2177,7 +2178,7 @@ func TestDecimalLiteralNode(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"DecimalError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDecimal},
+		{"DecimalError", newLiteralEval(types.String("frob")), zeroValue(), internal.ErrDecimal},
 		{"Success", newLiteralEval(types.String("1.0")), testutil.Must(types.NewDecimalFromInt(1)), nil},
 	}
 	for _, tt := range tests {
@@ -2204,7 +2205,7 @@ func TestIPLiteralNode(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"IPError", newLiteralEval(types.String("not-an-IP-address")), zeroValue(), types.ErrIP},
+		{"IPError", newLiteralEval(types.String("not-an-IP-address")), zeroValue(), internal.ErrIP},
 		{"Success", newLiteralEval(types.String("::1/128")), ipv6Loopback, nil},
 	}
 	for _, tt := range tests {
@@ -2335,7 +2336,7 @@ func TestDatetimeLiteralNode(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"DatetimeError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDatetime},
+		{"DatetimeError", newLiteralEval(types.String("frob")), zeroValue(), internal.ErrDatetime},
 		{"Success", newLiteralEval(types.String("1970-01-01")), types.FromStdTime(time.UnixMilli(0)), nil},
 	}
 	for _, tt := range tests {
@@ -2480,7 +2481,7 @@ func TestDurationLiteralNode(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"DurationError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDuration},
+		{"DurationError", newLiteralEval(types.String("frob")), zeroValue(), internal.ErrDuration},
 		{"Success", newLiteralEval(types.String("1h")), types.FromStdDuration(1 * time.Hour), nil},
 	}
 	for _, tt := range tests {

@@ -7,7 +7,11 @@ import (
 	"hash/fnv"
 	"net/netip"
 	"strings"
+
+	"github.com/cedar-policy/cedar-go/internal"
 )
+
+var errIP = internal.ErrIP
 
 // An IPAddr is value that represents an IP address. It can be either IPv4 or IPv6.
 // The value can represent an individual address or a range of addresses.
@@ -17,13 +21,13 @@ type IPAddr netip.Prefix
 func ParseIPAddr(s string) (IPAddr, error) {
 	// We disallow IPv4-mapped IPv6 addresses in dotted notation because Cedar does.
 	if strings.Count(s, ":") >= 2 && strings.Count(s, ".") >= 2 {
-		return IPAddr{}, fmt.Errorf("%w: cannot parse IPv4 addresses embedded in IPv6 addresses", ErrIP)
+		return IPAddr{}, fmt.Errorf("%w: cannot parse IPv4 addresses embedded in IPv6 addresses", errIP)
 	} else if net, err := netip.ParsePrefix(s); err == nil {
 		return IPAddr(net), nil
 	} else if addr, err := netip.ParseAddr(s); err == nil {
 		return IPAddr(netip.PrefixFrom(addr, addr.BitLen())), nil
 	} else {
-		return IPAddr{}, fmt.Errorf("%w: error parsing IP address %s", ErrIP, s)
+		return IPAddr{}, fmt.Errorf("%w: error parsing IP address %s", errIP, s)
 	}
 }
 

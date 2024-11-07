@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -72,7 +73,7 @@ func TestDuration(t *testing.T) {
 			t.Run(fmt.Sprintf("%d_%s->%s", ti, tt.in, tt.errStr), func(t *testing.T) {
 				t.Parallel()
 				_, err := types.ParseDuration(tt.in)
-				testutil.ErrorIs(t, err, types.ErrDuration)
+				testutil.ErrorIs(t, err, internal.ErrDuration)
 				testutil.Equals(t, err.Error(), tt.errStr)
 			})
 		}
@@ -113,7 +114,7 @@ func TestDuration(t *testing.T) {
 			{one, zero, false, nil},
 			{zero, one, true, nil},
 			{zero, zero, false, nil},
-			{zero, f, false, types.ErrNotComparable},
+			{zero, f, false, internal.ErrNotComparable},
 		}
 
 		for ti, tt := range tests {
@@ -143,7 +144,7 @@ func TestDuration(t *testing.T) {
 			{one, zero, false, nil},
 			{zero, one, true, nil},
 			{zero, zero, true, nil},
-			{zero, f, false, types.ErrNotComparable},
+			{zero, f, false, internal.ErrNotComparable},
 		}
 
 		for ti, tt := range tests {
