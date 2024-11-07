@@ -8,11 +8,6 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-// EntityLoader defines the interface for loading entities from an entity store.
-type EntityLoader interface {
-	Load(EntityUID) (Entity, bool)
-}
-
 // An EntityMap is a collection of all the entities that are needed to evaluate
 // authorization requests.  The key is an EntityUID which uniquely identifies
 // the Entity (it must be the same as the UID within the Entity itself.)
