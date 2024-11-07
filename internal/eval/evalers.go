@@ -22,7 +22,7 @@ func zeroValue() types.Value {
 }
 
 type Env struct {
-	Entities                    types.EntityLoader
+	Entities                    types.EntityMap
 	Principal, Action, Resource types.Value
 	Context                     types.Value
 }
