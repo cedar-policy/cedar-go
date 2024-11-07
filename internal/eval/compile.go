@@ -74,7 +74,7 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 		for i, e := range t.Entities {
 			vals[i] = e
 		}
-		return ast.NewNode(varNode).In(ast.Value(types.NewSet(vals)))
+		return ast.NewNode(varNode).In(ast.Value(types.NewSet(vals...)))
 	case ast.ScopeTypeIs:
 		return ast.NewNode(varNode).Is(t.Type)
 

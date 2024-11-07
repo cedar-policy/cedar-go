@@ -249,9 +249,9 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"valueSet",
-			ast.Permit().When(ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43)}))),
+			ast.Permit().When(ast.Value(types.NewSet(types.Long(42), types.Long(43)))),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
-				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeValue{Value: types.NewSet([]types.Value{types.Long(42), types.Long(43)})}}},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeValue{Value: types.NewSet(types.Long(42), types.Long(43))}}},
 			},
 		},
 		{

@@ -102,9 +102,9 @@ func NewRecord(r RecordMap) Record {
 	return types.NewRecord(r)
 }
 
-// NewSet returns an immutable Set given a Go slice of Values. Duplicates are removed and order is not preserved.
-func NewSet(s []types.Value) Set {
-	return types.NewSet(s)
+// NewSet returns an immutable Set given a variadic set of Values. Duplicates are removed and order is not preserved.
+func NewSet(s ...types.Value) Set {
+	return types.NewSet(s...)
 }
 
 // NewDecimal returns a Decimal value of i * 10^exponent.

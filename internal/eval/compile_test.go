@@ -123,7 +123,7 @@ func TestScopeToNode(t *testing.T) {
 			"inSet",
 			ast.NewActionNode(),
 			ast.ScopeTypeInSet{Entities: []types.EntityUID{types.NewEntityUID("T", "42")}},
-			ast.Action().In(ast.Value(types.NewSet([]types.Value{types.NewEntityUID("T", "42")}))),
+			ast.Action().In(ast.Value(types.NewSet(types.NewEntityUID("T", "42")))),
 		},
 		{
 			"is",

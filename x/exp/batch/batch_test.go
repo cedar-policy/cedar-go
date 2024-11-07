@@ -634,8 +634,8 @@ func TestCloneSub(t *testing.T) {
 		},
 		{
 			"set",
-			types.NewSet([]types.Value{Variable("bananas")}), "bananas", types.String("hello"),
-			types.NewSet([]types.Value{types.String("hello")}), true,
+			types.NewSet(Variable("bananas")), "bananas", types.String("hello"),
+			types.NewSet(types.String("hello")), true,
 		},
 		{
 			"recordNoChange",
@@ -644,8 +644,8 @@ func TestCloneSub(t *testing.T) {
 		},
 		{
 			"setNoChange",
-			types.NewSet([]types.Value{Variable("asdf")}), "bananas", types.String("hello"),
-			types.NewSet([]types.Value{Variable("asdf")}), false,
+			types.NewSet(Variable("asdf")), "bananas", types.String("hello"),
+			types.NewSet(Variable("asdf")), false,
 		},
 	}
 	for _, tt := range tests {
@@ -667,10 +667,10 @@ func TestFindVariables(t *testing.T) {
 		out  []types.String
 	}{
 		{"record", types.NewRecord(types.RecordMap{"key": Variable("bananas")}), []types.String{"bananas"}},
-		{"set", types.NewSet([]types.Value{Variable("bananas")}), []types.String{"bananas"}},
-		{"dupes", types.NewSet([]types.Value{Variable("bananas"), Variable("bananas")}), []types.String{"bananas"}},
+		{"set", types.NewSet(Variable("bananas")), []types.String{"bananas"}},
+		{"dupes", types.NewSet(Variable("bananas"), Variable("bananas")), []types.String{"bananas"}},
 		{"none", types.String("test"), nil},
-		{"multi", types.NewSet([]types.Value{Variable("bananas"), Variable("test")}), []types.String{"bananas", "test"}},
+		{"multi", types.NewSet(Variable("bananas"), Variable("test")), []types.String{"bananas", "test"}},
 	}
 
 	for _, tt := range tests {

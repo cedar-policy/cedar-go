@@ -65,7 +65,7 @@ func TestUtil(t *testing.T) {
 		t.Parallel()
 		t.Run("roundTrip", func(t *testing.T) {
 			t.Parallel()
-			v := types.NewSet([]types.Value{types.Boolean(true), types.Long(1)})
+			v := types.NewSet(types.Boolean(true), types.Long(1))
 			slice, err := ValueToSet(v)
 			testutil.OK(t, err)
 			v2 := slice
