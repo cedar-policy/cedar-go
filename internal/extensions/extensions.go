@@ -24,16 +24,16 @@ var ExtMap = map[types.Path]extInfo{
 	"isMulticast": {Args: 1, IsMethod: true},
 	"isInRange":   {Args: 2, IsMethod: true},
 
-	"toDate":         {Args: 1, IsMethod: true},
-	"toTime":         {Args: 1, IsMethod: true},
+	"toDate":        {Args: 1, IsMethod: true},
+	"toTime":        {Args: 1, IsMethod: true},
+	"offset":        {Args: 2, IsMethod: true},
+	"durationSince": {Args: 2, IsMethod: true},
+
 	"toDays":         {Args: 1, IsMethod: true},
 	"toHours":        {Args: 1, IsMethod: true},
 	"toMinutes":      {Args: 1, IsMethod: true},
 	"toSeconds":      {Args: 1, IsMethod: true},
 	"toMilliseconds": {Args: 1, IsMethod: true},
-
-	"offset":        {Args: 2, IsMethod: true},
-	"durationSince": {Args: 2, IsMethod: true},
 }
 
 func init() {

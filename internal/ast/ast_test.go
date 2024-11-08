@@ -3,6 +3,7 @@ package ast_test
 import (
 	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -479,6 +480,59 @@ func TestASTByTable(t *testing.T) {
 			ast.Permit().When(ast.Long(42).IsInRange(ast.Long(43))),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
 				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "isInRange", Args: []ast.IsNode{ast.NodeValue{Value: types.Long(42)}, ast.NodeValue{Value: types.Long(43)}}}}}},
+		},
+		{
+			"opOffset",
+			ast.Permit().When(ast.Datetime(time.Time{}).Offset(ast.Duration(time.Duration(100)))),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "offset", Args: []ast.IsNode{ast.NodeValue{Value: types.FromStdTime(time.Time{})}, ast.NodeValue{Value: types.FromStdDuration(time.Duration(100))}}}}}},
+		},
+		{
+			"opDurationSince",
+			ast.Permit().When(ast.Datetime(time.Time{}).DurationSince(ast.Datetime(time.Time{}))),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "durationSince", Args: []ast.IsNode{ast.NodeValue{Value: types.FromStdTime(time.Time{})}, ast.NodeValue{Value: types.FromStdTime(time.Time{})}}}}}},
+		},
+		{
+			"opToDate",
+			ast.Permit().When(ast.Datetime(time.Time{}).ToDate()),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "toDate", Args: []ast.IsNode{ast.NodeValue{Value: types.FromStdTime(time.Time{})}}}}}},
+		},
+		{
+			"opToTime",
+			ast.Permit().When(ast.Datetime(time.Time{}).ToTime()),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "toTime", Args: []ast.IsNode{ast.NodeValue{Value: types.FromStdTime(time.Time{})}}}}}},
+		},
+		{
+			"opToDays",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToDays()),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "toDays", Args: []ast.IsNode{ast.NodeValue{Value: types.FromStdDuration(time.Duration(100))}}}}}},
+		},
+		{
+			"opToHours",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToHours()),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "toHours", Args: []ast.IsNode{ast.NodeValue{Value: types.FromStdDuration(time.Duration(100))}}}}}},
+		},
+		{"opToMinutes",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToMinutes()),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "toMinutes", Args: []ast.IsNode{ast.NodeValue{Value: types.FromStdDuration(time.Duration(100))}}}}}},
+		},
+		{
+			"opToSeconds",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToSeconds()),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "toSeconds", Args: []ast.IsNode{ast.NodeValue{Value: types.FromStdDuration(time.Duration(100))}}}}}},
+		},
+		{
+			"opToMilliseconds",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToMilliseconds()),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "toMilliseconds", Args: []ast.IsNode{ast.NodeValue{Value: types.FromStdDuration(time.Duration(100))}}}}}},
 		},
 
 		{

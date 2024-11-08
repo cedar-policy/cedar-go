@@ -165,3 +165,33 @@ func (lhs Node) IsLoopback() Node {
 func (lhs Node) IsInRange(rhs Node) Node {
 	return wrapNode(lhs.Node.IsInRange(rhs.Node))
 }
+
+//  ____        _       _   _
+// |  _ \  __ _| |_ ___| |_(_)_ __ ___   ___
+// | | | |/ _` | __/ _ \ __| | '_ ` _ \ / _ \
+// | |_| | (_| | ||  __/ |_| | | | | | |  __/
+// |____/ \__,_|\__\___|\__|_|_| |_| |_|\___|
+
+func (lhs Node) Offset(rhs Node) Node { return wrapNode(lhs.Node.Offset(rhs.Node)) }
+
+func (lhs Node) DurationSince(rhs Node) Node { return wrapNode(lhs.Node.DurationSince(rhs.Node)) }
+
+func (lhs Node) ToDate() Node { return wrapNode(lhs.Node.ToDate()) }
+
+func (lhs Node) ToTime() Node { return wrapNode(lhs.Node.ToTime()) }
+
+//  ____                  _   _
+// |  _ \ _   _ _ __ __ _| |_(_) ___  _ __
+// | | | | | | | '__/ _` | __| |/ _ \| '_ \
+// | |_| | |_| | | | (_| | |_| | (_) | | | |
+// |____/ \__,_|_|  \__,_|\__|_|\___/|_| |_|
+
+func (lhs Node) ToDays() Node { return wrapNode(lhs.Node.ToDays()) }
+
+func (lhs Node) ToHours() Node { return wrapNode(lhs.Node.ToHours()) }
+
+func (lhs Node) ToMinutes() Node { return wrapNode(lhs.Node.ToMinutes()) }
+
+func (lhs Node) ToSeconds() Node { return wrapNode(lhs.Node.ToSeconds()) }
+
+func (lhs Node) ToMilliseconds() Node { return wrapNode(lhs.Node.ToMilliseconds()) }

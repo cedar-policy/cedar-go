@@ -2,6 +2,7 @@ package ast
 
 import (
 	"net/netip"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
@@ -77,6 +78,14 @@ func EntityUID(typ types.Ident, id types.String) Node {
 // IPAddr creates an value node containing an IPAddr.
 func IPAddr[T netip.Prefix | types.IPAddr](i T) Node {
 	return wrapNode(ast.IPAddr(types.IPAddr(i)))
+}
+
+func Datetime(t time.Time) Node {
+	return Value(types.FromStdTime(t))
+}
+
+func Duration(d time.Duration) Node {
+	return Value(types.FromStdDuration(d))
 }
 
 // Value creates a value node from any value.
