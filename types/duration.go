@@ -31,8 +31,8 @@ type Duration struct {
 	value int64
 }
 
-// FromStdDuration returns a Cedar Duration from a Go time.Duration
-func FromStdDuration(d time.Duration) Duration {
+// NewDuration returns a Cedar Duration from a Go time.Duration
+func NewDuration(d time.Duration) Duration {
 	return Duration{value: d.Milliseconds()}
 }
 

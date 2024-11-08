@@ -978,9 +978,9 @@ func TestComparableValueComparisonNodes(t *testing.T) {
 		zeroDate     = types.NewDatetime(time.UnixMilli(0))
 		futureDate   = types.NewDatetime(time.UnixMilli(1))
 		pastDate     = types.NewDatetime(time.UnixMilli(-1))
-		zeroDuration = types.FromStdDuration(time.Duration(0))
-		negDuration  = types.FromStdDuration(-1 * time.Millisecond)
-		posDuration  = types.FromStdDuration(1 * time.Millisecond)
+		zeroDuration = types.NewDuration(time.Duration(0))
+		negDuration  = types.NewDuration(-1 * time.Millisecond)
+		posDuration  = types.NewDuration(1 * time.Millisecond)
 	)
 
 	type test struct {
@@ -2312,7 +2312,7 @@ func TestCedarString(t *testing.T) {
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
 		{"decimal", testutil.Must(types.NewDecimal(12345678, -4)), `1234.5678`, `decimal("1234.5678")`},
-		{"duration", types.FromStdDuration(1 * time.Millisecond), `1ms`, `duration("1ms")`},
+		{"duration", types.NewDuration(1 * time.Millisecond), `1ms`, `duration("1ms")`},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2384,7 +2384,7 @@ func TestDatetimeDurationSince(t *testing.T) {
 	testutil.OK(t, err)
 	endTime, err := types.ParseDatetime("1970-01-01T00:00:00Z")
 	testutil.OK(t, err)
-	dur := types.FromStdDuration(1 * time.Hour)
+	dur := types.NewDuration(1 * time.Hour)
 	bad := types.Long(1)
 
 	tests := []struct {
@@ -2417,7 +2417,7 @@ func TestDatetimeOffset(t *testing.T) {
 	testutil.OK(t, err)
 	endTime, err := types.ParseDatetime("1970-01-01T01:00:00Z")
 	testutil.OK(t, err)
-	dur := types.FromStdDuration(1 * time.Hour)
+	dur := types.NewDuration(1 * time.Hour)
 	bad := types.Long(1)
 
 	tests := []struct {
@@ -2457,7 +2457,7 @@ func TestDatetimeToTime(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"Success", newLiteralEval(aTime), types.FromStdDuration(10 * time.Hour), nil},
+		{"Success", newLiteralEval(aTime), types.NewDuration(10 * time.Hour), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2482,7 +2482,7 @@ func TestDurationLiteralNode(t *testing.T) {
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
 		{"DurationError", newLiteralEval(types.String("frob")), zeroValue(), internal.ErrDuration},
-		{"Success", newLiteralEval(types.String("1h")), types.FromStdDuration(1 * time.Hour), nil},
+		{"Success", newLiteralEval(types.String("1h")), types.NewDuration(1 * time.Hour), nil},
 	}
 	for _, tt := range tests {
 		tt := tt

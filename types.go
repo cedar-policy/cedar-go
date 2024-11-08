@@ -71,7 +71,7 @@ func DurationFromMillis(ms int64) Duration {
 
 // FromStdDuration returns a Cedar Duration from a Go time.Duration
 func FromStdDuration(d time.Duration) Duration {
-	return types.FromStdDuration(d)
+	return types.NewDuration(d)
 }
 
 // FromStdTime returns a Cedar Datetime from a Go time.Time value

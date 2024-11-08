@@ -79,7 +79,7 @@ func Datetime(t time.Time) Node {
 }
 
 func Duration(d time.Duration) Node {
-	return Value(types.FromStdDuration(d))
+	return Value(types.NewDuration(d))
 }
 
 func ExtensionCall(name types.Path, args ...Node) Node {

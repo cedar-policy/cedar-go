@@ -82,15 +82,15 @@ func TestDuration(t *testing.T) {
 	t.Run("Construct", func(t *testing.T) {
 		t.Parallel()
 		one := types.DurationFromMillis(1)
-		two := types.FromStdDuration(1 * time.Millisecond)
+		two := types.NewDuration(1 * time.Millisecond)
 		testutil.Equals(t, one.ToMilliseconds(), two.ToMilliseconds())
 	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		one := types.DurationFromMillis(1)
-		one2 := types.FromStdDuration(1 * time.Millisecond)
-		zero := types.FromStdDuration(time.Duration(0))
+		one2 := types.NewDuration(1 * time.Millisecond)
+		zero := types.NewDuration(time.Duration(0))
 		f := types.Boolean(false)
 		testutil.FatalIf(t, !one.Equal(one), "%v not Equal to %v", one, one)
 		testutil.FatalIf(t, !one.Equal(one2), "%v not Equal to %v", one, one2)
@@ -101,8 +101,8 @@ func TestDuration(t *testing.T) {
 
 	t.Run("LessThan", func(t *testing.T) {
 		t.Parallel()
-		one := types.FromStdDuration(1 * time.Millisecond)
-		zero := types.FromStdDuration(time.Duration(0))
+		one := types.NewDuration(1 * time.Millisecond)
+		zero := types.NewDuration(time.Duration(0))
 		f := types.Boolean(false)
 
 		tests := []struct {
@@ -131,8 +131,8 @@ func TestDuration(t *testing.T) {
 
 	t.Run("LessThanOrEqual", func(t *testing.T) {
 		t.Parallel()
-		one := types.FromStdDuration(1 * time.Millisecond)
-		zero := types.FromStdDuration(time.Duration(0))
+		one := types.NewDuration(1 * time.Millisecond)
+		zero := types.NewDuration(time.Duration(0))
 		f := types.Boolean(false)
 
 		tests := []struct {
@@ -160,7 +160,7 @@ func TestDuration(t *testing.T) {
 
 	t.Run("ToUnit", func(t *testing.T) {
 		t.Parallel()
-		dur := types.FromStdDuration((26 * time.Hour) + (31 * time.Minute) + (43 * time.Second) + (17 * time.Millisecond))
+		dur := types.NewDuration((26 * time.Hour) + (31 * time.Minute) + (43 * time.Second) + (17 * time.Millisecond))
 
 		testutil.Equals(t, dur.ToDays(), 1)
 		testutil.Equals(t, dur.ToHours(), 26)
@@ -171,12 +171,12 @@ func TestDuration(t *testing.T) {
 
 	t.Run("MarshalCedar", func(t *testing.T) {
 		t.Parallel()
-		testutil.Equals(t, string(types.FromStdDuration(42*time.Millisecond).MarshalCedar()), `duration("42ms")`)
+		testutil.Equals(t, string(types.NewDuration(42*time.Millisecond).MarshalCedar()), `duration("42ms")`)
 	})
 
 	t.Run("MarshalJSON", func(t *testing.T) {
 		t.Parallel()
-		bs, err := types.FromStdDuration(42 * time.Millisecond).MarshalJSON()
+		bs, err := types.NewDuration(42 * time.Millisecond).MarshalJSON()
 		testutil.OK(t, err)
 		testutil.Equals(t, string(bs), `{"__extn":{"fn":"duration","arg":"42ms"}}`)
 	})
