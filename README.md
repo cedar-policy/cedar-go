@@ -135,6 +135,31 @@ While in development (0.x.y), each tagged release may contain breaking changes.
 
 ## Change log
 
+### New features in 1.0.0
+- AST builder methods for Cedar datetime and duration literals and their extension methods have been added
+- Small improvement in evaluation runtime performance for large, shallow entity graphs.
+
+### Upgrading from 0.4.x to 1.0.0
+
+- The `Parents` field on `types.Entity` has been changed to an immutable set type with an interface similar to `types.Set`
+- The `UnsafeDecimal()` constructor for the `types.Decimal` type has been removed and replaced with the following safe constructors, which return error on overflow:
+  - `NewDecimal(int64 i, int exponent) (Decimal, error)`
+  - `NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error)`
+  - `NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error)`
+- The `Value` field on `types.Decimal` has been made private. Instances of `Decimal` can be compared with one another via the new `Compare` method.
+- `types.DecimalPrecision` has been made private
+- The following error types have been made private: `types.ErrDateitme`, `types.ErrDecimal`, `types.ErrDuration`, `types.ErrIP`, `types.ErrNotComparable`
+- The following datetime and duration-related constructors have been renamed:
+  - `types.FromStdTime()` has been renamed to `types.NewDatetime()`
+  - `types.DatetimeFromMillis()` has been renamed to `types.NewDatetimeFromMillis()`
+  - `types.FromStdDuration()` has been renamed to `types.NewDuration()`
+  - `types.DurationFromMillis()` has been renamed to `types.NewDurationFromMillis()`
+- `types.Entities` has been renamed to `types.EntityMap`
+- Because `types.Entity` is now immutable, `types.EntityMap` now stores items by value rather than by pointer
+- `PolicySet.Store()` has been renamed to `PolicySet.Add()`
+- `PolicySet.Delete()` has been renamed to `PolicySet.Remove()`
+- `types.Set()` now takes variadic arguments of type `types.Value` instead of a single `[]types.Value` argument
+
 ### New features in 0.4.0
 
 - `types.Set` is now implemented as a hash set, turning `Set.Contains()` into an O(1) operation, on average. This mitigates a worst case quadratic runtime for the evaluation of the `containsAny()` operator.
