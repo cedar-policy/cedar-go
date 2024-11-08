@@ -213,7 +213,7 @@ func TestToEval(t *testing.T) {
 		{
 			"datetime",
 			ast.ExtensionCall("datetime", ast.String("1970-01-01T00:00:00.001Z")),
-			types.FromStdTime(time.UnixMilli(1)),
+			types.NewDatetime(time.UnixMilli(1)),
 			testutil.OK,
 		},
 		{
@@ -224,13 +224,13 @@ func TestToEval(t *testing.T) {
 		},
 		{
 			"toDate",
-			ast.ExtensionCall("toDate", ast.Value(types.FromStdTime(time.UnixMilli(1)))),
-			types.FromStdTime(time.UnixMilli(0)),
+			ast.ExtensionCall("toDate", ast.Value(types.NewDatetime(time.UnixMilli(1)))),
+			types.NewDatetime(time.UnixMilli(0)),
 			testutil.OK,
 		},
 		{
 			"toTime",
-			ast.ExtensionCall("toTime", ast.Value(types.FromStdTime(time.UnixMilli(1)))),
+			ast.ExtensionCall("toTime", ast.Value(types.NewDatetime(time.UnixMilli(1)))),
 			types.FromStdDuration(1 * time.Millisecond),
 			testutil.OK,
 		},
@@ -266,13 +266,13 @@ func TestToEval(t *testing.T) {
 		},
 		{
 			"offset",
-			ast.ExtensionCall("offset", ast.Value(types.FromStdTime(time.UnixMilli(0))), ast.Value(types.FromStdDuration(1*time.Millisecond))),
-			types.FromStdTime(time.UnixMilli(1)),
+			ast.ExtensionCall("offset", ast.Value(types.NewDatetime(time.UnixMilli(0))), ast.Value(types.FromStdDuration(1*time.Millisecond))),
+			types.NewDatetime(time.UnixMilli(1)),
 			testutil.OK,
 		},
 		{
 			"durationSince",
-			ast.ExtensionCall("durationSince", ast.Value(types.FromStdTime(time.UnixMilli(1))), ast.Value(types.FromStdTime(time.UnixMilli(1)))),
+			ast.ExtensionCall("durationSince", ast.Value(types.NewDatetime(time.UnixMilli(1))), ast.Value(types.NewDatetime(time.UnixMilli(1)))),
 			types.FromStdDuration(time.Duration(0)),
 			testutil.OK,
 		},

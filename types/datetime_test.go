@@ -114,15 +114,15 @@ func TestDatetime(t *testing.T) {
 	t.Run("Construct", func(t *testing.T) {
 		t.Parallel()
 		one := types.DatetimeFromMillis(1)
-		two := types.FromStdTime(time.UnixMilli(1))
+		two := types.NewDatetime(time.UnixMilli(1))
 		testutil.Equals(t, one.Milliseconds(), two.Milliseconds())
 	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		one := types.DatetimeFromMillis(1)
-		one2 := types.FromStdTime(time.UnixMilli(1))
-		zero := types.FromStdTime(time.UnixMilli(0))
+		one2 := types.NewDatetime(time.UnixMilli(1))
+		zero := types.NewDatetime(time.UnixMilli(0))
 		f := types.Boolean(false)
 		testutil.FatalIf(t, !one.Equal(one), "%v not Equal to %v", one, one)
 		testutil.FatalIf(t, !one.Equal(one2), "%v not Equal to %v", one, one2)
@@ -133,8 +133,8 @@ func TestDatetime(t *testing.T) {
 
 	t.Run("LessThan", func(t *testing.T) {
 		t.Parallel()
-		one := types.FromStdTime(time.UnixMilli(1))
-		zero := types.FromStdTime(time.UnixMilli(0))
+		one := types.NewDatetime(time.UnixMilli(1))
+		zero := types.NewDatetime(time.UnixMilli(0))
 		f := types.Boolean(false)
 
 		tests := []struct {
@@ -163,8 +163,8 @@ func TestDatetime(t *testing.T) {
 
 	t.Run("LessThanOrEqual", func(t *testing.T) {
 		t.Parallel()
-		one := types.FromStdTime(time.UnixMilli(1))
-		zero := types.FromStdTime(time.UnixMilli(0))
+		one := types.NewDatetime(time.UnixMilli(1))
+		zero := types.NewDatetime(time.UnixMilli(0))
 		f := types.Boolean(false)
 
 		tests := []struct {
@@ -192,12 +192,12 @@ func TestDatetime(t *testing.T) {
 
 	t.Run("MarshalCedar", func(t *testing.T) {
 		t.Parallel()
-		testutil.Equals(t, string(types.FromStdTime(time.UnixMilli(42)).MarshalCedar()), `datetime("1970-01-01T00:00:00.042Z")`)
+		testutil.Equals(t, string(types.NewDatetime(time.UnixMilli(42)).MarshalCedar()), `datetime("1970-01-01T00:00:00.042Z")`)
 	})
 
 	t.Run("MarshalJSON", func(t *testing.T) {
 		t.Parallel()
-		bs, err := types.FromStdTime(time.UnixMilli(42)).MarshalJSON()
+		bs, err := types.NewDatetime(time.UnixMilli(42)).MarshalJSON()
 		testutil.OK(t, err)
 		testutil.Equals(t, string(bs), `{"__extn":{"fn":"datetime","arg":"1970-01-01T00:00:00.042Z"}}`)
 	})

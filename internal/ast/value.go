@@ -75,7 +75,7 @@ func IPAddr[T netip.Prefix | types.IPAddr](i T) Node {
 }
 
 func Datetime(t time.Time) Node {
-	return Value(types.FromStdTime(t))
+	return Value(types.NewDatetime(t))
 }
 
 func Duration(d time.Duration) Node {

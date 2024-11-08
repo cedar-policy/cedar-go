@@ -76,7 +76,7 @@ func FromStdDuration(d time.Duration) Duration {
 
 // FromStdTime returns a Cedar Datetime from a Go time.Time value
 func FromStdTime(t time.Time) Datetime {
-	return types.FromStdTime(t)
+	return types.NewDatetime(t)
 }
 
 // NewEntityUID returns an EntityUID given an EntityType and identifier

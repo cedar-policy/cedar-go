@@ -20,8 +20,8 @@ type Datetime struct {
 	value int64
 }
 
-// FromStdTime returns a Cedar Datetime from a Go time.Time value
-func FromStdTime(t time.Time) Datetime {
+// NewDatetime returns a Cedar Datetime from a Go time.Time value
+func NewDatetime(t time.Time) Datetime {
 	return Datetime{value: t.UnixMilli()}
 }
 

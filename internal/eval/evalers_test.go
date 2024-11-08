@@ -975,9 +975,9 @@ func TestComparableValueComparisonNodes(t *testing.T) {
 		zero         = types.Long(0)
 		neg1         = types.Long(-1)
 		pos1         = types.Long(1)
-		zeroDate     = types.FromStdTime(time.UnixMilli(0))
-		futureDate   = types.FromStdTime(time.UnixMilli(1))
-		pastDate     = types.FromStdTime(time.UnixMilli(-1))
+		zeroDate     = types.NewDatetime(time.UnixMilli(0))
+		futureDate   = types.NewDatetime(time.UnixMilli(1))
+		pastDate     = types.NewDatetime(time.UnixMilli(-1))
 		zeroDuration = types.FromStdDuration(time.Duration(0))
 		negDuration  = types.FromStdDuration(-1 * time.Millisecond)
 		posDuration  = types.FromStdDuration(1 * time.Millisecond)
@@ -2337,7 +2337,7 @@ func TestDatetimeLiteralNode(t *testing.T) {
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
 		{"DatetimeError", newLiteralEval(types.String("frob")), zeroValue(), internal.ErrDatetime},
-		{"Success", newLiteralEval(types.String("1970-01-01")), types.FromStdTime(time.UnixMilli(0)), nil},
+		{"Success", newLiteralEval(types.String("1970-01-01")), types.NewDatetime(time.UnixMilli(0)), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2364,7 +2364,7 @@ func TestDatetimeToDate(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"Success", newLiteralEval(aTime), types.FromStdTime(time.UnixMilli(24 * 60 * 60 * 1000)), nil},
+		{"Success", newLiteralEval(aTime), types.NewDatetime(time.UnixMilli(24 * 60 * 60 * 1000)), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
