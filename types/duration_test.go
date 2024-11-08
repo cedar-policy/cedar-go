@@ -81,14 +81,14 @@ func TestDuration(t *testing.T) {
 
 	t.Run("Construct", func(t *testing.T) {
 		t.Parallel()
-		one := types.DurationFromMillis(1)
+		one := types.NewDurationFromMillis(1)
 		two := types.NewDuration(1 * time.Millisecond)
 		testutil.Equals(t, one.ToMilliseconds(), two.ToMilliseconds())
 	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
-		one := types.DurationFromMillis(1)
+		one := types.NewDurationFromMillis(1)
 		one2 := types.NewDuration(1 * time.Millisecond)
 		zero := types.NewDuration(time.Duration(0))
 		f := types.Boolean(false)

@@ -36,8 +36,8 @@ func NewDuration(d time.Duration) Duration {
 	return Duration{value: d.Milliseconds()}
 }
 
-// DurationFromMillis returns a Duration from milliseconds
-func DurationFromMillis(ms int64) Duration {
+// NewDurationFromMillis returns a Duration from milliseconds
+func NewDurationFromMillis(ms int64) Duration {
 	return Duration{value: ms}
 }
 
