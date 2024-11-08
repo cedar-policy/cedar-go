@@ -113,14 +113,14 @@ func TestDatetime(t *testing.T) {
 
 	t.Run("Construct", func(t *testing.T) {
 		t.Parallel()
-		one := types.DatetimeFromMillis(1)
+		one := types.NewDatetimeFromMillis(1)
 		two := types.NewDatetime(time.UnixMilli(1))
 		testutil.Equals(t, one.Milliseconds(), two.Milliseconds())
 	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
-		one := types.DatetimeFromMillis(1)
+		one := types.NewDatetimeFromMillis(1)
 		one2 := types.NewDatetime(time.UnixMilli(1))
 		zero := types.NewDatetime(time.UnixMilli(0))
 		f := types.Boolean(false)

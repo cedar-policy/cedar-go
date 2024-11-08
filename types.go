@@ -61,7 +61,7 @@ const (
 
 // DatetimeFromMillis returns a Datetime from milliseconds
 func DatetimeFromMillis(ms int64) Datetime {
-	return types.DatetimeFromMillis(ms)
+	return types.NewDatetimeFromMillis(ms)
 }
 
 // DurationFromMillis returns a Duration from milliseconds
