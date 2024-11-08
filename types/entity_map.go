@@ -13,11 +13,6 @@ import (
 // the Entity (it must be the same as the UID within the Entity itself.)
 type EntityMap map[EntityUID]Entity
 
-func (e EntityMap) Load(k EntityUID) (Entity, bool) {
-	v, ok := e[k]
-	return v, ok
-}
-
 func (e EntityMap) MarshalJSON() ([]byte, error) {
 	s := maps.Values(e)
 	slices.SortFunc(s, func(a, b Entity) int {

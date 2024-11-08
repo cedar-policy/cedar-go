@@ -141,7 +141,7 @@ func TestCorpus(t *testing.T) {
 				t.Fatal("error reading entities content", err)
 			}
 
-			var entities cedar.Entities
+			var entities cedar.EntityMap
 			if err := json.Unmarshal(entitiesContent, &entities); err != nil {
 				t.Fatal("error unmarshalling test", err)
 			}
@@ -384,7 +384,7 @@ func TestCorpusRelated(t *testing.T) {
 			t.Parallel()
 			policy, err := cedar.NewPolicySetFromBytes("", []byte(tt.policy))
 			testutil.OK(t, err)
-			ok, diag := policy.IsAuthorized(cedar.Entities{}, tt.request)
+			ok, diag := policy.IsAuthorized(cedar.EntityMap{}, tt.request)
 			testutil.Equals(t, ok, tt.decision)
 			var reasons []cedar.PolicyID
 			for _, n := range diag.Reasons {
