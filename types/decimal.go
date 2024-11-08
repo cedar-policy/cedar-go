@@ -9,8 +9,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"golang.org/x/exp/constraints"
 )
+
+var errDecimal = internal.ErrDecimal
 
 // decimalPrecision is the precision of a Decimal.
 const decimalPrecision = 10000
@@ -26,9 +29,9 @@ type Decimal struct {
 // sign of intPart and tenThousandths should match.
 func newDecimal(intPart int64, tenThousandths int16) (Decimal, error) {
 	if intPart > 922337203685477 || (intPart == 922337203685477 && tenThousandths > 5807) {
-		return Decimal{}, fmt.Errorf("%w: value would overflow", ErrDecimal)
+		return Decimal{}, fmt.Errorf("%w: value would overflow", errDecimal)
 	} else if intPart < -922337203685477 || (intPart == -922337203685477 && tenThousandths < -5808) {
-		return Decimal{}, fmt.Errorf("%w: value would underflow", ErrDecimal)
+		return Decimal{}, fmt.Errorf("%w: value would underflow", errDecimal)
 	}
 
 	return Decimal{value: intPart*decimalPrecision + int64(tenThousandths)}, nil
@@ -37,7 +40,7 @@ func newDecimal(intPart int64, tenThousandths int16) (Decimal, error) {
 // NewDecimal returns a Decimal value of i * 10^exponent.
 func NewDecimal(i int64, exponent int) (Decimal, error) {
 	if exponent < -4 || exponent > 14 {
-		return Decimal{}, fmt.Errorf("%w: exponent value of %v exceeds maximum range of Decimal", ErrDecimal, exponent)
+		return Decimal{}, fmt.Errorf("%w: exponent value of %v exceeds maximum range of Decimal", errDecimal, exponent)
 	}
 
 	var intPart int64
@@ -48,9 +51,9 @@ func NewDecimal(i int64, exponent int) (Decimal, error) {
 	} else {
 		intPart = i * int64(math.Pow10(exponent))
 		if i > 0 && intPart < i {
-			return Decimal{}, fmt.Errorf("%w: value %ve%v would overflow", ErrDecimal, i, exponent)
+			return Decimal{}, fmt.Errorf("%w: value %ve%v would overflow", errDecimal, i, exponent)
 		} else if i < 0 && intPart > i {
-			return Decimal{}, fmt.Errorf("%w: value %ve%v would underflow", ErrDecimal, i, exponent)
+			return Decimal{}, fmt.Errorf("%w: value %ve%v would underflow", errDecimal, i, exponent)
 		}
 	}
 
@@ -73,9 +76,9 @@ func NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error) {
 func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
 	f = f * decimalPrecision
 	if f > math.MaxInt64 {
-		return Decimal{}, fmt.Errorf("%w: value %v would overflow", ErrDecimal, f)
+		return Decimal{}, fmt.Errorf("%w: value %v would overflow", errDecimal, f)
 	} else if f < math.MinInt64 {
-		return Decimal{}, fmt.Errorf("%w: value %v would underflow", ErrDecimal, f)
+		return Decimal{}, fmt.Errorf("%w: value %v would underflow", errDecimal, f)
 	}
 
 	return Decimal{int64(f)}, nil
@@ -94,29 +97,29 @@ func (d Decimal) Compare(other Decimal) int {
 func ParseDecimal(s string) (Decimal, error) {
 	decimalIndex := strings.Index(s, ".")
 	if decimalIndex < 0 {
-		return Decimal{}, fmt.Errorf("%w: missing decimal point", ErrDecimal)
+		return Decimal{}, fmt.Errorf("%w: missing decimal point", errDecimal)
 	}
 
 	intPart, err := strconv.ParseInt(s[0:decimalIndex], 10, 64)
 	if err != nil {
 		if errors.Is(err, strconv.ErrRange) {
-			return Decimal{}, fmt.Errorf("%w: value would overflow", ErrDecimal)
+			return Decimal{}, fmt.Errorf("%w: value would overflow", errDecimal)
 		}
-		return Decimal{}, fmt.Errorf("%w: %w", ErrDecimal, err)
+		return Decimal{}, fmt.Errorf("%w: %w", errDecimal, err)
 	}
 
 	fracPartStr := s[decimalIndex+1:]
 	fracPart, err := strconv.ParseUint(fracPartStr, 10, 16)
 	if err != nil {
 		if errors.Is(err, strconv.ErrRange) {
-			return Decimal{}, fmt.Errorf("%w: fractional part exceeds Decimal precision", ErrDecimal)
+			return Decimal{}, fmt.Errorf("%w: fractional part exceeds Decimal precision", errDecimal)
 		}
-		return Decimal{}, fmt.Errorf("%w: %w", ErrDecimal, err)
+		return Decimal{}, fmt.Errorf("%w: %w", errDecimal, err)
 	}
 
 	decimalPlaces := len(fracPartStr)
 	if decimalPlaces > 4 {
-		return Decimal{}, fmt.Errorf("%w: fractional part exceeds Decimal precision", ErrDecimal)
+		return Decimal{}, fmt.Errorf("%w: fractional part exceeds Decimal precision", errDecimal)
 	}
 
 	tenThousandths := int16(fracPart) * int16(math.Pow10(4-decimalPlaces))

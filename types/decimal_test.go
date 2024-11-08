@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -103,7 +104,7 @@ func TestDecimal(t *testing.T) {
 			t.Run(fmt.Sprintf("%s->%s", tt.in, tt.errStr), func(t *testing.T) {
 				t.Parallel()
 				_, err := types.ParseDecimal(tt.in)
-				testutil.ErrorIs(t, err, types.ErrDecimal)
+				testutil.ErrorIs(t, err, internal.ErrDecimal)
 				testutil.Equals(t, err.Error(), tt.errStr)
 			})
 		}
@@ -208,7 +209,7 @@ func TestDecimal(t *testing.T) {
 			t.Run(fmt.Sprintf("%ve%v", tt.in, tt.exp), func(t *testing.T) {
 				t.Parallel()
 				_, err := types.NewDecimal(tt.in, tt.exp)
-				testutil.ErrorIs(t, err, types.ErrDecimal)
+				testutil.ErrorIs(t, err, internal.ErrDecimal)
 			})
 		}
 	})
@@ -232,7 +233,7 @@ func TestDecimal(t *testing.T) {
 			t.Run(fmt.Sprintf("%ve%v", tt.in, tt.exp), func(t *testing.T) {
 				t.Parallel()
 				_, err := types.NewDecimal(tt.in, tt.exp)
-				testutil.ErrorIs(t, err, types.ErrDecimal)
+				testutil.ErrorIs(t, err, internal.ErrDecimal)
 			})
 		}
 	})
@@ -274,7 +275,7 @@ func TestDecimal(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(fmt.Sprintf("%v", tt.in), func(t *testing.T) {
 				_, err := types.NewDecimalFromFloat(tt.in)
-				testutil.ErrorIs(t, err, types.ErrDecimal)
+				testutil.ErrorIs(t, err, internal.ErrDecimal)
 			})
 		}
 	})
