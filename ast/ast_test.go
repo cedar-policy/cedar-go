@@ -3,6 +3,7 @@ package ast_test
 import (
 	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/ast"
 	internalast "github.com/cedar-policy/cedar-go/internal/ast"
@@ -402,6 +403,51 @@ func TestASTByTable(t *testing.T) {
 			"opIsInRange",
 			ast.Permit().When(ast.Long(42).IsInRange(ast.Long(43))),
 			internalast.Permit().When(internalast.Long(42).IsInRange(internalast.Long(43))),
+		},
+		{
+			"opOffset",
+			ast.Permit().When(ast.Datetime(time.Time{}).Offset(ast.Duration(time.Duration(100)))),
+			internalast.Permit().When(internalast.Datetime(time.Time{}).Offset(internalast.Duration(time.Duration(100)))),
+		},
+		{
+			"opDurationSince",
+			ast.Permit().When(ast.Datetime(time.Time{}).DurationSince(ast.Datetime(time.Time{}))),
+			internalast.Permit().When(internalast.Datetime(time.Time{}).DurationSince(internalast.Datetime(time.Time{}))),
+		},
+		{
+			"opToDate",
+			ast.Permit().When(ast.Datetime(time.Time{}).ToDate()),
+			internalast.Permit().When(internalast.Datetime(time.Time{}).ToDate()),
+		},
+		{
+			"opToTime",
+			ast.Permit().When(ast.Datetime(time.Time{}).ToTime()),
+			internalast.Permit().When(internalast.Datetime(time.Time{}).ToTime()),
+		},
+		{
+			"opToDays",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToDays()),
+			internalast.Permit().When(internalast.Duration(100).ToDays()),
+		},
+		{
+			"opToHours",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToHours()),
+			internalast.Permit().When(internalast.Duration(100).ToHours()),
+		},
+		{
+			"opToMinutes",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToMinutes()),
+			internalast.Permit().When(internalast.Duration(100).ToMinutes()),
+		},
+		{
+			"opToSeconds",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToSeconds()),
+			internalast.Permit().When(internalast.Duration(100).ToSeconds()),
+		},
+		{
+			"opToMilliseconds",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToMilliseconds()),
+			internalast.Permit().When(internalast.Duration(100).ToMilliseconds()),
 		},
 	}
 

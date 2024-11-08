@@ -162,3 +162,33 @@ func (lhs Node) IsLoopback() Node {
 func (lhs Node) IsInRange(rhs Node) Node {
 	return NewMethodCall(lhs, "isInRange", rhs)
 }
+
+//  ____        _       _   _
+// |  _ \  __ _| |_ ___| |_(_)_ __ ___   ___
+// | | | |/ _` | __/ _ \ __| | '_ ` _ \ / _ \
+// | |_| | (_| | ||  __/ |_| | | | | | |  __/
+// |____/ \__,_|\__\___|\__|_|_| |_| |_|\___|
+
+func (lhs Node) Offset(rhs Node) Node { return NewMethodCall(lhs, "offset", rhs) }
+
+func (lhs Node) DurationSince(rhs Node) Node { return NewMethodCall(lhs, "durationSince", rhs) }
+
+func (lhs Node) ToDate() Node { return NewMethodCall(lhs, "toDate") }
+
+func (lhs Node) ToTime() Node { return NewMethodCall(lhs, "toTime") }
+
+//  ____                  _   _
+// |  _ \ _   _ _ __ __ _| |_(_) ___  _ __
+// | | | | | | | '__/ _` | __| |/ _ \| '_ \
+// | |_| | |_| | | | (_| | |_| | (_) | | | |
+// |____/ \__,_|_|  \__,_|\__|_|\___/|_| |_|
+
+func (lhs Node) ToDays() Node { return NewMethodCall(lhs, "toDays") }
+
+func (lhs Node) ToHours() Node { return NewMethodCall(lhs, "toHours") }
+
+func (lhs Node) ToMinutes() Node { return NewMethodCall(lhs, "toMinutes") }
+
+func (lhs Node) ToSeconds() Node { return NewMethodCall(lhs, "toSeconds") }
+
+func (lhs Node) ToMilliseconds() Node { return NewMethodCall(lhs, "toMilliseconds") }
