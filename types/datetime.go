@@ -20,13 +20,14 @@ type Datetime struct {
 	value int64
 }
 
-// FromStdTime returns a Cedar Datetime from a Go time.Time value
-func FromStdTime(t time.Time) Datetime {
+// NewDatetime returns a Cedar Datetime from a Go time.Time value
+func NewDatetime(t time.Time) Datetime {
 	return Datetime{value: t.UnixMilli()}
 }
 
-// DatetimeFromMillis returns a Datetime from milliseconds
-func DatetimeFromMillis(ms int64) Datetime {
+// NewDatetimeFromMillis returns a Datetime from a count of milliseconds since
+// January 1, 1970 @ 00:00:00 UTC.
+func NewDatetimeFromMillis(ms int64) Datetime {
 	return Datetime{value: ms}
 }
 

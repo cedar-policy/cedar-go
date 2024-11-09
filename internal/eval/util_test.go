@@ -182,7 +182,7 @@ func TestTypeName(t *testing.T) {
 	}{
 
 		{"boolean", types.Boolean(true), "bool"},
-		{"datetime", types.FromStdTime(time.UnixMilli(42)), "datetime"},
+		{"datetime", types.NewDatetime(time.UnixMilli(42)), "datetime"},
 		{"decimal", testutil.Must(types.NewDecimalFromInt(42)), "decimal"},
 		{"entityUID", types.NewEntityUID("T", "42"), "(entity of type `T`)"},
 		{"ip", types.IPAddr{}, "IP"},

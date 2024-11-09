@@ -1426,7 +1426,7 @@ func (n *toDateEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.DatetimeFromMillis(lhs.Milliseconds() - (lhs.Milliseconds() % consts.MillisPerDay)), nil
+	return types.NewDatetimeFromMillis(lhs.Milliseconds() - (lhs.Milliseconds() % consts.MillisPerDay)), nil
 }
 
 type toTimeEval struct {
@@ -1442,7 +1442,7 @@ func (n *toTimeEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.DurationFromMillis(lhs.Milliseconds() % consts.MillisPerDay), nil
+	return types.NewDurationFromMillis(lhs.Milliseconds() % consts.MillisPerDay), nil
 }
 
 type toMillisecondsEval struct {
@@ -1543,7 +1543,7 @@ func (n *offsetEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.DatetimeFromMillis(lhs.Milliseconds() + rhs.ToMilliseconds()), nil
+	return types.NewDatetimeFromMillis(lhs.Milliseconds() + rhs.ToMilliseconds()), nil
 }
 
 type durationSinceEval struct {
@@ -1564,5 +1564,5 @@ func (n *durationSinceEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.DurationFromMillis(lhs.Milliseconds() - rhs.Milliseconds()), nil
+	return types.NewDurationFromMillis(lhs.Milliseconds() - rhs.Milliseconds()), nil
 }

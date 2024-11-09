@@ -59,24 +59,24 @@ const (
 // | |__| (_) | | | \__ \ |_| |  | |_| | (__| || (_) | |  \__ \
 //  \____\___/|_| |_|___/\__|_|   \__,_|\___|\__\___/|_|  |___/
 
-// DatetimeFromMillis returns a Datetime from milliseconds
-func DatetimeFromMillis(ms int64) Datetime {
-	return types.DatetimeFromMillis(ms)
+// NewDatetimeFromMillis returns a Datetime from milliseconds
+func NewDatetimeFromMillis(ms int64) Datetime {
+	return types.NewDatetimeFromMillis(ms)
 }
 
-// DurationFromMillis returns a Duration from milliseconds
-func DurationFromMillis(ms int64) Duration {
-	return types.DurationFromMillis(ms)
+// NewDurationFromMillis returns a Duration from milliseconds
+func NewDurationFromMillis(ms int64) Duration {
+	return types.NewDurationFromMillis(ms)
 }
 
-// FromStdDuration returns a Cedar Duration from a Go time.Duration
-func FromStdDuration(d time.Duration) Duration {
-	return types.FromStdDuration(d)
+// NewDuration returns a Cedar Duration from a Go time.Duration
+func NewDuration(d time.Duration) Duration {
+	return types.NewDuration(d)
 }
 
-// FromStdTime returns a Cedar Datetime from a Go time.Time value
-func FromStdTime(t time.Time) Datetime {
-	return types.FromStdTime(t)
+// NewDatetime returns a Cedar Datetime from a Go time.Time value
+func NewDatetime(t time.Time) Datetime {
+	return types.NewDatetime(t)
 }
 
 // NewEntityUID returns an EntityUID given an EntityType and identifier
