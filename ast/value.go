@@ -92,3 +92,23 @@ func Duration(d time.Duration) Node {
 func Value(v types.Value) Node {
 	return wrapNode(ast.Value(v))
 }
+
+// DecimalExtensionCall wraps a node with the cedar `decimal()` extension call
+func DecimalExtensionCall(rhs Node) Node {
+	return wrapNode(ast.ExtensionCall("decimal", rhs.Node))
+}
+
+// IPExtensionCall wraps a node with the cedar `ip()` extension call
+func IPExtensionCall(rhs Node) Node {
+	return wrapNode(ast.ExtensionCall("ip", rhs.Node))
+}
+
+// DatetimeExtensionCall wraps a node with the cedar `datetime()` extension call
+func DatetimeExtensionCall(rhs Node) Node {
+	return wrapNode(ast.ExtensionCall("datetime", rhs.Node))
+}
+
+// DurationExtensionCall wraps a node with the cedar `duration()` extension call
+func DurationExtensionCall(rhs Node) Node {
+	return wrapNode(ast.ExtensionCall("duration", rhs.Node))
+}

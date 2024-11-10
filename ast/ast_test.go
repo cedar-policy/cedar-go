@@ -11,10 +11,8 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-// These tests serve mostly as examples of how to translate from Cedar text into programmatic AST construction. They
-// don't verify anything.
-func TestAstExamples(t *testing.T) {
-	t.Parallel()
+// This example shows how you can construct polcies with the ast package
+func Example() {
 
 	johnny := types.NewEntityUID("User", "johnny")
 	sow := types.NewEntityUID("Action", "sow")
@@ -69,6 +67,15 @@ func TestAstExamples(t *testing.T) {
 				ast.Long(2).Add(ast.Long(3)).Multiply(ast.Long(4)),
 				ast.Context().Access("fooCount"),
 			).Contains(ast.Long(1)),
+		)
+
+	// forbid (principal, action, resource)
+	// when { resource.angleRadians.greaterThan(decimal("3.1415")) }
+	_ = ast.Forbid().
+		When(
+			ast.Resource().Access("angleRadians").DecimalGreaterThan(
+				ast.DecimalExtensionCall(ast.String("3.1415")),
+			),
 		)
 }
 
@@ -448,6 +455,26 @@ func TestASTByTable(t *testing.T) {
 			"opToMilliseconds",
 			ast.Permit().When(ast.Duration(time.Duration(100)).ToMilliseconds()),
 			internalast.Permit().When(internalast.Duration(100).ToMilliseconds()),
+		},
+		{
+			"decimalExtension",
+			ast.Permit().When(ast.DecimalExtensionCall(ast.Value(types.String("3.14")))),
+			internalast.Permit().When(internalast.ExtensionCall("decimal", internalast.String("3.14"))),
+		},
+		{
+			"ipExtension",
+			ast.Permit().When(ast.IPExtensionCall(ast.Value(types.String("127.0.0.1")))),
+			internalast.Permit().When(internalast.ExtensionCall("ip", internalast.String("127.0.0.1"))),
+		},
+		{
+			"datetime",
+			ast.Permit().When(ast.DatetimeExtensionCall(ast.Value(types.String("2006-01-02T15:04:05Z07:00")))),
+			internalast.Permit().When(internalast.ExtensionCall("datetime", internalast.String("2006-01-02T15:04:05Z07:00"))),
+		},
+		{
+			"duration",
+			ast.Permit().When(ast.DurationExtensionCall(ast.Value(types.String("1d2h3m4s5ms")))),
+			internalast.Permit().When(internalast.ExtensionCall("duration", internalast.String("1d2h3m4s5ms"))),
 		},
 	}
 
