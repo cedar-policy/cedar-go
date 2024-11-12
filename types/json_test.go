@@ -117,7 +117,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name: "ip",
+			name: "ip/explicit",
 			f: func(b []byte) (Value, error) {
 				var res IPAddr
 				err := (&res).UnmarshalJSON(b)
@@ -128,13 +128,24 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name: "ip/implicit",
+			name: "ip/implicit/string",
 			f: func(b []byte) (Value, error) {
 				var res IPAddr
 				err := (&res).UnmarshalJSON(b)
 				return res, err
 			},
 			in:        `"222.222.222.7"`,
+			wantValue: mustIPValue("222.222.222.7"),
+			wantErr:   nil,
+		},
+		{
+			name: "ip/implicit/JSON",
+			f: func(b []byte) (Value, error) {
+				var res IPAddr
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `{ "fn": "ip", "arg": "222.222.222.7" }`,
 			wantValue: mustIPValue("222.222.222.7"),
 			wantErr:   nil,
 		},
@@ -148,6 +159,17 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			in:        `"bad`,
 			wantValue: IPAddr{},
 			wantErr:   errJSONDecode,
+		},
+		{
+			name: "ip/implicit/notIP",
+			f: func(b []byte) (Value, error) {
+				var res IPAddr
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `{"fn": "datetime"}`,
+			wantValue: IPAddr{},
+			wantErr:   errJSONExtFnMatch,
 		},
 		{
 			name: "ip/badArg",
