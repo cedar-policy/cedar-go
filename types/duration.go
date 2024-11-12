@@ -214,9 +214,9 @@ func (v Duration) String() string {
 // UnmarshalJSON implements encoding/json.Unmarshaler for Duration
 //
 // It is capable of unmarshaling 3 different representations supported by Cedar
-// - { "__extn": { "fn": "duration", "arg": "1h10m" }}
-// - { "fn": "duration", "arg": "1h10m" }
-// - "1h10m"
+//   - { "__extn": { "fn": "duration", "arg": "1h10m" }}
+//   - { "fn": "duration", "arg": "1h10m" }
+//   - "1h10m"
 func (v *Duration) UnmarshalJSON(b []byte) error {
 	vv, err := unmarshalExtensionValue(b, "duration", ParseDuration)
 	if err != nil {

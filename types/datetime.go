@@ -246,9 +246,9 @@ func (a Datetime) String() string {
 // UnmarshalJSON implements encoding/json.Unmarshaler for Datetime
 //
 // It is capable of unmarshaling 3 different representations supported by Cedar
-// - { "__extn": { "fn": "datetime", "arg": "1970-01-01" }}
-// - { "fn": "datetime", "arg": "1970-01-01" }
-// - "1970-01-01"
+//   - { "__extn": { "fn": "datetime", "arg": "1970-01-01" }}
+//   - { "fn": "datetime", "arg": "1970-01-01" }
+//   - "1970-01-01"
 func (a *Datetime) UnmarshalJSON(b []byte) error {
 	aa, err := unmarshalExtensionValue(b, "datetime", ParseDatetime)
 	if err != nil {
