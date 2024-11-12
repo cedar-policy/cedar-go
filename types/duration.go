@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -219,34 +218,11 @@ func (v Duration) String() string {
 // - { "fn": "duration", "arg": "1h10m" }
 // - "1h10m"
 func (v *Duration) UnmarshalJSON(b []byte) error {
-	var arg string
-	if len(b) > 0 && b[0] == '"' {
-		if err := json.Unmarshal(b, &arg); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-	} else {
-		var res extValueJSON
-		if err := json.Unmarshal(b, &res); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-		if res.Extn == nil {
-			// If we didn't find an Extn, maybe it's just an extn.
-			var res2 extn
-			json.Unmarshal(b, &res2)
-			// We've tried Ext.Fn and Fn, so no good.
-			if res2.Fn == "" {
-				return errJSONExtNotFound
-			}
-			if res2.Fn != "duration" {
-				return errJSONExtFnMatch
-			}
-			arg = res2.Arg
-		} else if res.Extn.Fn != "duration" {
-			return errJSONExtFnMatch
-		} else {
-			arg = res.Extn.Arg
-		}
+	arg, err := unmarshalExtensionArg(b, "duration")
+	if err != nil {
+		return err
 	}
+
 	vv, err := ParseDuration(arg)
 	if err != nil {
 		return err

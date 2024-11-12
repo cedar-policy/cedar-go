@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"hash/fnv"
 	"net/netip"
@@ -105,28 +104,11 @@ func (c IPAddr) Contains(o IPAddr) bool {
 }
 
 func (v *IPAddr) UnmarshalJSON(b []byte) error {
-	var arg string
-	if len(b) > 0 && b[0] == '"' {
-		if err := json.Unmarshal(b, &arg); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-	} else {
-		// NOTE: cedar supports two other forms, for now we're only supporting the smallest implicit explicit form.
-		// The following are not supported:
-		// "ip(\"192.168.0.42\")"
-		// {"fn":"ip","arg":"192.168.0.42"}
-		var res extValueJSON
-		if err := json.Unmarshal(b, &res); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-		if res.Extn == nil {
-			return errJSONExtNotFound
-		}
-		if res.Extn.Fn != "ip" {
-			return errJSONExtFnMatch
-		}
-		arg = res.Extn.Arg
+	arg, err := unmarshalExtensionArg(b, "ip")
+	if err != nil {
+		return err
 	}
+
 	vv, err := ParseIPAddr(arg)
 	if err != nil {
 		return err

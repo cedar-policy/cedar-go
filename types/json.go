@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -124,4 +125,37 @@ func UnmarshalJSON(b []byte, v *Value) error {
 		return errJSONUnsupportedType
 	}
 	return nil
+}
+
+func unmarshalExtensionArg(b []byte, extName string) (string, error) {
+	var arg string
+	if len(b) > 0 && b[0] == '"' {
+		if err := json.Unmarshal(b, &arg); err != nil {
+			return "", errors.Join(errJSONDecode, err)
+		}
+	} else {
+		var res extValueJSON
+		if err := json.Unmarshal(b, &res); err != nil {
+			return "", errors.Join(errJSONDecode, err)
+		}
+		if res.Extn == nil {
+			// If we didn't find an Extn, maybe it's just an extn.
+			var res2 extn
+			_ = json.Unmarshal(b, &res2)
+			// We've tried Ext.Fn and Fn, so no good.
+			if res2.Fn == "" {
+				return "", errJSONExtNotFound
+			}
+			if res2.Fn != extName {
+				return "", errJSONExtFnMatch
+			}
+			arg = res2.Arg
+		} else if res.Extn.Fn != extName {
+			return "", errJSONExtFnMatch
+		} else {
+			arg = res.Extn.Arg
+		}
+	}
+
+	return arg, nil
 }

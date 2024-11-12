@@ -161,27 +161,11 @@ func (d Decimal) String() string {
 }
 
 func (d *Decimal) UnmarshalJSON(b []byte) error {
-	var arg string
-	if len(b) > 0 && b[0] == '"' {
-		if err := json.Unmarshal(b, &arg); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-	} else {
-		// NOTE: cedar supports two other forms, for now we're only supporting the smallest implicit and explicit form.
-		// The following are not supported:
-		// {"fn":"decimal","arg":"1234.5678"}
-		var res extValueJSON
-		if err := json.Unmarshal(b, &res); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-		if res.Extn == nil {
-			return errJSONExtNotFound
-		}
-		if res.Extn.Fn != "decimal" {
-			return errJSONExtFnMatch
-		}
-		arg = res.Extn.Arg
+	arg, err := unmarshalExtensionArg(b, "decimal")
+	if err != nil {
+		return err
 	}
+
 	vv, err := ParseDecimal(arg)
 	if err != nil {
 		return err

@@ -195,7 +195,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 		},
 
 		{
-			name: "decimal",
+			name: "decimal/explicit",
 			f: func(b []byte) (Value, error) {
 				var res Decimal
 				err := (&res).UnmarshalJSON(b)
@@ -206,7 +206,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name: "decimal/implicit",
+			name: "decimal/implicit/string",
 			f: func(b []byte) (Value, error) {
 				var res Decimal
 				err := (&res).UnmarshalJSON(b)
@@ -217,15 +217,37 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
+			name: "decimal/implicit/JSON",
+			f: func(b []byte) (Value, error) {
+				var res Decimal
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `{ "fn": "decimal", "arg": "1234.5678" }`,
+			wantValue: mustDecimalValue("1234.5678"),
+			wantErr:   nil,
+		},
+		{
 			name: "decimal/implicit/badJSON",
 			f: func(b []byte) (Value, error) {
 				var res Decimal
 				err := (&res).UnmarshalJSON(b)
 				return res, err
 			},
-			in:        `"bad`,
+			in:        `{"bad": "value"}`,
 			wantValue: Decimal{},
-			wantErr:   errJSONDecode,
+			wantErr:   errJSONExtNotFound,
+		},
+		{
+			name: "decimal/implicit/notDecimal",
+			f: func(b []byte) (Value, error) {
+				var res Decimal
+				err := (&res).UnmarshalJSON(b)
+				return res, err
+			},
+			in:        `{"fn": "datetime"}`,
+			wantValue: Decimal{},
+			wantErr:   errJSONExtFnMatch,
 		},
 		{
 			name: "decimal/badArg",
