@@ -250,15 +250,11 @@ func (a Datetime) String() string {
 // - { "fn": "datetime", "arg": "1970-01-01" }
 // - "1970-01-01"
 func (a *Datetime) UnmarshalJSON(b []byte) error {
-	arg, err := unmarshalExtensionArg(b, "datetime")
+	aa, err := unmarshalExtensionValue(b, "datetime", ParseDatetime)
 	if err != nil {
 		return err
 	}
 
-	aa, err := ParseDatetime(arg)
-	if err != nil {
-		return err
-	}
 	*a = aa
 	return nil
 }

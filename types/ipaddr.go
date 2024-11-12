@@ -103,16 +103,18 @@ func (c IPAddr) Contains(o IPAddr) bool {
 	return c.Prefix().Contains(o.Addr()) && c.Prefix().Bits() <= o.Prefix().Bits()
 }
 
+// UnmarshalJSON implements encoding/json.Unmarshaler for IPAddr
+//
+// It is capable of unmarshaling 3 different representations supported by Cedar
+// - { "__extn": { "fn": "ip", "arg": "12.34.56.78" }}
+// - { "fn": "ip", "arg": "12.34.56.78" }
+// - "12.34.56.78"
 func (v *IPAddr) UnmarshalJSON(b []byte) error {
-	arg, err := unmarshalExtensionArg(b, "ip")
+	vv, err := unmarshalExtensionValue(b, "ip", ParseIPAddr)
 	if err != nil {
 		return err
 	}
 
-	vv, err := ParseIPAddr(arg)
-	if err != nil {
-		return err
-	}
 	*v = vv
 	return nil
 }

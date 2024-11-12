@@ -218,15 +218,11 @@ func (v Duration) String() string {
 // - { "fn": "duration", "arg": "1h10m" }
 // - "1h10m"
 func (v *Duration) UnmarshalJSON(b []byte) error {
-	arg, err := unmarshalExtensionArg(b, "duration")
+	vv, err := unmarshalExtensionValue(b, "duration", ParseDuration)
 	if err != nil {
 		return err
 	}
 
-	vv, err := ParseDuration(arg)
-	if err != nil {
-		return err
-	}
 	*v = vv
 	return nil
 }
