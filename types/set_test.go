@@ -206,4 +206,48 @@ func TestSet(t *testing.T) {
 
 		testutil.Equals(t, got, types.Long(42))
 	})
+
+	t.Run("Contains", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			name  string
+			set   types.Set
+			value types.Value
+			want  bool
+		}{
+			{"true", types.NewSet(types.Long(42)), types.Long(42), true},
+			{"false", types.NewSet(types.Long(42)), types.Long(24), false},
+		}
+		for _, tt := range tests {
+			tt := tt
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				got := tt.set.Contains(tt.value)
+				testutil.Equals(t, got, tt.want)
+			})
+		}
+	})
+
+	t.Run("Equals", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			name  string
+			set   types.Set
+			value types.Value
+			want  bool
+		}{
+			{"true", types.NewSet(types.Long(42)), types.NewSet(types.Long(42)), true},
+			{"falseSet", types.NewSet(types.Long(42)), types.NewSet(types.Long(1234)), false},
+			{"falseOtherType", types.NewSet(types.Long(42)), types.Long(24), false},
+			{"falseSameHash", types.NewSet(types.Long(0)), types.NewSet(testutil.Must(types.NewDecimalFromInt(0))), false},
+		}
+		for _, tt := range tests {
+			tt := tt
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				got := tt.set.Equal(tt.value)
+				testutil.Equals(t, got, tt.want)
+			})
+		}
+	})
 }
