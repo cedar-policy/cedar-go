@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -286,5 +287,29 @@ func TestDecimal(t *testing.T) {
 			t,
 			string(testutil.Must(types.NewDecimal(42, 0)).MarshalCedar()),
 			`decimal("42.0")`)
+	})
+
+	t.Run("MarshalJSON", func(t *testing.T) {
+		t.Parallel()
+		expected := `{
+			"__extn": {
+				"fn": "decimal",
+				"arg": "1234.5678"
+			}
+		}`
+		d1 := testutil.Must(types.NewDecimal(12345678, -4))
+		testutil.JSONMarshalsTo(t, d1, expected)
+
+		var d2 types.Decimal
+		err := json.Unmarshal([]byte(expected), &d2)
+		testutil.OK(t, err)
+		testutil.Equals(t, d1, d2)
+	})
+
+	t.Run("UnmarshalJSON/error", func(t *testing.T) {
+		t.Parallel()
+		var dt2 types.Decimal
+		err := json.Unmarshal([]byte("{}"), &dt2)
+		testutil.Error(t, err)
 	})
 }

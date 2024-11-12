@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -197,8 +198,25 @@ func TestDatetime(t *testing.T) {
 
 	t.Run("MarshalJSON", func(t *testing.T) {
 		t.Parallel()
-		bs, err := types.NewDatetime(time.UnixMilli(42)).MarshalJSON()
+		expected := `{
+			"__extn": {
+				"fn": "datetime",
+				"arg": "1970-01-01T00:00:00.042Z"
+			}
+		}`
+		dt1 := types.NewDatetime(time.UnixMilli(42))
+		testutil.JSONMarshalsTo(t, dt1, expected)
+
+		var dt2 types.Datetime
+		err := json.Unmarshal([]byte(expected), &dt2)
 		testutil.OK(t, err)
-		testutil.Equals(t, string(bs), `{"__extn":{"fn":"datetime","arg":"1970-01-01T00:00:00.042Z"}}`)
+		testutil.Equals(t, dt1, dt2)
+	})
+
+	t.Run("UnmarshalJSON/error", func(t *testing.T) {
+		t.Parallel()
+		var dt2 types.Datetime
+		err := json.Unmarshal([]byte("{}"), &dt2)
+		testutil.Error(t, err)
 	})
 }
