@@ -214,16 +214,13 @@ func (v Duration) String() string {
 
 // UnmarshalJSON implements encoding/json.Unmarshaler for Duration
 //
-// It is capable of unmarshaling 4 different representations supported by Cedar
+// It is capable of unmarshaling 3 different representations supported by Cedar
 // - { "__extn": { "fn": "duration", "arg": "1h10m" }}
 // - { "fn": "duration", "arg": "1h10m" }
-// - "duration(\"1h10m\")"
 // - "1h10m"
 func (v *Duration) UnmarshalJSON(b []byte) error {
 	var arg string
-	if bytes.HasPrefix(b, []byte(`"duration(\"`)) && bytes.HasSuffix(b, []byte(`\")"`)) {
-		arg = string(b[12 : len(b)-4])
-	} else if len(b) > 0 && b[0] == '"' {
+	if len(b) > 0 && b[0] == '"' {
 		if err := json.Unmarshal(b, &arg); err != nil {
 			return errors.Join(errJSONDecode, err)
 		}

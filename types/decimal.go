@@ -169,7 +169,6 @@ func (d *Decimal) UnmarshalJSON(b []byte) error {
 	} else {
 		// NOTE: cedar supports two other forms, for now we're only supporting the smallest implicit and explicit form.
 		// The following are not supported:
-		// "decimal(\"1234.5678\")"
 		// {"fn":"decimal","arg":"1234.5678"}
 		var res extValueJSON
 		if err := json.Unmarshal(b, &res); err != nil {

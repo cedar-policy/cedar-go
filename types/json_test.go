@@ -273,7 +273,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 		},
 
 		{
-			name: "datetime",
+			name: "datetime/explicit",
 			f: func(b []byte) (Value, error) {
 				var res Datetime
 				err := (&res).UnmarshalJSON(b)
@@ -284,7 +284,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name: "datetime/implicit",
+			name: "datetime/implicit/string",
 			f: func(b []byte) (Value, error) {
 				var res Datetime
 				err := (&res).UnmarshalJSON(b)
@@ -295,18 +295,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name: "datetime/direct",
-			f: func(b []byte) (Value, error) {
-				var res Datetime
-				err := (&res).UnmarshalJSON(b)
-				return res, err
-			},
-			in:        `"datetime(\"1970-01-01T00:00:01Z\")"`,
-			wantValue: mustDatetimeValue("1970-01-01T00:00:01Z"),
-			wantErr:   nil,
-		},
-		{
-			name: "datetime/direct/JSON",
+			name: "datetime/implicit/JSON",
 			f: func(b []byte) (Value, error) {
 				var res Datetime
 				err := (&res).UnmarshalJSON(b)
@@ -396,7 +385,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 		},
 
 		{
-			name: "duration",
+			name: "duration/explicit",
 			f: func(b []byte) (Value, error) {
 				var res Duration
 				err := (&res).UnmarshalJSON(b)
@@ -407,7 +396,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name: "duration/implicit",
+			name: "duration/implicit/string",
 			f: func(b []byte) (Value, error) {
 				var res Duration
 				err := (&res).UnmarshalJSON(b)
@@ -418,18 +407,7 @@ func TestTypedJSONUnmarshal(t *testing.T) {
 			wantErr:   nil,
 		},
 		{
-			name: "duration/direct",
-			f: func(b []byte) (Value, error) {
-				var res Duration
-				err := (&res).UnmarshalJSON(b)
-				return res, err
-			},
-			in:        `"duration(\"1ms\")"`,
-			wantValue: mustDurationValue("1ms"),
-			wantErr:   nil,
-		},
-		{
-			name: "duration/direct/JSON",
+			name: "duration/implicit/JSON",
 			f: func(b []byte) (Value, error) {
 				var res Duration
 				err := (&res).UnmarshalJSON(b)

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -247,16 +246,13 @@ func (a Datetime) String() string {
 
 // UnmarshalJSON implements encoding/json.Unmarshaler for Datetime
 //
-// It is capable of unmarshaling 4 different representations supported by Cedar
+// It is capable of unmarshaling 3 different representations supported by Cedar
 // - { "__extn": { "fn": "datetime", "arg": "1970-01-01" }}
 // - { "fn": "datetime", "arg": "1970-01-01" }
-// - "datetime(\"1970-01-01\")"
 // - "1970-01-01"
 func (a *Datetime) UnmarshalJSON(b []byte) error {
 	var arg string
-	if bytes.HasPrefix(b, []byte(`"datetime(\"`)) && bytes.HasSuffix(b, []byte(`\")"`)) {
-		arg = string(b[12 : len(b)-4])
-	} else if len(b) > 0 && b[0] == '"' {
+	if len(b) > 0 && b[0] == '"' {
 		if err := json.Unmarshal(b, &arg); err != nil {
 			return errors.Join(errJSONDecode, err)
 		}
