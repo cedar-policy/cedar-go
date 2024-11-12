@@ -150,6 +150,12 @@ func TestMapSet(t *testing.T) {
 		testutil.Equals(t, string(out), "[]")
 	})
 
+	t.Run("marshal error", func(t *testing.T) {
+		s := FromItems(complex(0, 0))
+		_, err := json.Marshal(s)
+		testutil.Error(t, err)
+	})
+
 	t.Run("encode json one int", func(t *testing.T) {
 		s := FromItems(1)
 
