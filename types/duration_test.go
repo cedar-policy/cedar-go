@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -176,8 +177,25 @@ func TestDuration(t *testing.T) {
 
 	t.Run("MarshalJSON", func(t *testing.T) {
 		t.Parallel()
-		bs, err := types.NewDuration(42 * time.Millisecond).MarshalJSON()
+		expected := `{
+			"__extn": {
+				"fn": "duration",
+				"arg": "42ms"
+			}
+		}`
+		d1 := types.NewDuration(42 * time.Millisecond)
+		testutil.JSONMarshalsTo(t, d1, expected)
+
+		var d2 types.Duration
+		err := json.Unmarshal([]byte(expected), &d2)
 		testutil.OK(t, err)
-		testutil.Equals(t, string(bs), `{"__extn":{"fn":"duration","arg":"42ms"}}`)
+		testutil.Equals(t, d1, d2)
+	})
+
+	t.Run("UnmarshalJSON/error", func(t *testing.T) {
+		t.Parallel()
+		var dt2 types.Duration
+		err := json.Unmarshal([]byte("{}"), &dt2)
+		testutil.Error(t, err)
 	})
 }

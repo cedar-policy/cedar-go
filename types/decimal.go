@@ -160,34 +160,19 @@ func (d Decimal) String() string {
 	return res[:right]
 }
 
+// UnmarshalJSON implements encoding/json.Unmarshaler for Decimal
+//
+// It is capable of unmarshaling 3 different representations supported by Cedar
+//   - { "__extn": { "fn": "decimal", "arg": "1234.5678" }}
+//   - { "fn": "decimal", "arg": "1234.5678" }
+//   - "1234.5678"
 func (d *Decimal) UnmarshalJSON(b []byte) error {
-	var arg string
-	if len(b) > 0 && b[0] == '"' {
-		if err := json.Unmarshal(b, &arg); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-	} else {
-		// NOTE: cedar supports two other forms, for now we're only supporting the smallest implicit and explicit form.
-		// The following are not supported:
-		// "decimal(\"1234.5678\")"
-		// {"fn":"decimal","arg":"1234.5678"}
-		var res extValueJSON
-		if err := json.Unmarshal(b, &res); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-		if res.Extn == nil {
-			return errJSONExtNotFound
-		}
-		if res.Extn.Fn != "decimal" {
-			return errJSONExtFnMatch
-		}
-		arg = res.Extn.Arg
-	}
-	vv, err := ParseDecimal(arg)
+	dd, err := unmarshalExtensionValue(b, "decimal", ParseDecimal)
 	if err != nil {
 		return err
 	}
-	*d = vv
+
+	*d = dd
 	return nil
 }
 

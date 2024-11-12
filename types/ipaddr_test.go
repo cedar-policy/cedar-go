@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -277,4 +278,27 @@ func TestIP(t *testing.T) {
 			`ip("10.0.0.42")`)
 	})
 
+	t.Run("MarshalJSON", func(t *testing.T) {
+		t.Parallel()
+		expected := `{
+			"__extn": {
+				"fn": "ip",
+				"arg": "12.34.56.78"
+			}
+		}`
+		i1 := testutil.Must(types.ParseIPAddr("12.34.56.78"))
+		testutil.JSONMarshalsTo(t, i1, expected)
+
+		var i2 types.IPAddr
+		err := json.Unmarshal([]byte(expected), &i2)
+		testutil.OK(t, err)
+		testutil.Equals(t, i1, i2)
+	})
+
+	t.Run("UnmarshalJSON/error", func(t *testing.T) {
+		t.Parallel()
+		var dt2 types.IPAddr
+		err := json.Unmarshal([]byte("{}"), &dt2)
+		testutil.Error(t, err)
+	})
 }
