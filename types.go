@@ -93,7 +93,7 @@ func NewEntityUIDSet(args ...EntityUID) EntityUIDSet {
 // The pattern components may be one of string, cedar.String, or cedar.Wildcard.  Any other types will
 // cause a panic.
 func NewPattern(components ...any) Pattern {
-	return types.NewPattern(components)
+	return types.NewPattern(components...)
 }
 
 // NewRecord returns an immutable Record given a Go map of Strings to Values
