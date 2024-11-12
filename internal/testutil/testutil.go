@@ -73,6 +73,7 @@ func Must[T any](t T, err error) T {
 // JSONMarshalsTo asserts that obj marshals as JSON to the given string, allowing for formatting differences and
 // displaying an easy-to-read diff.
 func JSONMarshalsTo[T any](t TB, obj T, want string) {
+	t.Helper()
 	b, err := json.MarshalIndent(obj, "", "\t")
 	OK(t, err)
 

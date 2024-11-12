@@ -269,4 +269,12 @@ func TestIP(t *testing.T) {
 			})
 		}
 	})
+	t.Run("MarshalCedar", func(t *testing.T) {
+		t.Parallel()
+		testutil.Equals(
+			t,
+			string(testutil.Must(types.ParseIPAddr("10.0.0.42")).MarshalCedar()),
+			`ip("10.0.0.42")`)
+	})
+
 }

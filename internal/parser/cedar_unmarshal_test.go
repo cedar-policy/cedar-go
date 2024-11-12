@@ -564,6 +564,7 @@ func TestParseApproximateErrors(t *testing.T) {
 		{"reservedKeywordAsEntityType", `permit (principal == false::"42", action, resource)`, "expected ident"},
 		{"reservedKeywordAsAttributeAccess", `permit (principal, action, resource) when { context.false }`, "expected ident"},
 		{"invalidPrimary", `permit (principal, action, resource) when { foobar }`, "invalid primary"},
+		{"unexpectedTokenInEntityOrExtFun", `permit (principal, action, resource) when { A::B 42 }`, "unexpected token"},
 	}
 	for _, tt := range tests {
 		tt := tt
