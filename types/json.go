@@ -142,7 +142,12 @@ func unmarshalExtensionValue[T any](b []byte, extName string, parse func(string)
 		if res.Extn == nil {
 			// If we didn't find an Extn, maybe it's just an extn.
 			var res2 extn
+
+			// N.B. we already know that this JSON unmarshals successfully as a struct, so it's
+			// not actually possible to get an error here. Hence, it's safe to ignore the return
+			// value.
 			_ = json.Unmarshal(b, &res2)
+
 			// We've tried Ext.Fn and Fn, so no good.
 			if res2.Fn == "" {
 				return zeroT, errJSONExtNotFound
