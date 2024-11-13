@@ -47,19 +47,16 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 	}
 }
 
-func unaryToJSON(dest **unaryJSON, src ast.UnaryNode) error {
-	n := ast.UnaryNode(src)
+func unaryToJSON(dest **unaryJSON, src ast.UnaryNode) {
 	res := &unaryJSON{}
-	res.Arg.FromNode(n.Arg)
+	res.Arg.FromNode(src.Arg)
 	*dest = res
-	return nil
 }
 
 func binaryToJSON(dest **binaryJSON, src ast.BinaryNode) {
-	n := ast.BinaryNode(src)
 	res := &binaryJSON{}
-	res.Left.FromNode(n.Left)
-	res.Right.FromNode(n.Right)
+	res.Left.FromNode(src.Left)
+	res.Right.FromNode(src.Right)
 	*dest = res
 }
 

@@ -9,6 +9,7 @@ linters:
   disable-all: true
   enable:
   - bodyclose
+  - errcheck
   - errname
   - gofmt
   - goimports

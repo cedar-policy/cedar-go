@@ -1212,7 +1212,7 @@ func TestPartialBasic(t *testing.T) {
 func TestPartialPanic(t *testing.T) {
 	t.Parallel()
 	testutil.Panic(t, func() {
-		partial(Env{}, nil)
+		_, _ = partial(Env{}, nil)
 	})
 }
 
