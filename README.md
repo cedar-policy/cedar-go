@@ -137,6 +137,7 @@ While in development (0.x.y), each tagged release may contain breaking changes.
 
 ### New features in 1.0.0
 - AST builder methods for Cedar datetime and duration literals and their extension methods have been added
+- AST builder methods for adding extension function calls with uninterpreted strings
 - Small improvement in evaluation runtime performance for large, shallow entity graphs.
 
 ### Upgrading from 0.4.x to 1.0.0
