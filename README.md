@@ -138,7 +138,7 @@ If you're looking to integrate Cedar into a production system, please be sure th
 
 ## Backward Compatibility Considerations
 
-x/exp - code in this directory is not subject to the semantic version constraints of the rest of the module and may break at any time
+x/exp - code in this directory is not subject to the semantic version constraints of the rest of the module and breaking changes may be made at any time
 
 ## Change log
 
