@@ -1,3 +1,10 @@
+// Package batch allows for performant batch evaluations of Cedar policy given a set of principals, actions, resources,
+// and/or context as variables. The batch evaluation takes advantage of a form of [partial evaluation] to whittle the
+// policy set down to just those policies which refer to the set of unknown variables. This allows for queries over a
+// policy set, such as "to which resources can user A connect when the request comes from outside the United States?"
+// which can run much faster than a brute force trawl through every possible authorization request.
+//
+// [partial evaluation]: https://en.wikipedia.org/wiki/Partial_evaluation
 package batch
 
 import (
