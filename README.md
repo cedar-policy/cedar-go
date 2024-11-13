@@ -89,7 +89,7 @@ func main() {
 	ps := cedar.NewPolicySet()
 	ps.Add("policy0", &policy)
 
-	var entities cedar.Entities
+	var entities cedar.EntityMap
 	if err := json.Unmarshal([]byte(entitiesJSON), &entities); err != nil {
 		log.Fatal(err)
 	}
