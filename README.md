@@ -40,10 +40,12 @@ The Go implementation includes:
 
 The Go implementation does not yet include:
 
-- examples and CLI applications
-- schema support and the validator
+- CLI applications
+- schema support and the [validator](https://docs.cedarpolicy.com/policies/validation.html)
 - the formatter
 - partial evaluation
+- support for [RFC 82](https://github.com/cedar-policy/rfcs/blob/main/text/0082-entity-tags.md) (entity tags)
+- support for [policy templates](https://docs.cedarpolicy.com/policies/templates.html)
 
 ## Quick Start
 
@@ -93,6 +95,7 @@ func main() {
 	if err := json.Unmarshal([]byte(entitiesJSON), &entities); err != nil {
 		log.Fatal(err)
 	}
+	
 	req := cedar.Request{
 		Principal: cedar.NewEntityUID("User", "alice"),
 		Action:    cedar.NewEntityUID("Action", "view"),
@@ -117,6 +120,13 @@ This request is allowed because `VacationPhoto94.jpg` belongs to `Album::"jane_v
 
 If you'd like to see more details on what can be expressed as Cedar policies, see the [documentation](https://docs.cedarpolicy.com).
 
+## Packages
+The cedar-go module houses four public packages:
+ * [cedar](.) - The main package for interacting with the module, including parsing policies and entities and authorizing requests.
+ * [ast](ast/) - Programmatic construction of Cedar ASTs
+ * [types](types/) - Basic types common to multiple packages. For convenience, most of these are also projected through the cedar package.
+ * [x/exp/batch](x/exp/batch/) - An experimental batch authorization API supporting high-performance variable substitution via partial evaluation.
+
 ## Documentation
 
 General documentation for Cedar is available at [docs.cedarpolicy.com](https://docs.cedarpolicy.com), with source code in the [cedar-policy/cedar-docs](https://github.com/cedar-policy/cedar-docs/) repository.
@@ -128,10 +138,7 @@ If you're looking to integrate Cedar into a production system, please be sure th
 
 ## Backward Compatibility Considerations
 
-x/exp - code in this subrepository is not subject to the Go 1
-compatibility promise.
-
-While in development (0.x.y), each tagged release may contain breaking changes.
+x/exp - code in this directory is not subject to the semantic version constraints of the rest of the module and breaking changes may be made at any time
 
 ## Change log
 
