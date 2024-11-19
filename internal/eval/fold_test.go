@@ -3,6 +3,7 @@ package eval
 import (
 	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -281,6 +282,26 @@ func TestFoldPolicy(t *testing.T) {
 			"opGreaterThanOrEqualErr",
 			ast.Permit().When(ast.Long(42).GreaterThanOrEqual(ast.String("test"))),
 			ast.Permit().When(ast.Long(42).GreaterThanOrEqual(ast.String("test"))),
+		},
+		{
+			"opLessThanComparable",
+			ast.Permit().When(ast.Datetime(time.UnixMilli(42)).LessThan(ast.Datetime(time.UnixMilli(43)))),
+			ast.Permit().When(ast.True()),
+		},
+		{
+			"opLessThanOrEqualComparable",
+			ast.Permit().When(ast.Datetime(time.UnixMilli(42)).LessThanOrEqual(ast.Datetime(time.UnixMilli(43)))),
+			ast.Permit().When(ast.True()),
+		},
+		{
+			"opGreaterThanComparable",
+			ast.Permit().When(ast.Datetime(time.UnixMilli(42)).GreaterThan(ast.Datetime(time.UnixMilli(43)))),
+			ast.Permit().When(ast.False()),
+		},
+		{
+			"opGreaterThanOrEqualComparable",
+			ast.Permit().When(ast.Datetime(time.UnixMilli(42)).GreaterThanOrEqual(ast.Datetime(time.UnixMilli(43)))),
+			ast.Permit().When(ast.False()),
 		},
 		{
 			"opLessThanExt",

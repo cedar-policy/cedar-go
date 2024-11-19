@@ -220,7 +220,7 @@ func TestBatch(t *testing.T) {
 					Values: Values{"principal": p1, "action": a1, "resource": r1},
 					Diagnostic: types.Diagnostic{
 						Errors: []types.DiagnosticError{
-							{PolicyID: "0", Message: "type error: expected long, got string"},
+							{PolicyID: "0", Message: "type error: expected comparable value, got string"},
 						},
 					},
 				},

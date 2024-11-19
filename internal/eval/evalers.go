@@ -429,106 +429,6 @@ func (n *negateEval) Eval(env Env) (types.Value, error) {
 	return res, nil
 }
 
-// longLessThanEval
-type longLessThanEval struct {
-	lhs Evaler
-	rhs Evaler
-}
-
-func newLongLessThanEval(lhs Evaler, rhs Evaler) Evaler {
-	return &longLessThanEval{
-		lhs: lhs,
-		rhs: rhs,
-	}
-}
-
-func (n *longLessThanEval) Eval(env Env) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	rhs, err := evalLong(n.rhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	return types.Boolean(lhs < rhs), nil
-}
-
-// longLessThanOrEqualEval
-type longLessThanOrEqualEval struct {
-	lhs Evaler
-	rhs Evaler
-}
-
-func newLongLessThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
-	return &longLessThanOrEqualEval{
-		lhs: lhs,
-		rhs: rhs,
-	}
-}
-
-func (n *longLessThanOrEqualEval) Eval(env Env) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	rhs, err := evalLong(n.rhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	return types.Boolean(lhs <= rhs), nil
-}
-
-// longGreaterThanEval
-type longGreaterThanEval struct {
-	lhs Evaler
-	rhs Evaler
-}
-
-func newLongGreaterThanEval(lhs Evaler, rhs Evaler) Evaler {
-	return &longGreaterThanEval{
-		lhs: lhs,
-		rhs: rhs,
-	}
-}
-
-func (n *longGreaterThanEval) Eval(env Env) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	rhs, err := evalLong(n.rhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	return types.Boolean(lhs > rhs), nil
-}
-
-// longGreaterThanOrEqualEval
-type longGreaterThanOrEqualEval struct {
-	lhs Evaler
-	rhs Evaler
-}
-
-func newLongGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
-	return &longGreaterThanOrEqualEval{
-		lhs: lhs,
-		rhs: rhs,
-	}
-}
-
-func (n *longGreaterThanOrEqualEval) Eval(env Env) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	rhs, err := evalLong(n.rhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	return types.Boolean(lhs >= rhs), nil
-}
-
 // decimalLessThanEval
 type decimalLessThanEval struct {
 	lhs Evaler
@@ -1301,7 +1201,7 @@ type comparableValueLessThanEval struct {
 	rhs Evaler
 }
 
-func newComparableValueLessThanEval(lhs Evaler, rhs Evaler) *comparableValueLessThanEval {
+func newComparableValueLessThanEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueLessThanEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -1332,7 +1232,7 @@ type comparableValueGreaterThanEval struct {
 	rhs Evaler
 }
 
-func newComparableValueGreaterThanEval(lhs Evaler, rhs Evaler) *comparableValueGreaterThanEval {
+func newComparableValueGreaterThanEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueGreaterThanEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -1361,7 +1261,7 @@ type comparableValueLessThanOrEqualEval struct {
 	rhs Evaler
 }
 
-func newComparableValueLessThanOrEqualEval(lhs Evaler, rhs Evaler) *comparableValueLessThanOrEqualEval {
+func newComparableValueLessThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueLessThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -1390,7 +1290,7 @@ type comparableValueGreaterThanOrEqualEval struct {
 	rhs Evaler
 }
 
-func newComparableValueGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *comparableValueGreaterThanOrEqualEval {
+func newComparableValueGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueGreaterThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,

@@ -343,13 +343,13 @@ func partial(env Env, n ast.IsNode) (ast.IsNode, error) {
 	case ast.NodeTypeNotEquals:
 		return tryPartialBinary(env, v.BinaryNode, newNotEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeNotEquals{BinaryNode: b} })
 	case ast.NodeTypeGreaterThan:
-		return tryPartialBinary(env, v.BinaryNode, newLongGreaterThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThan{BinaryNode: b} })
+		return tryPartialBinary(env, v.BinaryNode, newComparableValueGreaterThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThan{BinaryNode: b} })
 	case ast.NodeTypeGreaterThanOrEqual:
-		return tryPartialBinary(env, v.BinaryNode, newLongGreaterThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThanOrEqual{BinaryNode: b} })
+		return tryPartialBinary(env, v.BinaryNode, newComparableValueGreaterThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThanOrEqual{BinaryNode: b} })
 	case ast.NodeTypeLessThan:
-		return tryPartialBinary(env, v.BinaryNode, newLongLessThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThan{BinaryNode: b} })
+		return tryPartialBinary(env, v.BinaryNode, newComparableValueLessThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThan{BinaryNode: b} })
 	case ast.NodeTypeLessThanOrEqual:
-		return tryPartialBinary(env, v.BinaryNode, newLongLessThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThanOrEqual{BinaryNode: b} })
+		return tryPartialBinary(env, v.BinaryNode, newComparableValueLessThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThanOrEqual{BinaryNode: b} })
 	case ast.NodeTypeSub:
 		return tryPartialBinary(env, v.BinaryNode, newSubtractEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeSub{BinaryNode: b} })
 	case ast.NodeTypeAdd:
