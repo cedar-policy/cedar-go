@@ -1301,7 +1301,7 @@ type comparableValueLessThanEval struct {
 	rhs Evaler
 }
 
-func newComparableValueLessThanEval(lhs Evaler, rhs Evaler) *comparableValueLessThanEval {
+func newComparableValueLessThanEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueLessThanEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -1332,7 +1332,7 @@ type comparableValueGreaterThanEval struct {
 	rhs Evaler
 }
 
-func newComparableValueGreaterThanEval(lhs Evaler, rhs Evaler) *comparableValueGreaterThanEval {
+func newComparableValueGreaterThanEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueGreaterThanEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -1361,7 +1361,7 @@ type comparableValueLessThanOrEqualEval struct {
 	rhs Evaler
 }
 
-func newComparableValueLessThanOrEqualEval(lhs Evaler, rhs Evaler) *comparableValueLessThanOrEqualEval {
+func newComparableValueLessThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueLessThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -1390,7 +1390,7 @@ type comparableValueGreaterThanOrEqualEval struct {
 	rhs Evaler
 }
 
-func newComparableValueGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *comparableValueGreaterThanOrEqualEval {
+func newComparableValueGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueGreaterThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
