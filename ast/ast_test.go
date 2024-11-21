@@ -11,12 +11,11 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-type CustomString string
-type CustomBool bool
-type CustomInt int
-type CustomInt64 int64
-
 func TestASTByTable(t *testing.T) {
+	type CustomString string
+	type CustomBool bool
+	type CustomInt int
+	type CustomInt64 int64
 	t.Parallel()
 	tests := []struct {
 		name string
