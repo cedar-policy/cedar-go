@@ -9,7 +9,7 @@ import (
 )
 
 // Boolean creates a value node containing a Boolean.
-func Boolean[T bool | types.Boolean](b T) Node {
+func Boolean[T ~bool](b T) Node {
 	return wrapNode(ast.Boolean(types.Boolean(b)))
 }
 
@@ -24,12 +24,12 @@ func False() Node {
 }
 
 // String creates a value node containing a String.
-func String[T string | types.String](s T) Node {
+func String[T ~string](s T) Node {
 	return wrapNode(ast.String(types.String(s)))
 }
 
 // Long creates a value node containing a Long.
-func Long[T int | int64 | types.Long](l T) Node {
+func Long[T ~int | ~int64](l T) Node {
 	return wrapNode(ast.Long(types.Long(l)))
 }
 

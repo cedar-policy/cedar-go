@@ -12,6 +12,10 @@ import (
 )
 
 func TestASTByTable(t *testing.T) {
+	type CustomString string
+	type CustomBool bool
+	type CustomInt int
+	type CustomInt64 int64
 	t.Parallel()
 	tests := []struct {
 		name string
@@ -144,6 +148,16 @@ func TestASTByTable(t *testing.T) {
 			internalast.Permit().When(internalast.Boolean(true)),
 		},
 		{
+			"customValueBoolFalse",
+			ast.Permit().When(ast.Boolean(CustomBool(false))),
+			internalast.Permit().When(internalast.Boolean(false)),
+		},
+		{
+			"customValueBoolTrue",
+			ast.Permit().When(ast.Boolean(CustomBool(true))),
+			internalast.Permit().When(internalast.Boolean(true)),
+		},
+		{
 			"valueTrue",
 			ast.Permit().When(ast.True()),
 			internalast.Permit().When(internalast.True()),
@@ -157,6 +171,21 @@ func TestASTByTable(t *testing.T) {
 			"valueString",
 			ast.Permit().When(ast.String("cedar")),
 			internalast.Permit().When(internalast.String("cedar")),
+		},
+		{
+			"customValueString",
+			ast.Permit().When(ast.String(CustomString("cedar"))),
+			internalast.Permit().When(internalast.String("cedar")),
+		},
+		{
+			"customValueInt",
+			ast.Permit().When(ast.Long(CustomInt(42))),
+			internalast.Permit().When(internalast.Long(42)),
+		},
+		{
+			"customValueInt64",
+			ast.Permit().When(ast.Long(CustomInt64(42))),
+			internalast.Permit().When(internalast.Long(42)),
 		},
 		{
 			"valueLong",
