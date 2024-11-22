@@ -2,7 +2,9 @@ package parser
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"github.com/cedar-policy/cedar-go/types"
 
 	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/consts"
@@ -33,7 +35,10 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 	case ast.ScopeTypeAll:
 		return ast.True()
 	case ast.ScopeTypeEq:
-		return ast.NewNode(varNode).Equal(ast.Value(t.Entity))
+		//todo: should we panic on this? or just trust that the interface is correct?
+		rhs, _ := entityReferenceToNode(t.Entity)
+
+		return ast.NewNode(varNode).Equal(rhs)
 	case ast.ScopeTypeIn:
 		return ast.NewNode(varNode).In(ast.Value(t.Entity))
 	case ast.ScopeTypeInSet:
@@ -49,6 +54,17 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 		return ast.NewNode(varNode).IsIn(t.Type, ast.Value(t.Entity))
 	default:
 		panic(fmt.Sprintf("unknown scope type %T", t))
+	}
+}
+
+func entityReferenceToNode(ef types.EntityReference) (ast.Node, error) {
+	switch e := ef.(type) {
+	case types.EntityUID:
+		return ast.Value(e), nil
+	case types.VariableSlot:
+		return ast.NewNode(ast.NodeTypeVariable{Name: e.Name}), nil
+	default:
+		return ast.Node{}, errors.New("unknown entity reference type")
 	}
 }
 

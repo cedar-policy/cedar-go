@@ -435,6 +435,17 @@ when { (if true then 2 else 3 * 4) == 2 };`,
 when { (if true then 2 else 3) * 4 == 8 };`,
 			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(2), ast.Long(3)).Multiply(ast.Long(4)).Equal(ast.Long(8))),
 		},
+
+		// templates experiment
+		{
+			"principal variable",
+			`permit (
+    principal == ?principal,
+    action,
+    resource
+);`,
+			ast.Permit().PrincipalEq(types.VariableSlot{Name: "?principal"}),
+		},
 	}
 
 	for _, tt := range parseTests {

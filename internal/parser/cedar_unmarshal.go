@@ -191,7 +191,7 @@ func (p *parser) principal(policy *ast.Policy) error {
 	switch p.peek().Text {
 	case "==":
 		p.advance()
-		entity, err := p.entity()
+		entity, err := p.entityReference()
 		if err != nil {
 			return err
 		}
@@ -230,10 +230,30 @@ func (p *parser) principal(policy *ast.Policy) error {
 
 func (p *parser) entity() (types.EntityUID, error) {
 	var res types.EntityUID
+
 	t := p.advance()
 	if !t.isIdent() {
 		return res, p.errorf("expected ident")
 	}
+
+	return p.entityFirstPathPreread(types.EntityType(t.Text))
+}
+
+func (p *parser) entityReference() (types.EntityReference, error) {
+	var res types.EntityUID
+
+	if p.peek().Type == TokenOperator && p.peek().Text == "?" {
+		p.advance()
+		t := p.advance()
+
+		return types.VariableSlot{Name: "?" + types.String(t.Text)}, nil
+	}
+
+	t := p.advance()
+	if !t.isIdent() {
+		return res, p.errorf("expected ident")
+	}
+
 	return p.entityFirstPathPreread(types.EntityType(t.Text))
 }
 
@@ -347,10 +367,11 @@ func (p *parser) resource(policy *ast.Policy) error {
 	switch p.peek().Text {
 	case "==":
 		p.advance()
-		entity, err := p.entity()
+		entity, err := p.entityReference()
 		if err != nil {
 			return err
 		}
+
 		policy.ResourceEq(entity)
 		return nil
 	case "is":
