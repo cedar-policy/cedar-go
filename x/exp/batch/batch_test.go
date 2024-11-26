@@ -9,10 +9,10 @@ import (
 
 	"github.com/cedar-policy/cedar-go"
 	publicast "github.com/cedar-policy/cedar-go/ast"
-	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func TestBatch(t *testing.T) {

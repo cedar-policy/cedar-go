@@ -4,11 +4,11 @@ import (
 	"bytes"
 
 	"github.com/cedar-policy/cedar-go/ast"
-	internalast "github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/json"
 	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/types"
+	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 // A Policy is the parsed form of a single Cedar language policy statement.
