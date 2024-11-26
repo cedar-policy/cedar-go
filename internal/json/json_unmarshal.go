@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 type isPrincipalResourceScopeNode interface {

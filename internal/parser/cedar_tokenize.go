@@ -9,8 +9,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/rust"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 //go:generate moq -pkg parser -fmt goimports -out tokenize_mocks_test.go . reader

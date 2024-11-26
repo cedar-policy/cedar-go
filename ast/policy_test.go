@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/ast"
-	internalast "github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
+	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func TestPolicy_MarshalJSON(t *testing.T) {

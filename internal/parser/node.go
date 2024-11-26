@@ -3,7 +3,7 @@ package parser
 import (
 	"bytes"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 type NodeTypeIf struct{ ast.NodeTypeIfThenElse }

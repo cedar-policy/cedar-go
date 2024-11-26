@@ -8,9 +8,9 @@ import (
 	"maps"
 	"slices"
 
-	internalast "github.com/cedar-policy/cedar-go/internal/ast"
 	internaljson "github.com/cedar-policy/cedar-go/internal/json"
 	"github.com/cedar-policy/cedar-go/types"
+	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 type PolicyID = types.PolicyID

@@ -1,6 +1,6 @@
 package ast
 
-import "github.com/cedar-policy/cedar-go/internal/ast"
+import "github.com/cedar-policy/cedar-go/x/exp/ast"
 
 func Principal() Node {
 	return wrapNode(ast.Principal())
