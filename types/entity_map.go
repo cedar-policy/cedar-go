@@ -8,6 +8,13 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+// An EntityGetter is an interface for retrieving an Entity by EntityUID.
+type EntityGetter interface {
+	Get(uid EntityUID) (Entity, bool)
+}
+
+var _ EntityGetter = EntityMap{}
+
 // An EntityMap is a collection of all the entities that are needed to evaluate
 // authorization requests.  The key is an EntityUID which uniquely identifies
 // the Entity (it must be the same as the UID within the Entity itself.)
