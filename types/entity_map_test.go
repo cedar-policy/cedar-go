@@ -22,6 +22,21 @@ func TestEntities(t *testing.T) {
 		testutil.Equals(t, clone, e)
 	})
 
+	t.Run("Get", func(t *testing.T) {
+		t.Parallel()
+		ent := types.Entity{
+			UID:        types.NewEntityUID("Type", "id"),
+			Attributes: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
+		}
+		e := types.EntityMap{
+			ent.UID: ent,
+		}
+		got, ok := e.Get(ent.UID)
+		testutil.Equals(t, ok, true)
+		testutil.Equals(t, got, ent)
+		_, ok = e.Get(types.NewEntityUID("Type", "id2"))
+		testutil.Equals(t, ok, false)
+	})
 }
 
 func TestEntitiesJSON(t *testing.T) {

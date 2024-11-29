@@ -37,3 +37,8 @@ func (e *EntityMap) UnmarshalJSON(b []byte) error {
 func (e EntityMap) Clone() EntityMap {
 	return maps.Clone(e)
 }
+
+func (e EntityMap) Get(uid EntityUID) (Entity, bool) {
+	ent, ok := e[uid]
+	return ent, ok
+}
