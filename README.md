@@ -137,8 +137,9 @@ Generated documentation for the latest version of the Go implementation can be a
 If you're looking to integrate Cedar into a production system, please be sure the read the [security best practices](https://docs.cedarpolicy.com/other/security.html)
 
 ## Backward Compatibility Considerations
-
-x/exp - code in this directory is not subject to the semantic version constraints of the rest of the module and breaking changes may be made at any time
+- `x/exp` - code in this directory is not subject to the semantic versioning constraints of the rest of the module and breaking changes may be made at any time.
+- Variadics may be added to functions that do not have them to expand the arguments of a function or method.
+- Concrete types may be replaced with compatible interfaces to expand the variety of arguments a function or method can take.
 
 ## Change log
 
