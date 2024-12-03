@@ -31,8 +31,8 @@ type String = types.String
 
 // Other Cedar types
 
-type EntityMap = types.EntityMap
 type Entity = types.Entity
+type EntityMap = types.EntityMap
 type EntityType = types.EntityType
 type EntityUIDSet = types.EntityUIDSet
 type Pattern = types.Pattern
@@ -40,6 +40,7 @@ type Wildcard = types.Wildcard
 
 // cedar-go types
 
+type EntityGetter = types.EntityGetter
 type Value = types.Value
 
 //   ____                _              _
