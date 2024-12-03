@@ -422,6 +422,30 @@ func TestBatchErrors(t *testing.T) {
 		testutil.Equals(t, total, 2)
 	})
 
+	t.Run("contextAndCallbackErrored", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		errWant := fmt.Errorf("errWant")
+		err := Authorize(ctx, cedar.NewPolicySet(), types.EntityMap{}, Request{
+			Principal: types.NewEntityUID("Principal", "principal"),
+			Action:    types.NewEntityUID("Action", "action"),
+			Resource:  Variable("resource"),
+			Context:   types.Record{},
+			Variables: Variables{
+				"resource": []types.Value{
+					types.NewEntityUID("Resource", "1"),
+					types.NewEntityUID("Resource", "2"),
+					types.NewEntityUID("Resource", "3"),
+				},
+			},
+		}, func(_ Result) error {
+			cancel()
+			return errWant
+		},
+		)
+		testutil.ErrorIs(t, err, context.Canceled)
+		testutil.ErrorIs(t, err, errWant)
+	})
+
 	t.Run("invalidPrincipal", func(t *testing.T) {
 		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
 			Principal: types.String("invalid"),
