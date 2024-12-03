@@ -11,6 +11,7 @@ type Entity struct {
 	UID        EntityUID    `json:"uid"`
 	Parents    EntityUIDSet `json:"parents"`
 	Attributes Record       `json:"attrs"`
+	Tags       Record       `json:"tags,omitempty"`
 }
 
 // MarshalJSON serializes Entity as a JSON object, using the implicit form of EntityUID encoding to match the Rust
@@ -33,10 +34,12 @@ func (e Entity) MarshalJSON() ([]byte, error) {
 		UID        ImplicitlyMarshaledEntityUID   `json:"uid"`
 		Parents    []ImplicitlyMarshaledEntityUID `json:"parents"`
 		Attributes Record                         `json:"attrs"`
+		Tags       Record                         `json:"tags"`
 	}{
 		ImplicitlyMarshaledEntityUID(e.UID),
 		parents,
 		e.Attributes,
+		e.Tags,
 	}
 	return json.Marshal(m)
 }
