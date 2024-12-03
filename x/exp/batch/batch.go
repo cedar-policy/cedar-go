@@ -55,7 +55,7 @@ type Result struct {
 
 // Callback is a function that is called for each single batch authorization with
 // a Result.
-type Callback func(Result)
+type Callback func(Result) error
 
 type idEvaler struct {
 	Policy *ast.Policy
@@ -70,7 +70,7 @@ type batchEvaler struct {
 	compiled bool
 	evalers  map[types.PolicyID]*idEvaler
 	env      eval.Env
-	callback Callback
+	callback func(Result) error
 }
 
 type variableItem struct {
@@ -107,6 +107,7 @@ var errInvalidPart = fmt.Errorf("invalid part")
 //   - It will error in case any of PARC are an incorrect type at authorization.
 //   - It will error in case there are unbound variables.
 //   - It will error in case there are unused variables.
+//   - It will error in case of a callback error.
 //
 // The result passed to the callback must be used / cloned immediately and not modified.
 func Authorize(ctx context.Context, ps *cedar.PolicySet, entities types.EntityMap, request Request, cb Callback) error {
@@ -284,8 +285,7 @@ func diagnosticAuthzWithCallback(be *batchEvaler) error {
 	res.Values = be.Values
 	batchCompile(be)
 	res.Decision, res.Diagnostic = isAuthorized(be.evalers, be.env)
-	be.callback(res)
-	return nil
+	return be.callback(res)
 }
 
 func isAuthorized(ps map[types.PolicyID]*idEvaler, env eval.Env) (types.Decision, types.Diagnostic) {
