@@ -9,6 +9,7 @@ package batch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -175,7 +176,7 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entities types.EntityMa
 		fixIgnores(be)
 	}
 
-	return doBatch(ctx, be)
+	return errors.Join(doBatch(ctx, be), ctx.Err())
 }
 
 func doPartial(be *batchEvaler) {
