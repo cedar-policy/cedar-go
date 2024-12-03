@@ -208,9 +208,10 @@ func TestCorpus(t *testing.T) {
 							"resource":  []cedar.Value{resource},
 							"context":   []cedar.Value{context},
 						},
-					}, func(r batch.Result) {
+					}, func(r batch.Result) error {
 						res = r
 						total++
+						return nil
 					})
 					testutil.OK(t, err)
 					testutil.Equals(t, total, 1)
