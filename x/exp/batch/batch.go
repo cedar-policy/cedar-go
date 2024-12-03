@@ -71,7 +71,7 @@ type batchEvaler struct {
 	compiled bool
 	evalers  map[types.PolicyID]*idEvaler
 	env      eval.Env
-	callback func(Result) error
+	callback Callback
 }
 
 type variableItem struct {
