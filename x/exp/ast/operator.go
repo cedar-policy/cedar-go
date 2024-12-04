@@ -137,6 +137,14 @@ func (lhs Node) Has(attr types.String) Node {
 	return NewNode(NodeTypeHas{StrOpNode: StrOpNode{Arg: lhs.v, Value: attr}})
 }
 
+func (lhs Node) GetTag(rhs Node) Node {
+	return NewMethodCall(lhs, "getTag", rhs)
+}
+
+func (lhs Node) HasTag(rhs Node) Node {
+	return NewMethodCall(lhs, "hasTag", rhs)
+}
+
 //  ___ ____   _       _     _
 // |_ _|  _ \ / \   __| | __| |_ __ ___  ___ ___
 //  | || |_) / _ \ / _` |/ _` | '__/ _ \/ __/ __|

@@ -440,6 +440,18 @@ func TestASTByTable(t *testing.T) {
 				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeContainsAny{BinaryNode: ast.BinaryNode{Left: ast.NodeValue{Value: types.Long(42)}, Right: ast.NodeValue{Value: types.Long(43)}}}}}},
 		},
 		{
+			"opGetTag",
+			ast.Permit().When(ast.Long(42).GetTag(ast.String("key"))),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "getTag", Args: []ast.IsNode{ast.NodeValue{Value: types.Long(42)}, ast.NodeValue{Value: types.String("key")}}}}}},
+		},
+		{
+			"opHasTag",
+			ast.Permit().When(ast.Long(42).HasTag(ast.String("key"))),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeExtensionCall{Name: "hasTag", Args: []ast.IsNode{ast.NodeValue{Value: types.Long(42)}, ast.NodeValue{Value: types.String("key")}}}}}},
+		},
+		{
 			"opAccess",
 			ast.Permit().When(ast.Long(42).Access("key")),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
