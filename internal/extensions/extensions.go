@@ -8,6 +8,9 @@ type extInfo struct {
 }
 
 var ExtMap = map[types.Path]extInfo{
+	"hasTag": {Args: 2, IsMethod: true},
+	"getTag": {Args: 2, IsMethod: true},
+
 	"ip":       {Args: 1, IsMethod: false},
 	"decimal":  {Args: 1, IsMethod: false},
 	"datetime": {Args: 1, IsMethod: false},

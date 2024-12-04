@@ -1448,6 +1448,175 @@ func TestHasNode(t *testing.T) {
 	}
 }
 
+func TestGetTagNode(t *testing.T) {
+	t.Parallel()
+
+	const (
+		knownType   = types.EntityType("knownType")
+		unknownType = types.EntityType("")
+		knownID     = "knownID"
+		unknownID   = ""
+		knownTag    = types.String("knownTag")
+		unknownTag  = types.String("unknownTag")
+		knownAttr   = "knownAttr"
+		notString   = types.Long(42)
+		value       = types.Long(42)
+	)
+
+	tests := []struct {
+		name   string
+		lhs    Evaler
+		rhs    Evaler
+		result types.Value
+		err    error
+	}{
+		{"ObjectTypeError",
+			newLiteralEval(types.True),
+			newLiteralEval(knownTag),
+			zeroValue(),
+			ErrType},
+		{"SubjectTypeError",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(notString),
+			zeroValue(),
+			ErrType},
+		{"TagOnRecord",
+			newLiteralEval(types.NewRecord(nil)),
+			newLiteralEval(knownTag), zeroValue(),
+			ErrType},
+		{"ProgrammaticTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newAttributeAccessEval(newLiteralEval(types.NewEntityUID(knownType, knownID)), knownAttr),
+			value,
+			nil,
+		},
+		{"KnownTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(knownTag),
+			value,
+			nil},
+		{"UnknownTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(unknownTag),
+			zeroValue(),
+			errTagAccess},
+		{"UnknownEntity",
+			newLiteralEval(types.NewEntityUID("unknownType", unknownID)),
+			newLiteralEval(knownTag),
+			zeroValue(),
+			errEntityNotExist},
+		{"UnspecifiedEntity",
+			newLiteralEval(types.NewEntityUID("", "")),
+			newLiteralEval(knownTag),
+			zeroValue(),
+			errUnspecifiedEntity},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newGetTagEval(tt.lhs, tt.rhs)
+			entity := types.Entity{
+				UID:        types.NewEntityUID(knownType, knownID),
+				Tags:       types.NewRecord(types.RecordMap{knownTag: value}),
+				Attributes: types.NewRecord(types.RecordMap{knownAttr: knownTag}),
+			}
+			v, err := n.Eval(Env{
+				Entities: types.EntityMap{
+					entity.UID: entity,
+				},
+			})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+
+	}
+}
+
+func TestHasTagNode(t *testing.T) {
+	t.Parallel()
+
+	const (
+		knownType   = types.EntityType("knownType")
+		unknownType = types.EntityType("unknownType")
+		knownID     = "knownID"
+		unkownID    = "unknownID"
+		knownTag    = types.String("knownTag")
+		unknownTag  = types.String("unknownTag")
+		knownAttr   = types.String("knownAttr")
+		notString   = types.Long(42)
+		value       = types.Long(42)
+	)
+
+	tests := []struct {
+		name   string
+		lhs    Evaler
+		rhs    Evaler
+		result types.Value
+		err    error
+	}{
+		{"ObjectTypeError",
+			newLiteralEval(types.True),
+			newLiteralEval(knownTag),
+			zeroValue(),
+			ErrType},
+		{"SubjectTypeError",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(notString),
+			zeroValue(),
+			ErrType},
+		{"TagOnRecord",
+			newLiteralEval(types.NewRecord(nil)),
+			newLiteralEval(knownTag),
+			zeroValue(),
+			ErrType},
+		{"ProgrammaticTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newAttributeAccessEval(newLiteralEval(types.NewEntityUID(knownType, knownID)), knownAttr),
+			types.True,
+			nil,
+		},
+		{"KnownTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(knownTag),
+			types.True,
+			nil},
+		{"UnknownTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(unknownTag),
+			types.False,
+			nil},
+		{"UnknownEntity",
+			newLiteralEval(types.NewEntityUID(unknownType, unkownID)),
+			newLiteralEval(knownTag),
+			types.False,
+			nil},
+		{"UnspecifiedEntity",
+			newLiteralEval(types.NewEntityUID("", "")),
+			newLiteralEval(knownTag),
+			types.False,
+			nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newHasTagEval(tt.lhs, tt.rhs)
+			entity := types.Entity{
+				UID:        types.NewEntityUID(knownType, knownID),
+				Tags:       types.NewRecord(types.RecordMap{knownTag: value}),
+				Attributes: types.NewRecord(types.RecordMap{knownAttr: knownTag}),
+			}
+			v, err := n.Eval(Env{
+				Entities: types.EntityMap{
+					entity.UID: entity,
+				},
+			})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+
+	}
+}
+
 func TestLikeNode(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

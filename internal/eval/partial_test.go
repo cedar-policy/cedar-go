@@ -1238,6 +1238,30 @@ func TestPartialBasic(t *testing.T) {
 			nul,
 			testutil.Error,
 		},
+		{
+			"opGetTagKeep",
+			ast.Principal().GetTag(ast.String("key")),
+			ast.Principal().GetTag(ast.String("key")),
+			testutil.OK,
+		},
+		{
+			"opGetTagError",
+			ast.String("test").GetTag(ast.String("key")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opHasTagKeep",
+			ast.Principal().HasTag(ast.String("key")),
+			ast.Principal().HasTag(ast.String("key")),
+			testutil.OK,
+		},
+		{
+			"opHasTagError",
+			ast.String("test").HasTag(ast.String("key")),
+			nul,
+			testutil.Error,
+		},
 		/*
 		 */
 	}
