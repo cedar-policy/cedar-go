@@ -25,7 +25,7 @@ func TestBatch(t *testing.T) {
 	tests := []struct {
 		name     string
 		policy   *ast.Policy
-		entities types.EntityMap
+		entities types.EntityGetter
 		request  Request
 		results  []Result
 	}{
