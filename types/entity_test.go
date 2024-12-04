@@ -40,6 +40,7 @@ func TestEntityMarshalJSON(t *testing.T) {
 			types.NewEntityUID("QuuxType", "3"),
 		),
 		Attributes: types.Record{},
+		Tags:       types.Record{},
 	}
 
 	testutil.JSONMarshalsTo(t, e,
@@ -52,6 +53,7 @@ func TestEntityMarshalJSON(t *testing.T) {
 				{"type":"QuuxType","id":"3"},
 				{"type":"QuuxType","id":"30"}
 			],
-			"attrs":{}
+			"attrs":{},
+			"tags":{}
 		}`)
 }
