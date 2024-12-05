@@ -274,9 +274,9 @@ func (a Datetime) Milliseconds() int64 {
 	return a.value
 }
 
-// Time returns the time.Time representation of a Datetime.
+// Time returns the UTC time.Time representation of a Datetime.
 func (a Datetime) Time() time.Time {
-	return time.UnixMilli(a.value)
+	return time.UnixMilli(a.value).UTC()
 }
 
 func (v Datetime) hash() uint64 {

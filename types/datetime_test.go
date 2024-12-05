@@ -123,7 +123,7 @@ func TestDatetime(t *testing.T) {
 		t.Parallel()
 		in := types.NewDatetime(time.UnixMilli(42))
 		got := in.Time()
-		want := time.UnixMilli(42)
+		want := time.UnixMilli(42).UTC()
 		testutil.Equals(t, got, want)
 	})
 
