@@ -5,6 +5,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 //nolint:revive // due to table test function-length
@@ -15,7 +16,7 @@ func TestIsAuthorized(t *testing.T) {
 	tests := []struct {
 		Name                        string
 		Policy                      string
-		Entities                    cedar.EntityMap
+		Entities                    types.EntityGetter
 		Principal, Action, Resource cedar.EntityUID
 		Context                     cedar.Record
 		Want                        cedar.Decision
@@ -26,6 +27,16 @@ func TestIsAuthorized(t *testing.T) {
 			Name:      "simple-permit",
 			Policy:    `permit(principal,action,resource);`,
 			Entities:  cedar.EntityMap{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  cedar.NewEntityUID("table", "whatever"),
+			Context:   cedar.Record{},
+			Want:      true,
+			DiagErr:   0,
+		},
+		{
+			Name:      "nil-entity-map",
+			Policy:    `permit(principal,action,resource);`,
 			Principal: cuzco,
 			Action:    dropTable,
 			Resource:  cedar.NewEntityUID("table", "whatever"),
@@ -784,7 +795,7 @@ func TestIsAuthorized(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.Name, func(t *testing.T) {
-			t.Parallel()
+			// t.Parallel()
 			ps, err := cedar.NewPolicySetFromBytes("policy.cedar", []byte(tt.Policy))
 			testutil.Equals(t, err != nil, tt.ParseErr)
 			ok, diag := ps.IsAuthorized(tt.Entities, cedar.Request{

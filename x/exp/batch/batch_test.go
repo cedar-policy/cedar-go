@@ -52,6 +52,29 @@ func TestBatch(t *testing.T) {
 			},
 		},
 
+		{"nilEntityMap",
+			ast.Permit(),
+			nil,
+			Request{
+				Principal: p1,
+				Action:    Variable("action"),
+				Resource:  Variable("resource"),
+				Context:   types.Record{},
+				Variables: Variables{
+					"action":   []types.Value{a1, a2},
+					"resource": []types.Value{r1, r2, r3},
+				},
+			},
+			[]Result{
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.Record{}}, Decision: true, Values: Values{"action": a1, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"action": a1, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r3, Context: types.Record{}}, Decision: true, Values: Values{"action": a1, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r1, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r1}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r2, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r2}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+				{Request: types.Request{Principal: p1, Action: a2, Resource: r3, Context: types.Record{}}, Decision: true, Values: Values{"action": a2, "resource": r3}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+			},
+		},
+
 		{"someOk",
 			ast.Permit().PrincipalEq(p1).ActionEq(a2).ResourceEq(r3),
 			types.EntityMap{},
