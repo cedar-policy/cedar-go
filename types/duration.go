@@ -267,6 +267,18 @@ func (v Duration) ToMilliseconds() int64 {
 	return v.value
 }
 
+// Duration returns a time.Duration representation of a Duration.  An error
+// is returned if the duration cannot be converted to a time.Duration.
+func (v Duration) Duration() (time.Duration, error) {
+	if v.value > math.MaxInt64/1000 {
+		return 0, internal.ErrDurationRange
+	}
+	if v.value < math.MinInt64/1000 {
+		return 0, internal.ErrDurationRange
+	}
+	return time.Millisecond * time.Duration(v.value), nil
+}
+
 func (v Duration) hash() uint64 {
 	return uint64(v.value)
 }

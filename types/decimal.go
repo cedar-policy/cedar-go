@@ -186,6 +186,12 @@ func (d Decimal) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// Float returns a float64 representation of a Decimal.  Warning: some precision
+// may be lost during this conversion.
+func (d Decimal) Float() float64 {
+	return float64(d.value)/decimalPrecision
+}
+
 func (d Decimal) hash() uint64 {
 	return uint64(d.value)
 }

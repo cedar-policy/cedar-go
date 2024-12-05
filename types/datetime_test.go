@@ -119,6 +119,14 @@ func TestDatetime(t *testing.T) {
 		testutil.Equals(t, one.Milliseconds(), two.Milliseconds())
 	})
 
+	t.Run("Time", func(t *testing.T) {
+		t.Parallel()
+		in := types.NewDatetime(time.UnixMilli(42))
+		got := in.Time()
+		want := time.UnixMilli(42)
+		testutil.Equals(t, got, want)
+	})
+
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
 		one := types.NewDatetimeFromMillis(1)

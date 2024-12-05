@@ -281,6 +281,15 @@ func TestDecimal(t *testing.T) {
 		}
 	})
 
+	t.Run("Float", func(t *testing.T) {
+		t.Parallel()
+		in, err := types.NewDecimalFromFloat(42.42)
+		testutil.OK(t, err)
+		got := in.Float()
+		want := 42.42
+		testutil.Equals(t, got, want)
+	})
+
 	t.Run("MarshalCedar", func(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(
