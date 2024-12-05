@@ -3,6 +3,7 @@ package types_test
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"testing"
 	"time"
 
@@ -85,6 +86,29 @@ func TestDuration(t *testing.T) {
 		one := types.NewDurationFromMillis(1)
 		two := types.NewDuration(1 * time.Millisecond)
 		testutil.Equals(t, one.ToMilliseconds(), two.ToMilliseconds())
+	})
+
+	t.Run("Duration", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			name string
+			in   types.Duration
+			out  time.Duration
+			err  func(testutil.TB, error)
+		}{
+			{"ok", types.NewDuration(time.Millisecond * 42), time.Millisecond * 42, testutil.OK},
+			{"maxPlusOne", types.NewDurationFromMillis(math.MaxInt64/1000 + 1), 0, testutil.Error},
+			{"minMinusOne", types.NewDurationFromMillis(math.MinInt64/1000 - 1), 0, testutil.Error},
+		}
+		for _, tt := range tests {
+			tt := tt
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				out, err := tt.in.Duration()
+				testutil.Equals(t, out, tt.out)
+				tt.err(t, err)
+			})
+		}
 	})
 
 	t.Run("Equal", func(t *testing.T) {
