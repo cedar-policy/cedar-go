@@ -14,6 +14,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/batch"
 )
 
@@ -244,11 +245,27 @@ func TestCorpusRelated(t *testing.T) {
 	tests := []struct {
 		name     string
 		policy   string
+		entities types.EntityGetter
 		request  cedar.Request
 		decision cedar.Decision
 		reasons  []cedar.PolicyID
 		errors   []cedar.PolicyID
 	}{
+		{
+			"a9fe7e4b20024dc7818a168c67ce312d6e076b93",
+			`forbid(
+			principal,
+			action in [Action::"action",Action::"action"],
+			resource
+			) when {
+			true && (resource.hasTag("A"))
+			};`,
+			types.EntityMap{cedar.NewEntityUID("a", ""): cedar.Entity{Attributes: cedar.NewRecord(cedar.RecordMap{"A": types.False})}},
+			cedar.Request{Principal: cedar.NewEntityUID("a", ""), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "'")},
+			cedar.Deny,
+			nil,
+			nil,
+		},
 		{
 			"0cb1ad7042508e708f1999284b634ed0f334bc00",
 			`forbid(
@@ -258,6 +275,7 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			(true && (((!870985681610) == principal) == principal)) && principal
 		};`,
+			nil,
 			cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\u0000"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "\u0000\u0000")},
 			cedar.Deny,
 			nil,
@@ -273,6 +291,7 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			(((!870985681610) == principal) == principal)
 		};`,
+			nil,
 			cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\u0000"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "\u0000\u0000")},
 			cedar.Deny,
 			nil,
@@ -287,6 +306,7 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			((!870985681610) == principal)
 		};`,
+			nil,
 			cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\u0000"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "\u0000\u0000")},
 			cedar.Deny,
 			nil,
@@ -302,6 +322,7 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			(!870985681610)
 		};`,
+			nil,
 			cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\u0000"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "\u0000\u0000")},
 			cedar.Deny,
 			nil,
@@ -317,6 +338,7 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			((!42) == principal)
 		};`,
+			nil,
 			cedar.Request{},
 			cedar.Deny,
 			nil,
@@ -332,6 +354,7 @@ func TestCorpusRelated(t *testing.T) {
 			) when {
 				(!42 == principal)
 			};`,
+			nil,
 			cedar.Request{},
 			cedar.Deny,
 			nil,
@@ -346,6 +369,7 @@ func TestCorpusRelated(t *testing.T) {
 			  ) when {
 				true && ((if (principal in action) then (ip("")) else (if true then (ip("6b6b:f00::32ff:ffff:6368/00")) else (ip("7265:6c69:706d:6f43:5f74:6f70:7374:6f68")))).isMulticast())
 			  };`,
+			nil,
 			cedar.Request{Principal: cedar.NewEntityUID("a", "\u0000\b\u0011\u0000R"), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "\u0000\b\u0011\u0000R")},
 			cedar.Deny,
 			nil,
@@ -360,6 +384,7 @@ func TestCorpusRelated(t *testing.T) {
 		  ) when {
 			true && ip("6b6b:f00::32ff:ffff:6368/00").isMulticast()
 		  };`,
+			nil,
 			cedar.Request{},
 			cedar.Deny,
 			nil,
@@ -386,7 +411,7 @@ func TestCorpusRelated(t *testing.T) {
 			t.Parallel()
 			policy, err := cedar.NewPolicySetFromBytes("", []byte(tt.policy))
 			testutil.OK(t, err)
-			ok, diag := policy.IsAuthorized(cedar.EntityMap{}, tt.request)
+			ok, diag := policy.IsAuthorized(tt.entities, tt.request)
 			testutil.Equals(t, ok, tt.decision)
 			var reasons []cedar.PolicyID
 			for _, n := range diag.Reasons {
