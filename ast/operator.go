@@ -140,6 +140,14 @@ func (lhs Node) Has(attr types.String) Node {
 	return wrapNode(lhs.Node.Has(attr))
 }
 
+func (lhs Node) GetTag(rhs Node) Node {
+	return wrapNode(lhs.Node.GetTag(rhs.Node))
+}
+
+func (lhs Node) HasTag(rhs Node) Node {
+	return wrapNode(lhs.Node.HasTag(rhs.Node))
+}
+
 //  ___ ____   _       _     _
 // |_ _|  _ \ / \   __| | __| |_ __ ___  ___ ___
 //  | || |_) / _ \ / _` |/ _` | '__/ _ \/ __/ __|

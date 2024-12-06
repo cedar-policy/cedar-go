@@ -14,6 +14,7 @@ var errOverflow = fmt.Errorf("integer overflow")
 var errUnknownExtensionFunction = fmt.Errorf("function does not exist")
 var errArity = fmt.Errorf("wrong number of arguments provided to extension function")
 var errAttributeAccess = fmt.Errorf("does not have the attribute")
+var errTagAccess = fmt.Errorf("does not have the tag")
 var errEntityNotExist = fmt.Errorf("does not exist")
 var errUnspecifiedEntity = fmt.Errorf("unspecified entity")
 
@@ -804,6 +805,73 @@ func (n *hasEval) Eval(env Env) (types.Value, error) {
 	return types.Boolean(ok), nil
 }
 
+// getTagEval
+type getTagEval struct {
+	lhs, rhs Evaler
+}
+
+func newGetTagEval(object, tag Evaler) *getTagEval {
+	return &getTagEval{lhs: object, rhs: tag}
+}
+
+func (n *getTagEval) Eval(env Env) (types.Value, error) {
+	eid, err := evalEntity(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	var unspecified types.EntityUID
+	if eid == unspecified {
+		return zeroValue(), fmt.Errorf("cannot access tag `%s` of %w", n.rhs, errUnspecifiedEntity)
+	}
+
+	t, err := evalString(n.rhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	e, ok := env.Entities.Get(eid)
+	if !ok {
+		return zeroValue(), fmt.Errorf("entity `%v` %w", eid.String(), errEntityNotExist)
+	}
+
+	val, ok := e.Tags.Get(t)
+	if !ok {
+		return zeroValue(), fmt.Errorf("`%s` %w `%s`", eid.String(), errTagAccess, t)
+	}
+
+	return val, nil
+}
+
+// hasTagEval
+type hasTagEval struct {
+	lhs, rhs Evaler
+}
+
+func newHasTagEval(object, tag Evaler) *hasTagEval {
+	return &hasTagEval{lhs: object, rhs: tag}
+}
+
+func (n *hasTagEval) Eval(env Env) (types.Value, error) {
+	eid, err := evalEntity(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	t, err := evalString(n.rhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	e, ok := env.Entities.Get(eid)
+	if !ok {
+		return types.False, nil
+	}
+
+	_, ok = e.Tags.Get(t)
+	return types.Boolean(ok), nil
+}
+
 // likeEval
 type likeEval struct {
 	lhs     Evaler
@@ -1139,9 +1207,13 @@ func newExtensionEval(name types.Path, args []Evaler) Evaler {
 
 	if i, ok := extensions.ExtMap[name]; ok {
 		if i.Args != len(args) {
-			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s)", errArity, name, i.Args))
+			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s), but %d provided", errArity, name, i.Args, len(args)))
 		}
 		switch {
+		case name == "hasTag":
+			return newHasTagEval(args[0], args[1])
+		case name == "getTag":
+			return newGetTagEval(args[0], args[1])
 		case name == "datetime":
 			return newDatetimeLiteralEval(args[0])
 		case name == "decimal":

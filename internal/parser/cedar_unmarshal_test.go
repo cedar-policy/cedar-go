@@ -201,6 +201,36 @@ when { 42 * 2 };`,
 			ast.Permit().When(ast.Long(42).Multiply(ast.Long(2))),
 		},
 		{
+			"principal has tag",
+			`permit ( principal, action, resource )
+when { principal.hasTag("blue") };`,
+			ast.Permit().When(ast.Principal().HasTag(ast.String("blue"))),
+		},
+		{
+			"resource has tag",
+			`permit ( principal, action, resource )
+when { resource.hasTag("blue") };`,
+			ast.Permit().When(ast.Resource().HasTag(ast.String("blue"))),
+		},
+		{
+			"principal tag equals value",
+			`permit ( principal, action, resource )
+when { principal.hasTag("blue") && principal.getTag("blue") == "green" };`,
+			ast.Permit().When(ast.Principal().HasTag(ast.String("blue")).And(ast.Principal().GetTag(ast.String("blue")).Equal(ast.String("green")))),
+		},
+		{
+			"principal tag has attribute",
+			`permit ( principal, action, resource )
+when { principal.hasTag("blue") && principal.getTag("blue") has attr };`,
+			ast.Permit().When(ast.Principal().HasTag(ast.String("blue")).And(ast.Principal().GetTag(ast.String("blue")).Has("attr"))),
+		},
+		{
+			"principal has tag from context",
+			`permit ( principal, action, resource )
+when { principal.hasTag(context.request_ip) };`,
+			ast.Permit().When(ast.Principal().HasTag(ast.Context().Access("request_ip"))),
+		},
+		{
 			"multiple multiplication",
 			`permit ( principal, action, resource )
 when { 42 * 2 * 1 };`,

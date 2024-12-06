@@ -60,8 +60,8 @@ func TestEntitiesJSON(t *testing.T) {
 			t,
 			e,
 			`[
-				{"uid": {"type": "Type", "id": "id"}, "parents": [], "attrs": {"key": 42}},
-				{"uid": {"type": "Type" ,"id" :"id2"}, "parents": [{"type":"Type","id":"id"}], "attrs": {"key": 42}}
+				{"uid": {"type": "Type", "id": "id"}, "parents": [], "attrs": {"key": 42}, "tags": {}},
+				{"uid": {"type": "Type" ,"id" :"id2"}, "parents": [{"type":"Type","id":"id"}], "attrs": {"key": 42}, "tags":{}}
 			]`)
 	})
 

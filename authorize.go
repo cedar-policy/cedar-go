@@ -19,6 +19,9 @@ const (
 // IsAuthorized uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
 func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decision, Diagnostic) {
+	if entities == nil {
+		entities = types.EntityMap{}
+	}
 	env := eval.Env{
 		Entities:  entities,
 		Principal: req.Principal,

@@ -55,7 +55,7 @@ func tryFold(nodes []ast.IsNode,
 	}
 	if allFolded {
 		eval := mkEval(values)
-		v, err := eval.Eval(Env{})
+		v, err := eval.Eval(Env{Entities: types.EntityMap{}})
 		if err == nil {
 			return ast.NodeValue{Value: v}
 		}
