@@ -1282,6 +1282,63 @@ func TestPartialBasic(t *testing.T) {
 	}
 }
 
+func TestPartialWithContext(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		context    types.Value
+		entitities types.EntityGetter
+		in         ast.Node
+		out        ast.Node
+		err        func(testutil.TB, error)
+	}{
+		{
+			"opGetTagFold",
+			types.NewRecord(types.RecordMap{
+				"entity": types.NewEntityUID("T", "1"),
+			}),
+			types.EntityMap{types.NewEntityUID("T", "1"): types.Entity{
+				Tags: types.NewRecord(types.RecordMap{
+					"a": types.Long(42),
+				}),
+			}},
+			ast.Context().Access("entity").GetTag(ast.String("a")),
+			ast.Long(42),
+			testutil.OK,
+		},
+		{
+			"opHasTagFold",
+			types.NewRecord(types.RecordMap{
+				"entity": types.NewEntityUID("T", "1"),
+			}),
+			types.EntityMap{types.NewEntityUID("T", "1"): types.Entity{
+				Tags: types.NewRecord(types.RecordMap{
+					"a": types.Long(42),
+				}),
+			}},
+			ast.Context().Access("entity").HasTag(ast.String("a")),
+			ast.True(),
+			testutil.OK,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out, err := partial((Env{
+				Entities:  tt.entitities,
+				Principal: Variable("principal"),
+				Action:    Variable("action"),
+				Resource:  Variable("resource"),
+				Context:   tt.context,
+			}), tt.in.AsIsNode())
+			tt.err(t, err)
+			testutil.Equals(t, out, tt.out.AsIsNode())
+		})
+	}
+}
+
 func TestPartialPanic(t *testing.T) {
 	t.Parallel()
 	testutil.Panic(t, func() {
