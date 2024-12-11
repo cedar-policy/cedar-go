@@ -1505,7 +1505,7 @@ func TestGetTagNode(t *testing.T) {
 			newLiteralEval(knownTag),
 			zeroValue(),
 			errEntityNotExist},
-		{"UnspecifiedEntity",
+		{"ZeroEntity",
 			newLiteralEval(types.NewEntityUID("", "")),
 			newLiteralEval(knownTag),
 			zeroValue(),

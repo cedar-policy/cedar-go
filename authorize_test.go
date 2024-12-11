@@ -35,8 +35,26 @@ func TestIsAuthorized(t *testing.T) {
 			DiagErr:   0,
 		},
 		{
-			Name:      "nil-entity-map",
+			Name:   "permit-when-tags",
+			Policy: `permit(principal,action,resource) when { principal.hasTag("foo") };`,
+			Entities: types.EntityMap{
+				cuzco: types.Entity{
+					Tags: types.NewRecord(cedar.RecordMap{
+						"foo": types.String("bar"),
+					}),
+				},
+			},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  cedar.NewEntityUID("table", "whatever"),
+			Context:   cedar.Record{},
+			Want:      true,
+			DiagErr:   0,
+		},
+		{
+			Name:      "nil-entity-getter",
 			Policy:    `permit(principal,action,resource);`,
+			Entities:  nil,
 			Principal: cuzco,
 			Action:    dropTable,
 			Resource:  cedar.NewEntityUID("table", "whatever"),
@@ -795,7 +813,7 @@ func TestIsAuthorized(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.Name, func(t *testing.T) {
-			// t.Parallel()
+			t.Parallel()
 			ps, err := cedar.NewPolicySetFromBytes("policy.cedar", []byte(tt.Policy))
 			testutil.Equals(t, err != nil, tt.ParseErr)
 			ok, diag := ps.IsAuthorized(tt.Entities, cedar.Request{

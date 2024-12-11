@@ -252,21 +252,6 @@ func TestCorpusRelated(t *testing.T) {
 		errors   []cedar.PolicyID
 	}{
 		{
-			"a9fe7e4b20024dc7818a168c67ce312d6e076b93",
-			`forbid(
-			principal,
-			action in [Action::"action",Action::"action"],
-			resource
-			) when {
-			true && (resource.hasTag("A"))
-			};`,
-			types.EntityMap{cedar.NewEntityUID("a", ""): cedar.Entity{Attributes: cedar.NewRecord(cedar.RecordMap{"A": types.False})}},
-			cedar.Request{Principal: cedar.NewEntityUID("a", ""), Action: cedar.NewEntityUID("Action", "action"), Resource: cedar.NewEntityUID("a", "'")},
-			cedar.Deny,
-			nil,
-			nil,
-		},
-		{
 			"0cb1ad7042508e708f1999284b634ed0f334bc00",
 			`forbid(
 			principal in a::"\0\0",

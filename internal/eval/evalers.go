@@ -820,8 +820,8 @@ func (n *getTagEval) Eval(env Env) (types.Value, error) {
 		return zeroValue(), err
 	}
 
-	var unspecified types.EntityUID
-	if eid == unspecified {
+	var zero types.EntityUID
+	if eid == zero {
 		return zeroValue(), fmt.Errorf("cannot access tag `%s` of %w", n.rhs, errUnspecifiedEntity)
 	}
 

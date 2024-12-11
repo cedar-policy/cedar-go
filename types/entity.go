@@ -11,7 +11,7 @@ type Entity struct {
 	UID        EntityUID    `json:"uid"`
 	Parents    EntityUIDSet `json:"parents"`
 	Attributes Record       `json:"attrs"`
-	Tags       Record       `json:"tags,omitempty"`
+	Tags       Record       `json:"tags"`
 }
 
 // MarshalJSON serializes Entity as a JSON object, using the implicit form of EntityUID encoding to match the Rust
