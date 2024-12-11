@@ -1210,10 +1210,6 @@ func newExtensionEval(name types.Path, args []Evaler) Evaler {
 			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s), but %d provided", errArity, name, i.Args, len(args)))
 		}
 		switch {
-		case name == "hasTag":
-			return newHasTagEval(args[0], args[1])
-		case name == "getTag":
-			return newGetTagEval(args[0], args[1])
 		case name == "datetime":
 			return newDatetimeLiteralEval(args[0])
 		case name == "decimal":

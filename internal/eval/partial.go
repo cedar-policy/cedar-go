@@ -232,6 +232,26 @@ func partial(env Env, n ast.IsNode) (ast.IsNode, error) {
 				return ast.NodeTypeHas{StrOpNode: ast.StrOpNode{Arg: nodes[0], Value: v.Value}}
 			},
 		)
+	case ast.NodeTypeGetTag:
+		return tryPartial(env,
+			[]ast.IsNode{v.Left, v.Right},
+			func(values []types.Value) Evaler {
+				return newGetTagEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeGetTag{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
+			},
+		)
+	case ast.NodeTypeHasTag:
+		return tryPartial(env,
+			[]ast.IsNode{v.Left, v.Right},
+			func(values []types.Value) Evaler {
+				return newHasTagEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeHasTag{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
+			},
+		)
 	case ast.NodeTypeLike:
 		return tryPartial(env,
 			[]ast.IsNode{v.Arg},

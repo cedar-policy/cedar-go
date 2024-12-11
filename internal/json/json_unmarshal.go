@@ -201,7 +201,7 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 	case j.Negate != nil:
 		return j.Negate.ToNode(ast.Negate)
 
-	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
+	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny, hasTag, getTag
 	case j.Equals != nil:
 		return j.Equals.ToNode(ast.Node.Equal)
 	case j.NotEquals != nil:
@@ -232,6 +232,10 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 		return j.ContainsAll.ToNode(ast.Node.ContainsAll)
 	case j.ContainsAny != nil:
 		return j.ContainsAny.ToNode(ast.Node.ContainsAny)
+	case j.GetTag != nil:
+		return j.GetTag.ToNode(ast.Node.GetTag)
+	case j.HasTag != nil:
+		return j.HasTag.ToNode(ast.Node.HasTag)
 
 	// ., has
 	case j.Access != nil:

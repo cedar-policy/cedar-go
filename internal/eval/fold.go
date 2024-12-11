@@ -109,6 +109,32 @@ func fold(n ast.IsNode) ast.IsNode {
 				return ast.NodeTypeHas{StrOpNode: ast.StrOpNode{Arg: nodes[0], Value: v.Value}}
 			},
 		)
+	case ast.NodeTypeGetTag:
+		return tryFold(
+			[]ast.IsNode{v.Left, v.Right},
+			func(values []types.Value) Evaler {
+				if _, ok := values[0].(types.EntityUID); ok {
+					return newErrorEval(fmt.Errorf("fold.GetTag.EntityUID"))
+				}
+				return newGetTagEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeGetTag{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
+			},
+		)
+	case ast.NodeTypeHasTag:
+		return tryFold(
+			[]ast.IsNode{v.Left, v.Right},
+			func(values []types.Value) Evaler {
+				if _, ok := values[0].(types.EntityUID); ok {
+					return newErrorEval(fmt.Errorf("fold.HasTag.EntityUID"))
+				}
+				return newHasTagEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeHasTag{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
+			},
+		)
 	case ast.NodeTypeLike:
 		return tryFold(
 			[]ast.IsNode{v.Arg},

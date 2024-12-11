@@ -138,11 +138,11 @@ func (lhs Node) Has(attr types.String) Node {
 }
 
 func (lhs Node) GetTag(rhs Node) Node {
-	return NewMethodCall(lhs, "getTag", rhs)
+	return NewNode(NodeTypeGetTag{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 func (lhs Node) HasTag(rhs Node) Node {
-	return NewMethodCall(lhs, "hasTag", rhs)
+	return NewNode(NodeTypeHasTag{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
 //  ___ ____   _       _     _

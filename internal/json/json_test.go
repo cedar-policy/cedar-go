@@ -381,6 +381,20 @@ func TestUnmarshalJSON(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			"getTag",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"getTag":{"left": {"Var": "principal"},"right": {"Value": "key"}}}}]}`,
+			ast.Permit().When(ast.Principal().GetTag(ast.String("key"))),
+			testutil.OK,
+		},
+		{
+			"hasTag",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"hasTag":{"left": {"Var": "principal"},"right": {"Value": "key"}}}}]}`,
+			ast.Permit().When(ast.Principal().HasTag(ast.String("key"))),
+			testutil.OK,
+		},
+		{
 			"is",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"resource"},"entity_type":"T"}}}]}`,

@@ -491,7 +491,7 @@ func TestFoldPolicy(t *testing.T) {
 		{
 			"opHasTagEntity",
 			ast.Permit().When(ast.EntityUID("T", "1").HasTag(ast.String("key"))),
-			ast.Permit().When(ast.False()),
+			ast.Permit().When(ast.EntityUID("T", "1").HasTag(ast.String("key"))),
 		},
 		{
 			"opIsIpv4",

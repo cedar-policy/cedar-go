@@ -31,6 +31,18 @@ func TestToEval(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			"getTag",
+			ast.EntityUID("T", "ID").GetTag(ast.String("key")),
+			types.Long(42),
+			testutil.OK,
+		},
+		{
+			"hasTag",
+			ast.EntityUID("T", "ID").HasTag(ast.String("key")),
+			types.True,
+			testutil.OK,
+		},
+		{
 			"like",
 			ast.String("test").Like(types.Pattern{}),
 			types.False,
@@ -355,7 +367,11 @@ func TestToEval(t *testing.T) {
 				Action:    types.NewEntityUID("Action", "test"),
 				Resource:  types.NewEntityUID("Resource", "database"),
 				Context:   types.Record{},
-				Entities:  types.EntityMap{},
+				Entities: types.EntityMap{
+					types.NewEntityUID("T", "ID"): types.Entity{
+						Tags: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
+					},
+				},
 			})
 			tt.err(t, err)
 			testutil.Equals(t, out, tt.out)
