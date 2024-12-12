@@ -67,9 +67,7 @@ type NodeTypeHas struct {
 	StrOpNode
 }
 
-type NodeTypeHasTag struct {
-	BinaryNode
-}
+type NodeTypeHasTag struct{ BinaryNode }
 
 type NodeTypeLike struct {
 	Arg   IsNode

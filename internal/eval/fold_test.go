@@ -474,22 +474,22 @@ func TestFoldPolicy(t *testing.T) {
 			ast.Permit().When(ast.EntityUID("T", "1").Has("key")),
 		},
 		{
+			"opGetTagInvalidType",
+			ast.Permit().When(ast.Long(42).GetTag(ast.String("key"))),
+			ast.Permit().When(ast.Long(42).GetTag(ast.String("key"))),
+		},
+		{
+			"opHasTagInvalidType",
+			ast.Permit().When(ast.Long(42).HasTag(ast.String("key"))),
+			ast.Permit().When(ast.Long(42).HasTag(ast.String("key"))),
+		},
+		{
 			"opGetTag",
-			ast.Permit().When(ast.Long(42).GetTag(ast.String("key"))),
-			ast.Permit().When(ast.Long(42).GetTag(ast.String("key"))),
+			ast.Permit().When(ast.EntityUID("T", "1").GetTag(ast.String("key"))),
+			ast.Permit().When(ast.EntityUID("T", "1").GetTag(ast.String("key"))),
 		},
 		{
 			"opHasTag",
-			ast.Permit().When(ast.Long(42).HasTag(ast.String("key"))),
-			ast.Permit().When(ast.Long(42).HasTag(ast.String("key"))),
-		},
-		{
-			"opGetTagEntity",
-			ast.Permit().When(ast.EntityUID("T", "1").GetTag(ast.String("key"))),
-			ast.Permit().When(ast.EntityUID("T", "1").GetTag(ast.String("key"))),
-		},
-		{
-			"opHasTagEntity",
 			ast.Permit().When(ast.EntityUID("T", "1").HasTag(ast.String("key"))),
 			ast.Permit().When(ast.EntityUID("T", "1").HasTag(ast.String("key"))),
 		},

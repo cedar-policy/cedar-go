@@ -349,13 +349,13 @@ func TestASTByTable(t *testing.T) {
 		},
 		{
 			"opGetTag",
-			ast.Permit().When(ast.Long(42).GetTag(ast.String("key"))),
-			internalast.Permit().When(internalast.Long(42).GetTag(internalast.String("key"))),
+			ast.Permit().When(ast.EntityUID("T", "1").GetTag(ast.String("key"))),
+			internalast.Permit().When(internalast.EntityUID("T", "1").GetTag(internalast.String("key"))),
 		},
 		{
 			"opsHasTag",
-			ast.Permit().When(ast.Long(42).HasTag(ast.String("key"))),
-			internalast.Permit().When(internalast.Long(42).HasTag(internalast.String("key"))),
+			ast.Permit().When(ast.EntityUID("T", "1").HasTag(ast.String("key"))),
+			internalast.Permit().When(internalast.EntityUID("T", "1").HasTag(internalast.String("key"))),
 		},
 		{
 			"opIsIpv4",

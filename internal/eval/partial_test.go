@@ -1285,12 +1285,12 @@ func TestPartialBasic(t *testing.T) {
 func TestPartialWithContext(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name       string
-		context    types.Value
-		entitities types.EntityGetter
-		in         ast.Node
-		out        ast.Node
-		err        func(testutil.TB, error)
+		name     string
+		context  types.Value
+		entities types.EntityGetter
+		in       ast.Node
+		out      ast.Node
+		err      func(testutil.TB, error)
 	}{
 		{
 			"opGetTagFold",
@@ -1327,7 +1327,7 @@ func TestPartialWithContext(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			out, err := partial((Env{
-				Entities:  tt.entitities,
+				Entities:  tt.entities,
 				Principal: Variable("principal"),
 				Action:    Variable("action"),
 				Resource:  Variable("resource"),

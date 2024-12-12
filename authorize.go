@@ -20,7 +20,8 @@ const (
 // if the given Request to determine Decision and Diagnostic.
 func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decision, Diagnostic) {
 	if entities == nil {
-		entities = types.EntityMap{}
+		var zero types.EntityMap
+		entities = zero
 	}
 	env := eval.Env{
 		Entities:  entities,

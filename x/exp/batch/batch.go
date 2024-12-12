@@ -156,7 +156,8 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entities types.EntityGe
 		return fmt.Errorf("%w: context", errMissingPart)
 	}
 	if entities == nil {
-		entities = types.EntityMap{}
+		var zero types.EntityMap
+		entities = zero
 	}
 	be.env = eval.Env{
 		Entities:  entities,
