@@ -5,6 +5,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 //nolint:revive // due to table test function-length
@@ -15,7 +16,7 @@ func TestIsAuthorized(t *testing.T) {
 	tests := []struct {
 		Name                        string
 		Policy                      string
-		Entities                    cedar.EntityMap
+		Entities                    types.EntityGetter
 		Principal, Action, Resource cedar.EntityUID
 		Context                     cedar.Record
 		Want                        cedar.Decision
@@ -26,6 +27,34 @@ func TestIsAuthorized(t *testing.T) {
 			Name:      "simple-permit",
 			Policy:    `permit(principal,action,resource);`,
 			Entities:  cedar.EntityMap{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  cedar.NewEntityUID("table", "whatever"),
+			Context:   cedar.Record{},
+			Want:      true,
+			DiagErr:   0,
+		},
+		{
+			Name:   "permit-when-tags",
+			Policy: `permit(principal,action,resource) when { principal.hasTag("foo") };`,
+			Entities: types.EntityMap{
+				cuzco: types.Entity{
+					Tags: types.NewRecord(cedar.RecordMap{
+						"foo": types.String("bar"),
+					}),
+				},
+			},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  cedar.NewEntityUID("table", "whatever"),
+			Context:   cedar.Record{},
+			Want:      true,
+			DiagErr:   0,
+		},
+		{
+			Name:      "nil-entity-getter",
+			Policy:    `permit(principal,action,resource);`,
+			Entities:  nil,
 			Principal: cuzco,
 			Action:    dropTable,
 			Resource:  cedar.NewEntityUID("table", "whatever"),

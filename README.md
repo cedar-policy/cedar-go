@@ -44,7 +44,6 @@ The Go implementation does not yet include:
 - schema support and the [validator](https://docs.cedarpolicy.com/policies/validation.html)
 - the formatter
 - partial evaluation
-- support for [RFC 82](https://github.com/cedar-policy/rfcs/blob/main/text/0082-entity-tags.md) (entity tags)
 - support for [policy templates](https://docs.cedarpolicy.com/policies/templates.html)
 
 ## Quick Start

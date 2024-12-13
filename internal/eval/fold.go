@@ -55,7 +55,7 @@ func tryFold(nodes []ast.IsNode,
 	}
 	if allFolded {
 		eval := mkEval(values)
-		v, err := eval.Eval(Env{})
+		v, err := eval.Eval(Env{Entities: types.EntityMap{}})
 		if err == nil {
 			return ast.NodeValue{Value: v}
 		}
@@ -81,6 +81,8 @@ func tryFoldUnary(v ast.UnaryNode, mkEval func(a Evaler) Evaler, wrap func(b ast
 }
 
 // fold takes in an ast.Node and finds does as much constant folding as is possible given no PARC data.
+//
+//nolint:revive
 func fold(n ast.IsNode) ast.IsNode {
 	switch v := n.(type) {
 	case ast.NodeTypeAccess:
@@ -107,6 +109,26 @@ func fold(n ast.IsNode) ast.IsNode {
 			},
 			func(nodes []ast.IsNode) ast.IsNode {
 				return ast.NodeTypeHas{StrOpNode: ast.StrOpNode{Arg: nodes[0], Value: v.Value}}
+			},
+		)
+	case ast.NodeTypeGetTag:
+		return tryFold(
+			[]ast.IsNode{v.Left, v.Right},
+			func(_ []types.Value) Evaler {
+				return newErrorEval(fmt.Errorf("fold.GetTag.EntityUID"))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeGetTag{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
+			},
+		)
+	case ast.NodeTypeHasTag:
+		return tryFold(
+			[]ast.IsNode{v.Left, v.Right},
+			func(_ []types.Value) Evaler {
+				return newErrorEval(fmt.Errorf("fold.HasTag.EntityUID"))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeHasTag{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
 			},
 		)
 	case ast.NodeTypeLike:

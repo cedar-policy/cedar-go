@@ -894,6 +894,10 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 				knownMethod = ast.Node.ContainsAll
 			case "containsAny":
 				knownMethod = ast.Node.ContainsAny
+			case "hasTag":
+				knownMethod = ast.Node.HasTag
+			case "getTag":
+				knownMethod = ast.Node.GetTag
 			default:
 				// Although the Cedar grammar says that any name can be provided here, the reference implementation
 				// actually checks at parse time whether the name corresponds to a known extension method.

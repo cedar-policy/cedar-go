@@ -113,6 +113,8 @@ type nodeJSON struct {
 	Contains           *binaryJSON `json:"contains,omitempty"`
 	ContainsAll        *binaryJSON `json:"containsAll,omitempty"`
 	ContainsAny        *binaryJSON `json:"containsAny,omitempty"`
+	GetTag             *binaryJSON `json:"getTag,omitempty"`
+	HasTag             *binaryJSON `json:"hasTag,omitempty"`
 
 	// ., has
 	Access *strJSON `json:".,omitempty"`

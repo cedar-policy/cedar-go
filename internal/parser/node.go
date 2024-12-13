@@ -65,6 +65,11 @@ type NodeTypeHas struct {
 	RelationNode
 }
 
+type NodeTypeHasTag struct {
+	ast.NodeTypeHasTag
+	RelationNode
+}
+
 type NodeTypeLike struct {
 	ast.NodeTypeLike
 	RelationNode
@@ -120,6 +125,12 @@ type NodeTypeNot struct {
 type NodeTypeAccess struct{ ast.NodeTypeAccess }
 
 func (n NodeTypeAccess) precedenceLevel() nodePrecedenceLevel {
+	return accessPrecedence
+}
+
+type NodeTypeGetTag struct{ ast.NodeTypeGetTag }
+
+func (n NodeTypeGetTag) precedenceLevel() nodePrecedenceLevel {
 	return accessPrecedence
 }
 

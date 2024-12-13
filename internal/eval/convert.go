@@ -14,6 +14,10 @@ func toEval(n ast.IsNode) Evaler {
 		return newAttributeAccessEval(toEval(v.Arg), v.Value)
 	case ast.NodeTypeHas:
 		return newHasEval(toEval(v.Arg), v.Value)
+	case ast.NodeTypeGetTag:
+		return newGetTagEval(toEval(v.Left), toEval(v.Right))
+	case ast.NodeTypeHasTag:
+		return newHasTagEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeLike:
 		return newLikeEval(toEval(v.Arg), v.Value)
 	case ast.NodeTypeIfThenElse:

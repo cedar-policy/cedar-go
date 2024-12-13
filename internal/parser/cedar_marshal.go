@@ -203,6 +203,20 @@ func (n NodeTypeContainsAny) marshalCedar(buf *bytes.Buffer) {
 	buf.WriteRune(')')
 }
 
+func (n NodeTypeGetTag) marshalCedar(buf *bytes.Buffer) {
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeGetTag.Left, buf)
+	buf.WriteString(".getTag(")
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeGetTag.Right, buf)
+	buf.WriteRune(')')
+}
+
+func (n NodeTypeHasTag) marshalCedar(buf *bytes.Buffer) {
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeHasTag.Left, buf)
+	buf.WriteString(".hasTag(")
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeHasTag.Right, buf)
+	buf.WriteRune(')')
+}
+
 func (n NodeTypeSet) marshalCedar(buf *bytes.Buffer) {
 	buf.WriteRune('[')
 	for i := range n.NodeTypeSet.Elements {
@@ -346,6 +360,8 @@ func astNodeToMarshalNode(astNode ast.IsNode) IsNode {
 		return NodeTypeIn{v, RelationNode{}}
 	case ast.NodeTypeHas:
 		return NodeTypeHas{v, RelationNode{}}
+	case ast.NodeTypeHasTag:
+		return NodeTypeHasTag{v, RelationNode{}}
 	case ast.NodeTypeLike:
 		return NodeTypeLike{v, RelationNode{}}
 	case ast.NodeTypeIs:
@@ -364,6 +380,8 @@ func astNodeToMarshalNode(astNode ast.IsNode) IsNode {
 		return NodeTypeNot{v, UnaryNode{}}
 	case ast.NodeTypeAccess:
 		return NodeTypeAccess{v}
+	case ast.NodeTypeGetTag:
+		return NodeTypeGetTag{v}
 	case ast.NodeTypeExtensionCall:
 		return NodeTypeExtensionCall{v}
 	case ast.NodeTypeContains:

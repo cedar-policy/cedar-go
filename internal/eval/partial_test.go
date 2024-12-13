@@ -1238,6 +1238,30 @@ func TestPartialBasic(t *testing.T) {
 			nul,
 			testutil.Error,
 		},
+		{
+			"opGetTagKeep",
+			ast.Principal().GetTag(ast.String("key")),
+			ast.Principal().GetTag(ast.String("key")),
+			testutil.OK,
+		},
+		{
+			"opGetTagError",
+			ast.String("test").GetTag(ast.String("key")),
+			nul,
+			testutil.Error,
+		},
+		{
+			"opHasTagKeep",
+			ast.Principal().HasTag(ast.String("key")),
+			ast.Principal().HasTag(ast.String("key")),
+			testutil.OK,
+		},
+		{
+			"opHasTagError",
+			ast.String("test").HasTag(ast.String("key")),
+			nul,
+			testutil.Error,
+		},
 		/*
 		 */
 	}
@@ -1251,6 +1275,63 @@ func TestPartialBasic(t *testing.T) {
 				Action:    Variable("action"),
 				Resource:  Variable("resource"),
 				Context:   Variable("context"),
+			}), tt.in.AsIsNode())
+			tt.err(t, err)
+			testutil.Equals(t, out, tt.out.AsIsNode())
+		})
+	}
+}
+
+func TestPartialWithContext(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		context  types.Value
+		entities types.EntityGetter
+		in       ast.Node
+		out      ast.Node
+		err      func(testutil.TB, error)
+	}{
+		{
+			"opGetTagFold",
+			types.NewRecord(types.RecordMap{
+				"entity": types.NewEntityUID("T", "1"),
+			}),
+			types.EntityMap{types.NewEntityUID("T", "1"): types.Entity{
+				Tags: types.NewRecord(types.RecordMap{
+					"a": types.Long(42),
+				}),
+			}},
+			ast.Context().Access("entity").GetTag(ast.String("a")),
+			ast.Long(42),
+			testutil.OK,
+		},
+		{
+			"opHasTagFold",
+			types.NewRecord(types.RecordMap{
+				"entity": types.NewEntityUID("T", "1"),
+			}),
+			types.EntityMap{types.NewEntityUID("T", "1"): types.Entity{
+				Tags: types.NewRecord(types.RecordMap{
+					"a": types.Long(42),
+				}),
+			}},
+			ast.Context().Access("entity").HasTag(ast.String("a")),
+			ast.True(),
+			testutil.OK,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out, err := partial((Env{
+				Entities:  tt.entities,
+				Principal: Variable("principal"),
+				Action:    Variable("action"),
+				Resource:  Variable("resource"),
+				Context:   tt.context,
 			}), tt.in.AsIsNode())
 			tt.err(t, err)
 			testutil.Equals(t, out, tt.out.AsIsNode())
