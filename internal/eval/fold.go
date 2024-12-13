@@ -81,6 +81,8 @@ func tryFoldUnary(v ast.UnaryNode, mkEval func(a Evaler) Evaler, wrap func(b ast
 }
 
 // fold takes in an ast.Node and finds does as much constant folding as is possible given no PARC data.
+//
+//nolint:revive
 func fold(n ast.IsNode) ast.IsNode {
 	switch v := n.(type) {
 	case ast.NodeTypeAccess:
@@ -112,7 +114,7 @@ func fold(n ast.IsNode) ast.IsNode {
 	case ast.NodeTypeGetTag:
 		return tryFold(
 			[]ast.IsNode{v.Left, v.Right},
-			func(values []types.Value) Evaler {
+			func(_ []types.Value) Evaler {
 				return newErrorEval(fmt.Errorf("fold.GetTag.EntityUID"))
 			},
 			func(nodes []ast.IsNode) ast.IsNode {
@@ -122,7 +124,7 @@ func fold(n ast.IsNode) ast.IsNode {
 	case ast.NodeTypeHasTag:
 		return tryFold(
 			[]ast.IsNode{v.Left, v.Right},
-			func(values []types.Value) Evaler {
+			func(_ []types.Value) Evaler {
 				return newErrorEval(fmt.Errorf("fold.HasTag.EntityUID"))
 			},
 			func(nodes []ast.IsNode) ast.IsNode {
