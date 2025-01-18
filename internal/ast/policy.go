@@ -84,3 +84,7 @@ func (p *Policy) AddSlot(slotID types.SlotID) *Policy {
     p.tplCtx.slots = append(p.tplCtx.slots, slotID)
     return p
 }
+
+func (p *Policy) Slots() []types.SlotID {
+    return p.tplCtx.slots
+}

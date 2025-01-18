@@ -7,22 +7,30 @@ import (
     "strings"
 )
 
-// todo: how to clone policy body to avoid modifying the original template?
-// todo: add invariant len(slotEnv) == len(template.Slots)
-func LinkTemplateToPolicy(template ast.Template, linkID string, slotEnv map[string]string) ast.LinkedPolicy {
-    p := template.Body
-    templateID, _ := findAnnotation(p, "id")
+func LinkTemplateToPolicy(template ast.Template, linkID string, slotEnv map[string]string) (ast.LinkedPolicy, error) {
+    body := template.ClonePolicy()
+    if len(body.Slots()) != len(slotEnv) {
+        return ast.LinkedPolicy{}, fmt.Errorf("slot env length %d does not match template slot length %d", len(slotEnv), len(body.Slots()))
+    }
 
-    p.Principal = linkScope(p.Principal, slotEnv)
-    p.Resource = linkScope(p.Resource, slotEnv)
+    templateID, _ := findAnnotation(body, "id")
 
-    p.Annotate("id", types.String(linkID))
+    for _, slot := range body.Slots() {
+        switch slot {
+        case types.PrincipalSlot:
+            body.Principal = linkScope(template.Principal, slotEnv)
+        case types.ResourceSlot:
+            body.Resource = linkScope(template.Resource, slotEnv)
+        }
+    }
+
+    body.Annotate("id", types.String(linkID))
 
     return ast.LinkedPolicy{
         TemplateID: templateID.Value.String(),
         LinkID:     linkID,
-        Policy:     &p,
-    }
+        Policy:     &body,
+    }, nil
 }
 
 func findAnnotation(p ast.Policy, key string) (ast.AnnotationType, bool) {
@@ -38,21 +46,21 @@ func findAnnotation(p ast.Policy, key string) (ast.AnnotationType, bool) {
 }
 
 func linkScope[T ast.IsScopeNode](scope T, slotEnv map[string]string) T {
-    var linkedScope any
+    var linkedScope any = scope
 
     switch t := any(scope).(type) {
-    case ast.ScopeTypeAll:
-        linkedScope = t
     case ast.ScopeTypeEq:
         t.Entity = resolveSlot(t.Entity, slotEnv)
 
         linkedScope = t
     case ast.ScopeTypeIn:
-    case ast.ScopeTypeInSet:
+        t.Entity = resolveSlot(t.Entity, slotEnv)
 
-    case ast.ScopeTypeIs:
-
+        linkedScope = t
     case ast.ScopeTypeIsIn:
+        t.Entity = resolveSlot(t.Entity, slotEnv)
+
+        linkedScope = t
     default:
         panic(fmt.Sprintf("unknown scope type %T", t))
     }
