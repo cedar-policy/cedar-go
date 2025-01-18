@@ -455,7 +455,7 @@ func TestUnmarshalJSON(t *testing.T) {
             testutil.OK,
         },
 
-        // template experiment
+        // template tests
         {
             "principal template variable",
             `{"effect":"permit","principal":{"op":"==", "slot": "?principal"},"action":{"op":"All"},"resource":{"op":"All"}}`,
