@@ -1,107 +1,107 @@
 package ast
 
 import (
-	"github.com/cedar-policy/cedar-go/types"
+    "github.com/cedar-policy/cedar-go/types"
 )
 
 type Scope struct{}
 
 func (s Scope) All() ScopeTypeAll {
-	return ScopeTypeAll{}
+    return ScopeTypeAll{}
 }
 
 func (s Scope) Eq(entity types.EntityReference) ScopeTypeEq {
-	return ScopeTypeEq{Entity: entity}
+    return ScopeTypeEq{Entity: entity}
 }
 
-func (s Scope) In(entity types.EntityUID) ScopeTypeIn {
-	return ScopeTypeIn{Entity: entity}
+func (s Scope) In(entity types.EntityReference) ScopeTypeIn {
+    return ScopeTypeIn{Entity: entity}
 }
 
 func (s Scope) InSet(entities []types.EntityUID) ScopeTypeInSet {
-	return ScopeTypeInSet{Entities: entities}
+    return ScopeTypeInSet{Entities: entities}
 }
 
 func (s Scope) Is(entityType types.EntityType) ScopeTypeIs {
-	return ScopeTypeIs{Type: entityType}
+    return ScopeTypeIs{Type: entityType}
 }
 
-func (s Scope) IsIn(entityType types.EntityType, entity types.EntityUID) ScopeTypeIsIn {
-	return ScopeTypeIsIn{Type: entityType, Entity: entity}
+func (s Scope) IsIn(entityType types.EntityType, entity types.EntityReference) ScopeTypeIsIn {
+    return ScopeTypeIsIn{Type: entityType, Entity: entity}
 }
 
 func (p *Policy) PrincipalEq(entity types.EntityReference) *Policy {
-	p.Principal = Scope{}.Eq(entity)
-	return p
+    p.Principal = Scope{}.Eq(entity)
+    return p
 }
 
-func (p *Policy) PrincipalIn(entity types.EntityUID) *Policy {
-	p.Principal = Scope{}.In(entity)
-	return p
+func (p *Policy) PrincipalIn(entity types.EntityReference) *Policy {
+    p.Principal = Scope{}.In(entity)
+    return p
 }
 
 func (p *Policy) PrincipalIs(entityType types.EntityType) *Policy {
-	p.Principal = Scope{}.Is(entityType)
-	return p
+    p.Principal = Scope{}.Is(entityType)
+    return p
 }
 
-func (p *Policy) PrincipalIsIn(entityType types.EntityType, entity types.EntityUID) *Policy {
-	p.Principal = Scope{}.IsIn(entityType, entity)
-	return p
+func (p *Policy) PrincipalIsIn(entityType types.EntityType, entity types.EntityReference) *Policy {
+    p.Principal = Scope{}.IsIn(entityType, entity)
+    return p
 }
 
 func (p *Policy) ActionEq(entity types.EntityUID) *Policy {
-	p.Action = Scope{}.Eq(entity)
-	return p
+    p.Action = Scope{}.Eq(entity)
+    return p
 }
 
 func (p *Policy) ActionIn(entity types.EntityUID) *Policy {
-	p.Action = Scope{}.In(entity)
-	return p
+    p.Action = Scope{}.In(entity)
+    return p
 }
 
 func (p *Policy) ActionInSet(entities ...types.EntityUID) *Policy {
-	p.Action = Scope{}.InSet(entities)
-	return p
+    p.Action = Scope{}.InSet(entities)
+    return p
 }
 
 func (p *Policy) ResourceEq(entity types.EntityReference) *Policy {
-	p.Resource = Scope{}.Eq(entity)
-	return p
+    p.Resource = Scope{}.Eq(entity)
+    return p
 }
 
-func (p *Policy) ResourceIn(entity types.EntityUID) *Policy {
-	p.Resource = Scope{}.In(entity)
-	return p
+func (p *Policy) ResourceIn(entity types.EntityReference) *Policy {
+    p.Resource = Scope{}.In(entity)
+    return p
 }
 
 func (p *Policy) ResourceIs(entityType types.EntityType) *Policy {
-	p.Resource = Scope{}.Is(entityType)
-	return p
+    p.Resource = Scope{}.Is(entityType)
+    return p
 }
 
-func (p *Policy) ResourceIsIn(entityType types.EntityType, entity types.EntityUID) *Policy {
-	p.Resource = Scope{}.IsIn(entityType, entity)
-	return p
+func (p *Policy) ResourceIsIn(entityType types.EntityType, entity types.EntityReference) *Policy {
+    p.Resource = Scope{}.IsIn(entityType, entity)
+    return p
 }
 
 type IsScopeNode interface {
-	isScope()
+    isScope()
 }
 
 type IsPrincipalScopeNode interface {
-	IsScopeNode
-	isPrincipalScope()
+    IsScopeNode
+    isPrincipalScope()
 }
 
 type IsActionScopeNode interface {
-	IsScopeNode
-	isActionScope()
+    IsScopeNode
+    isActionScope()
 }
 
 type IsResourceScopeNode interface {
-	IsScopeNode
-	isResourceScope()
+    IsScopeNode
+    isResourceScope()
 }
 
 type ScopeNode struct{}
@@ -112,6 +112,8 @@ type PrincipalScopeNode struct{}
 
 func (n PrincipalScopeNode) isPrincipalScope() {}
 
+//func (n PrincipalScopeNode) Slots() {}
+
 type ActionScopeNode struct{}
 
 func (n ActionScopeNode) isActionScope() {}
@@ -121,45 +123,84 @@ type ResourceScopeNode struct{}
 func (n ResourceScopeNode) isResourceScope() {}
 
 type ScopeTypeAll struct {
-	ScopeNode
-	PrincipalScopeNode
-	ActionScopeNode
-	ResourceScopeNode
+    ScopeNode
+    PrincipalScopeNode
+    ActionScopeNode
+    ResourceScopeNode
+}
+
+func (t ScopeTypeAll) Slot() (slotID types.SlotID, found bool) {
+    return "", false
 }
 
 type ScopeTypeEq struct {
-	ScopeNode
-	PrincipalScopeNode
-	ActionScopeNode
-	ResourceScopeNode
-	Entity types.EntityReference
+    ScopeNode
+    PrincipalScopeNode
+    ActionScopeNode
+    ResourceScopeNode
+    Entity types.EntityReference
+}
+
+func (t ScopeTypeEq) Slot() (slotID types.SlotID, found bool) {
+    switch et := t.Entity.(type) {
+    case types.VariableSlot:
+        slotID = et.ID
+        found = true
+    }
+
+    return
 }
 
 type ScopeTypeIn struct {
-	ScopeNode
-	PrincipalScopeNode
-	ActionScopeNode
-	ResourceScopeNode
-	Entity types.EntityUID
+    ScopeNode
+    PrincipalScopeNode
+    ActionScopeNode
+    ResourceScopeNode
+    Entity types.EntityReference
+}
+
+func (t ScopeTypeIn) Slot() (slotID types.SlotID, found bool) {
+    switch et := t.Entity.(type) {
+    case types.VariableSlot:
+        slotID = et.ID
+        found = true
+    }
+
+    return
 }
 
 type ScopeTypeInSet struct {
-	ScopeNode
-	ActionScopeNode
-	Entities []types.EntityUID
+    ScopeNode
+    ActionScopeNode
+    Entities []types.EntityUID
 }
 
+// todo: check if `is` operator support template
 type ScopeTypeIs struct {
-	ScopeNode
-	PrincipalScopeNode
-	ResourceScopeNode
-	Type types.EntityType
+    ScopeNode
+    PrincipalScopeNode
+    ResourceScopeNode
+    Type types.EntityType
+}
+
+func (t ScopeTypeIs) Slot() (slotID types.SlotID, found bool) {
+    return "", false
 }
 
 type ScopeTypeIsIn struct {
-	ScopeNode
-	PrincipalScopeNode
-	ResourceScopeNode
-	Type   types.EntityType
-	Entity types.EntityUID
+    ScopeNode
+    PrincipalScopeNode
+    ResourceScopeNode
+    Type   types.EntityType
+    Entity types.EntityReference
+}
+
+func (t ScopeTypeIsIn) Slot() (slotID types.SlotID, found bool) {
+    switch et := t.Entity.(type) {
+    case types.VariableSlot:
+        slotID = et.ID
+        found = true
+    }
+
+    return
 }
