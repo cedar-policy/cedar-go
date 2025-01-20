@@ -1,6 +1,7 @@
-package parser_test
+package cedar_test
 
 import (
+    "github.com/cedar-policy/cedar-go"
     "github.com/cedar-policy/cedar-go/internal/ast"
     "github.com/cedar-policy/cedar-go/internal/parser"
     "github.com/cedar-policy/cedar-go/internal/testutil"
@@ -15,7 +16,7 @@ func TestLinkTemplateToPolicy(t *testing.T) {
         TemplateID     string
         LinkID         string
         Env            map[string]string
-        Want           ast.LinkedPolicy
+        Want           parser.LinkedPolicy
     }{
 
         {
@@ -29,10 +30,10 @@ permit (
             "scope_eq_test",
             "scope_eq_link",
             map[string]string{"?principal": `User::"bob"`},
-            ast.LinkedPolicy{
+            parser.LinkedPolicy{
                 TemplateID: "scope_eq_test",
                 LinkID:     "scope_eq_link",
-                Policy: ast.Permit().
+                Template: ast.Permit().
                     Annotate("id", "scope_eq_link").
                     PrincipalEq(types.EntityUID{Type: "User", ID: "bob"}).
                     AddSlot(types.PrincipalSlot),
@@ -49,10 +50,10 @@ permit (
             "scope_eq_test",
             "scope_eq_link",
             map[string]string{"?resource": `Album::"trip"`},
-            ast.LinkedPolicy{
+            parser.LinkedPolicy{
                 TemplateID: "scope_eq_test",
                 LinkID:     "scope_eq_link",
-                Policy: ast.Permit().
+                Template: ast.Permit().
                     Annotate("id", "scope_eq_link").
                     ResourceEq(types.EntityUID{Type: "Album", ID: "trip"}).
                     AddSlot(types.ResourceSlot),
@@ -69,10 +70,10 @@ permit (
             "scope_in_test",
             "scope_in_link",
             map[string]string{"?principal": `User::"charlie"`},
-            ast.LinkedPolicy{
+            parser.LinkedPolicy{
                 TemplateID: "scope_in_test",
                 LinkID:     "scope_in_link",
-                Policy: ast.Permit().
+                Template: ast.Permit().
                     Annotate("id", "scope_in_link").
                     PrincipalIn(types.EntityUID{Type: "User", ID: "charlie"}).
                     AddSlot(types.PrincipalSlot),
@@ -89,10 +90,10 @@ permit (
             "scope_isin_test",
             "scope_isin_link",
             map[string]string{"?principal": `User::"dave"`},
-            ast.LinkedPolicy{
+            parser.LinkedPolicy{
                 TemplateID: "scope_isin_test",
                 LinkID:     "scope_isin_link",
-                Policy: ast.Permit().
+                Template: ast.Permit().
                     Annotate("id", "scope_isin_link").
                     PrincipalIsIn(types.EntityType("User"), types.EntityUID{Type: "User", ID: "dave"}).
                     AddSlot(types.PrincipalSlot),
@@ -109,10 +110,10 @@ permit (
             "resource_test",
             "resource_link",
             map[string]string{"?resource": `Album::"trip"`},
-            ast.LinkedPolicy{
+            parser.LinkedPolicy{
                 TemplateID: "resource_test",
                 LinkID:     "resource_link",
-                Policy: ast.Permit().
+                Template: ast.Permit().
                     Annotate("id", "resource_link").
                     ResourceEq(types.EntityUID{Type: "Album", ID: "trip"}).
                     AddSlot(types.ResourceSlot),
@@ -129,10 +130,10 @@ permit (
             "scope_in_test",
             "scope_in_link",
             map[string]string{"?resource": `Album::"trip"`},
-            ast.LinkedPolicy{
+            parser.LinkedPolicy{
                 TemplateID: "scope_in_test",
                 LinkID:     "scope_in_link",
-                Policy: ast.Permit().
+                Template: ast.Permit().
                     Annotate("id", "scope_in_link").
                     ResourceIn(types.EntityUID{Type: "Album", ID: "trip"}).
                     AddSlot(types.ResourceSlot),
@@ -149,10 +150,10 @@ permit (
             "scope_isin_test",
             "scope_isin_link",
             map[string]string{"?resource": `Album::"trip"`},
-            ast.LinkedPolicy{
+            parser.LinkedPolicy{
                 TemplateID: "scope_isin_test",
                 LinkID:     "scope_isin_link",
-                Policy: ast.Permit().
+                Template: ast.Permit().
                     Annotate("id", "scope_isin_link").
                     ResourceIsIn(types.EntityType("Album"), types.EntityUID{Type: "Album", ID: "trip"}).
                     AddSlot(types.ResourceSlot),
@@ -166,15 +167,15 @@ permit (
 
             var templateBody parser.Policy
             testutil.OK(t, templateBody.UnmarshalCedar([]byte(tt.TemplateString)))
-            template := ast.Template(templateBody)
+            template := parser.Template(templateBody)
 
-            linkedPolicy, err := parser.LinkTemplateToPolicy(template, tt.LinkID, tt.Env)
+            linkedPolicy, err := cedar.LinkTemplateToPolicy(template, tt.LinkID, tt.Env)
             testutil.OK(t, err)
 
             testutil.Equals(t, linkedPolicy.LinkID, tt.LinkID)
 
-            linkedPolicy.Policy.Position = ast.Position{}
-            testutil.Equals(t, linkedPolicy.Policy, tt.Want.Policy)
+            linkedPolicy.Template.Position = ast.Position{}
+            testutil.Equals(t, linkedPolicy.Template, tt.Want.Template)
         })
     }
 }

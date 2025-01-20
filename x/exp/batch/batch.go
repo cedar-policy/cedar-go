@@ -1,17 +1,17 @@
 package batch
 
 import (
-	"context"
-	"fmt"
-	"maps"
-	"slices"
+    "context"
+    "fmt"
+    "maps"
+    "slices"
 
-	"github.com/cedar-policy/cedar-go"
-	"github.com/cedar-policy/cedar-go/internal/ast"
-	"github.com/cedar-policy/cedar-go/internal/consts"
-	"github.com/cedar-policy/cedar-go/internal/eval"
-	"github.com/cedar-policy/cedar-go/internal/mapset"
-	"github.com/cedar-policy/cedar-go/types"
+    "github.com/cedar-policy/cedar-go"
+    "github.com/cedar-policy/cedar-go/internal/ast"
+    "github.com/cedar-policy/cedar-go/internal/consts"
+    "github.com/cedar-policy/cedar-go/internal/eval"
+    "github.com/cedar-policy/cedar-go/internal/mapset"
+    "github.com/cedar-policy/cedar-go/types"
 )
 
 // Ignore returns a value that should be ignored during batch evaluation.
@@ -22,11 +22,11 @@ func Variable(name types.String) types.Value { return eval.Variable(name) }
 
 // Request defines the PARC and map of Variables to batch evaluate.
 type Request struct {
-	Principal types.Value
-	Action    types.Value
-	Resource  types.Value
-	Context   types.Value
-	Variables Variables
+    Principal types.Value
+    Action    types.Value
+    Resource  types.Value
+    Context   types.Value
+    Variables Variables
 }
 
 // Variables is a map of String to slice of Value.
@@ -40,10 +40,10 @@ type Values map[types.String]types.Value
 // specific Request, the Values that were substituted, and the resulting
 // Decision and Diagnostics.
 type Result struct {
-	Request    types.Request
-	Values     Values
-	Decision   types.Decision
-	Diagnostic types.Diagnostic
+    Request    types.Request
+    Values     Values
+    Decision   types.Decision
+    Diagnostic types.Diagnostic
 }
 
 // Callback is a function that is called for each single batch authorization with
@@ -51,30 +51,30 @@ type Result struct {
 type Callback func(Result)
 
 type idEvaler struct {
-	Policy *ast.Policy
-	Evaler eval.BoolEvaler
+    Policy *ast.Policy
+    Evaler eval.BoolEvaler
 }
 
 type batchEvaler struct {
-	Variables []variableItem
-	Values    Values
+    Variables []variableItem
+    Values    Values
 
-	policies map[types.PolicyID]*ast.Policy
-	compiled bool
-	evalers  map[types.PolicyID]*idEvaler
-	env      eval.Env
-	callback Callback
+    policies map[types.PolicyID]*ast.Policy
+    compiled bool
+    evalers  map[types.PolicyID]*idEvaler
+    env      eval.Env
+    callback Callback
 }
 
 type variableItem struct {
-	Key    types.String
-	Values []types.Value
+    Key    types.String
+    Values []types.Value
 }
 
 const unknownEntityType = "__cedar::unknown"
 
 func unknownEntity(v types.String) types.EntityUID {
-	return types.NewEntityUID(unknownEntityType, v)
+    return types.NewEntityUID(unknownEntityType, v)
 }
 
 var errUnboundVariable = fmt.Errorf("unbound variable")
@@ -90,8 +90,8 @@ var errInvalidPart = fmt.Errorf("invalid part")
 //
 // Using [Ignore] you can ask questions like "When ignoring context could this request be allowed?"
 //
-//  1. When a Permit Policy Condition refers to an ignored value, the Condition is dropped from the Policy.
-//  2. When a Forbid Policy Condition refers to an ignored value, the Policy is dropped.
+//  1. When a Permit Template Condition refers to an ignored value, the Condition is dropped from the Template.
+//  2. When a Forbid Template Condition refers to an ignored value, the Template is dropped.
 //  3. When a Scope clause refers to an ignored value, that scope clause is set to match any.
 //
 // Errors may be returned for a variety of reasons:
@@ -103,300 +103,300 @@ var errInvalidPart = fmt.Errorf("invalid part")
 //
 // The result passed to the callback must be used / cloned immediately and not modified.
 func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback) error {
-	be := &batchEvaler{}
-	var found mapset.MapSet[types.String]
-	findVariables(&found, request.Principal)
-	findVariables(&found, request.Action)
-	findVariables(&found, request.Resource)
-	findVariables(&found, request.Context)
-	var err error
-	found.Iterate(func(key types.String) bool {
-		if _, ok := request.Variables[key]; !ok {
-			err = fmt.Errorf("%w: %v", errUnboundVariable, key)
-			return false
-		}
-		return true
-	})
-	if err != nil {
-		return err
-	}
-	for k := range request.Variables {
-		if !found.Contains(k) {
-			return fmt.Errorf("%w: %v", errUnusedVariable, k)
-		}
-	}
-	for _, vs := range request.Variables {
-		if len(vs) == 0 {
-			return nil
-		}
-	}
-	pm := ps.Map()
-	be.policies = make(map[types.PolicyID]*ast.Policy, len(pm))
-	for k, p := range pm {
-		be.policies[k] = (*ast.Policy)(p.AST())
-	}
-	be.callback = cb
-	switch {
-	case request.Principal == nil:
-		return fmt.Errorf("%w: principal", errMissingPart)
-	case request.Action == nil:
-		return fmt.Errorf("%w: action", errMissingPart)
-	case request.Resource == nil:
-		return fmt.Errorf("%w: resource", errMissingPart)
-	case request.Context == nil:
-		return fmt.Errorf("%w: context", errMissingPart)
-	}
-	be.env = eval.Env{
-		Entities:  entityMap,
-		Principal: request.Principal,
-		Action:    request.Action,
-		Resource:  request.Resource,
-		Context:   request.Context,
-	}
-	be.Values = Values{}
-	for k, v := range request.Variables {
-		be.Variables = append(be.Variables, variableItem{Key: k, Values: v})
-	}
-	slices.SortFunc(be.Variables, func(a, b variableItem) int {
-		return len(a.Values) - len(b.Values)
-	})
+    be := &batchEvaler{}
+    var found mapset.MapSet[types.String]
+    findVariables(&found, request.Principal)
+    findVariables(&found, request.Action)
+    findVariables(&found, request.Resource)
+    findVariables(&found, request.Context)
+    var err error
+    found.Iterate(func(key types.String) bool {
+        if _, ok := request.Variables[key]; !ok {
+            err = fmt.Errorf("%w: %v", errUnboundVariable, key)
+            return false
+        }
+        return true
+    })
+    if err != nil {
+        return err
+    }
+    for k := range request.Variables {
+        if !found.Contains(k) {
+            return fmt.Errorf("%w: %v", errUnusedVariable, k)
+        }
+    }
+    for _, vs := range request.Variables {
+        if len(vs) == 0 {
+            return nil
+        }
+    }
+    pm := ps.Map()
+    be.policies = make(map[types.PolicyID]*ast.Policy, len(pm))
+    for k, p := range pm {
+        be.policies[k] = (*ast.Policy)(p.AST())
+    }
+    be.callback = cb
+    switch {
+    case request.Principal == nil:
+        return fmt.Errorf("%w: principal", errMissingPart)
+    case request.Action == nil:
+        return fmt.Errorf("%w: action", errMissingPart)
+    case request.Resource == nil:
+        return fmt.Errorf("%w: resource", errMissingPart)
+    case request.Context == nil:
+        return fmt.Errorf("%w: context", errMissingPart)
+    }
+    be.env = eval.Env{
+        Entities:  entityMap,
+        Principal: request.Principal,
+        Action:    request.Action,
+        Resource:  request.Resource,
+        Context:   request.Context,
+    }
+    be.Values = Values{}
+    for k, v := range request.Variables {
+        be.Variables = append(be.Variables, variableItem{Key: k, Values: v})
+    }
+    slices.SortFunc(be.Variables, func(a, b variableItem) int {
+        return len(a.Values) - len(b.Values)
+    })
 
-	// resolve ignores if no variables exist
-	if len(be.Variables) == 0 {
-		doPartial(be)
-		fixIgnores(be)
-	}
+    // resolve ignores if no variables exist
+    if len(be.Variables) == 0 {
+        doPartial(be)
+        fixIgnores(be)
+    }
 
-	return doBatch(ctx, be)
+    return doBatch(ctx, be)
 }
 
 func doPartial(be *batchEvaler) {
-	np := map[types.PolicyID]*ast.Policy{}
-	for k, p := range be.policies {
-		part, keep := eval.PartialPolicy(be.env, p)
-		if !keep {
-			continue
-		}
-		np[k] = part
-	}
-	be.compiled = false
-	be.policies = np
-	be.evalers = nil
+    np := map[types.PolicyID]*ast.Policy{}
+    for k, p := range be.policies {
+        part, keep := eval.PartialPolicy(be.env, p)
+        if !keep {
+            continue
+        }
+        np[k] = part
+    }
+    be.compiled = false
+    be.policies = np
+    be.evalers = nil
 }
 
 // fixIgnores replaces the Ignore PAR (which may not be EntityUID's in the future) with
 // EntityUID's so that the conversion to Result is successful.  An ignored context is
 // replaced with a nil Record for the same reason.
 func fixIgnores(be *batchEvaler) {
-	if eval.IsIgnore(be.env.Principal) {
-		be.env.Principal = unknownEntity(consts.Principal)
-	}
-	if eval.IsIgnore(be.env.Action) {
-		be.env.Action = unknownEntity(consts.Action)
-	}
-	if eval.IsIgnore(be.env.Resource) {
-		be.env.Resource = unknownEntity(consts.Resource)
-	}
-	if eval.IsIgnore(be.env.Context) {
-		var nilRecord types.Record
-		be.env.Context = nilRecord
-	}
+    if eval.IsIgnore(be.env.Principal) {
+        be.env.Principal = unknownEntity(consts.Principal)
+    }
+    if eval.IsIgnore(be.env.Action) {
+        be.env.Action = unknownEntity(consts.Action)
+    }
+    if eval.IsIgnore(be.env.Resource) {
+        be.env.Resource = unknownEntity(consts.Resource)
+    }
+    if eval.IsIgnore(be.env.Context) {
+        var nilRecord types.Record
+        be.env.Context = nilRecord
+    }
 }
 
 func doBatch(ctx context.Context, be *batchEvaler) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
+    if err := ctx.Err(); err != nil {
+        return err
+    }
 
-	// if no variables, authorize
-	if len(be.Variables) == 0 {
-		return diagnosticAuthzWithCallback(be)
-	}
+    // if no variables, authorize
+    if len(be.Variables) == 0 {
+        return diagnosticAuthzWithCallback(be)
+    }
 
-	// save previous state
-	prevState := *be
+    // save previous state
+    prevState := *be
 
-	// else, partial eval what we have so far
-	doPartial(be)
+    // else, partial eval what we have so far
+    doPartial(be)
 
-	// if no more partial evaluation, fill in ignores with defaults
-	if len(be.Variables) == 1 {
-		fixIgnores(be)
-	}
+    // if no more partial evaluation, fill in ignores with defaults
+    if len(be.Variables) == 1 {
+        fixIgnores(be)
+    }
 
-	// then loop the current variable
-	loopEnv := be.env
-	u := be.Variables[0]
-	dummyVal := types.True
-	_, chPrincipal := cloneSub(be.env.Principal, u.Key, dummyVal)
-	_, chAction := cloneSub(be.env.Action, u.Key, dummyVal)
-	_, chResource := cloneSub(be.env.Resource, u.Key, dummyVal)
-	_, chContext := cloneSub(be.env.Context, u.Key, dummyVal)
-	be.Variables = be.Variables[1:]
-	be.Values = maps.Clone(be.Values)
-	for _, v := range u.Values {
-		be.env = loopEnv
-		be.Values[u.Key] = v
-		if chPrincipal {
-			be.env.Principal, _ = cloneSub(loopEnv.Principal, u.Key, v)
-		}
-		if chAction {
-			be.env.Action, _ = cloneSub(loopEnv.Action, u.Key, v)
-		}
-		if chResource {
-			be.env.Resource, _ = cloneSub(loopEnv.Resource, u.Key, v)
-		}
-		if chContext {
-			be.env.Context, _ = cloneSub(loopEnv.Context, u.Key, v)
-		}
-		if err := doBatch(ctx, be); err != nil {
-			return err
-		}
-	}
+    // then loop the current variable
+    loopEnv := be.env
+    u := be.Variables[0]
+    dummyVal := types.True
+    _, chPrincipal := cloneSub(be.env.Principal, u.Key, dummyVal)
+    _, chAction := cloneSub(be.env.Action, u.Key, dummyVal)
+    _, chResource := cloneSub(be.env.Resource, u.Key, dummyVal)
+    _, chContext := cloneSub(be.env.Context, u.Key, dummyVal)
+    be.Variables = be.Variables[1:]
+    be.Values = maps.Clone(be.Values)
+    for _, v := range u.Values {
+        be.env = loopEnv
+        be.Values[u.Key] = v
+        if chPrincipal {
+            be.env.Principal, _ = cloneSub(loopEnv.Principal, u.Key, v)
+        }
+        if chAction {
+            be.env.Action, _ = cloneSub(loopEnv.Action, u.Key, v)
+        }
+        if chResource {
+            be.env.Resource, _ = cloneSub(loopEnv.Resource, u.Key, v)
+        }
+        if chContext {
+            be.env.Context, _ = cloneSub(loopEnv.Context, u.Key, v)
+        }
+        if err := doBatch(ctx, be); err != nil {
+            return err
+        }
+    }
 
-	// restore previous state
-	*be = prevState
-	return nil
+    // restore previous state
+    *be = prevState
+    return nil
 }
 
 func diagnosticAuthzWithCallback(be *batchEvaler) error {
-	var res Result
-	var err error
-	if res.Request.Principal, err = eval.ValueToEntity(be.env.Principal); err != nil {
-		return fmt.Errorf("%w: %w", errInvalidPart, err)
-	}
-	if res.Request.Action, err = eval.ValueToEntity(be.env.Action); err != nil {
-		return fmt.Errorf("%w: %w", errInvalidPart, err)
-	}
-	if res.Request.Resource, err = eval.ValueToEntity(be.env.Resource); err != nil {
-		return fmt.Errorf("%w: %w", errInvalidPart, err)
-	}
-	if res.Request.Context, err = eval.ValueToRecord(be.env.Context); err != nil {
-		return fmt.Errorf("%w: %w", errInvalidPart, err)
-	}
-	res.Values = be.Values
-	batchCompile(be)
-	res.Decision, res.Diagnostic = isAuthorized(be.evalers, be.env)
-	be.callback(res)
-	return nil
+    var res Result
+    var err error
+    if res.Request.Principal, err = eval.ValueToEntity(be.env.Principal); err != nil {
+        return fmt.Errorf("%w: %w", errInvalidPart, err)
+    }
+    if res.Request.Action, err = eval.ValueToEntity(be.env.Action); err != nil {
+        return fmt.Errorf("%w: %w", errInvalidPart, err)
+    }
+    if res.Request.Resource, err = eval.ValueToEntity(be.env.Resource); err != nil {
+        return fmt.Errorf("%w: %w", errInvalidPart, err)
+    }
+    if res.Request.Context, err = eval.ValueToRecord(be.env.Context); err != nil {
+        return fmt.Errorf("%w: %w", errInvalidPart, err)
+    }
+    res.Values = be.Values
+    batchCompile(be)
+    res.Decision, res.Diagnostic = isAuthorized(be.evalers, be.env)
+    be.callback(res)
+    return nil
 }
 
 func isAuthorized(ps map[types.PolicyID]*idEvaler, env eval.Env) (types.Decision, types.Diagnostic) {
-	var diag types.Diagnostic
-	var forbids []types.DiagnosticReason
-	var permits []types.DiagnosticReason
-	// Don't try to short circuit this.
-	// - Even though single forbid means forbid
-	// - All policy should be run to collect errors
-	// - For permit, all permits must be run to collect annotations
-	// - For forbid, forbids must be run to collect annotations
-	for pid, po := range ps {
-		result, err := po.Evaler.Eval(env)
-		if err != nil {
-			diag.Errors = append(diag.Errors, types.DiagnosticError{PolicyID: pid, Position: types.Position(po.Policy.Position), Message: err.Error()})
-			continue
-		}
-		if !result {
-			continue
-		}
-		if po.Policy.Effect == ast.EffectPermit {
-			permits = append(permits, types.DiagnosticReason{PolicyID: pid, Position: types.Position(po.Policy.Position)})
-		} else {
-			forbids = append(forbids, types.DiagnosticReason{PolicyID: pid, Position: types.Position(po.Policy.Position)})
-		}
-	}
-	if len(forbids) > 0 {
-		diag.Reasons = forbids
-		return types.Deny, diag
-	}
-	if len(permits) > 0 {
-		diag.Reasons = permits
-		return types.Allow, diag
-	}
-	return types.Deny, diag
+    var diag types.Diagnostic
+    var forbids []types.DiagnosticReason
+    var permits []types.DiagnosticReason
+    // Don't try to short circuit this.
+    // - Even though single forbid means forbid
+    // - All policy should be run to collect errors
+    // - For permit, all permits must be run to collect annotations
+    // - For forbid, forbids must be run to collect annotations
+    for pid, po := range ps {
+        result, err := po.Evaler.Eval(env)
+        if err != nil {
+            diag.Errors = append(diag.Errors, types.DiagnosticError{PolicyID: pid, Position: types.Position(po.Policy.Position), Message: err.Error()})
+            continue
+        }
+        if !result {
+            continue
+        }
+        if po.Policy.Effect == ast.EffectPermit {
+            permits = append(permits, types.DiagnosticReason{PolicyID: pid, Position: types.Position(po.Policy.Position)})
+        } else {
+            forbids = append(forbids, types.DiagnosticReason{PolicyID: pid, Position: types.Position(po.Policy.Position)})
+        }
+    }
+    if len(forbids) > 0 {
+        diag.Reasons = forbids
+        return types.Deny, diag
+    }
+    if len(permits) > 0 {
+        diag.Reasons = permits
+        return types.Allow, diag
+    }
+    return types.Deny, diag
 }
 
 func batchCompile(be *batchEvaler) {
-	if be.compiled {
-		return
-	}
-	be.evalers = make(map[types.PolicyID]*idEvaler, len(be.policies))
-	for k, p := range be.policies {
-		be.evalers[k] = &idEvaler{Policy: p, Evaler: eval.Compile(p)}
-	}
-	be.compiled = true
+    if be.compiled {
+        return
+    }
+    be.evalers = make(map[types.PolicyID]*idEvaler, len(be.policies))
+    for k, p := range be.policies {
+        be.evalers[k] = &idEvaler{Policy: p, Evaler: eval.Compile(p)}
+    }
+    be.compiled = true
 }
 
 // cloneSub will return a new value if any of its children have changed
 // and signal the change via the boolean
 func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) {
-	switch t := r.(type) {
-	case types.EntityUID:
-		if key, ok := eval.ToVariable(t); ok && key == k {
-			return v, true
-		}
-	case types.Record:
-		var newMap types.RecordMap
-		t.Iterate(func(kk types.String, vv types.Value) bool {
-			if vv, delta := cloneSub(vv, k, v); delta && newMap == nil {
-				if newMap == nil {
-					newMap = t.Map()
-				}
-				newMap[kk] = vv
-			}
-			return true
-		})
+    switch t := r.(type) {
+    case types.EntityUID:
+        if key, ok := eval.ToVariable(t); ok && key == k {
+            return v, true
+        }
+    case types.Record:
+        var newMap types.RecordMap
+        t.Iterate(func(kk types.String, vv types.Value) bool {
+            if vv, delta := cloneSub(vv, k, v); delta && newMap == nil {
+                if newMap == nil {
+                    newMap = t.Map()
+                }
+                newMap[kk] = vv
+            }
+            return true
+        })
 
-		if newMap == nil {
-			return t, false
-		}
-		return types.NewRecord(newMap), true
-	case types.Set:
-		hasDeltas := false
+        if newMap == nil {
+            return t, false
+        }
+        return types.NewRecord(newMap), true
+    case types.Set:
+        hasDeltas := false
 
-		// Look for deltas. Unfortunately, due to the indeterminate nature of the set iteration order,
-		// we can't pull the same trick as we do for Records above
-		t.Iterate(func(vv types.Value) bool {
-			if _, delta := cloneSub(vv, k, v); delta {
-				hasDeltas = true
-				return false
-			}
-			return true
-		})
+        // Look for deltas. Unfortunately, due to the indeterminate nature of the set iteration order,
+        // we can't pull the same trick as we do for Records above
+        t.Iterate(func(vv types.Value) bool {
+            if _, delta := cloneSub(vv, k, v); delta {
+                hasDeltas = true
+                return false
+            }
+            return true
+        })
 
-		// If no deltas, just return the input Value
-		if !hasDeltas {
-			return t, false
-		}
+        // If no deltas, just return the input Value
+        if !hasDeltas {
+            return t, false
+        }
 
-		// If there were deltas, build a new Set
-		newSlice := make([]types.Value, 0, t.Len())
-		t.Iterate(func(vv types.Value) bool {
-			vv, _ = cloneSub(vv, k, v)
-			newSlice = append(newSlice, vv)
-			return true
-		})
+        // If there were deltas, build a new Set
+        newSlice := make([]types.Value, 0, t.Len())
+        t.Iterate(func(vv types.Value) bool {
+            vv, _ = cloneSub(vv, k, v)
+            newSlice = append(newSlice, vv)
+            return true
+        })
 
-		return types.NewSet(newSlice), true
-	}
-	return r, false
+        return types.NewSet(newSlice), true
+    }
+    return r, false
 }
 
 func findVariables(found *mapset.MapSet[types.String], r types.Value) {
-	switch t := r.(type) {
-	case types.EntityUID:
-		if key, ok := eval.ToVariable(t); ok {
-			found.Add(key)
-		}
-	case types.Record:
-		t.Iterate(func(_ types.String, vv types.Value) bool {
-			findVariables(found, vv)
-			return true
-		})
-	case types.Set:
-		t.Iterate(func(vv types.Value) bool {
-			findVariables(found, vv)
-			return true
-		})
-	}
+    switch t := r.(type) {
+    case types.EntityUID:
+        if key, ok := eval.ToVariable(t); ok {
+            found.Add(key)
+        }
+    case types.Record:
+        t.Iterate(func(_ types.String, vv types.Value) bool {
+            findVariables(found, vv)
+            return true
+        })
+    case types.Set:
+        t.Iterate(func(vv types.Value) bool {
+            findVariables(found, vv)
+            return true
+        })
+    }
 }

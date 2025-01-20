@@ -88,3 +88,20 @@ func (p *Policy) AddSlot(slotID types.SlotID) *Policy {
 func (p *Policy) Slots() []types.SlotID {
     return p.tplCtx.slots
 }
+
+func (p *Policy) Clone() Policy {
+    clonedPolicy := Policy{
+        Effect:      p.Effect,
+        Annotations: append([]AnnotationType(nil), p.Annotations...),
+        Principal:   p.Principal,
+        Action:      p.Action,
+        Resource:    p.Resource,
+        Conditions:  append([]ConditionType(nil), p.Conditions...),
+        Position:    p.Position,
+        tplCtx: templateContext{
+            slots: append([]types.SlotID(nil), p.tplCtx.slots...),
+        },
+    }
+
+    return clonedPolicy
+}
