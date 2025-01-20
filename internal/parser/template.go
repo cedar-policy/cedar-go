@@ -1,6 +1,7 @@
 package parser
 
 import (
+    "encoding/json"
     "fmt"
     "github.com/cedar-policy/cedar-go/internal/ast"
     "github.com/cedar-policy/cedar-go/types"
@@ -37,7 +38,7 @@ func (p LinkedPolicy) Render() (Policy, error) {
     body := p.Template.ClonePolicy().unwrap()
 
     if len(body.Slots()) != len(p.slotEnv) {
-        return Policy{}, fmt.Errorf("slot env length %d does not match template slot length %d", len(slotEnv), len(body.Slots()))
+        return Policy{}, fmt.Errorf("slot env length %d does not match template slot length %d", len(p.slotEnv), len(body.Slots()))
     }
 
     for _, slot := range body.Slots() {
@@ -86,4 +87,23 @@ func resolveSlot(ef types.EntityReference, slotEnv map[types.SlotID]types.Entity
     default:
         panic(fmt.Sprintf("unknown entity reference type %T", e))
     }
+}
+
+// MarshalJSON marshals a LinkedPolicy to JSON following cedar-cli format.
+func (p LinkedPolicy) MarshalJSON() ([]byte, error) {
+    lp := struct {
+        TemplateID string            `json:"template_id"`
+        LinkID     string            `json:"link_id"`
+        Args       map[string]string `json:"args"`
+    }{
+        TemplateID: p.TemplateID,
+        LinkID:     p.LinkID,
+    }
+
+    lp.Args = make(map[string]string, len(p.slotEnv))
+    for k, v := range p.slotEnv {
+        lp.Args[string(k)] = v.String()
+    }
+
+    return json.Marshal(lp)
 }

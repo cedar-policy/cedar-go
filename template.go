@@ -29,3 +29,9 @@ func (p LinkedPolicy) Render() (*Policy, error) {
 
     return newPolicy(&internalPolicy), nil
 }
+
+func (p LinkedPolicy) MarshalJSON() ([]byte, error) {
+    pl := parser.LinkedPolicy(p)
+
+    return pl.MarshalJSON()
+}
