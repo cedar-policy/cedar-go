@@ -1,17 +1,27 @@
 package cedar
 
 import (
+    "bytes"
     internalast "github.com/cedar-policy/cedar-go/internal/ast"
     "github.com/cedar-policy/cedar-go/internal/parser"
     "github.com/cedar-policy/cedar-go/types"
 )
 
-type Template Policy
+type Template parser.Policy
+
+func (p *Template) MarshalCedar() []byte {
+    cedarPolicy := (*parser.Policy)(p)
+
+    var buf bytes.Buffer
+    cedarPolicy.MarshalCedar(&buf)
+
+    return buf.Bytes()
+}
 
 type LinkedPolicy parser.LinkedPolicy
 
 func LinkTemplate(template Template, templateID string, linkID string, slotEnv map[types.SlotID]types.EntityUID) LinkedPolicy {
-    t := parser.Template(*template.ast)
+    t := parser.Template(template)
     linkedPolicy := parser.NewLinkedPolicy(&t, templateID, linkID, slotEnv)
 
     return LinkedPolicy(linkedPolicy)

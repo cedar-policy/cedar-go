@@ -33,6 +33,36 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
     return nil
 }
 
+func (p *PolicySlice2) UnmarshalCedar(b []byte) error {
+    tokens, err := Tokenize(b)
+    if err != nil {
+        return err
+    }
+
+    var policySet PolicySlice
+    var templateSet []*Template
+
+    parser := newParser(tokens)
+    for !parser.peek().isEOF() {
+        var policy Policy
+        if err = policy.fromCedar(&parser); err != nil {
+            return err
+        }
+
+        if len(policy.unwrap().Slots()) > 0 {
+            t := Template(policy)
+            templateSet = append(templateSet, &t)
+        } else {
+            policySet = append(policySet, &policy)
+        }
+    }
+
+    p.StaticPolicies = policySet
+    p.Templates = templateSet
+
+    return nil
+}
+
 func (p *Policy) UnmarshalCedar(b []byte) error {
     tokens, err := Tokenize(b)
     if err != nil {
