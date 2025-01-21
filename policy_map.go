@@ -97,10 +97,14 @@ func (p PolicySet) Len() int {
 
 // MarshalCedar emits a concatenated Cedar representation of a PolicySet. The policy names are stripped, but policies
 // are emitted in lexicographical order by ID.
-// todo: add support for Templates
 func (p *PolicySet) MarshalCedar() []byte {
-    ids := make([]PolicyID, 0, len(p.policies.StaticPolicies))
+    setSize := p.Len()
+
+    ids := make([]PolicyID, 0, setSize)
     for k := range p.policies.StaticPolicies {
+        ids = append(ids, k)
+    }
+    for k := range p.policies.Templates {
         ids = append(ids, k)
     }
     slices.Sort(ids)
@@ -108,28 +112,37 @@ func (p *PolicySet) MarshalCedar() []byte {
     var buf bytes.Buffer
     i := 0
     for _, id := range ids {
-        policy := p.policies.StaticPolicies[id]
-        buf.Write(policy.MarshalCedar())
+        if policy, found := p.policies.StaticPolicies[id]; found {
+            buf.Write(policy.MarshalCedar())
+        } else {
+            template := p.policies.Templates[id]
+            buf.Write(template.MarshalCedar())
+        }
 
-        if i < len(p.policies.StaticPolicies)-1 {
+        if i < setSize-1 {
             buf.WriteString("\n\n")
         }
         i++
     }
+
     return buf.Bytes()
 }
 
 // MarshalJSON encodes a PolicySet in the JSON format specified by the [Cedar documentation].
 //
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
-// todo: add support for Templates
 func (p *PolicySet) MarshalJSON() ([]byte, error) {
     jsonPolicySet := internaljson.PolicySetJSON{
         StaticPolicies: make(internaljson.PolicySet, len(p.policies.StaticPolicies)),
+        Templates:      make(internaljson.TemplateSet, len(p.policies.Templates)),
     }
     for k, v := range p.policies.StaticPolicies {
         jsonPolicySet.StaticPolicies[string(k)] = (*internaljson.Policy)(v.ast)
     }
+    for k, v := range p.policies.Templates {
+        jsonPolicySet.Templates[string(k)] = (*internaljson.Policy)(v)
+    }
+
     return json.Marshal(jsonPolicySet)
 }
 

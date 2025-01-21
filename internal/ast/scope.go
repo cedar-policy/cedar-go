@@ -175,7 +175,6 @@ type ScopeTypeInSet struct {
     Entities []types.EntityUID
 }
 
-// todo: check if `is` operator support template
 type ScopeTypeIs struct {
     ScopeNode
     PrincipalScopeNode
