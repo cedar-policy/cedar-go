@@ -45,3 +45,12 @@ func (p LinkedPolicy) MarshalJSON() ([]byte, error) {
 
     return pl.MarshalJSON()
 }
+
+func (p PolicySet) StoreLinkedPolicy(lp LinkedPolicy) {
+    policy, err := lp.Render()
+    if err != nil {
+        return
+    }
+
+    p.Store(PolicyID(lp.LinkID), policy)
+}
