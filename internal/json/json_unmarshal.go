@@ -18,16 +18,16 @@ type isPrincipalResourceScopeNode interface {
     Slot() (types.SlotID, bool)
 }
 
-func slotID(id *string) types.SlotID {
+func slotID(id *string) (types.SlotID, error) {
     sid := *id
 
     switch sid {
     case string(types.PrincipalSlot):
-        return types.PrincipalSlot
+        return types.PrincipalSlot, nil
     case string(types.ResourceSlot):
-        return types.ResourceSlot
+        return types.ResourceSlot, nil
     default:
-        panic("unknown slot id: " + sid)
+        return "", fmt.Errorf("unknown slot ID: %v", sid)
     }
 }
 
@@ -40,7 +40,12 @@ func scopeEntityReference(s *scopeJSON) (types.EntityReference, error) {
 
     switch {
     case s.Slot != nil:
-        ref = types.VariableSlot{ID: slotID(s.Slot)}
+        id, err := slotID(s.Slot)
+        if err != nil {
+            return nil, err
+        }
+
+        ref = types.VariableSlot{ID: id}
     case s.Entity != nil:
         ref = types.EntityUID(*s.Entity)
     default:
@@ -59,7 +64,12 @@ func scopeInEntityReference(s *scopeInJSON) (types.EntityReference, error) {
 
     switch {
     case s.Slot != nil:
-        ref = types.VariableSlot{ID: slotID(s.Slot)}
+        id, err := slotID(s.Slot)
+        if err != nil {
+            return nil, err
+        }
+
+        ref = types.VariableSlot{ID: id}
     case s.Entity != nil:
         ref = types.EntityUID(*s.Entity)
     default:
@@ -78,7 +88,12 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 
         switch {
         case s.Slot != nil:
-            ref = types.VariableSlot{ID: slotID(s.Slot)}
+            id, err := slotID(s.Slot)
+            if err != nil {
+                return nil, err
+            }
+
+            ref = types.VariableSlot{ID: id}
         case s.Entity != nil:
             ref = types.EntityUID(*s.Entity)
         default:
@@ -87,10 +102,6 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 
         return ast.Scope{}.Eq(ref), nil
     case "in":
-        //if s.Entity == nil {
-        //    return nil, fmt.Errorf("missing entity")
-        //}
-
         ref, err := scopeEntityReference(s)
         if err != nil {
             return nil, err
