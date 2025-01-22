@@ -21,7 +21,7 @@ type PolicyMap struct {
     Templates      map[PolicyID]*Template
 }
 
-func makePolicyMap2() PolicyMap {
+func makePolicyMap() PolicyMap {
     return PolicyMap{
         StaticPolicies: make(map[PolicyID]*Policy),
         Templates:      make(map[PolicyID]*Template),
@@ -36,7 +36,7 @@ type PolicySet struct {
 
 // NewPolicySet creates a new, empty PolicySet
 func NewPolicySet() *PolicySet {
-    return &PolicySet{policies: makePolicyMap2()}
+    return &PolicySet{policies: makePolicyMap()}
 }
 
 // NewPolicySetFromBytes will create a PolicySet from the given text document with the given file name used in Position
@@ -155,7 +155,7 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
         return err
     }
     *p = PolicySet{
-        policies: makePolicyMap2(),
+        policies: makePolicyMap(),
     }
 
     for k, v := range jsonPolicySet.StaticPolicies {
