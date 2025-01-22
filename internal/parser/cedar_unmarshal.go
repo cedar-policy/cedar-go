@@ -18,28 +18,7 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
         return err
     }
 
-    var policySet PolicySlice
-    parser := newParser(tokens)
-    for !parser.peek().isEOF() {
-        var policy Policy
-        if err = policy.fromCedar(&parser); err != nil {
-            return err
-        }
-
-        policySet = append(policySet, &policy)
-    }
-
-    *p = policySet
-    return nil
-}
-
-func (p *PolicySlice2) UnmarshalCedar(b []byte) error {
-    tokens, err := Tokenize(b)
-    if err != nil {
-        return err
-    }
-
-    var policySet PolicySlice
+    var policySet []*Policy
     var templateSet []*Template
 
     parser := newParser(tokens)

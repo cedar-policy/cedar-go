@@ -563,7 +563,7 @@ func TestParsePolicySet(t *testing.T) {
 
         expectedPolicy := ast.Permit()
         expectedPolicy.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
-        testutil.Equals(t, policies[0], (*parser.Policy)(expectedPolicy))
+        testutil.Equals(t, policies.StaticPolicies[0], (*parser.Policy)(expectedPolicy))
     })
     t.Run("two policies", func(t *testing.T) {
         policyStr := []byte(`permit (
@@ -581,11 +581,11 @@ func TestParsePolicySet(t *testing.T) {
 
         expectedPolicy0 := ast.Permit()
         expectedPolicy0.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
-        testutil.Equals(t, policies[0], (*parser.Policy)(expectedPolicy0))
+        testutil.Equals(t, policies.StaticPolicies[0], (*parser.Policy)(expectedPolicy0))
 
         expectedPolicy1 := ast.Forbid()
         expectedPolicy1.Position = ast.Position{Offset: 53, Line: 6, Column: 3}
-        testutil.Equals(t, policies[1], (*parser.Policy)(expectedPolicy1))
+        testutil.Equals(t, policies.StaticPolicies[1], (*parser.Policy)(expectedPolicy1))
     })
 }
 
