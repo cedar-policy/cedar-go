@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("namespace 0A0 action \"\" appliesTo 0 principal!0//0000")

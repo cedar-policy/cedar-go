@@ -1,0 +1,197 @@
+{
+    "": {
+        "entityTypes": {
+            "Manufacturer": {}
+        },
+        "actions": {}
+    },
+    "ExampleCo::Clients": {
+        "entityTypes": {
+            "Manufacturer": {}
+        },
+        "actions": {}
+    },
+    "ExampleCo::Furniture": {
+        "entityTypes": {
+            "Table": {
+                "shape": {
+                    "type": "Record",
+                    "attributes": {
+                        "manufacturer": {
+                            "required": false,
+                            "type": "Entity",
+                            "name": "ExampleCo::Clients::Manufacturer"
+                        }
+                    }
+                }
+            }
+        },
+        "actions": {}
+    },
+    "PhotoFlash": {
+        "entityTypes": {
+            "Account": {
+                "shape": {
+                    "type": "Record",
+                    "attributes": {
+                        "admins": {
+                            "type": "Set",
+                            "required": false,
+                            "element": {
+                                "type": "Entity",
+                                "name": "User"
+                            }
+                        },
+                        "owner": {
+                            "type": "Entity",
+                            "required": false,
+                            "name": "User"
+                        }
+                    }
+                }
+            },
+            "Album": {
+                "memberOfTypes": [
+                    "Album"
+                ],
+                "shape": {
+                    "type": "Record",
+                    "attributes": {
+                        "account": {
+                            "type": "Entity",
+                            "required": false,
+                            "name": "Account"
+                        },
+                        "private": {
+                            "type": "Boolean",
+                            "required": false
+                        }
+                    }
+                }
+            },
+            "Photo": {
+                "memberOfTypes": [
+                    "Album"
+                ],
+                "shape": {
+                    "type": "Record",
+                    "attributes": {
+                        "account": {
+                            "type": "Entity",
+                            "required": false,
+                            "name": "Account"
+                        },
+                        "private": {
+                            "type": "Boolean",
+                            "required": false
+                        }
+                    }
+                }
+            },
+            "User": {
+                "memberOfTypes": [
+                    "UserGroup"
+                ],
+                "shape": {
+                    "type": "Record",
+                    "attributes": {
+                        "department": {
+                            "type": "String",
+                            "required": false
+                        },
+                        "jobLevel": {
+                            "type": "Long",
+                            "required": false
+                        }
+                    }
+                }
+            },
+            "UserGroup": {}
+        },
+        "actions": {
+            "listAlbums": {
+                "appliesTo": {
+                    "principalTypes": [
+                        "User"
+                    ],
+                    "resourceTypes": [
+                        "Account"
+                    ],
+                    "context": {
+                        "type": "Record",
+                        "attributes": {
+                            "authenticated": {
+                                "type": "Boolean",
+                                "required": false
+                            }
+                        }
+                    }
+                },
+                "memberOf": [
+                    {
+                        "id": "read",
+                        "type": "PhotoFlash::Action"
+                    }
+                ]
+            },
+            "read": {
+                "appliesTo": {
+                    "principalTypes": [],
+                    "resourceTypes": []
+                }
+            },
+            "uploadPhoto": {
+                "appliesTo": {
+                    "principalTypes": [
+                        "User"
+                    ],
+                    "resourceTypes": [
+                        "Album"
+                    ],
+                    "context": {
+                        "type": "Record",
+                        "attributes": {
+                            "authenticated": {
+                                "type": "Boolean",
+                                "required": false
+                            },
+                            "photo": {
+                                "type": "Record",
+                                "required": false,
+                                "attributes": {
+                                    "file_size": {
+                                        "type": "Long",
+                                        "required": false
+                                    },
+                                    "file_type": {
+                                        "type": "String",
+                                        "required": false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "viewPhoto": {
+                "appliesTo": {
+                    "principalTypes": [
+                        "User"
+                    ],
+                    "resourceTypes": [
+                        "Photo"
+                    ],
+                    "context": {
+                        "type": "Record",
+                        "attributes": {
+                            "authenticated": {
+                                "type": "Boolean",
+                                "required": false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
