@@ -22,17 +22,20 @@ func (e Error) Error() string {
 	return fmt.Sprintf("%s:%d:%d: %v", filename, e.Pos.Line, e.Pos.Column, e.Err)
 }
 
-type ErrList []error
+type Errors []error
 
-func (errs ErrList) Error() string {
+func (errs Errors) Error() string {
 	return errors.Join(errs...).Error()
 }
 
-func (errs ErrList) Sort() {
+func (errs Errors) Sort() {
 	errs = slices.DeleteFunc(errs, func(e1 error) bool { return e1 == nil })
 	slices.SortFunc(errs, func(e1, e2 error) int {
-		te1 := e1.(Error)
-		te2 := e2.(Error)
+		te1, ok1 := e1.(Error)
+		te2, ok2 := e2.(Error)
+		if !ok1 || !ok2 {
+			return 0 // don't sort these values
+		}
 		return te1.Pos.Offset - te2.Pos.Offset
 	})
 }

@@ -113,14 +113,14 @@ func (p *formatter) print(n ast.Node) {
 		}
 		p.write("\n")
 		for _, d := range n.Decls {
-			p.indent += 1
+			p.indent++
 			p.print(d)
-			p.indent -= 1
+			p.indent--
 		}
 		if len(n.Remaining) > 0 {
-			p.indent += 1
+			p.indent++
 			p.print(n.Remaining)
-			p.indent -= 1
+			p.indent--
 		}
 		p.write("}")
 		if n.Footer != nil {
@@ -143,14 +143,14 @@ func (p *formatter) print(n ast.Node) {
 		}
 		p.write("\n")
 		for _, a := range n.Attributes {
-			p.indent += 1
+			p.indent++
 			p.print(a)
-			p.indent -= 1
+			p.indent--
 		}
 		if len(n.Remaining) > 0 {
-			p.indent += 1
+			p.indent++
 			p.print(n.Remaining)
-			p.indent -= 1
+			p.indent--
 		}
 		p.printInd("}")
 	case *ast.SetType:
@@ -231,9 +231,9 @@ func (p *formatter) print(n ast.Node) {
 				p.print(n.AppliesTo.Inline)
 			}
 			p.write("\n")
-			p.indent += 1
+			p.indent++
 			p.print(n.AppliesTo)
-			p.indent -= 1
+			p.indent--
 			p.printInd("}")
 		}
 		p.write(";")

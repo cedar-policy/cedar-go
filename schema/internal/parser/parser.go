@@ -56,7 +56,7 @@ type Parser struct {
 	lex     *Lexer
 	nextTok *Token // next token to be consumed, or nil if none consumed yet
 
-	Errors token.ErrList
+	Errors token.Errors
 }
 
 func (p *Parser) error(pos token.Position, err error) {
@@ -205,9 +205,9 @@ func (p *Parser) parseNamespace() (namespace *ast.Namespace) {
 		namespace.Remaining = comments
 	}
 
-	close, _ := p.eatOnly(token.RIGHTBRACE, "expected }")
-	namespace.CloseBrace = close.Pos
-	if p.matches(token.COMMENT) && p.peek().Pos.Line == close.Pos.Line {
+	closebrace, _ := p.eatOnly(token.RIGHTBRACE, "expected }")
+	namespace.CloseBrace = closebrace.Pos
+	if p.matches(token.COMMENT) && p.peek().Pos.Line == closebrace.Pos.Line {
 		namespace.Footer = p.parseComment()
 	}
 	return namespace
@@ -320,7 +320,6 @@ loop:
 	}
 	if len(comments) > 0 {
 		appliesTo.Remaining = comments
-		comments = nil
 	}
 	closer, _ := p.eatOnly(token.RIGHTBRACE, "expected }")
 	appliesTo.CloseBrace = closer.Pos

@@ -44,7 +44,7 @@ type Lexer struct {
 	lineStart int            // byte offset from start of last line
 	pos       token.Position // marks position of the scanner
 
-	Errors token.ErrList
+	Errors token.Errors
 }
 
 func (l *Lexer) error(pos token.Position, err error) {

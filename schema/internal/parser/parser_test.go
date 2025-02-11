@@ -107,7 +107,9 @@ func TestRealFiles(t *testing.T) {
 			got := strings.TrimSpace(string(gotBytes))
 			if got != strings.TrimSpace(string(input)) {
 				t.Errorf("Parsed schema does not match original:\n%s\n=========================================\n%s\n=========================================", string(input), got)
-				os.WriteFile("testdata/cases/"+file.Name()+".got", gotBytes, 0644)
+				if err := os.WriteFile("testdata/cases/"+file.Name()+".got", gotBytes, 0644); err != nil {
+					t.Logf("Error writing testdata/cases/%s.got: %v", file.Name(), err)
+				}
 			}
 		})
 	}

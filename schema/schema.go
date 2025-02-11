@@ -35,9 +35,6 @@ type ParseOptions struct {
 // If there are errors, the parser will still attempt to continue and return any errors it finds.
 // All errors are of type []token.Error and contain position information.
 func ParseFile(filename string, src io.Reader, options *ParseOptions) (*ast.Schema, error) {
-	if options == nil {
-		options = &ParseOptions{}
-	}
 	contents, err := io.ReadAll(src)
 	if err != nil {
 		return nil, err

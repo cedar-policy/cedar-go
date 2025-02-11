@@ -15,7 +15,7 @@ func TestError_Error(t *testing.T) {
 }
 
 func TestErrList_Error(t *testing.T) {
-	errs := ErrList{
+	errs := Errors{
 		errors.New("first error"),
 		errors.New("second error"),
 	}
@@ -26,7 +26,7 @@ func TestErrList_Error(t *testing.T) {
 }
 
 func TestErrList_Sort(t *testing.T) {
-	errs := ErrList{
+	errs := Errors{
 		Error{Pos: Position{Line: 1, Column: 2, Offset: 2}, Err: errors.New("second error")},
 		Error{Pos: Position{Line: 1, Column: 1, Offset: 1}, Err: errors.New("first error")},
 	}
