@@ -1,9 +1,7 @@
 package ast
 
 import (
-	"crypto/sha256"
 	"encoding/json"
-	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -39,10 +37,4 @@ func jsonEq(a, b []byte) (bool, error) {
 		return false, err
 	}
 	return reflect.DeepEqual(j2, j), nil
-}
-
-func hash(data []byte) string {
-	h := sha256.New()
-	h.Write(data)
-	return fmt.Sprintf("%x", h.Sum(nil))[:8]
 }

@@ -45,7 +45,9 @@ func TestConvertHumanToJson(t *testing.T) {
 		t.Fatalf("Error comparing JSON: %v", err)
 	}
 	if !ok {
-		os.WriteFile("testdata/test_got.json", got.Bytes(), 0644)
+		if err := os.WriteFile("testdata/test_got.json", got.Bytes(), 0644); err != nil {
+			t.Logf("Error writing testdata/test_got.json: %v", err)
+		}
 		t.Errorf("Schema does not match original, compare schema/testdata/test_want.json and schema/testdata/test_got.json")
 	}
 }
