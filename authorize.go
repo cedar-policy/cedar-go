@@ -1,8 +1,8 @@
 package cedar
 
 import (
-    "github.com/cedar-policy/cedar-go/internal/eval"
-    "github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/internal/eval"
+	"github.com/cedar-policy/cedar-go/types"
 )
 
 type Request = types.Request
@@ -12,8 +12,8 @@ type DiagnosticReason = types.DiagnosticReason
 type DiagnosticError = types.DiagnosticError
 
 const (
-    Allow = types.Allow
-    Deny  = types.Deny
+	Allow = types.Allow
+	Deny  = types.Deny
 )
 
 // IsAuthorized uses the combination of the PolicySet and Entities to determine

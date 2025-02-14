@@ -17,31 +17,31 @@ import (
 type Policy ast.Policy
 
 func wrapPolicy(p *ast.Policy) *Policy {
-    return (*Policy)(p)
+	return (*Policy)(p)
 }
 
 func (p *Policy) unwrap() *ast.Policy {
-    return (*ast.Policy)(p)
+	return (*ast.Policy)(p)
 }
 
 // Permit creates a new Permit policy.
 func Permit() *Policy {
-    return wrapPolicy(ast.Permit())
+	return wrapPolicy(ast.Permit())
 }
 
 // Forbid creates a new Forbid policy.
 func Forbid() *Policy {
-    return wrapPolicy(ast.Forbid())
+	return wrapPolicy(ast.Forbid())
 }
 
 // When adds a conditional clause.
 func (p *Policy) When(node Node) *Policy {
-    return wrapPolicy(p.unwrap().When(node.Node))
+	return wrapPolicy(p.unwrap().When(node.Node))
 }
 
 // Unless adds a conditional clause.
 func (p *Policy) Unless(node Node) *Policy {
-    return wrapPolicy(p.unwrap().Unless(node.Node))
+	return wrapPolicy(p.unwrap().Unless(node.Node))
 }
 
 // MarshalJSON encodes a single Policy statement in the JSON format specified by the [Cedar documentation].

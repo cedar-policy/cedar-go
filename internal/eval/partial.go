@@ -1,9 +1,9 @@
 package eval
 
 import (
-    "errors"
-    "fmt"
-    "slices"
+	"errors"
+	"fmt"
+	"slices"
 
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
@@ -13,154 +13,154 @@ import (
 const variableEntityType = "__cedar::variable"
 
 func Variable(v types.String) types.Value {
-    return types.NewEntityUID(variableEntityType, v)
+	return types.NewEntityUID(variableEntityType, v)
 }
 
 const ignoreEntityType = "__cedar::ignore"
 
 func Ignore() types.Value {
-    return types.NewEntityUID(ignoreEntityType, "")
+	return types.NewEntityUID(ignoreEntityType, "")
 }
 
 func IsVariable(v types.Value) bool {
-    if ent, ok := v.(types.EntityUID); ok && ent.Type == variableEntityType {
-        return true
-    }
-    return false
+	if ent, ok := v.(types.EntityUID); ok && ent.Type == variableEntityType {
+		return true
+	}
+	return false
 }
 
 func ToVariable(ent types.EntityUID) (types.String, bool) {
-    if ent.Type == variableEntityType {
-        return ent.ID, true
-    }
-    return "", false
+	if ent.Type == variableEntityType {
+		return ent.ID, true
+	}
+	return "", false
 }
 
 func IsIgnore(v types.Value) bool {
-    if ent, ok := v.(types.EntityUID); ok && ent.Type == ignoreEntityType {
-        return true
-    }
-    return false
+	if ent, ok := v.(types.EntityUID); ok && ent.Type == ignoreEntityType {
+		return true
+	}
+	return false
 }
 
 // PartialPolicy returns a partially evaluated version of the policy and a boolean indicating if the policy should be kept.
 // (Policies that are determined to evaluate to false are not kept.)
 func PartialPolicy(env Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
-    p2 := *p
-    if p2.Principal, keep = partialPrincipalScope(env, env.Principal, p2.Principal); !keep {
-        return nil, false
-    }
-    if p2.Action, keep = partialActionScope(env, env.Action, p2.Action); !keep {
-        return nil, false
-    }
-    if p2.Resource, keep = partialResourceScope(env, env.Resource, p2.Resource); !keep {
-        return nil, false
-    }
-    p2.Annotations = slices.Clone(p.Annotations)
-    p2.Conditions = nil
-    for _, c := range p.Conditions {
-        body, err := partial(env, c.Body)
-        if errors.Is(err, errVariable) {
-            p2.Conditions = append(p2.Conditions, c)
-            continue
-        } else if errors.Is(err, errIgnore) {
-            if types.Effect(p.Effect) == types.Permit {
-                continue
-            }
-            return nil, false
-        } else if err != nil {
-            p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: extError(err)})
-            return &p2, true
-        } else if v, ok := body.(ast.NodeValue); ok {
-            if b, bok := v.Value.(types.Boolean); bok {
-                if bool(b) != bool(c.Condition) {
-                    return nil, false
-                }
-                continue
-            }
-            err := fmt.Errorf("%w: condition expected bool", ErrType)
-            p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: extError(err)})
-            return &p2, true
-        }
-        p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: body})
-    }
-    return &p2, true
+	p2 := *p
+	if p2.Principal, keep = partialPrincipalScope(env, env.Principal, p2.Principal); !keep {
+		return nil, false
+	}
+	if p2.Action, keep = partialActionScope(env, env.Action, p2.Action); !keep {
+		return nil, false
+	}
+	if p2.Resource, keep = partialResourceScope(env, env.Resource, p2.Resource); !keep {
+		return nil, false
+	}
+	p2.Annotations = slices.Clone(p.Annotations)
+	p2.Conditions = nil
+	for _, c := range p.Conditions {
+		body, err := partial(env, c.Body)
+		if errors.Is(err, errVariable) {
+			p2.Conditions = append(p2.Conditions, c)
+			continue
+		} else if errors.Is(err, errIgnore) {
+			if types.Effect(p.Effect) == types.Permit {
+				continue
+			}
+			return nil, false
+		} else if err != nil {
+			p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: extError(err)})
+			return &p2, true
+		} else if v, ok := body.(ast.NodeValue); ok {
+			if b, bok := v.Value.(types.Boolean); bok {
+				if bool(b) != bool(c.Condition) {
+					return nil, false
+				}
+				continue
+			}
+			err := fmt.Errorf("%w: condition expected bool", ErrType)
+			p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: extError(err)})
+			return &p2, true
+		}
+		p2.Conditions = append(p2.Conditions, ast.ConditionType{Condition: c.Condition, Body: body})
+	}
+	return &p2, true
 }
 
 func partialPrincipalScope(env Env, ent types.Value, scope ast.IsPrincipalScopeNode) (ast.IsPrincipalScopeNode, bool) {
-    evaled, result := partialScopeEval(env, ent, scope)
-    switch {
-    case evaled && !result:
-        return nil, false
-    case evaled && result:
-        return ast.ScopeTypeAll{}, true
-    default:
-        return scope, true
-    }
+	evaled, result := partialScopeEval(env, ent, scope)
+	switch {
+	case evaled && !result:
+		return nil, false
+	case evaled && result:
+		return ast.ScopeTypeAll{}, true
+	default:
+		return scope, true
+	}
 }
 
 func partialActionScope(env Env, ent types.Value, scope ast.IsActionScopeNode) (ast.IsActionScopeNode, bool) {
-    evaled, result := partialScopeEval(env, ent, scope)
-    switch {
-    case evaled && !result:
-        return nil, false
-    case evaled && result:
-        return ast.ScopeTypeAll{}, true
-    default:
-        return scope, true
-    }
+	evaled, result := partialScopeEval(env, ent, scope)
+	switch {
+	case evaled && !result:
+		return nil, false
+	case evaled && result:
+		return ast.ScopeTypeAll{}, true
+	default:
+		return scope, true
+	}
 }
 
 func partialResourceScope(env Env, ent types.Value, scope ast.IsResourceScopeNode) (ast.IsResourceScopeNode, bool) {
-    evaled, result := partialScopeEval(env, ent, scope)
-    switch {
-    case evaled && !result:
-        return nil, false
-    case evaled && result:
-        return ast.ScopeTypeAll{}, true
-    default:
-        return scope, true
-    }
+	evaled, result := partialScopeEval(env, ent, scope)
+	switch {
+	case evaled && !result:
+		return nil, false
+	case evaled && result:
+		return ast.ScopeTypeAll{}, true
+	default:
+		return scope, true
+	}
 }
 
 func entityReferenceToUID(ef types.EntityReference) types.EntityUID {
-    switch e := ef.(type) {
-    case types.EntityUID:
-        return e
-    case types.VariableSlot:
-        panic("variable slot cannot be evaluated, you should instantiate a template-linked policy first")
-    default:
-        panic(fmt.Sprintf("unknown entity reference type %T", e))
-    }
+	switch e := ef.(type) {
+	case types.EntityUID:
+		return e
+	case types.VariableSlot:
+		panic("variable slot cannot be evaluated, you should instantiate a template-linked policy first")
+	default:
+		panic(fmt.Sprintf("unknown entity reference type %T", e))
+	}
 }
 
 func partialScopeEval(env Env, ent types.Value, in ast.IsScopeNode) (evaled bool, result bool) {
-    if IsVariable(ent) {
-        return false, false
-    } else if IsIgnore(ent) {
-        return true, true
-    }
-    e, ok := ent.(types.EntityUID)
-    if !ok {
-        return false, false
-    }
-    switch t := in.(type) {
-    case ast.ScopeTypeAll:
-        return true, true
-    case ast.ScopeTypeEq:
-        return true, e == t.Entity
-    case ast.ScopeTypeIn:
-        return true, entityInOne(env, e, entityReferenceToUID(t.Entity))
-    case ast.ScopeTypeInSet:
-        set := mapset.Immutable(t.Entities...)
-        return true, entityInSet(env, e, set)
-    case ast.ScopeTypeIs:
-        return true, e.Type == t.Type
-    case ast.ScopeTypeIsIn:
-        return true, e.Type == t.Type && entityInOne(env, e, entityReferenceToUID(t.Entity))
-    default:
-        panic(fmt.Sprintf("unknown scope type %T", t))
-    }
+	if IsVariable(ent) {
+		return false, false
+	} else if IsIgnore(ent) {
+		return true, true
+	}
+	e, ok := ent.(types.EntityUID)
+	if !ok {
+		return false, false
+	}
+	switch t := in.(type) {
+	case ast.ScopeTypeAll:
+		return true, true
+	case ast.ScopeTypeEq:
+		return true, e == t.Entity
+	case ast.ScopeTypeIn:
+		return true, entityInOne(env, e, entityReferenceToUID(t.Entity))
+	case ast.ScopeTypeInSet:
+		set := mapset.Immutable(t.Entities...)
+		return true, entityInSet(env, e, set)
+	case ast.ScopeTypeIs:
+		return true, e.Type == t.Type
+	case ast.ScopeTypeIsIn:
+		return true, e.Type == t.Type && entityInOne(env, e, entityReferenceToUID(t.Entity))
+	default:
+		panic(fmt.Sprintf("unknown scope type %T", t))
+	}
 }
 
 var errVariable = fmt.Errorf("variable")
@@ -168,56 +168,56 @@ var errIgnore = fmt.Errorf("ignore")
 
 // NOTE: nodes is modified in place, so be sure to send unique copy in
 func tryPartial(env Env, nodes []ast.IsNode,
-    mkEval func(values []types.Value) Evaler,
-    mkNode func(nodes []ast.IsNode) ast.IsNode,
+	mkEval func(values []types.Value) Evaler,
+	mkNode func(nodes []ast.IsNode) ast.IsNode,
 ) (ast.IsNode, error) {
-    var values []types.Value
-    ok := true
-    for i, n := range nodes {
-        n, err := partial(env, n)
-        if errors.Is(err, errVariable) {
-            ok = false
-            continue
-        } else if err != nil {
-            return nil, err
-        }
-        nodes[i] = n
-        if !ok {
-            continue
-        }
-        if v, vok := n.(ast.NodeValue); vok {
-            values = append(values, v.Value)
-            continue
-        }
-        ok = false
-    }
-    if ok {
-        eval := mkEval(values)
-        v, err := eval.Eval(env)
-        if err != nil {
-            return nil, err
-        }
-        if IsVariable(v) {
-            return mkNode(nodes), errVariable
-        } else if IsIgnore(v) {
-            return nil, errIgnore
-        }
-        return ast.NodeValue{Value: v}, nil
-    }
-    return mkNode(nodes), nil
+	var values []types.Value
+	ok := true
+	for i, n := range nodes {
+		n, err := partial(env, n)
+		if errors.Is(err, errVariable) {
+			ok = false
+			continue
+		} else if err != nil {
+			return nil, err
+		}
+		nodes[i] = n
+		if !ok {
+			continue
+		}
+		if v, vok := n.(ast.NodeValue); vok {
+			values = append(values, v.Value)
+			continue
+		}
+		ok = false
+	}
+	if ok {
+		eval := mkEval(values)
+		v, err := eval.Eval(env)
+		if err != nil {
+			return nil, err
+		}
+		if IsVariable(v) {
+			return mkNode(nodes), errVariable
+		} else if IsIgnore(v) {
+			return nil, errIgnore
+		}
+		return ast.NodeValue{Value: v}, nil
+	}
+	return mkNode(nodes), nil
 }
 
 func tryPartialBinary(env Env, v ast.BinaryNode, mkEval func(a, b Evaler) Evaler, wrap func(b ast.BinaryNode) ast.IsNode) (ast.IsNode, error) {
-    return tryPartial(env, []ast.IsNode{v.Left, v.Right},
-        func(values []types.Value) Evaler { return mkEval(newLiteralEval(values[0]), newLiteralEval(values[1])) },
-        func(nodes []ast.IsNode) ast.IsNode { return wrap(ast.BinaryNode{Left: nodes[0], Right: nodes[1]}) },
-    )
+	return tryPartial(env, []ast.IsNode{v.Left, v.Right},
+		func(values []types.Value) Evaler { return mkEval(newLiteralEval(values[0]), newLiteralEval(values[1])) },
+		func(nodes []ast.IsNode) ast.IsNode { return wrap(ast.BinaryNode{Left: nodes[0], Right: nodes[1]}) },
+	)
 }
 func tryPartialUnary(env Env, v ast.UnaryNode, mkEval func(a Evaler) Evaler, wrap func(b ast.UnaryNode) ast.IsNode) (ast.IsNode, error) {
-    return tryPartial(env, []ast.IsNode{v.Arg},
-        func(values []types.Value) Evaler { return mkEval(newLiteralEval(values[0])) },
-        func(nodes []ast.IsNode) ast.IsNode { return wrap(ast.UnaryNode{Arg: nodes[0]}) },
-    )
+	return tryPartial(env, []ast.IsNode{v.Arg},
+		func(values []types.Value) Evaler { return mkEval(newLiteralEval(values[0])) },
+		func(nodes []ast.IsNode) ast.IsNode { return wrap(ast.UnaryNode{Arg: nodes[0]}) },
+	)
 }
 
 // partial takes in an ast.Node and finds does as much as is possible given the context
@@ -399,132 +399,132 @@ func partial(env Env, n ast.IsNode) (ast.IsNode, error) {
 }
 
 func isNonBoolValue(in ast.IsNode) bool {
-    n, ok := in.(ast.NodeValue)
-    if !ok {
-        return false
-    }
-    _, ok = n.Value.(types.Boolean)
-    return !ok
+	n, ok := in.(ast.NodeValue)
+	if !ok {
+		return false
+	}
+	_, ok = n.Value.(types.Boolean)
+	return !ok
 }
 
 func isTrue(in ast.IsNode) bool {
-    n, ok := in.(ast.NodeValue)
-    if !ok {
-        return false
-    }
-    v, ok := n.Value.(types.Boolean)
-    if !ok {
-        return false
-    }
-    return v == types.Boolean(true)
+	n, ok := in.(ast.NodeValue)
+	if !ok {
+		return false
+	}
+	v, ok := n.Value.(types.Boolean)
+	if !ok {
+		return false
+	}
+	return v == types.Boolean(true)
 }
 
 func isFalse(in ast.IsNode) bool {
-    n, ok := in.(ast.NodeValue)
-    if !ok {
-        return false
-    }
-    v, ok := n.Value.(types.Boolean)
-    if !ok {
-        return false
-    }
-    return v == types.Boolean(false)
+	n, ok := in.(ast.NodeValue)
+	if !ok {
+		return false
+	}
+	v, ok := n.Value.(types.Boolean)
+	if !ok {
+		return false
+	}
+	return v == types.Boolean(false)
 }
 
 func partialIfThenElse(env Env, v ast.NodeTypeIfThenElse) (ast.IsNode, error) {
-    if_, ifErr := partial(env, v.If)
-    switch {
-    case errors.Is(ifErr, errVariable):
-    case ifErr != nil:
-        return nil, ifErr
-    case isNonBoolValue(if_):
-        return nil, fmt.Errorf("%w: ifThenElse expected bool", ErrType)
-    case isTrue(if_):
-        return partial(env, v.Then)
-    case isFalse(if_):
-        return partial(env, v.Else)
-    }
-    then, thenErr := partial(env, v.Then)
-    if errors.Is(thenErr, errIgnore) {
-        return nil, thenErr
-    } else if thenErr != nil && !errors.Is(thenErr, errVariable) {
-        then = extError(thenErr)
-    }
-    else_, elseErr := partial(env, v.Else)
-    if errors.Is(elseErr, errIgnore) {
-        return nil, elseErr
-    } else if elseErr != nil && !errors.Is(elseErr, errVariable) {
-        else_ = extError(elseErr)
-    }
-    return ast.NodeTypeIfThenElse{If: if_, Then: then, Else: else_}, nil
+	if_, ifErr := partial(env, v.If)
+	switch {
+	case errors.Is(ifErr, errVariable):
+	case ifErr != nil:
+		return nil, ifErr
+	case isNonBoolValue(if_):
+		return nil, fmt.Errorf("%w: ifThenElse expected bool", ErrType)
+	case isTrue(if_):
+		return partial(env, v.Then)
+	case isFalse(if_):
+		return partial(env, v.Else)
+	}
+	then, thenErr := partial(env, v.Then)
+	if errors.Is(thenErr, errIgnore) {
+		return nil, thenErr
+	} else if thenErr != nil && !errors.Is(thenErr, errVariable) {
+		then = extError(thenErr)
+	}
+	else_, elseErr := partial(env, v.Else)
+	if errors.Is(elseErr, errIgnore) {
+		return nil, elseErr
+	} else if elseErr != nil && !errors.Is(elseErr, errVariable) {
+		else_ = extError(elseErr)
+	}
+	return ast.NodeTypeIfThenElse{If: if_, Then: then, Else: else_}, nil
 }
 
 func partialAnd(env Env, v ast.NodeTypeAnd) (ast.IsNode, error) {
-    left, leftErr := partial(env, v.Left)
-    switch {
-    case errors.Is(leftErr, errVariable):
-    case leftErr != nil:
-        return nil, leftErr
-    case isNonBoolValue(left):
-        return nil, fmt.Errorf("%w: and expected bool", ErrType)
-    case isFalse(left):
-        return ast.NodeValue{Value: types.False}, nil
-    case isTrue(left):
-        return tryPartialBinary(env,
-            ast.BinaryNode{Left: ast.NodeValue{Value: types.True}, Right: v.Right},
-            newAndEval,
-            func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAnd{BinaryNode: b} },
-        )
-    }
-    right, rightErr := partial(env, v.Right)
-    if errors.Is(rightErr, errIgnore) {
-        return nil, rightErr
-    } else if rightErr != nil && !errors.Is(rightErr, errVariable) {
-        right = extError(rightErr)
-    }
-    return ast.NodeTypeAnd{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, nil
+	left, leftErr := partial(env, v.Left)
+	switch {
+	case errors.Is(leftErr, errVariable):
+	case leftErr != nil:
+		return nil, leftErr
+	case isNonBoolValue(left):
+		return nil, fmt.Errorf("%w: and expected bool", ErrType)
+	case isFalse(left):
+		return ast.NodeValue{Value: types.False}, nil
+	case isTrue(left):
+		return tryPartialBinary(env,
+			ast.BinaryNode{Left: ast.NodeValue{Value: types.True}, Right: v.Right},
+			newAndEval,
+			func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAnd{BinaryNode: b} },
+		)
+	}
+	right, rightErr := partial(env, v.Right)
+	if errors.Is(rightErr, errIgnore) {
+		return nil, rightErr
+	} else if rightErr != nil && !errors.Is(rightErr, errVariable) {
+		right = extError(rightErr)
+	}
+	return ast.NodeTypeAnd{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, nil
 }
 
 func partialOr(env Env, v ast.NodeTypeOr) (ast.IsNode, error) {
-    left, leftErr := partial(env, v.Left)
-    switch {
-    case errors.Is(leftErr, errVariable):
-    case leftErr != nil:
-        return nil, leftErr
-    case isNonBoolValue(left):
-        return nil, fmt.Errorf("%w: or expected bool", ErrType)
-    case isTrue(left):
-        return ast.NodeValue{Value: types.True}, nil
-    case isFalse(left):
-        return tryPartialBinary(env,
-            ast.BinaryNode{Left: ast.NodeValue{Value: types.False}, Right: v.Right},
-            newOrEval,
-            func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeOr{BinaryNode: b} },
-        )
-    }
-    right, rightErr := partial(env, v.Right)
-    if errors.Is(rightErr, errIgnore) {
-        return nil, rightErr
-    } else if rightErr != nil && !errors.Is(rightErr, errVariable) {
-        right = extError(rightErr)
-    }
-    return ast.NodeTypeOr{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, nil
+	left, leftErr := partial(env, v.Left)
+	switch {
+	case errors.Is(leftErr, errVariable):
+	case leftErr != nil:
+		return nil, leftErr
+	case isNonBoolValue(left):
+		return nil, fmt.Errorf("%w: or expected bool", ErrType)
+	case isTrue(left):
+		return ast.NodeValue{Value: types.True}, nil
+	case isFalse(left):
+		return tryPartialBinary(env,
+			ast.BinaryNode{Left: ast.NodeValue{Value: types.False}, Right: v.Right},
+			newOrEval,
+			func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeOr{BinaryNode: b} },
+		)
+	}
+	right, rightErr := partial(env, v.Right)
+	if errors.Is(rightErr, errIgnore) {
+		return nil, rightErr
+	} else if rightErr != nil && !errors.Is(rightErr, errVariable) {
+		right = extError(rightErr)
+	}
+	return ast.NodeTypeOr{BinaryNode: ast.BinaryNode{Left: left, Right: right}}, nil
 }
 
 const partialErrorName = "__cedar::partialError"
 
 func extError(err error) ast.NodeTypeExtensionCall {
-    return ast.NodeTypeExtensionCall{Name: partialErrorName, Args: []ast.IsNode{ast.NodeValue{Value: types.String(err.Error())}}}
+	return ast.NodeTypeExtensionCall{Name: partialErrorName, Args: []ast.IsNode{ast.NodeValue{Value: types.String(err.Error())}}}
 }
 
 // partialHasEval
 type partialHasEval struct {
-    object    Evaler
-    attribute types.String
+	object    Evaler
+	attribute types.String
 }
 
 func newPartialHasEval(record Evaler, attribute types.String) *partialHasEval {
-    return &partialHasEval{object: record, attribute: attribute}
+	return &partialHasEval{object: record, attribute: attribute}
 }
 
 func (n *partialHasEval) Eval(env Env) (types.Value, error) {
@@ -552,19 +552,19 @@ func (n *partialHasEval) Eval(env Env) (types.Value, error) {
 
 // partialErrorEval
 type partialErrorEval struct {
-    arg Evaler
+	arg Evaler
 }
 
 func newPartialErrorEval(err Evaler) *partialErrorEval {
-    return &partialErrorEval{
-        arg: err,
-    }
+	return &partialErrorEval{
+		arg: err,
+	}
 }
 
 func (n *partialErrorEval) Eval(env Env) (types.Value, error) {
-    v, err := evalString(n.arg, env)
-    if err != nil {
-        return nil, err
-    }
-    return zeroValue(), errors.New(string(v))
+	v, err := evalString(n.arg, env)
+	if err != nil {
+		return nil, err
+	}
+	return zeroValue(), errors.New(string(v))
 }

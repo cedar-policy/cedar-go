@@ -1,16 +1,16 @@
 package cedar_test
 
 import (
-    "testing"
+	"testing"
 
-    "github.com/cedar-policy/cedar-go"
-    "github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestPolicySlice(t *testing.T) {
-    t.Parallel()
+	t.Parallel()
 
-    policiesStr := `permit (
+	policiesStr := `permit (
     principal,
     action == Action::"editPhoto",
     resource
@@ -23,15 +23,15 @@ forbid (
     resource
 );`
 
-    policies, err := cedar.NewPolicyListFromBytes("", []byte(policiesStr))
-    testutil.OK(t, err)
-    testutil.Equals(t, string(policies.MarshalCedar()), policiesStr)
+	policies, err := cedar.NewPolicyListFromBytes("", []byte(policiesStr))
+	testutil.OK(t, err)
+	testutil.Equals(t, string(policies.MarshalCedar()), policiesStr)
 }
 
 func TestPolicySlice2(t *testing.T) {
-    t.Parallel()
+	t.Parallel()
 
-    policiesStr := `permit (
+	policiesStr := `permit (
     principal,
     action == Action::"editPhoto",
     resource
@@ -50,7 +50,7 @@ permit (
     resource
 );`
 
-    policies, err := cedar.NewPolicyListFromBytes("", []byte(policiesStr))
-    testutil.OK(t, err)
-    testutil.Equals(t, string(policies.MarshalCedar()), policiesStr)
+	policies, err := cedar.NewPolicyListFromBytes("", []byte(policiesStr))
+	testutil.OK(t, err)
+	testutil.Equals(t, string(policies.MarshalCedar()), policiesStr)
 }

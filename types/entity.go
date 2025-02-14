@@ -1,9 +1,9 @@
 package types
 
 import (
-    "encoding/json"
-    "slices"
-    "strings"
+	"encoding/json"
+	"slices"
+	"strings"
 )
 
 const CedarVariable = EntityType("__cedar::variable")
@@ -19,18 +19,18 @@ type Entity struct {
 // MarshalJSON serializes Entity as a JSON object, using the implicit form of EntityUID encoding to match the Rust
 // SDK's behavior.
 func (e Entity) MarshalJSON() ([]byte, error) {
-    parents := make([]ImplicitlyMarshaledEntityUID, 0, e.Parents.Len())
-    e.Parents.Iterate(func(p EntityUID) bool {
-        parents = append(parents, ImplicitlyMarshaledEntityUID(p))
-        return true
-    })
-    slices.SortFunc(parents, func(a, b ImplicitlyMarshaledEntityUID) int {
-        if cmp := strings.Compare(string(a.Type), string(b.Type)); cmp != 0 {
-            return cmp
-        }
+	parents := make([]ImplicitlyMarshaledEntityUID, 0, e.Parents.Len())
+	e.Parents.Iterate(func(p EntityUID) bool {
+		parents = append(parents, ImplicitlyMarshaledEntityUID(p))
+		return true
+	})
+	slices.SortFunc(parents, func(a, b ImplicitlyMarshaledEntityUID) int {
+		if cmp := strings.Compare(string(a.Type), string(b.Type)); cmp != 0 {
+			return cmp
+		}
 
-        return strings.Compare(string(a.ID), string(b.ID))
-    })
+		return strings.Compare(string(a.ID), string(b.ID))
+	})
 
 	m := struct {
 		UID        ImplicitlyMarshaledEntityUID   `json:"uid"`
@@ -47,12 +47,12 @@ func (e Entity) MarshalJSON() ([]byte, error) {
 }
 
 type EntityReference interface {
-    isEntityReference()
+	isEntityReference()
 }
 
 type VariableSlot struct {
-    ID   SlotID `json:"slot"`
-    Name String `json:"name"`
+	ID   SlotID `json:"slot"`
+	Name String `json:"name"`
 }
 
 func (v VariableSlot) isEntityReference() {}

@@ -201,12 +201,12 @@ func TestBatch(t *testing.T) {
 			},
 		},
 
-        {"ignoreContext",
-            ast.Permit().
-                When(ast.Context().Access("key").Equal(ast.Long(42))).
-                When(ast.Principal().Equal(ast.Value(p1))).
-                When(ast.Action().Equal(ast.Value(a1))).
-                When(ast.Resource().Equal(ast.Value(r2))),
+		{"ignoreContext",
+			ast.Permit().
+				When(ast.Context().Access("key").Equal(ast.Long(42))).
+				When(ast.Principal().Equal(ast.Value(p1))).
+				When(ast.Action().Equal(ast.Value(a1))).
+				When(ast.Resource().Equal(ast.Value(r2))),
 
 			types.EntityMap{},
 			Request{
@@ -310,7 +310,7 @@ func TestBatchErrors(t *testing.T) {
 		testutil.OK(t, err)
 		testutil.Equals(t, total, 0)
 
-    })
+	})
 
 	t.Run("missingPrincipal", func(t *testing.T) {
 		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
@@ -513,9 +513,9 @@ func TestBatchErrors(t *testing.T) {
 }
 
 func TestIgnoreReasons(t *testing.T) {
-    t.Parallel()
+	t.Parallel()
 
-    doc := `
+	doc := `
 	@id("bob0")
 	permit (
 		principal == Principal::"bob",
@@ -615,88 +615,88 @@ func TestIgnoreReasons(t *testing.T) {
 		}
 	}
 
-    tests := []struct {
-        Name     string
-        Request  Request
-        Total    int
-        Decision types.Decision
-        Reasons  []types.PolicyID
-    }{
-        {"when-could-bob-access-prod-ignoring-context",
-            Request{
-                Principal: types.NewEntityUID("Principal", "bob"),
-                Action:    types.NewEntityUID("Action", "access"),
-                Resource:  types.NewEntityUID("Resource", "prod"),
-                Context:   Ignore(),
-            },
-            1,
-            types.Allow,
-            []types.PolicyID{"bob0", "bob1"},
-        },
-        {"bob-is-forbidden",
-            Request{
-                Principal: types.NewEntityUID("Principal", "bob"),
-                Action:    types.NewEntityUID("Action", "access"),
-                Resource:  types.NewEntityUID("Resource", "prod"),
-                Context: types.NewRecord(types.RecordMap{
-                    "location": types.String("unknown"),
-                    "device":   types.String("bad"),
-                }),
-            },
-            1,
-            types.Deny,
-            []types.PolicyID{"bob2", "bob3"},
-        },
-        {"can-anyone-access-prod-ignoring-context",
-            Request{
-                Principal: Ignore(),
-                Action:    types.NewEntityUID("Action", "access"),
-                Resource:  types.NewEntityUID("Resource", "prod"),
-                Context:   Ignore(),
-            },
-            1,
-            types.Allow,
-            []types.PolicyID{"bob0", "bob1", "alice0"},
-        },
-        {"can-anyone-drop-prod-ignoring-context",
-            Request{
-                Principal: Ignore(),
-                Action:    types.NewEntityUID("Action", "drop"),
-                Resource:  types.NewEntityUID("Resource", "prod"),
-                Context:   Ignore(),
-            },
-            1,
-            types.Allow,
-            []types.PolicyID{"alice1", "spy0"},
-        },
-        {"what-permit-policies-relate-to-drops",
-            Request{
-                Principal: Ignore(),
-                Action:    types.NewEntityUID("Action", "drop"),
-                Resource:  Ignore(),
-                Context:   Ignore(),
-            },
-            1,
-            types.Allow,
-            []types.PolicyID{"alice1", "eve0", "spy0"},
-        },
-        {"what-permit-policies-relate-to-bob",
-            Request{
-                Principal: types.NewEntityUID("Principal", "bob"),
-                Action:    Ignore(),
-                Resource:  Ignore(),
-                Context:   Ignore(),
-            },
-            1,
-            types.Allow,
-            []types.PolicyID{"bob0", "bob1", "bob4", "bob5-condition"},
-        },
-    }
+	tests := []struct {
+		Name     string
+		Request  Request
+		Total    int
+		Decision types.Decision
+		Reasons  []types.PolicyID
+	}{
+		{"when-could-bob-access-prod-ignoring-context",
+			Request{
+				Principal: types.NewEntityUID("Principal", "bob"),
+				Action:    types.NewEntityUID("Action", "access"),
+				Resource:  types.NewEntityUID("Resource", "prod"),
+				Context:   Ignore(),
+			},
+			1,
+			types.Allow,
+			[]types.PolicyID{"bob0", "bob1"},
+		},
+		{"bob-is-forbidden",
+			Request{
+				Principal: types.NewEntityUID("Principal", "bob"),
+				Action:    types.NewEntityUID("Action", "access"),
+				Resource:  types.NewEntityUID("Resource", "prod"),
+				Context: types.NewRecord(types.RecordMap{
+					"location": types.String("unknown"),
+					"device":   types.String("bad"),
+				}),
+			},
+			1,
+			types.Deny,
+			[]types.PolicyID{"bob2", "bob3"},
+		},
+		{"can-anyone-access-prod-ignoring-context",
+			Request{
+				Principal: Ignore(),
+				Action:    types.NewEntityUID("Action", "access"),
+				Resource:  types.NewEntityUID("Resource", "prod"),
+				Context:   Ignore(),
+			},
+			1,
+			types.Allow,
+			[]types.PolicyID{"bob0", "bob1", "alice0"},
+		},
+		{"can-anyone-drop-prod-ignoring-context",
+			Request{
+				Principal: Ignore(),
+				Action:    types.NewEntityUID("Action", "drop"),
+				Resource:  types.NewEntityUID("Resource", "prod"),
+				Context:   Ignore(),
+			},
+			1,
+			types.Allow,
+			[]types.PolicyID{"alice1", "spy0"},
+		},
+		{"what-permit-policies-relate-to-drops",
+			Request{
+				Principal: Ignore(),
+				Action:    types.NewEntityUID("Action", "drop"),
+				Resource:  Ignore(),
+				Context:   Ignore(),
+			},
+			1,
+			types.Allow,
+			[]types.PolicyID{"alice1", "eve0", "spy0"},
+		},
+		{"what-permit-policies-relate-to-bob",
+			Request{
+				Principal: types.NewEntityUID("Principal", "bob"),
+				Action:    Ignore(),
+				Resource:  Ignore(),
+				Context:   Ignore(),
+			},
+			1,
+			types.Allow,
+			[]types.PolicyID{"bob0", "bob1", "bob4", "bob5-condition"},
+		},
+	}
 
-    for _, tt := range tests {
-        tt := tt
-        t.Run(tt.Name, func(t *testing.T) {
-            t.Parallel()
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
 
 			var reasons []types.PolicyID
 			var total int
@@ -780,14 +780,14 @@ func TestFindVariables(t *testing.T) {
 		{"multi", types.NewSet(Variable("bananas"), Variable("test")), []types.String{"bananas", "test"}},
 	}
 
-    for _, tt := range tests {
-        tt := tt
-        t.Run(tt.name, func(t *testing.T) {
-            t.Parallel()
-            out := mapset.Make[types.String]()
-            findVariables(out, tt.in)
-            testutil.Equals(t, out, mapset.FromItems(tt.out...))
-        })
-    }
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := mapset.Make[types.String]()
+			findVariables(out, tt.in)
+			testutil.Equals(t, out, mapset.FromItems(tt.out...))
+		})
+	}
 
 }
