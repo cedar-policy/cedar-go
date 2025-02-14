@@ -15,21 +15,39 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		return
 	case ast.ScopeTypeEq:
 		s.Op = "=="
-		e := types.ImplicitlyMarshaledEntityUID(t.Entity)
-		s.Entity = &e
+
+		switch ent := t.Entity.(type) {
+		case types.EntityUID:
+			e := types.ImplicitlyMarshaledEntityUID(ent)
+			s.Entity = &e
+		case types.VariableSlot:
+			varName := ent.ID.String()
+			s.Slot = &varName
+		}
+
 		return
 	case ast.ScopeTypeIn:
 		s.Op = "in"
-		e := types.ImplicitlyMarshaledEntityUID(t.Entity)
-		s.Entity = &e
+
+		switch ent := t.Entity.(type) {
+		case types.EntityUID:
+			e := types.ImplicitlyMarshaledEntityUID(ent)
+			s.Entity = &e
+		case types.VariableSlot:
+			varName := ent.ID.String()
+			s.Slot = &varName
+		}
+
 		return
 	case ast.ScopeTypeInSet:
 		s.Op = "in"
+
 		es := make([]types.ImplicitlyMarshaledEntityUID, len(t.Entities))
 		for i, e := range t.Entities {
 			es[i] = types.ImplicitlyMarshaledEntityUID(e)
 		}
 		s.Entities = es
+
 		return
 	case ast.ScopeTypeIs:
 		s.Op = "is"
@@ -38,9 +56,18 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 	case ast.ScopeTypeIsIn:
 		s.Op = "is"
 		s.EntityType = string(t.Type)
-		s.In = &scopeInJSON{
-			Entity: types.ImplicitlyMarshaledEntityUID(t.Entity),
+		in := &scopeInJSON{}
+
+		switch et := t.Entity.(type) {
+		case types.EntityUID:
+			uid := types.ImplicitlyMarshaledEntityUID(et)
+			in.Entity = &uid
+		case types.VariableSlot:
+			varName := et.ID.String()
+			in.Slot = &varName
 		}
+
+		s.In = in
 		return
 	default:
 		panic(fmt.Sprintf("unknown scope type %T", t))
