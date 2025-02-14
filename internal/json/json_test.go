@@ -5,9 +5,9 @@ import (
     "net/netip"
     "testing"
 
-    "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/internal/testutil"
-    "github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func TestUnmarshalJSON(t *testing.T) {
@@ -377,12 +377,26 @@ func TestUnmarshalJSON(t *testing.T) {
             "has",
             `{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"has":{"left":{"Var":"context"},"attr":"key"}}}]}`,
-            ast.Permit().When(ast.Context().Has("key")),
-            testutil.OK,
-        },
-        {
-            "is",
-            `{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			ast.Permit().When(ast.Context().Has("key")),
+			testutil.OK,
+		},
+		{
+			"getTag",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"getTag":{"left": {"Var": "principal"},"right": {"Value": "key"}}}}]}`,
+			ast.Permit().When(ast.Principal().GetTag(ast.String("key"))),
+			testutil.OK,
+		},
+		{
+			"hasTag",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"hasTag":{"left": {"Var": "principal"},"right": {"Value": "key"}}}}]}`,
+			ast.Permit().When(ast.Principal().HasTag(ast.String("key"))),
+			testutil.OK,
+		},
+		{
+			"is",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"resource"},"entity_type":"T"}}}]}`,
             ast.Permit().When(ast.Resource().Is("T")),
             testutil.OK,
@@ -748,41 +762,41 @@ func TestUnmarshalErrors(t *testing.T) {
 }
 
 func TestMarshalExtensions(t *testing.T) {
-    t.Parallel()
-    tests := []struct {
-        name string
-        in   *ast.Policy
-        out  string
-    }{
-        {
-            "decimalType",
-            ast.Permit().When(ast.Value(types.UnsafeDecimal(42))),
-            `{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.0"}]}}]}`,
-        },
-        {
-            "decimalExtension",
-            ast.Permit().When(ast.ExtensionCall("decimal", ast.String("42.0"))),
-            `{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.0"}]}}]}`,
-        },
-        {
-            "ipType",
-            ast.Permit().When(ast.Value(types.IPAddr(netip.MustParsePrefix("127.0.0.1/16")))),
-            `{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"ip":[{"Value":"127.0.0.1/16"}]}}]}`,
-        },
-        {
-            "ipExtension",
-            ast.Permit().When(ast.ExtensionCall("ip", ast.String("127.0.0.1/16"))),
-            `{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"ip":[{"Value":"127.0.0.1/16"}]}}]}`,
-        },
-    }
-    for _, tt := range tests {
-        tt := tt
-        t.Run(tt.name, func(t *testing.T) {
-            t.Parallel()
-            p := (*Policy)(tt.in)
-            out, err := p.MarshalJSON()
-            testutil.OK(t, err)
-            testutil.Equals(t, string(out), tt.out)
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   *ast.Policy
+		out  string
+	}{
+		{
+			"decimalType",
+			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42)))),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.0"}]}}]}`,
+		},
+		{
+			"decimalExtension",
+			ast.Permit().When(ast.ExtensionCall("decimal", ast.String("42.0"))),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.0"}]}}]}`,
+		},
+		{
+			"ipType",
+			ast.Permit().When(ast.Value(types.IPAddr(netip.MustParsePrefix("127.0.0.1/16")))),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"ip":[{"Value":"127.0.0.1/16"}]}}]}`,
+		},
+		{
+			"ipExtension",
+			ast.Permit().When(ast.ExtensionCall("ip", ast.String("127.0.0.1/16"))),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"ip":[{"Value":"127.0.0.1/16"}]}}]}`,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			p := (*Policy)(tt.in)
+			out, err := p.MarshalJSON()
+			testutil.OK(t, err)
+			testutil.Equals(t, string(out), tt.out)
 
         })
     }

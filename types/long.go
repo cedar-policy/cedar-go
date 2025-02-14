@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+
+	"github.com/cedar-policy/cedar-go/internal"
 )
 
 // A Long is a whole number without decimals that can range from -9223372036854775808 to 9223372036854775807.
@@ -15,7 +17,7 @@ func (a Long) Equal(bi Value) bool {
 func (a Long) LessThan(bi Value) (bool, error) {
 	b, ok := bi.(Long)
 	if !ok {
-		return false, ErrNotComparable
+		return false, internal.ErrNotComparable
 	}
 	return a < b, nil
 }
@@ -23,7 +25,7 @@ func (a Long) LessThan(bi Value) (bool, error) {
 func (a Long) LessThanOrEqual(bi Value) (bool, error) {
 	b, ok := bi.(Long)
 	if !ok {
-		return false, ErrNotComparable
+		return false, internal.ErrNotComparable
 	}
 	return a <= b, nil
 }

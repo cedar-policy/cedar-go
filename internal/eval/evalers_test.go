@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -512,214 +513,6 @@ func TestNegateNode(t *testing.T) {
 	}
 }
 
-func TestLongLessThanNode(t *testing.T) {
-	t.Parallel()
-	{
-		tests := []struct {
-			lhs, rhs int64
-			result   bool
-		}{
-			{-1, -1, false},
-			{-1, 0, true},
-			{-1, 1, true},
-			{0, -1, false},
-			{0, 0, false},
-			{0, 1, true},
-			{1, -1, false},
-			{1, 0, false},
-			{1, 1, false},
-		}
-		for _, tt := range tests {
-			tt := tt
-			t.Run(fmt.Sprintf("%v<%v", tt.lhs, tt.rhs), func(t *testing.T) {
-				t.Parallel()
-				n := newLongLessThanEval(
-					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
-				v, err := n.Eval(Env{})
-				testutil.OK(t, err)
-				AssertBoolValue(t, v, tt.result)
-			})
-		}
-	}
-	{
-		tests := []struct {
-			name     string
-			lhs, rhs Evaler
-			err      error
-		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Long(0)), ErrType},
-			{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.True), ErrType},
-		}
-		for _, tt := range tests {
-			tt := tt
-			t.Run(tt.name, func(t *testing.T) {
-				t.Parallel()
-				n := newLongLessThanEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(Env{})
-				testutil.ErrorIs(t, err, tt.err)
-			})
-		}
-	}
-}
-
-func TestLongLessThanOrEqualNode(t *testing.T) {
-	t.Parallel()
-	{
-		tests := []struct {
-			lhs, rhs int64
-			result   bool
-		}{
-			{-1, -1, true},
-			{-1, 0, true},
-			{-1, 1, true},
-			{0, -1, false},
-			{0, 0, true},
-			{0, 1, true},
-			{1, -1, false},
-			{1, 0, false},
-			{1, 1, true},
-		}
-		for _, tt := range tests {
-			tt := tt
-			t.Run(fmt.Sprintf("%v<=%v", tt.lhs, tt.rhs), func(t *testing.T) {
-				t.Parallel()
-				n := newLongLessThanOrEqualEval(
-					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
-				v, err := n.Eval(Env{})
-				testutil.OK(t, err)
-				AssertBoolValue(t, v, tt.result)
-			})
-		}
-	}
-	{
-		tests := []struct {
-			name     string
-			lhs, rhs Evaler
-			err      error
-		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Long(0)), ErrType},
-			{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.True), ErrType},
-		}
-		for _, tt := range tests {
-			tt := tt
-			t.Run(tt.name, func(t *testing.T) {
-				t.Parallel()
-				n := newLongLessThanOrEqualEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(Env{})
-				testutil.ErrorIs(t, err, tt.err)
-			})
-		}
-	}
-}
-
-func TestLongGreaterThanNode(t *testing.T) {
-	t.Parallel()
-	{
-		tests := []struct {
-			lhs, rhs int64
-			result   bool
-		}{
-			{-1, -1, false},
-			{-1, 0, false},
-			{-1, 1, false},
-			{0, -1, true},
-			{0, 0, false},
-			{0, 1, false},
-			{1, -1, true},
-			{1, 0, true},
-			{1, 1, false},
-		}
-		for _, tt := range tests {
-			tt := tt
-			t.Run(fmt.Sprintf("%v>%v", tt.lhs, tt.rhs), func(t *testing.T) {
-				t.Parallel()
-				n := newLongGreaterThanEval(
-					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
-				v, err := n.Eval(Env{})
-				testutil.OK(t, err)
-				AssertBoolValue(t, v, tt.result)
-			})
-		}
-	}
-	{
-		tests := []struct {
-			name     string
-			lhs, rhs Evaler
-			err      error
-		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Long(0)), ErrType},
-			{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.True), ErrType},
-		}
-		for _, tt := range tests {
-			tt := tt
-			t.Run(tt.name, func(t *testing.T) {
-				t.Parallel()
-				n := newLongGreaterThanEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(Env{})
-				testutil.ErrorIs(t, err, tt.err)
-			})
-		}
-	}
-}
-
-func TestLongGreaterThanOrEqualNode(t *testing.T) {
-	t.Parallel()
-	{
-		tests := []struct {
-			lhs, rhs int64
-			result   bool
-		}{
-			{-1, -1, true},
-			{-1, 0, false},
-			{-1, 1, false},
-			{0, -1, true},
-			{0, 0, true},
-			{0, 1, false},
-			{1, -1, true},
-			{1, 0, true},
-			{1, 1, true},
-		}
-		for _, tt := range tests {
-			tt := tt
-			t.Run(fmt.Sprintf("%v>=%v", tt.lhs, tt.rhs), func(t *testing.T) {
-				t.Parallel()
-				n := newLongGreaterThanOrEqualEval(
-					newLiteralEval(types.Long(tt.lhs)), newLiteralEval(types.Long(tt.rhs)))
-				v, err := n.Eval(Env{})
-				testutil.OK(t, err)
-				AssertBoolValue(t, v, tt.result)
-			})
-		}
-	}
-	{
-		tests := []struct {
-			name     string
-			lhs, rhs Evaler
-			err      error
-		}{
-			{"LhsError", newErrorEval(errTest), newLiteralEval(types.Long(0)), errTest},
-			{"LhsTypeError", newLiteralEval(types.True), newLiteralEval(types.Long(0)), ErrType},
-			{"RhsError", newLiteralEval(types.Long(0)), newErrorEval(errTest), errTest},
-			{"RhsTypeError", newLiteralEval(types.Long(0)), newLiteralEval(types.True), ErrType},
-		}
-		for _, tt := range tests {
-			tt := tt
-			t.Run(tt.name, func(t *testing.T) {
-				t.Parallel()
-				n := newLongGreaterThanOrEqualEval(tt.lhs, tt.rhs)
-				_, err := n.Eval(Env{})
-				testutil.ErrorIs(t, err, tt.err)
-			})
-		}
-	}
-}
-
 func TestDecimalLessThanNode(t *testing.T) {
 	t.Parallel()
 	{
@@ -974,12 +767,12 @@ func TestComparableValueComparisonNodes(t *testing.T) {
 		zero         = types.Long(0)
 		neg1         = types.Long(-1)
 		pos1         = types.Long(1)
-		zeroDate     = types.FromStdTime(time.UnixMilli(0))
-		futureDate   = types.FromStdTime(time.UnixMilli(1))
-		pastDate     = types.FromStdTime(time.UnixMilli(-1))
-		zeroDuration = types.FromStdDuration(time.Duration(0))
-		negDuration  = types.FromStdDuration(-1 * time.Millisecond)
-		posDuration  = types.FromStdDuration(1 * time.Millisecond)
+		zeroDate     = types.NewDatetime(time.UnixMilli(0))
+		futureDate   = types.NewDatetime(time.UnixMilli(1))
+		pastDate     = types.NewDatetime(time.UnixMilli(-1))
+		zeroDuration = types.NewDuration(time.Duration(0))
+		negDuration  = types.NewDuration(-1 * time.Millisecond)
+		posDuration  = types.NewDuration(1 * time.Millisecond)
 	)
 
 	type test struct {
@@ -1290,20 +1083,20 @@ func TestSetLiteralNode(t *testing.T) {
 		{"nested",
 			[]Evaler{
 				newLiteralEval(types.True),
-				newLiteralEval(types.NewSet([]types.Value{
+				newLiteralEval(types.NewSet(
 					types.False,
 					types.Long(1),
-				})),
+				)),
 				newLiteralEval(types.Long(10)),
 			},
-			types.NewSet([]types.Value{
+			types.NewSet(
 				types.True,
-				types.NewSet([]types.Value{
+				types.NewSet(
 					types.False,
 					types.Long(1),
-				}),
+				),
 				types.Long(10),
-			}),
+			),
 			nil},
 	}
 	for _, tt := range tests {
@@ -1343,8 +1136,8 @@ func TestContainsNode(t *testing.T) {
 	}
 	{
 		empty := types.Set{}
-		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
-		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
+		trueAndOne := types.NewSet(types.True, types.Long(1))
+		nested := types.NewSet(trueAndOne, types.False, types.Long(2))
 
 		tests := []struct {
 			name     string
@@ -1398,9 +1191,9 @@ func TestContainsAllNode(t *testing.T) {
 	}
 	{
 		empty := types.Set{}
-		trueOnly := types.NewSet([]types.Value{types.True})
-		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
-		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
+		trueOnly := types.NewSet(types.True)
+		trueAndOne := types.NewSet(types.True, types.Long(1))
+		nested := types.NewSet(trueAndOne, types.False, types.Long(2))
 
 		tests := []struct {
 			name     string
@@ -1452,10 +1245,10 @@ func TestContainsAnyNode(t *testing.T) {
 	}
 	{
 		empty := types.Set{}
-		trueOnly := types.NewSet([]types.Value{types.True})
-		trueAndOne := types.NewSet([]types.Value{types.True, types.Long(1)})
-		trueAndTwo := types.NewSet([]types.Value{types.True, types.Long(2)})
-		nested := types.NewSet([]types.Value{trueAndOne, types.False, types.Long(2)})
+		trueOnly := types.NewSet(types.True)
+		trueAndOne := types.NewSet(types.True, types.Long(1))
+		trueAndTwo := types.NewSet(types.True, types.Long(2))
+		nested := types.NewSet(trueAndOne, types.False, types.Long(2))
 
 		tests := []struct {
 			name     string
@@ -1495,7 +1288,7 @@ func TestContainsAnyNode(t *testing.T) {
 			set2[i] = types.Long(setSize + i)
 		}
 
-		n := newContainsAnyEval(newLiteralEval(types.NewSet(set1)), newLiteralEval(types.NewSet(set2)))
+		n := newContainsAnyEval(newLiteralEval(types.NewSet(set1...)), newLiteralEval(types.NewSet(set2...)))
 
 		// This call would take several minutes if the evaluation of ContainsAny was quadratic
 		val, err := n.Eval(Env{})
@@ -1583,12 +1376,12 @@ func TestAttributeAccessNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newAttributeAccessEval(tt.object, tt.attribute)
-			entity := &types.Entity{
+			entity := types.Entity{
 				UID:        types.NewEntityUID("knownType", "knownID"),
 				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
 			v, err := n.Eval(Env{
-				Entities: types.Entities{
+				Entities: types.EntityMap{
 					entity.UID: entity,
 				},
 			})
@@ -1640,18 +1433,187 @@ func TestHasNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newHasEval(tt.record, tt.attribute)
-			entity := &types.Entity{
+			entity := types.Entity{
 				UID:        types.NewEntityUID("knownType", "knownID"),
 				Attributes: types.NewRecord(types.RecordMap{"knownAttr": types.Long(42)}),
 			}
 			v, err := n.Eval(Env{
-				Entities: types.Entities{
+				Entities: types.EntityMap{
 					entity.UID: entity,
 				},
 			})
 			testutil.ErrorIs(t, err, tt.err)
 			AssertValue(t, v, tt.result)
 		})
+	}
+}
+
+func TestGetTagNode(t *testing.T) {
+	t.Parallel()
+
+	const (
+		knownType   = types.EntityType("knownType")
+		unknownType = types.EntityType("")
+		knownID     = "knownID"
+		unknownID   = ""
+		knownTag    = types.String("knownTag")
+		unknownTag  = types.String("unknownTag")
+		knownAttr   = "knownAttr"
+		notString   = types.Long(42)
+		value       = types.Long(42)
+	)
+
+	tests := []struct {
+		name   string
+		lhs    Evaler
+		rhs    Evaler
+		result types.Value
+		err    error
+	}{
+		{"ObjectTypeError",
+			newLiteralEval(types.True),
+			newLiteralEval(knownTag),
+			zeroValue(),
+			ErrType},
+		{"SubjectTypeError",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(notString),
+			zeroValue(),
+			ErrType},
+		{"TagOnRecord",
+			newLiteralEval(types.NewRecord(nil)),
+			newLiteralEval(knownTag), zeroValue(),
+			ErrType},
+		{"ProgrammaticTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newAttributeAccessEval(newLiteralEval(types.NewEntityUID(knownType, knownID)), knownAttr),
+			value,
+			nil,
+		},
+		{"KnownTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(knownTag),
+			value,
+			nil},
+		{"UnknownTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(unknownTag),
+			zeroValue(),
+			errTagAccess},
+		{"UnknownEntity",
+			newLiteralEval(types.NewEntityUID("unknownType", unknownID)),
+			newLiteralEval(knownTag),
+			zeroValue(),
+			errEntityNotExist},
+		{"ZeroEntity",
+			newLiteralEval(types.NewEntityUID("", "")),
+			newLiteralEval(knownTag),
+			zeroValue(),
+			errUnspecifiedEntity},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newGetTagEval(tt.lhs, tt.rhs)
+			entity := types.Entity{
+				UID:        types.NewEntityUID(knownType, knownID),
+				Tags:       types.NewRecord(types.RecordMap{knownTag: value}),
+				Attributes: types.NewRecord(types.RecordMap{knownAttr: knownTag}),
+			}
+			v, err := n.Eval(Env{
+				Entities: types.EntityMap{
+					entity.UID: entity,
+				},
+			})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+
+	}
+}
+
+func TestHasTagNode(t *testing.T) {
+	t.Parallel()
+
+	const (
+		knownType   = types.EntityType("knownType")
+		unknownType = types.EntityType("unknownType")
+		knownID     = "knownID"
+		unkownID    = "unknownID"
+		knownTag    = types.String("knownTag")
+		unknownTag  = types.String("unknownTag")
+		knownAttr   = types.String("knownAttr")
+		notString   = types.Long(42)
+		value       = types.Long(42)
+	)
+
+	tests := []struct {
+		name   string
+		lhs    Evaler
+		rhs    Evaler
+		result types.Value
+		err    error
+	}{
+		{"ObjectTypeError",
+			newLiteralEval(types.True),
+			newLiteralEval(knownTag),
+			zeroValue(),
+			ErrType},
+		{"SubjectTypeError",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(notString),
+			zeroValue(),
+			ErrType},
+		{"TagOnRecord",
+			newLiteralEval(types.NewRecord(nil)),
+			newLiteralEval(knownTag),
+			zeroValue(),
+			ErrType},
+		{"ProgrammaticTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newAttributeAccessEval(newLiteralEval(types.NewEntityUID(knownType, knownID)), knownAttr),
+			types.True,
+			nil,
+		},
+		{"KnownTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(knownTag),
+			types.True,
+			nil},
+		{"UnknownTag",
+			newLiteralEval(types.NewEntityUID(knownType, knownID)),
+			newLiteralEval(unknownTag),
+			types.False,
+			nil},
+		{"UnknownEntity",
+			newLiteralEval(types.NewEntityUID(unknownType, unkownID)),
+			newLiteralEval(knownTag),
+			types.False,
+			nil},
+		{"UnspecifiedEntity",
+			newLiteralEval(types.NewEntityUID("", "")),
+			newLiteralEval(knownTag),
+			types.False,
+			nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := newHasTagEval(tt.lhs, tt.rhs)
+			entity := types.Entity{
+				UID:        types.NewEntityUID(knownType, knownID),
+				Tags:       types.NewRecord(types.RecordMap{knownTag: value}),
+				Attributes: types.NewRecord(types.RecordMap{knownAttr: knownTag}),
+			}
+			v, err := n.Eval(Env{
+				Entities: types.EntityMap{
+					entity.UID: entity,
+				},
+			})
+			testutil.ErrorIs(t, err, tt.err)
+			AssertValue(t, v, tt.result)
+		})
+
 	}
 }
 
@@ -1837,14 +1799,14 @@ func TestEntityIn(t *testing.T) {
 			for _, v := range tt.rhs {
 				rhs = append(rhs, strEnt(v))
 			}
-			entityMap := types.Entities{}
+			entityMap := types.EntityMap{}
 			for k, p := range tt.parents {
 				var ps []types.EntityUID
 				for _, pp := range p {
 					ps = append(ps, strEnt(pp))
 				}
 				uid := strEnt(k)
-				entityMap[uid] = &types.Entity{
+				entityMap[uid] = types.Entity{
 					UID:     uid,
 					Parents: types.NewEntityUIDSet(ps...),
 				}
@@ -1858,19 +1820,19 @@ func TestEntityIn(t *testing.T) {
 		// This test will run for a very long time (O(2^100)) if there isn't caching.
 		)
 
-		entityMap := types.Entities{}
+		entityMap := types.EntityMap{}
 		for i := 0; i < 100; i++ {
 			p := types.NewEntityUIDSet(
 				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "1"),
 				types.NewEntityUID(types.EntityType(fmt.Sprint(i+1)), "2"),
 			)
 			uid1 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "1")
-			entityMap[uid1] = &types.Entity{
+			entityMap[uid1] = types.Entity{
 				UID:     uid1,
 				Parents: p,
 			}
 			uid2 := types.NewEntityUID(types.EntityType(fmt.Sprint(i)), "2")
-			entityMap[uid2] = &types.Entity{
+			entityMap[uid2] = types.Entity{
 				UID:     uid2,
 				Parents: p,
 			}
@@ -1954,9 +1916,9 @@ func TestInNode(t *testing.T) {
 		{
 			"RhsTypeError2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
-			newLiteralEval(types.NewSet([]types.Value{
+			newLiteralEval(types.NewSet(
 				types.String("foo"),
-			})),
+			)),
 			map[string][]string{},
 			zeroValue(),
 			ErrType,
@@ -1972,9 +1934,9 @@ func TestInNode(t *testing.T) {
 		{
 			"Reflexive2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
-			newLiteralEval(types.NewSet([]types.Value{
+			newLiteralEval(types.NewSet(
 				types.NewEntityUID("human", "joe"),
-			})),
+			)),
 			map[string][]string{},
 			types.True,
 			nil,
@@ -2007,14 +1969,14 @@ func TestInNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newInEval(tt.lhs, tt.rhs)
-			entityMap := types.Entities{}
+			entityMap := types.EntityMap{}
 			for k, p := range tt.parents {
 				var ps []types.EntityUID
 				for _, pp := range p {
 					ps = append(ps, strEnt(pp))
 				}
 				uid := strEnt(k)
-				entityMap[uid] = &types.Entity{
+				entityMap[uid] = types.Entity{
 					UID:     uid,
 					Parents: types.NewEntityUIDSet(ps...),
 				}
@@ -2078,9 +2040,9 @@ func TestIsInNode(t *testing.T) {
 			"RhsTypeError2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
 			"human",
-			newLiteralEval(types.NewSet([]types.Value{
+			newLiteralEval(types.NewSet(
 				types.String("foo"),
-			})),
+			)),
 			map[string][]string{},
 			zeroValue(),
 			ErrType,
@@ -2098,9 +2060,9 @@ func TestIsInNode(t *testing.T) {
 			"Reflexive2",
 			newLiteralEval(types.NewEntityUID("human", "joe")),
 			"human",
-			newLiteralEval(types.NewSet([]types.Value{
+			newLiteralEval(types.NewSet(
 				types.NewEntityUID("human", "joe"),
-			})),
+			)),
 			map[string][]string{},
 			types.True,
 			nil,
@@ -2147,14 +2109,14 @@ func TestIsInNode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			n := newIsInEval(tt.lhs, tt.is, tt.rhs)
-			entityMap := types.Entities{}
+			entityMap := types.EntityMap{}
 			for k, p := range tt.parents {
 				var ps []types.EntityUID
 				for _, pp := range p {
 					ps = append(ps, strEnt(pp))
 				}
 				uid := strEnt(k)
-				entityMap[uid] = &types.Entity{
+				entityMap[uid] = types.Entity{
 					UID:     uid,
 					Parents: types.NewEntityUIDSet(ps...),
 				}
@@ -2177,8 +2139,8 @@ func TestDecimalLiteralNode(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"DecimalError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDecimal},
-		{"Success", newLiteralEval(types.String("1.0")), types.UnsafeDecimal(1), nil},
+		{"DecimalError", newLiteralEval(types.String("frob")), zeroValue(), internal.ErrDecimal},
+		{"Success", newLiteralEval(types.String("1.0")), testutil.Must(types.NewDecimalFromInt(1)), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2204,7 +2166,7 @@ func TestIPLiteralNode(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"IPError", newLiteralEval(types.String("not-an-IP-address")), zeroValue(), types.ErrIP},
+		{"IPError", newLiteralEval(types.String("not-an-IP-address")), zeroValue(), internal.ErrIP},
 		{"Success", newLiteralEval(types.String("::1/128")), ipv6Loopback, nil},
 	}
 	for _, tt := range tests {
@@ -2307,11 +2269,11 @@ func TestCedarString(t *testing.T) {
 		{"number", types.Long(42), `42`, `42`},
 		{"bool", types.True, `true`, `true`},
 		{"record", types.NewRecord(types.RecordMap{"a": types.Long(42), "b": types.Long(43)}), `{"a":42, "b":43}`, `{"a":42, "b":43}`},
-		{"set", types.NewSet([]types.Value{types.Long(42), types.Long(43)}), `[42, 43]`, `[42, 43]`},
+		{"set", types.NewSet(types.Long(42), types.Long(43)), `[42, 43]`, `[42, 43]`},
 		{"singleIP", types.IPAddr(netip.MustParsePrefix("192.168.0.42/32")), `192.168.0.42`, `ip("192.168.0.42")`},
 		{"ipPrefix", types.IPAddr(netip.MustParsePrefix("192.168.0.42/24")), `192.168.0.42/24`, `ip("192.168.0.42/24")`},
-		{"decimal", types.UnsafeDecimal(1234.5678), `1234.5678`, `decimal("1234.5678")`},
-		{"duration", types.FromStdDuration(1 * time.Millisecond), `1ms`, `duration("1ms")`},
+		{"decimal", testutil.Must(types.NewDecimal(12345678, -4)), `1234.5678`, `decimal("1234.5678")`},
+		{"duration", types.NewDuration(1 * time.Millisecond), `1ms`, `duration("1ms")`},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2335,8 +2297,8 @@ func TestDatetimeLiteralNode(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"DatetimeError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDatetime},
-		{"Success", newLiteralEval(types.String("1970-01-01")), types.FromStdTime(time.UnixMilli(0)), nil},
+		{"DatetimeError", newLiteralEval(types.String("frob")), zeroValue(), internal.ErrDatetime},
+		{"Success", newLiteralEval(types.String("1970-01-01")), types.NewDatetime(time.UnixMilli(0)), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2363,7 +2325,7 @@ func TestDatetimeToDate(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"Success", newLiteralEval(aTime), types.FromStdTime(time.UnixMilli(24 * 60 * 60 * 1000)), nil},
+		{"Success", newLiteralEval(aTime), types.NewDatetime(time.UnixMilli(24 * 60 * 60 * 1000)), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2383,7 +2345,7 @@ func TestDatetimeDurationSince(t *testing.T) {
 	testutil.OK(t, err)
 	endTime, err := types.ParseDatetime("1970-01-01T00:00:00Z")
 	testutil.OK(t, err)
-	dur := types.FromStdDuration(1 * time.Hour)
+	dur := types.NewDuration(1 * time.Hour)
 	bad := types.Long(1)
 
 	tests := []struct {
@@ -2416,7 +2378,7 @@ func TestDatetimeOffset(t *testing.T) {
 	testutil.OK(t, err)
 	endTime, err := types.ParseDatetime("1970-01-01T01:00:00Z")
 	testutil.OK(t, err)
-	dur := types.FromStdDuration(1 * time.Hour)
+	dur := types.NewDuration(1 * time.Hour)
 	bad := types.Long(1)
 
 	tests := []struct {
@@ -2456,7 +2418,7 @@ func TestDatetimeToTime(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"Success", newLiteralEval(aTime), types.FromStdDuration(10 * time.Hour), nil},
+		{"Success", newLiteralEval(aTime), types.NewDuration(10 * time.Hour), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2480,8 +2442,8 @@ func TestDurationLiteralNode(t *testing.T) {
 	}{
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
-		{"DurationError", newLiteralEval(types.String("frob")), zeroValue(), types.ErrDuration},
-		{"Success", newLiteralEval(types.String("1h")), types.FromStdDuration(1 * time.Hour), nil},
+		{"DurationError", newLiteralEval(types.String("frob")), zeroValue(), internal.ErrDuration},
+		{"Success", newLiteralEval(types.String("1h")), types.NewDuration(1 * time.Hour), nil},
 	}
 	for _, tt := range tests {
 		tt := tt

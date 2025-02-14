@@ -67,6 +67,8 @@ type NodeTypeHas struct {
 	StrOpNode
 }
 
+type NodeTypeHasTag struct{ BinaryNode }
+
 type NodeTypeLike struct {
 	Arg   IsNode
 	Value types.Pattern
@@ -110,6 +112,8 @@ type NodeTypeNegate struct{ UnaryNode }
 type NodeTypeNot struct{ UnaryNode }
 
 type NodeTypeAccess struct{ StrOpNode }
+
+type NodeTypeGetTag struct{ BinaryNode }
 
 type NodeTypeExtensionCall struct {
 	Name types.Path

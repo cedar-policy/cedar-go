@@ -14,6 +14,7 @@ var errOverflow = fmt.Errorf("integer overflow")
 var errUnknownExtensionFunction = fmt.Errorf("function does not exist")
 var errArity = fmt.Errorf("wrong number of arguments provided to extension function")
 var errAttributeAccess = fmt.Errorf("does not have the attribute")
+var errTagAccess = fmt.Errorf("does not have the tag")
 var errEntityNotExist = fmt.Errorf("does not exist")
 var errUnspecifiedEntity = fmt.Errorf("unspecified entity")
 
@@ -22,7 +23,7 @@ func zeroValue() types.Value {
 }
 
 type Env struct {
-	Entities                    types.Entities
+	Entities                    types.EntityGetter
 	Principal, Action, Resource types.Value
 	Context                     types.Value
 }
@@ -429,106 +430,6 @@ func (n *negateEval) Eval(env Env) (types.Value, error) {
 	return res, nil
 }
 
-// longLessThanEval
-type longLessThanEval struct {
-	lhs Evaler
-	rhs Evaler
-}
-
-func newLongLessThanEval(lhs Evaler, rhs Evaler) Evaler {
-	return &longLessThanEval{
-		lhs: lhs,
-		rhs: rhs,
-	}
-}
-
-func (n *longLessThanEval) Eval(env Env) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	rhs, err := evalLong(n.rhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	return types.Boolean(lhs < rhs), nil
-}
-
-// longLessThanOrEqualEval
-type longLessThanOrEqualEval struct {
-	lhs Evaler
-	rhs Evaler
-}
-
-func newLongLessThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
-	return &longLessThanOrEqualEval{
-		lhs: lhs,
-		rhs: rhs,
-	}
-}
-
-func (n *longLessThanOrEqualEval) Eval(env Env) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	rhs, err := evalLong(n.rhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	return types.Boolean(lhs <= rhs), nil
-}
-
-// longGreaterThanEval
-type longGreaterThanEval struct {
-	lhs Evaler
-	rhs Evaler
-}
-
-func newLongGreaterThanEval(lhs Evaler, rhs Evaler) Evaler {
-	return &longGreaterThanEval{
-		lhs: lhs,
-		rhs: rhs,
-	}
-}
-
-func (n *longGreaterThanEval) Eval(env Env) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	rhs, err := evalLong(n.rhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	return types.Boolean(lhs > rhs), nil
-}
-
-// longGreaterThanOrEqualEval
-type longGreaterThanOrEqualEval struct {
-	lhs Evaler
-	rhs Evaler
-}
-
-func newLongGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
-	return &longGreaterThanOrEqualEval{
-		lhs: lhs,
-		rhs: rhs,
-	}
-}
-
-func (n *longGreaterThanOrEqualEval) Eval(env Env) (types.Value, error) {
-	lhs, err := evalLong(n.lhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	rhs, err := evalLong(n.rhs, env)
-	if err != nil {
-		return zeroValue(), err
-	}
-	return types.Boolean(lhs >= rhs), nil
-}
-
 // decimalLessThanEval
 type decimalLessThanEval struct {
 	lhs Evaler
@@ -551,7 +452,7 @@ func (n *decimalLessThanEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs.Value < rhs.Value), nil
+	return types.Boolean(lhs.Compare(rhs) == -1), nil
 }
 
 // decimalLessThanOrEqualEval
@@ -576,7 +477,7 @@ func (n *decimalLessThanOrEqualEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs.Value <= rhs.Value), nil
+	return types.Boolean(lhs.Compare(rhs) <= 0), nil
 }
 
 // decimalGreaterThanEval
@@ -601,7 +502,7 @@ func (n *decimalGreaterThanEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs.Value > rhs.Value), nil
+	return types.Boolean(lhs.Compare(rhs) == 1), nil
 }
 
 // decimalGreaterThanOrEqualEval
@@ -626,7 +527,7 @@ func (n *decimalGreaterThanOrEqualEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.Boolean(lhs.Value >= rhs.Value), nil
+	return types.Boolean(lhs.Compare(rhs) >= 0), nil
 }
 
 // ifThenElseEval
@@ -721,7 +622,7 @@ func (n *setLiteralEval) Eval(env Env) (types.Value, error) {
 		}
 		vals[i] = v
 	}
-	return types.NewSet(vals), nil
+	return types.NewSet(vals...), nil
 }
 
 // containsEval
@@ -854,7 +755,7 @@ func (n *attributeAccessEval) Eval(env Env) (types.Value, error) {
 		if vv == unspecified {
 			return zeroValue(), fmt.Errorf("cannot access attribute `%s` of %w", n.attribute, errUnspecifiedEntity)
 		}
-		rec, ok := env.Entities[vv]
+		rec, ok := env.Entities.Get(vv)
 		if !ok {
 			return zeroValue(), fmt.Errorf("entity `%v` %w", vv.String(), errEntityNotExist)
 		}
@@ -892,7 +793,7 @@ func (n *hasEval) Eval(env Env) (types.Value, error) {
 	var record types.Record
 	switch vv := v.(type) {
 	case types.EntityUID:
-		if rec, ok := env.Entities[vv]; ok {
+		if rec, ok := env.Entities.Get(vv); ok {
 			record = rec.Attributes
 		}
 	case types.Record:
@@ -901,6 +802,73 @@ func (n *hasEval) Eval(env Env) (types.Value, error) {
 		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
 	}
 	_, ok := record.Get(n.attribute)
+	return types.Boolean(ok), nil
+}
+
+// getTagEval
+type getTagEval struct {
+	lhs, rhs Evaler
+}
+
+func newGetTagEval(object, tag Evaler) *getTagEval {
+	return &getTagEval{lhs: object, rhs: tag}
+}
+
+func (n *getTagEval) Eval(env Env) (types.Value, error) {
+	eid, err := evalEntity(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	var zero types.EntityUID
+	if eid == zero {
+		return zeroValue(), fmt.Errorf("cannot access tag `%s` of %w", n.rhs, errUnspecifiedEntity)
+	}
+
+	t, err := evalString(n.rhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	e, ok := env.Entities.Get(eid)
+	if !ok {
+		return zeroValue(), fmt.Errorf("entity `%v` %w", eid.String(), errEntityNotExist)
+	}
+
+	val, ok := e.Tags.Get(t)
+	if !ok {
+		return zeroValue(), fmt.Errorf("`%s` %w `%s`", eid.String(), errTagAccess, t)
+	}
+
+	return val, nil
+}
+
+// hasTagEval
+type hasTagEval struct {
+	lhs, rhs Evaler
+}
+
+func newHasTagEval(object, tag Evaler) *hasTagEval {
+	return &hasTagEval{lhs: object, rhs: tag}
+}
+
+func (n *hasTagEval) Eval(env Env) (types.Value, error) {
+	eid, err := evalEntity(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	t, err := evalString(n.rhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+
+	e, ok := env.Entities.Get(eid)
+	if !ok {
+		return types.False, nil
+	}
+
+	_, ok = e.Tags.Get(t)
 	return types.Boolean(ok), nil
 }
 
@@ -961,12 +929,12 @@ func entityInOne(env Env, entity types.EntityUID, parent types.EntityUID) bool {
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
-		if fe, ok := env.Entities[candidate]; ok {
+		if fe, ok := env.Entities.Get(candidate); ok {
 			if fe.Parents.Contains(parent) {
 				return true
 			}
 			fe.Parents.Iterate(func(k types.EntityUID) bool {
-				p, ok := env.Entities[k]
+				p, ok := env.Entities.Get(k)
 				if !ok || p.Parents.Len() == 0 || k == entity || known.Contains(k) {
 					return true
 				}
@@ -990,12 +958,12 @@ func entityInSet(env Env, entity types.EntityUID, parents mapset.Container[types
 	var todo []types.EntityUID
 	var candidate = entity
 	for {
-		if fe, ok := env.Entities[candidate]; ok {
+		if fe, ok := env.Entities.Get(candidate); ok {
 			if fe.Parents.Intersects(parents) {
 				return true
 			}
 			fe.Parents.Iterate(func(k types.EntityUID) bool {
-				p, ok := env.Entities[k]
+				p, ok := env.Entities.Get(k)
 				if !ok || p.Parents.Len() == 0 || k == entity || known.Contains(k) {
 					return true
 				}
@@ -1239,7 +1207,7 @@ func newExtensionEval(name types.Path, args []Evaler) Evaler {
 
 	if i, ok := extensions.ExtMap[name]; ok {
 		if i.Args != len(args) {
-			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s)", errArity, name, i.Args))
+			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s), but %d provided", errArity, name, i.Args, len(args)))
 		}
 		switch {
 		case name == "datetime":
@@ -1301,7 +1269,7 @@ type comparableValueLessThanEval struct {
 	rhs Evaler
 }
 
-func newComparableValueLessThanEval(lhs Evaler, rhs Evaler) *comparableValueLessThanEval {
+func newComparableValueLessThanEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueLessThanEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -1332,7 +1300,7 @@ type comparableValueGreaterThanEval struct {
 	rhs Evaler
 }
 
-func newComparableValueGreaterThanEval(lhs Evaler, rhs Evaler) *comparableValueGreaterThanEval {
+func newComparableValueGreaterThanEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueGreaterThanEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -1361,7 +1329,7 @@ type comparableValueLessThanOrEqualEval struct {
 	rhs Evaler
 }
 
-func newComparableValueLessThanOrEqualEval(lhs Evaler, rhs Evaler) *comparableValueLessThanOrEqualEval {
+func newComparableValueLessThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueLessThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -1390,7 +1358,7 @@ type comparableValueGreaterThanOrEqualEval struct {
 	rhs Evaler
 }
 
-func newComparableValueGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) *comparableValueGreaterThanOrEqualEval {
+func newComparableValueGreaterThanOrEqualEval(lhs Evaler, rhs Evaler) Evaler {
 	return &comparableValueGreaterThanOrEqualEval{
 		lhs: lhs,
 		rhs: rhs,
@@ -1426,7 +1394,7 @@ func (n *toDateEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.DatetimeFromMillis(lhs.Milliseconds() - (lhs.Milliseconds() % consts.MillisPerDay)), nil
+	return types.NewDatetimeFromMillis(lhs.Milliseconds() - (lhs.Milliseconds() % consts.MillisPerDay)), nil
 }
 
 type toTimeEval struct {
@@ -1442,7 +1410,7 @@ func (n *toTimeEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.DurationFromMillis(lhs.Milliseconds() % consts.MillisPerDay), nil
+	return types.NewDurationFromMillis(lhs.Milliseconds() % consts.MillisPerDay), nil
 }
 
 type toMillisecondsEval struct {
@@ -1543,7 +1511,7 @@ func (n *offsetEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.DatetimeFromMillis(lhs.Milliseconds() + rhs.ToMilliseconds()), nil
+	return types.NewDatetimeFromMillis(lhs.Milliseconds() + rhs.ToMilliseconds()), nil
 }
 
 type durationSinceEval struct {
@@ -1564,5 +1532,5 @@ func (n *durationSinceEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.DurationFromMillis(lhs.Milliseconds() - rhs.Milliseconds()), nil
+	return types.NewDurationFromMillis(lhs.Milliseconds() - rhs.Milliseconds()), nil
 }

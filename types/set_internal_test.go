@@ -17,7 +17,7 @@ func (c colliderValue) MarshalCedar() []byte { return nil }
 func (c colliderValue) Equal(v Value) bool   { return v.Equal(c.Value) }
 func (c colliderValue) hash() uint64         { return c.HashVal }
 
-func TestSet(t *testing.T) {
+func TestSetInternal(t *testing.T) {
 	t.Parallel()
 
 	t.Run("hash", func(t *testing.T) {
@@ -25,8 +25,8 @@ func TestSet(t *testing.T) {
 
 		t.Run("order independent", func(t *testing.T) {
 			t.Parallel()
-			s1 := NewSet([]Value{Long(42), Long(1337)})
-			s2 := NewSet([]Value{Long(1337), Long(42)})
+			s1 := NewSet(Long(42), Long(1337))
+			s2 := NewSet(Long(1337), Long(42))
 			testutil.Equals(t, s1.hash(), s2.hash())
 		})
 
@@ -38,12 +38,12 @@ func TestSet(t *testing.T) {
 			v3 := colliderValue{Value: String("baz"), HashVal: 1337}
 
 			permutations := []Set{
-				NewSet([]Value{v1, v2, v3}),
-				NewSet([]Value{v1, v3, v2}),
-				NewSet([]Value{v2, v1, v3}),
-				NewSet([]Value{v2, v3, v1}),
-				NewSet([]Value{v3, v1, v2}),
-				NewSet([]Value{v3, v2, v1}),
+				NewSet(v1, v2, v3),
+				NewSet(v1, v3, v2),
+				NewSet(v2, v1, v3),
+				NewSet(v2, v3, v1),
+				NewSet(v3, v1, v2),
+				NewSet(v3, v2, v1),
 			}
 			expected := permutations[0].hash()
 			for _, p := range permutations {
@@ -59,12 +59,12 @@ func TestSet(t *testing.T) {
 			v3 := colliderValue{Value: String("baz"), HashVal: 1337}
 
 			permutations := []Set{
-				NewSet([]Value{v1, v2, v3}),
-				NewSet([]Value{v1, v3, v2}),
-				NewSet([]Value{v2, v1, v3}),
-				NewSet([]Value{v2, v3, v1}),
-				NewSet([]Value{v3, v1, v2}),
-				NewSet([]Value{v3, v2, v1}),
+				NewSet(v1, v2, v3),
+				NewSet(v1, v3, v2),
+				NewSet(v2, v1, v3),
+				NewSet(v2, v3, v1),
+				NewSet(v3, v1, v2),
+				NewSet(v3, v2, v1),
 			}
 			expected := permutations[0].hash()
 			for _, p := range permutations {
@@ -74,18 +74,16 @@ func TestSet(t *testing.T) {
 
 		t.Run("duplicates unimportant", func(t *testing.T) {
 			t.Parallel()
-			s1 := NewSet([]Value{Long(42), Long(1337)})
-			s2 := NewSet([]Value{Long(42), Long(1337), Long(1337)})
+			s1 := NewSet(Long(42), Long(1337))
+			s2 := NewSet(Long(42), Long(1337), Long(1337))
 			testutil.Equals(t, s1.hash(), s2.hash())
 		})
 
 		t.Run("empty set", func(t *testing.T) {
 			t.Parallel()
 			m1 := Set{}
-			m2 := NewSet([]Value{})
-			m3 := NewSet(nil)
+			m2 := NewSet()
 			testutil.Equals(t, m1.hash(), m2.hash())
-			testutil.Equals(t, m2.hash(), m3.hash())
 		})
 
 		// These tests don't necessarily hold for all values of Set, but we want to ensure we are considering
@@ -93,15 +91,15 @@ func TestSet(t *testing.T) {
 
 		t.Run("extra element", func(t *testing.T) {
 			t.Parallel()
-			s1 := NewSet([]Value{Long(42), Long(1337)})
-			s2 := NewSet([]Value{Long(42), Long(1337), Long(1)})
+			s1 := NewSet(Long(42), Long(1337))
+			s2 := NewSet(Long(42), Long(1337), Long(1))
 			testutil.FatalIf(t, s1.hash() == s2.hash(), "unexpected hash collision")
 		})
 
 		t.Run("disjoint", func(t *testing.T) {
 			t.Parallel()
-			s1 := NewSet([]Value{Long(42), Long(1337)})
-			s2 := NewSet([]Value{Long(0), String("hi")})
+			s1 := NewSet(Long(42), Long(1337))
+			s2 := NewSet(Long(0), String("hi"))
 			testutil.FatalIf(t, s1.hash() == s2.hash(), "unexpected hash collision")
 		})
 	})
@@ -114,7 +112,7 @@ func TestSet(t *testing.T) {
 		v3 := colliderValue{Value: String("baz"), HashVal: 1338}
 		v4 := colliderValue{Value: String("baz"), HashVal: 1337}
 
-		set := NewSet([]Value{v1, v2, v3, v4})
+		set := NewSet(v1, v2, v3, v4)
 
 		testutil.Equals(t, set.Len(), 3)
 

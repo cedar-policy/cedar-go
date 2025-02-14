@@ -2,6 +2,7 @@ package ast
 
 import (
 	"net/netip"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -71,6 +72,14 @@ func EntityUID(typ types.Ident, id types.String) Node {
 
 func IPAddr[T netip.Prefix | types.IPAddr](i T) Node {
 	return Value(types.IPAddr(i))
+}
+
+func Datetime(t time.Time) Node {
+	return Value(types.NewDatetime(t))
+}
+
+func Duration(d time.Duration) Node {
+	return Value(types.NewDuration(d))
 }
 
 func ExtensionCall(name types.Path, args ...Node) Node {

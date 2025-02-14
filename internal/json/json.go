@@ -99,22 +99,24 @@ type nodeJSON struct {
     Not    *unaryJSON `json:"!,omitempty"`
     Negate *unaryJSON `json:"neg,omitempty"`
 
-    // Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
-    Equals             *binaryJSON `json:"==,omitempty"`
-    NotEquals          *binaryJSON `json:"!=,omitempty"`
-    In                 *binaryJSON `json:"in,omitempty"`
-    LessThan           *binaryJSON `json:"<,omitempty"`
-    LessThanOrEqual    *binaryJSON `json:"<=,omitempty"`
-    GreaterThan        *binaryJSON `json:">,omitempty"`
-    GreaterThanOrEqual *binaryJSON `json:">=,omitempty"`
-    And                *binaryJSON `json:"&&,omitempty"`
-    Or                 *binaryJSON `json:"||,omitempty"`
-    Add                *binaryJSON `json:"+,omitempty"`
-    Subtract           *binaryJSON `json:"-,omitempty"`
-    Multiply           *binaryJSON `json:"*,omitempty"`
-    Contains           *binaryJSON `json:"contains,omitempty"`
-    ContainsAll        *binaryJSON `json:"containsAll,omitempty"`
-    ContainsAny        *binaryJSON `json:"containsAny,omitempty"`
+	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
+	Equals             *binaryJSON `json:"==,omitempty"`
+	NotEquals          *binaryJSON `json:"!=,omitempty"`
+	In                 *binaryJSON `json:"in,omitempty"`
+	LessThan           *binaryJSON `json:"<,omitempty"`
+	LessThanOrEqual    *binaryJSON `json:"<=,omitempty"`
+	GreaterThan        *binaryJSON `json:">,omitempty"`
+	GreaterThanOrEqual *binaryJSON `json:">=,omitempty"`
+	And                *binaryJSON `json:"&&,omitempty"`
+	Or                 *binaryJSON `json:"||,omitempty"`
+	Add                *binaryJSON `json:"+,omitempty"`
+	Subtract           *binaryJSON `json:"-,omitempty"`
+	Multiply           *binaryJSON `json:"*,omitempty"`
+	Contains           *binaryJSON `json:"contains,omitempty"`
+	ContainsAll        *binaryJSON `json:"containsAll,omitempty"`
+	ContainsAny        *binaryJSON `json:"containsAny,omitempty"`
+	GetTag             *binaryJSON `json:"getTag,omitempty"`
+	HasTag             *binaryJSON `json:"hasTag,omitempty"`
 
     // ., has
     Access *strJSON `json:".,omitempty"`

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func TestCompile(t *testing.T) {
@@ -123,7 +123,7 @@ func TestScopeToNode(t *testing.T) {
 			"inSet",
 			ast.NewActionNode(),
 			ast.ScopeTypeInSet{Entities: []types.EntityUID{types.NewEntityUID("T", "42")}},
-			ast.Action().In(ast.Value(types.NewSet([]types.Value{types.NewEntityUID("T", "42")}))),
+			ast.Action().In(ast.Value(types.NewSet(types.NewEntityUID("T", "42")))),
 		},
 		{
 			"is",

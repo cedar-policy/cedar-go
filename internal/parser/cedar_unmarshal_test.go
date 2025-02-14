@@ -5,10 +5,10 @@ import (
     "strings"
     "testing"
 
-    "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/internal/parser"
-    "github.com/cedar-policy/cedar-go/internal/testutil"
-    "github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/internal/parser"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 var johnny = types.EntityUID{
@@ -198,11 +198,41 @@ when { context.sourceIP.isIpv4() };`,
             "multiplication",
             `permit ( principal, action, resource )
 when { 42 * 2 };`,
-            ast.Permit().When(ast.Long(42).Multiply(ast.Long(2))),
-        },
-        {
-            "multiple multiplication",
-            `permit ( principal, action, resource )
+			ast.Permit().When(ast.Long(42).Multiply(ast.Long(2))),
+		},
+		{
+			"principal has tag",
+			`permit ( principal, action, resource )
+when { principal.hasTag("blue") };`,
+			ast.Permit().When(ast.Principal().HasTag(ast.String("blue"))),
+		},
+		{
+			"resource has tag",
+			`permit ( principal, action, resource )
+when { resource.hasTag("blue") };`,
+			ast.Permit().When(ast.Resource().HasTag(ast.String("blue"))),
+		},
+		{
+			"principal tag equals value",
+			`permit ( principal, action, resource )
+when { principal.hasTag("blue") && principal.getTag("blue") == "green" };`,
+			ast.Permit().When(ast.Principal().HasTag(ast.String("blue")).And(ast.Principal().GetTag(ast.String("blue")).Equal(ast.String("green")))),
+		},
+		{
+			"principal tag has attribute",
+			`permit ( principal, action, resource )
+when { principal.hasTag("blue") && principal.getTag("blue") has attr };`,
+			ast.Permit().When(ast.Principal().HasTag(ast.String("blue")).And(ast.Principal().GetTag(ast.String("blue")).Has("attr"))),
+		},
+		{
+			"principal has tag from context",
+			`permit ( principal, action, resource )
+when { principal.hasTag(context.request_ip) };`,
+			ast.Permit().When(ast.Principal().HasTag(ast.Context().Access("request_ip"))),
+		},
+		{
+			"multiple multiplication",
+			`permit ( principal, action, resource )
 when { 42 * 2 * 1 };`,
             ast.Permit().When(ast.Long(42).Multiply(ast.Long(2)).Multiply(ast.Long(1))),
         },
@@ -590,47 +620,48 @@ func TestParsePolicySet(t *testing.T) {
 }
 
 func TestParseApproximateErrors(t *testing.T) {
-    t.Parallel()
-    tests := []struct {
-        name            string
-        in              string
-        outErrSubstring string
-    }{
-        {"unexpectedEffect", "!", "unexpected effect"},
-        {"nul", "\x00", "invalid character"},
-        {"notTerminated", `"`, "literal not terminated"},
-        {"principalBadIsIn", `permit (principal is T in error);`, "got ) want ::"},
-        {"principalBadIn", `permit (principal in error);`, "got ) want ::"},
-        {"resourceBadEq", `permit (principal, action, resource == error);`, "got ) want ::"},
-        {"resourceBadIsIn1", `permit (principal, action, resource is "error");`, "expected ident"},
-        {"resourceBadIsIn1", `permit (principal, action, resource is T in error);`, "got ) want ::"},
-        {"resourceBadIn", `permit (principal, action, resource in error);`, "got ) want ::"},
-        {"unlessCondition", `permit (principal, action, resource) unless {`, "invalid primary"},
-        {"or", `permit (principal, action, resource) when { true ||`, "invalid primary"},
-        {"and", `permit (principal, action, resource) when { true &&`, "invalid primary"},
-        {"isPath", `permit (principal, action, resource) when { context is`, "expected ident"},
-        {"isIn", `permit (principal, action, resource) when { context is T in`, "invalid primary"},
-        {"mult", `permit (principal, action, resource) when { 42 *`, "invalid primary"},
-        {"parens", `permit (principal, action, resource) when { (42}`, "got } want )"},
-        {"func", `permit (principal, action, resource) when { ip(}`, "invalid primary"},
-        {"args", `permit (principal, action, resource) when { ip(42 42)`, "got 42 want ,"},
-        {"dupeKey", `permit (principal, action, resource) when { {k:42,k:43}`, "duplicate key"},
-        {"reservedKeywordAsRecordKey", `permit (principal, action, resource) when { {false:43} }`, "expected ident or string"},
-        {"reservedKeywordAsHas", `permit (principal, action, resource) when { {} has false }`, "expected ident or string"},
-        {"reservedKeywordAsEntityType", `permit (principal == false::"42", action, resource)`, "expected ident"},
-        {"reservedKeywordAsAttributeAccess", `permit (principal, action, resource) when { context.false }`, "expected ident"},
-        {"invalidPrimary", `permit (principal, action, resource) when { foobar }`, "invalid primary"},
-    }
-    for _, tt := range tests {
-        tt := tt
-        t.Run(tt.name, func(t *testing.T) {
-            t.Parallel()
-            var pol parser.Policy
-            err := pol.UnmarshalCedar([]byte(tt.in))
-            testutil.Error(t, err)
-            testutil.FatalIf(t, !strings.Contains(err.Error(), tt.outErrSubstring), "got %v want %v", err.Error(), tt.outErrSubstring)
-        })
-    }
+	t.Parallel()
+	tests := []struct {
+		name            string
+		in              string
+		outErrSubstring string
+	}{
+		{"unexpectedEffect", "!", "unexpected effect"},
+		{"nul", "\x00", "invalid character"},
+		{"notTerminated", `"`, "literal not terminated"},
+		{"principalBadIsIn", `permit (principal is T in error);`, "got ) want ::"},
+		{"principalBadIn", `permit (principal in error);`, "got ) want ::"},
+		{"resourceBadEq", `permit (principal, action, resource == error);`, "got ) want ::"},
+		{"resourceBadIsIn1", `permit (principal, action, resource is "error");`, "expected ident"},
+		{"resourceBadIsIn1", `permit (principal, action, resource is T in error);`, "got ) want ::"},
+		{"resourceBadIn", `permit (principal, action, resource in error);`, "got ) want ::"},
+		{"unlessCondition", `permit (principal, action, resource) unless {`, "invalid primary"},
+		{"or", `permit (principal, action, resource) when { true ||`, "invalid primary"},
+		{"and", `permit (principal, action, resource) when { true &&`, "invalid primary"},
+		{"isPath", `permit (principal, action, resource) when { context is`, "expected ident"},
+		{"isIn", `permit (principal, action, resource) when { context is T in`, "invalid primary"},
+		{"mult", `permit (principal, action, resource) when { 42 *`, "invalid primary"},
+		{"parens", `permit (principal, action, resource) when { (42}`, "got } want )"},
+		{"func", `permit (principal, action, resource) when { ip(}`, "invalid primary"},
+		{"args", `permit (principal, action, resource) when { ip(42 42)`, "got 42 want ,"},
+		{"dupeKey", `permit (principal, action, resource) when { {k:42,k:43}`, "duplicate key"},
+		{"reservedKeywordAsRecordKey", `permit (principal, action, resource) when { {false:43} }`, "expected ident or string"},
+		{"reservedKeywordAsHas", `permit (principal, action, resource) when { {} has false }`, "expected ident or string"},
+		{"reservedKeywordAsEntityType", `permit (principal == false::"42", action, resource)`, "expected ident"},
+		{"reservedKeywordAsAttributeAccess", `permit (principal, action, resource) when { context.false }`, "expected ident"},
+		{"invalidPrimary", `permit (principal, action, resource) when { foobar }`, "invalid primary"},
+		{"unexpectedTokenInEntityOrExtFun", `permit (principal, action, resource) when { A::B 42 }`, "unexpected token"},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var pol parser.Policy
+			err := pol.UnmarshalCedar([]byte(tt.in))
+			testutil.Error(t, err)
+			testutil.FatalIf(t, !strings.Contains(err.Error(), tt.outErrSubstring), "got %v want %v", err.Error(), tt.outErrSubstring)
+		})
+	}
 }
 
 func TestPolicySliceErrors(t *testing.T) {

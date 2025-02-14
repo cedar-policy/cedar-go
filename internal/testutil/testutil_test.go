@@ -147,3 +147,60 @@ func TestPanic(t *testing.T) {
 		Equals(t, len(tb.FatalfCalls()), 1)
 	})
 }
+
+func TestMust(t *testing.T) {
+	t.Parallel()
+	t.Run("Panic", func(t *testing.T) {
+		tb := newTB()
+		var x bool
+		Panic(tb, func() {
+			x = Must(true, fmt.Errorf("panic"))
+		})
+		// assertions
+		Equals(t, x, false)
+		Equals(t, len(tb.HelperCalls()), 1)
+		Equals(t, len(tb.FatalfCalls()), 0)
+	})
+	t.Run("Okay", func(t *testing.T) {
+		tb := newTB()
+		var x bool
+		Panic(tb, func() {
+			x = Must(true, nil)
+		})
+		// assertions
+		Equals(t, x, true)
+	})
+}
+
+func TestJSONMarshalsTo(t *testing.T) {
+	t.Parallel()
+	t.Run("Okay", func(t *testing.T) {
+		tb := newTB()
+		JSONMarshalsTo(tb, "test", `"test"`)
+		Equals(t, len(tb.HelperCalls()), 4)
+		Equals(t, len(tb.FatalfCalls()), 0)
+	})
+
+	t.Run("ErrNotEqual", func(t *testing.T) {
+		tb := newTB()
+		JSONMarshalsTo(tb, "test", `"asdf"`)
+		Equals(t, len(tb.HelperCalls()), 4)
+		Equals(t, len(tb.FatalfCalls()), 1)
+	})
+
+	t.Run("ErrNotJSON", func(t *testing.T) {
+		tb := newTB()
+		JSONMarshalsTo(tb, "test", `asdf`)
+		Equals(t, len(tb.HelperCalls()), 4)
+		Equals(t, len(tb.FatalfCalls()), 2)
+	})
+
+	t.Run("ErrNotMarshalable", func(t *testing.T) {
+		tb := newTB()
+		cx := complex(0, 0)
+		JSONMarshalsTo(tb, cx, `null`)
+		Equals(t, len(tb.HelperCalls()), 4)
+		Equals(t, len(tb.FatalfCalls()), 2)
+	})
+
+}

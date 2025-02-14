@@ -3,15 +3,17 @@ package types
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
 	"time"
 	"unicode"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 )
+
+var errDuration = internal.ErrDuration
 
 var unitToMillis = map[string]int64{
 	"d":  consts.MillisPerDay,
@@ -28,13 +30,13 @@ type Duration struct {
 	value int64
 }
 
-// FromStdDuration returns a Cedar Duration from a Go time.Duration
-func FromStdDuration(d time.Duration) Duration {
+// NewDuration returns a Cedar Duration from a Go time.Duration
+func NewDuration(d time.Duration) Duration {
 	return Duration{value: d.Milliseconds()}
 }
 
-// DurationFromMillis returns a Duration from milliseconds
-func DurationFromMillis(ms int64) Duration {
+// NewDurationFromMillis returns a Duration from milliseconds
+func NewDurationFromMillis(ms int64) Duration {
 	return Duration{value: ms}
 }
 
@@ -52,7 +54,7 @@ func DurationFromMillis(ms int64) Duration {
 func ParseDuration(s string) (Duration, error) {
 	// Check for empty string.
 	if len(s) <= 1 {
-		return Duration{}, fmt.Errorf("%w: string too short", ErrDuration)
+		return Duration{}, fmt.Errorf("%w: string too short", errDuration)
 	}
 
 	i := 0
@@ -78,13 +80,13 @@ func ParseDuration(s string) (Duration, error) {
 
 			// check overflow
 			if value > math.MaxInt32 {
-				return Duration{}, fmt.Errorf("%w: overflow", ErrDuration)
+				return Duration{}, fmt.Errorf("%w: overflow", errDuration)
 			}
 			hasValue = true
 			i++
 		} else if s[i] == 'd' || s[i] == 'h' || s[i] == 'm' || s[i] == 's' {
 			if !hasValue {
-				return Duration{}, fmt.Errorf("%w: unit found without quantity", ErrDuration)
+				return Duration{}, fmt.Errorf("%w: unit found without quantity", errDuration)
 			}
 
 			// is it ms?
@@ -104,7 +106,7 @@ func ParseDuration(s string) (Duration, error) {
 			}
 
 			if !unitOK {
-				return Duration{}, fmt.Errorf("%w: unexpected unit '%s'", ErrDuration, unit)
+				return Duration{}, fmt.Errorf("%w: unexpected unit '%s'", errDuration, unit)
 			}
 
 			total = total + value*unitToMillis[unit]
@@ -112,18 +114,18 @@ func ParseDuration(s string) (Duration, error) {
 			hasValue = false
 			value = 0
 		} else {
-			return Duration{}, fmt.Errorf("%w: unexpected character %s", ErrDuration, strconv.QuoteRune(rune(s[i])))
+			return Duration{}, fmt.Errorf("%w: unexpected character %s", errDuration, strconv.QuoteRune(rune(s[i])))
 		}
 	}
 
 	// We didn't have a trailing unit
 	if hasValue {
-		return Duration{}, fmt.Errorf("%w: expected unit", ErrDuration)
+		return Duration{}, fmt.Errorf("%w: expected unit", errDuration)
 	}
 
 	// We still have characters left, but no more units to assign.
 	if i < len(s) {
-		return Duration{}, fmt.Errorf("%w: invalid duration", ErrDuration)
+		return Duration{}, fmt.Errorf("%w: invalid duration", errDuration)
 	}
 
 	return Duration{value: negative * total}, nil
@@ -141,7 +143,7 @@ func (a Duration) Equal(bi Value) bool {
 func (a Duration) LessThan(bi Value) (bool, error) {
 	b, ok := bi.(Duration)
 	if !ok {
-		return false, ErrNotComparable
+		return false, internal.ErrNotComparable
 	}
 	return a.value < b.value, nil
 }
@@ -152,7 +154,7 @@ func (a Duration) LessThan(bi Value) (bool, error) {
 func (a Duration) LessThanOrEqual(bi Value) (bool, error) {
 	b, ok := bi.(Duration)
 	if !ok {
-		return false, ErrNotComparable
+		return false, internal.ErrNotComparable
 	}
 	return a.value <= b.value, nil
 }
@@ -211,46 +213,16 @@ func (v Duration) String() string {
 
 // UnmarshalJSON implements encoding/json.Unmarshaler for Duration
 //
-// It is capable of unmarshaling 4 different representations supported by Cedar
-// - { "__extn": { "fn": "duration", "arg": "1h10m" }}
-// - { "fn": "duration", "arg": "1h10m" }
-// - "duration(\"1h10m\")"
-// - "1h10m"
+// It is capable of unmarshaling 3 different representations supported by Cedar
+//   - { "__extn": { "fn": "duration", "arg": "1h10m" }}
+//   - { "fn": "duration", "arg": "1h10m" }
+//   - "1h10m"
 func (v *Duration) UnmarshalJSON(b []byte) error {
-	var arg string
-	if bytes.HasPrefix(b, []byte(`"duration(\"`)) && bytes.HasSuffix(b, []byte(`\")"`)) {
-		arg = string(b[12 : len(b)-4])
-	} else if len(b) > 0 && b[0] == '"' {
-		if err := json.Unmarshal(b, &arg); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-	} else {
-		var res extValueJSON
-		if err := json.Unmarshal(b, &res); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-		if res.Extn == nil {
-			// If we didn't find an Extn, maybe it's just an extn.
-			var res2 extn
-			json.Unmarshal(b, &res2)
-			// We've tried Ext.Fn and Fn, so no good.
-			if res2.Fn == "" {
-				return errJSONExtNotFound
-			}
-			if res2.Fn != "duration" {
-				return errJSONExtFnMatch
-			}
-			arg = res2.Arg
-		} else if res.Extn.Fn != "duration" {
-			return errJSONExtFnMatch
-		} else {
-			arg = res.Extn.Arg
-		}
-	}
-	vv, err := ParseDuration(arg)
+	vv, err := unmarshalExtensionValue(b, "duration", ParseDuration)
 	if err != nil {
 		return err
 	}
+
 	*v = vv
 	return nil
 }
@@ -293,6 +265,18 @@ func (v Duration) ToSeconds() int64 {
 // represents
 func (v Duration) ToMilliseconds() int64 {
 	return v.value
+}
+
+// Duration returns a time.Duration representation of a Duration.  An error
+// is returned if the duration cannot be converted to a time.Duration.
+func (v Duration) Duration() (time.Duration, error) {
+	if v.value > math.MaxInt64/1000 {
+		return 0, internal.ErrDurationRange
+	}
+	if v.value < math.MinInt64/1000 {
+		return 0, internal.ErrDurationRange
+	}
+	return time.Millisecond * time.Duration(v.value), nil
 }
 
 func (v Duration) hash() uint64 {

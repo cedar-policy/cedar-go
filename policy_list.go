@@ -4,8 +4,8 @@ import (
     "bytes"
     "fmt"
 
-    internalast "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/internal/parser"
+	"github.com/cedar-policy/cedar-go/internal/parser"
+	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 // PolicyList represents a list of un-named Policy's. Cedar documents, unlike the PolicySet form, don't have a means of

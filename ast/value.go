@@ -2,13 +2,14 @@ package ast
 
 import (
 	"net/netip"
+	"time"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 // Boolean creates a value node containing a Boolean.
-func Boolean[T bool | types.Boolean](b T) Node {
+func Boolean[T ~bool](b T) Node {
 	return wrapNode(ast.Boolean(types.Boolean(b)))
 }
 
@@ -23,12 +24,12 @@ func False() Node {
 }
 
 // String creates a value node containing a String.
-func String[T string | types.String](s T) Node {
+func String[T ~string](s T) Node {
 	return wrapNode(ast.String(types.String(s)))
 }
 
 // Long creates a value node containing a Long.
-func Long[T int | int64 | types.Long](l T) Node {
+func Long[T ~int | ~int64](l T) Node {
 	return wrapNode(ast.Long(types.Long(l)))
 }
 
@@ -79,7 +80,35 @@ func IPAddr[T netip.Prefix | types.IPAddr](i T) Node {
 	return wrapNode(ast.IPAddr(types.IPAddr(i)))
 }
 
+func Datetime(t time.Time) Node {
+	return Value(types.NewDatetime(t))
+}
+
+func Duration(d time.Duration) Node {
+	return Value(types.NewDuration(d))
+}
+
 // Value creates a value node from any value.
 func Value(v types.Value) Node {
 	return wrapNode(ast.Value(v))
+}
+
+// DecimalExtensionCall wraps a node with the cedar `decimal()` extension call
+func DecimalExtensionCall(rhs Node) Node {
+	return wrapNode(ast.ExtensionCall("decimal", rhs.Node))
+}
+
+// IPExtensionCall wraps a node with the cedar `ip()` extension call
+func IPExtensionCall(rhs Node) Node {
+	return wrapNode(ast.ExtensionCall("ip", rhs.Node))
+}
+
+// DatetimeExtensionCall wraps a node with the cedar `datetime()` extension call
+func DatetimeExtensionCall(rhs Node) Node {
+	return wrapNode(ast.ExtensionCall("datetime", rhs.Node))
+}
+
+// DurationExtensionCall wraps a node with the cedar `duration()` extension call
+func DurationExtensionCall(rhs Node) Node {
+	return wrapNode(ast.ExtensionCall("duration", rhs.Node))
 }

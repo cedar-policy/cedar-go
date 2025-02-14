@@ -5,9 +5,9 @@ import (
     "fmt"
     "slices"
 
-    "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/internal/mapset"
-    "github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
+	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 const variableEntityType = "__cedar::variable"
@@ -222,160 +222,180 @@ func tryPartialUnary(env Env, v ast.UnaryNode, mkEval func(a Evaler) Evaler, wra
 
 // partial takes in an ast.Node and finds does as much as is possible given the context
 func partial(env Env, n ast.IsNode) (ast.IsNode, error) {
-    switch v := n.(type) {
-    case ast.NodeTypeAccess:
-        return tryPartial(env,
-            []ast.IsNode{v.Arg},
-            func(values []types.Value) Evaler {
-                return newAttributeAccessEval(newLiteralEval(values[0]), v.Value)
-            },
-            func(nodes []ast.IsNode) ast.IsNode {
-                return ast.NodeTypeAccess{StrOpNode: ast.StrOpNode{Arg: nodes[0], Value: v.Value}}
-            },
-        )
-    case ast.NodeTypeHas:
-        return tryPartial(env,
-            []ast.IsNode{v.Arg},
-            func(values []types.Value) Evaler {
-                return newPartialHasEval(newLiteralEval(values[0]), v.Value)
-            },
-            func(nodes []ast.IsNode) ast.IsNode {
-                return ast.NodeTypeHas{StrOpNode: ast.StrOpNode{Arg: nodes[0], Value: v.Value}}
-            },
-        )
-    case ast.NodeTypeLike:
-        return tryPartial(env,
-            []ast.IsNode{v.Arg},
-            func(values []types.Value) Evaler {
-                return newLikeEval(newLiteralEval(values[0]), v.Value)
-            },
-            func(nodes []ast.IsNode) ast.IsNode {
-                return ast.NodeTypeLike{Arg: nodes[0], Value: v.Value}
-            },
-        )
-    case ast.NodeTypeIfThenElse:
-        return partialIfThenElse(env, v)
-    case ast.NodeTypeIs:
-        return tryPartial(env,
-            []ast.IsNode{v.Left},
-            func(values []types.Value) Evaler {
-                return newIsEval(newLiteralEval(values[0]), v.EntityType)
-            },
-            func(nodes []ast.IsNode) ast.IsNode {
-                return ast.NodeTypeIs{Left: nodes[0], EntityType: v.EntityType}
-            },
-        )
-    case ast.NodeTypeIsIn:
-        return tryPartial(env,
-            []ast.IsNode{v.Left, v.Entity},
-            func(values []types.Value) Evaler {
-                return newIsInEval(newLiteralEval(values[0]), v.EntityType, newLiteralEval(values[1]))
-            },
-            func(nodes []ast.IsNode) ast.IsNode {
-                return ast.NodeTypeIsIn{NodeTypeIs: ast.NodeTypeIs{Left: nodes[0], EntityType: v.EntityType}, Entity: nodes[1]}
-            },
-        )
+	switch v := n.(type) {
+	case ast.NodeTypeAccess:
+		return tryPartial(env,
+			[]ast.IsNode{v.Arg},
+			func(values []types.Value) Evaler {
+				return newAttributeAccessEval(newLiteralEval(values[0]), v.Value)
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeAccess{StrOpNode: ast.StrOpNode{Arg: nodes[0], Value: v.Value}}
+			},
+		)
+	case ast.NodeTypeHas:
+		return tryPartial(env,
+			[]ast.IsNode{v.Arg},
+			func(values []types.Value) Evaler {
+				return newPartialHasEval(newLiteralEval(values[0]), v.Value)
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeHas{StrOpNode: ast.StrOpNode{Arg: nodes[0], Value: v.Value}}
+			},
+		)
+	case ast.NodeTypeGetTag:
+		return tryPartial(env,
+			[]ast.IsNode{v.Left, v.Right},
+			func(values []types.Value) Evaler {
+				return newGetTagEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeGetTag{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
+			},
+		)
+	case ast.NodeTypeHasTag:
+		return tryPartial(env,
+			[]ast.IsNode{v.Left, v.Right},
+			func(values []types.Value) Evaler {
+				return newHasTagEval(newLiteralEval(values[0]), newLiteralEval(values[1]))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeHasTag{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
+			},
+		)
+	case ast.NodeTypeLike:
+		return tryPartial(env,
+			[]ast.IsNode{v.Arg},
+			func(values []types.Value) Evaler {
+				return newLikeEval(newLiteralEval(values[0]), v.Value)
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeLike{Arg: nodes[0], Value: v.Value}
+			},
+		)
+	case ast.NodeTypeIfThenElse:
+		return partialIfThenElse(env, v)
+	case ast.NodeTypeIs:
+		return tryPartial(env,
+			[]ast.IsNode{v.Left},
+			func(values []types.Value) Evaler {
+				return newIsEval(newLiteralEval(values[0]), v.EntityType)
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeIs{Left: nodes[0], EntityType: v.EntityType}
+			},
+		)
+	case ast.NodeTypeIsIn:
+		return tryPartial(env,
+			[]ast.IsNode{v.Left, v.Entity},
+			func(values []types.Value) Evaler {
+				return newIsInEval(newLiteralEval(values[0]), v.EntityType, newLiteralEval(values[1]))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeIsIn{NodeTypeIs: ast.NodeTypeIs{Left: nodes[0], EntityType: v.EntityType}, Entity: nodes[1]}
+			},
+		)
 
-    case ast.NodeTypeExtensionCall:
-        nodes := make([]ast.IsNode, len(v.Args))
-        copy(nodes, v.Args)
-        return tryPartial(env, nodes,
-            func(values []types.Value) Evaler {
-                args := make([]Evaler, len(values))
-                for i, a := range values {
-                    args[i] = newLiteralEval(a)
-                }
-                return newExtensionEval(v.Name, args)
-            },
-            func(nodes []ast.IsNode) ast.IsNode {
-                return ast.NodeTypeExtensionCall{Name: v.Name, Args: nodes}
-            },
-        )
-    case ast.NodeValue:
-        return n, nil
-    case ast.NodeTypeRecord:
-        elements := make([]ast.IsNode, len(v.Elements))
-        for i, pair := range v.Elements {
-            elements[i] = pair.Value
-        }
-        return tryPartial(env, elements,
-            func(values []types.Value) Evaler {
-                m := make(map[types.String]Evaler, len(values))
-                for i, val := range values {
-                    m[types.String(v.Elements[i].Key)] = newLiteralEval(val)
-                }
-                return newRecordLiteralEval(m)
-            },
-            func(nodes []ast.IsNode) ast.IsNode {
-                el := make([]ast.RecordElementNode, len(nodes))
-                for i, val := range nodes {
-                    el[i] = ast.RecordElementNode{Key: v.Elements[i].Key, Value: val}
-                }
-                return ast.NodeTypeRecord{Elements: el}
-            },
-        )
-    case ast.NodeTypeSet:
-        elements := make([]ast.IsNode, len(v.Elements))
-        copy(elements, v.Elements)
-        return tryPartial(env, elements,
-            func(values []types.Value) Evaler {
-                el := make([]Evaler, len(values))
-                for i, v := range values {
-                    el[i] = newLiteralEval(v)
-                }
-                return newSetLiteralEval(el)
-            },
-            func(nodes []ast.IsNode) ast.IsNode {
-                return ast.NodeTypeSet{Elements: nodes}
-            },
-        )
-    case ast.NodeTypeNegate:
-        return tryPartialUnary(env, v.UnaryNode, newNegateEval, func(b ast.UnaryNode) ast.IsNode { return ast.NodeTypeNegate{UnaryNode: b} })
-    case ast.NodeTypeNot:
-        return tryPartialUnary(env, v.UnaryNode, newNotEval, func(b ast.UnaryNode) ast.IsNode { return ast.NodeTypeNot{UnaryNode: b} })
-    case ast.NodeTypeVariable:
-        return tryPartial(env,
-            []ast.IsNode{},
-            func(_ []types.Value) Evaler {
-                return newVariableEval(v.Name)
-            },
-            func(_ []ast.IsNode) ast.IsNode {
-                return ast.NodeTypeVariable{Name: v.Name}
-            },
-        )
-    case ast.NodeTypeIn:
-        return tryPartialBinary(env, v.BinaryNode, newInEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeIn{BinaryNode: b} })
-    case ast.NodeTypeAnd:
-        return partialAnd(env, v)
-    case ast.NodeTypeOr:
-        return partialOr(env, v)
-    case ast.NodeTypeEquals:
-        return tryPartialBinary(env, v.BinaryNode, newEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeEquals{BinaryNode: b} })
-    case ast.NodeTypeNotEquals:
-        return tryPartialBinary(env, v.BinaryNode, newNotEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeNotEquals{BinaryNode: b} })
-    case ast.NodeTypeGreaterThan:
-        return tryPartialBinary(env, v.BinaryNode, newLongGreaterThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThan{BinaryNode: b} })
-    case ast.NodeTypeGreaterThanOrEqual:
-        return tryPartialBinary(env, v.BinaryNode, newLongGreaterThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThanOrEqual{BinaryNode: b} })
-    case ast.NodeTypeLessThan:
-        return tryPartialBinary(env, v.BinaryNode, newLongLessThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThan{BinaryNode: b} })
-    case ast.NodeTypeLessThanOrEqual:
-        return tryPartialBinary(env, v.BinaryNode, newLongLessThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThanOrEqual{BinaryNode: b} })
-    case ast.NodeTypeSub:
-        return tryPartialBinary(env, v.BinaryNode, newSubtractEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeSub{BinaryNode: b} })
-    case ast.NodeTypeAdd:
-        return tryPartialBinary(env, v.BinaryNode, newAddEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAdd{BinaryNode: b} })
-    case ast.NodeTypeMult:
-        return tryPartialBinary(env, v.BinaryNode, newMultiplyEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeMult{BinaryNode: b} })
-    case ast.NodeTypeContains:
-        return tryPartialBinary(env, v.BinaryNode, newContainsEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContains{BinaryNode: b} })
-    case ast.NodeTypeContainsAll:
-        return tryPartialBinary(env, v.BinaryNode, newContainsAllEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContainsAll{BinaryNode: b} })
-    case ast.NodeTypeContainsAny:
-        return tryPartialBinary(env, v.BinaryNode, newContainsAnyEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContainsAny{BinaryNode: b} })
-    default:
-        panic(fmt.Sprintf("unknown node type %T", v))
-    }
+	case ast.NodeTypeExtensionCall:
+		nodes := make([]ast.IsNode, len(v.Args))
+		copy(nodes, v.Args)
+		return tryPartial(env, nodes,
+			func(values []types.Value) Evaler {
+				args := make([]Evaler, len(values))
+				for i, a := range values {
+					args[i] = newLiteralEval(a)
+				}
+				return newExtensionEval(v.Name, args)
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeExtensionCall{Name: v.Name, Args: nodes}
+			},
+		)
+	case ast.NodeValue:
+		return n, nil
+	case ast.NodeTypeRecord:
+		elements := make([]ast.IsNode, len(v.Elements))
+		for i, pair := range v.Elements {
+			elements[i] = pair.Value
+		}
+		return tryPartial(env, elements,
+			func(values []types.Value) Evaler {
+				m := make(map[types.String]Evaler, len(values))
+				for i, val := range values {
+					m[types.String(v.Elements[i].Key)] = newLiteralEval(val)
+				}
+				return newRecordLiteralEval(m)
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				el := make([]ast.RecordElementNode, len(nodes))
+				for i, val := range nodes {
+					el[i] = ast.RecordElementNode{Key: v.Elements[i].Key, Value: val}
+				}
+				return ast.NodeTypeRecord{Elements: el}
+			},
+		)
+	case ast.NodeTypeSet:
+		elements := make([]ast.IsNode, len(v.Elements))
+		copy(elements, v.Elements)
+		return tryPartial(env, elements,
+			func(values []types.Value) Evaler {
+				el := make([]Evaler, len(values))
+				for i, v := range values {
+					el[i] = newLiteralEval(v)
+				}
+				return newSetLiteralEval(el)
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeSet{Elements: nodes}
+			},
+		)
+	case ast.NodeTypeNegate:
+		return tryPartialUnary(env, v.UnaryNode, newNegateEval, func(b ast.UnaryNode) ast.IsNode { return ast.NodeTypeNegate{UnaryNode: b} })
+	case ast.NodeTypeNot:
+		return tryPartialUnary(env, v.UnaryNode, newNotEval, func(b ast.UnaryNode) ast.IsNode { return ast.NodeTypeNot{UnaryNode: b} })
+	case ast.NodeTypeVariable:
+		return tryPartial(env,
+			[]ast.IsNode{},
+			func(_ []types.Value) Evaler {
+				return newVariableEval(v.Name)
+			},
+			func(_ []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeVariable{Name: v.Name}
+			},
+		)
+	case ast.NodeTypeIn:
+		return tryPartialBinary(env, v.BinaryNode, newInEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeIn{BinaryNode: b} })
+	case ast.NodeTypeAnd:
+		return partialAnd(env, v)
+	case ast.NodeTypeOr:
+		return partialOr(env, v)
+	case ast.NodeTypeEquals:
+		return tryPartialBinary(env, v.BinaryNode, newEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeEquals{BinaryNode: b} })
+	case ast.NodeTypeNotEquals:
+		return tryPartialBinary(env, v.BinaryNode, newNotEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeNotEquals{BinaryNode: b} })
+	case ast.NodeTypeGreaterThan:
+		return tryPartialBinary(env, v.BinaryNode, newComparableValueGreaterThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThan{BinaryNode: b} })
+	case ast.NodeTypeGreaterThanOrEqual:
+		return tryPartialBinary(env, v.BinaryNode, newComparableValueGreaterThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThanOrEqual{BinaryNode: b} })
+	case ast.NodeTypeLessThan:
+		return tryPartialBinary(env, v.BinaryNode, newComparableValueLessThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThan{BinaryNode: b} })
+	case ast.NodeTypeLessThanOrEqual:
+		return tryPartialBinary(env, v.BinaryNode, newComparableValueLessThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThanOrEqual{BinaryNode: b} })
+	case ast.NodeTypeSub:
+		return tryPartialBinary(env, v.BinaryNode, newSubtractEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeSub{BinaryNode: b} })
+	case ast.NodeTypeAdd:
+		return tryPartialBinary(env, v.BinaryNode, newAddEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeAdd{BinaryNode: b} })
+	case ast.NodeTypeMult:
+		return tryPartialBinary(env, v.BinaryNode, newMultiplyEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeMult{BinaryNode: b} })
+	case ast.NodeTypeContains:
+		return tryPartialBinary(env, v.BinaryNode, newContainsEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContains{BinaryNode: b} })
+	case ast.NodeTypeContainsAll:
+		return tryPartialBinary(env, v.BinaryNode, newContainsAllEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContainsAll{BinaryNode: b} })
+	case ast.NodeTypeContainsAny:
+		return tryPartialBinary(env, v.BinaryNode, newContainsAnyEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContainsAny{BinaryNode: b} })
+	default:
+		panic(fmt.Sprintf("unknown node type %T", v))
+	}
 }
 
 func isNonBoolValue(in ast.IsNode) bool {
@@ -508,26 +528,26 @@ func newPartialHasEval(record Evaler, attribute types.String) *partialHasEval {
 }
 
 func (n *partialHasEval) Eval(env Env) (types.Value, error) {
-    v, err := n.object.Eval(env)
-    if err != nil {
-        return zeroValue(), err
-    }
-    var record types.Record
-    switch vv := v.(type) {
-    case types.EntityUID:
-        if rec, ok := env.Entities[vv]; ok {
-            record = rec.Attributes
-        }
-    case types.Record:
-        record = vv
-    default:
-        return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
-    }
-    v, ok := record.Get(n.attribute)
-    if IsIgnore(v) {
-        return nil, errIgnore
-    }
-    return types.Boolean(ok), nil
+	v, err := n.object.Eval(env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	var record types.Record
+	switch vv := v.(type) {
+	case types.EntityUID:
+		if rec, ok := env.Entities.Get(vv); ok {
+			record = rec.Attributes
+		}
+	case types.Record:
+		record = vv
+	default:
+		return zeroValue(), fmt.Errorf("%w: expected one of [record, (entity of type `any_entity_type`)], got %v", ErrType, TypeName(v))
+	}
+	v, ok := record.Get(n.attribute)
+	if IsIgnore(v) {
+		return nil, errIgnore
+	}
+	return types.Boolean(ok), nil
 }
 
 // partialErrorEval

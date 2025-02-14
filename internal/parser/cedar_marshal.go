@@ -6,9 +6,9 @@ import (
     "fmt"
     "github.com/cedar-policy/cedar-go/types"
 
-    "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/internal/consts"
-    "github.com/cedar-policy/cedar-go/internal/extensions"
+	"github.com/cedar-policy/cedar-go/internal/consts"
+	"github.com/cedar-policy/cedar-go/internal/extensions"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
@@ -231,6 +231,20 @@ func (n NodeTypeContainsAny) marshalCedar(buf *bytes.Buffer) {
     buf.WriteRune(')')
 }
 
+func (n NodeTypeGetTag) marshalCedar(buf *bytes.Buffer) {
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeGetTag.Left, buf)
+	buf.WriteString(".getTag(")
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeGetTag.Right, buf)
+	buf.WriteRune(')')
+}
+
+func (n NodeTypeHasTag) marshalCedar(buf *bytes.Buffer) {
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeHasTag.Left, buf)
+	buf.WriteString(".hasTag(")
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeHasTag.Right, buf)
+	buf.WriteRune(')')
+}
+
 func (n NodeTypeSet) marshalCedar(buf *bytes.Buffer) {
     buf.WriteRune('[')
     for i := range n.NodeTypeSet.Elements {
@@ -351,64 +365,68 @@ func (n NodeTypeIf) marshalCedar(buf *bytes.Buffer) {
 }
 
 func astNodeToMarshalNode(astNode ast.IsNode) IsNode {
-    switch v := astNode.(type) {
-    case ast.NodeTypeIfThenElse:
-        return NodeTypeIf{v}
-    case ast.NodeTypeOr:
-        return NodeTypeOr{v}
-    case ast.NodeTypeAnd:
-        return NodeTypeAnd{v}
-    case ast.NodeTypeLessThan:
-        return NodeTypeLessThan{v, RelationNode{}}
-    case ast.NodeTypeLessThanOrEqual:
-        return NodeTypeLessThanOrEqual{v, RelationNode{}}
-    case ast.NodeTypeGreaterThan:
-        return NodeTypeGreaterThan{v, RelationNode{}}
-    case ast.NodeTypeGreaterThanOrEqual:
-        return NodeTypeGreaterThanOrEqual{v, RelationNode{}}
-    case ast.NodeTypeNotEquals:
-        return NodeTypeNotEquals{v, RelationNode{}}
-    case ast.NodeTypeEquals:
-        return NodeTypeEquals{v, RelationNode{}}
-    case ast.NodeTypeIn:
-        return NodeTypeIn{v, RelationNode{}}
-    case ast.NodeTypeHas:
-        return NodeTypeHas{v, RelationNode{}}
-    case ast.NodeTypeLike:
-        return NodeTypeLike{v, RelationNode{}}
-    case ast.NodeTypeIs:
-        return NodeTypeIs{v, RelationNode{}}
-    case ast.NodeTypeIsIn:
-        return NodeTypeIsIn{v, RelationNode{}}
-    case ast.NodeTypeSub:
-        return NodeTypeSub{v, AddNode{}}
-    case ast.NodeTypeAdd:
-        return NodeTypeAdd{v, AddNode{}}
-    case ast.NodeTypeMult:
-        return NodeTypeMult{v}
-    case ast.NodeTypeNegate:
-        return NodeTypeNegate{v, UnaryNode{}}
-    case ast.NodeTypeNot:
-        return NodeTypeNot{v, UnaryNode{}}
-    case ast.NodeTypeAccess:
-        return NodeTypeAccess{v}
-    case ast.NodeTypeExtensionCall:
-        return NodeTypeExtensionCall{v}
-    case ast.NodeTypeContains:
-        return NodeTypeContains{v, ContainsNode{}}
-    case ast.NodeTypeContainsAll:
-        return NodeTypeContainsAll{v, ContainsNode{}}
-    case ast.NodeTypeContainsAny:
-        return NodeTypeContainsAny{v, ContainsNode{}}
-    case ast.NodeValue:
-        return NodeValue{v, PrimaryNode{}}
-    case ast.NodeTypeRecord:
-        return NodeTypeRecord{v, PrimaryNode{}}
-    case ast.NodeTypeSet:
-        return NodeTypeSet{v, PrimaryNode{}}
-    case ast.NodeTypeVariable:
-        return NodeTypeVariable{v, PrimaryNode{}}
-    default:
-        panic(fmt.Sprintf("unknown node type %T", v))
-    }
+	switch v := astNode.(type) {
+	case ast.NodeTypeIfThenElse:
+		return NodeTypeIf{v}
+	case ast.NodeTypeOr:
+		return NodeTypeOr{v}
+	case ast.NodeTypeAnd:
+		return NodeTypeAnd{v}
+	case ast.NodeTypeLessThan:
+		return NodeTypeLessThan{v, RelationNode{}}
+	case ast.NodeTypeLessThanOrEqual:
+		return NodeTypeLessThanOrEqual{v, RelationNode{}}
+	case ast.NodeTypeGreaterThan:
+		return NodeTypeGreaterThan{v, RelationNode{}}
+	case ast.NodeTypeGreaterThanOrEqual:
+		return NodeTypeGreaterThanOrEqual{v, RelationNode{}}
+	case ast.NodeTypeNotEquals:
+		return NodeTypeNotEquals{v, RelationNode{}}
+	case ast.NodeTypeEquals:
+		return NodeTypeEquals{v, RelationNode{}}
+	case ast.NodeTypeIn:
+		return NodeTypeIn{v, RelationNode{}}
+	case ast.NodeTypeHas:
+		return NodeTypeHas{v, RelationNode{}}
+	case ast.NodeTypeHasTag:
+		return NodeTypeHasTag{v, RelationNode{}}
+	case ast.NodeTypeLike:
+		return NodeTypeLike{v, RelationNode{}}
+	case ast.NodeTypeIs:
+		return NodeTypeIs{v, RelationNode{}}
+	case ast.NodeTypeIsIn:
+		return NodeTypeIsIn{v, RelationNode{}}
+	case ast.NodeTypeSub:
+		return NodeTypeSub{v, AddNode{}}
+	case ast.NodeTypeAdd:
+		return NodeTypeAdd{v, AddNode{}}
+	case ast.NodeTypeMult:
+		return NodeTypeMult{v}
+	case ast.NodeTypeNegate:
+		return NodeTypeNegate{v, UnaryNode{}}
+	case ast.NodeTypeNot:
+		return NodeTypeNot{v, UnaryNode{}}
+	case ast.NodeTypeAccess:
+		return NodeTypeAccess{v}
+	case ast.NodeTypeGetTag:
+		return NodeTypeGetTag{v}
+	case ast.NodeTypeExtensionCall:
+		return NodeTypeExtensionCall{v}
+	case ast.NodeTypeContains:
+		return NodeTypeContains{v, ContainsNode{}}
+	case ast.NodeTypeContainsAll:
+		return NodeTypeContainsAll{v, ContainsNode{}}
+	case ast.NodeTypeContainsAny:
+		return NodeTypeContainsAny{v, ContainsNode{}}
+	case ast.NodeValue:
+		return NodeValue{v, PrimaryNode{}}
+	case ast.NodeTypeRecord:
+		return NodeTypeRecord{v, PrimaryNode{}}
+	case ast.NodeTypeSet:
+		return NodeTypeSet{v, PrimaryNode{}}
+	case ast.NodeTypeVariable:
+		return NodeTypeVariable{v, PrimaryNode{}}
+	default:
+		panic(fmt.Sprintf("unknown node type %T", v))
+	}
 }

@@ -4,9 +4,9 @@ import (
     "bytes"
     "testing"
 
-    "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/internal/parser"
-    "github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go/internal/parser"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func TestParse(t *testing.T) {
@@ -111,7 +111,19 @@ func TestParse(t *testing.T) {
 			when { action.foo["bar"].isIpv4() }
 			unless { principal.isIpv4(false, 123, "foo") }
 			when { principal["foo"] };`, false},
-        {"unary", `permit(principal, action, resource)
+		{"tags", `permit(principal, action, resource)
+			when { resource.hasTag("blue") };
+
+			permit(principal, action, resource)
+			when { resource.getTag("blue") };
+
+			permit(principal, action, resource)
+			when { resource.hasTag(context.color) };
+
+			permit(principal, action, resource)
+			when { resource.getTag(context.color) };
+			`, false},
+		{"unary", `permit(principal, action, resource)
 			when { !resource.foo }
 			unless { -resource.bar }
 			when { !!resource.foo }
@@ -243,7 +255,21 @@ func TestParse(t *testing.T) {
 			when { resource.bar[baz]`, true},
         {"invalidAccess8", `permit(principal, action, resource)
 			when { resource.bar["baz")`, true},
-        {"invalidUnaryOp", `permit(principal, action, resource)
+		{"invalidTag1", `permit(principal, action, resource)
+			when { resource.getTag(42)}`, true},
+		{"invalidTag2", `permit(principal, action, resource)
+			when { resource.hasTag(42)}`, true},
+		{"invalidTag3", `permit(principal, action, resource)
+			when { resource.hasTag(12.1 + 3.6)}`, true},
+		{"invalidTag4", `permit(principal, action, resource)
+			when { resource.hasTag(true)}`, true},
+		{"invalidTag5", `permit(principal, action, resource)
+			when { "blue".hasTag("true")}`, true},
+		{"invalidTag6", `permit(principal, action, resource)
+			when { 42.hasTag("true")}`, true},
+		{"invalidTag7", `permit(principal, action, resource)
+			when { true.hasTag("true")}`, true},
+		{"invalidUnaryOp", `permit(principal, action, resource)
 			when { +resource.bar };`, true},
         {"invalidAdd", `permit(principal, action, resource)
 			when { resource.foo +`, true},

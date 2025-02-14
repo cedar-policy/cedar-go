@@ -8,9 +8,9 @@ import (
     "maps"
     "slices"
 
-    internalast "github.com/cedar-policy/cedar-go/internal/ast"
-    internaljson "github.com/cedar-policy/cedar-go/internal/json"
-    "github.com/cedar-policy/cedar-go/types"
+	internaljson "github.com/cedar-policy/cedar-go/internal/json"
+	"github.com/cedar-policy/cedar-go/types"
+	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 type PolicyID = types.PolicyID
@@ -68,19 +68,26 @@ func NewPolicySetFromBytes(fileName string, document []byte) (*PolicySet, error)
     return &PolicySet{policies: pm}, nil
 }
 
-// Get returns the Policy with the given ID. If a policy with the given ID does not exist, nil is returned.
+// Get returns the Policy with the given ID. If a policy with the given ID
+// does not exist, nil is returned.
 func (p PolicySet) Get(policyID PolicyID) *Policy {
     return p.policies.StaticPolicies[policyID]
 }
 
-// Store inserts or updates a policy with the given ID.
-func (p *PolicySet) Store(policyID PolicyID, policy *Policy) {
-    p.policies.StaticPolicies[policyID] = policy
+// Add inserts or updates a policy with the given ID. Returns true if a policy
+// with the given ID did not already exist in the set.
+func (p *PolicySet) Add(policyID PolicyID, policy *Policy) bool {
+	_, exists := p.policies[policyID]
+	p.policies[policyID] = policy
+	return !exists
 }
 
-// Delete removes a policy from the PolicySet. Deleting a non-existent policy is a no-op.
-func (p *PolicySet) Delete(policyID PolicyID) {
-    delete(p.policies.StaticPolicies, policyID)
+// Remove removes a policy from the PolicySet. Returns true if a policy with
+// the given ID already existed in the set.
+func (p *PolicySet) Remove(policyID PolicyID) bool {
+	_, exists := p.policies[policyID]
+	delete(p.policies, policyID)
+	return exists
 }
 
 // Map returns a new PolicyMap instance of the policies in the PolicySet.

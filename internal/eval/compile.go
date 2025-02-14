@@ -3,8 +3,8 @@ package eval
 import (
     "fmt"
 
-    "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 type BoolEvaler struct {
@@ -62,35 +62,25 @@ func policyToNode(p *ast.Policy) ast.Node {
 }
 
 func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
-    switch t := in.(type) {
-    case ast.ScopeTypeAll:
-        return ast.True()
-    case ast.ScopeTypeEq:
-        return ast.NewNode(varNode).Equal(entityReferenceToNode(t.Entity))
-    case ast.ScopeTypeIn:
-        return ast.NewNode(varNode).In(entityReferenceToNode(t.Entity))
-    case ast.ScopeTypeInSet:
-        vals := make([]types.Value, len(t.Entities))
-        for i, e := range t.Entities {
-            vals[i] = e
-        }
-        return ast.NewNode(varNode).In(ast.Value(types.NewSet(vals)))
-    case ast.ScopeTypeIs:
-        return ast.NewNode(varNode).Is(t.Type)
-    case ast.ScopeTypeIsIn:
-        return ast.NewNode(varNode).IsIn(t.Type, entityReferenceToNode(t.Entity))
-    default:
-        panic(fmt.Sprintf("unknown scope type %T", t))
-    }
-}
+	switch t := in.(type) {
+	case ast.ScopeTypeAll:
+		return ast.True()
+	case ast.ScopeTypeEq:
+		return ast.NewNode(varNode).Equal(ast.Value(t.Entity))
+	case ast.ScopeTypeIn:
+		return ast.NewNode(varNode).In(ast.Value(t.Entity))
+	case ast.ScopeTypeInSet:
+		vals := make([]types.Value, len(t.Entities))
+		for i, e := range t.Entities {
+			vals[i] = e
+		}
+		return ast.NewNode(varNode).In(ast.Value(types.NewSet(vals...)))
+	case ast.ScopeTypeIs:
+		return ast.NewNode(varNode).Is(t.Type)
 
-func entityReferenceToNode(ef types.EntityReference) ast.Node {
-    switch e := ef.(type) {
-    case types.EntityUID:
-        return ast.Value(e)
-    case types.VariableSlot:
-        panic("variable slot cannot be evaluated, you should instantiate a template-linked policy first")
-    default:
-        panic(fmt.Sprintf("unknown entity reference type %T", e))
-    }
+	case ast.ScopeTypeIsIn:
+		return ast.NewNode(varNode).IsIn(t.Type, ast.Value(t.Entity))
+	default:
+		panic(fmt.Sprintf("unknown scope type %T", t))
+	}
 }

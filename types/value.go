@@ -4,12 +4,6 @@ import (
 	"fmt"
 )
 
-var ErrDatetime = fmt.Errorf("error parsing datetime value")
-var ErrDecimal = fmt.Errorf("error parsing decimal value")
-var ErrDuration = fmt.Errorf("error parsing duration value")
-var ErrIP = fmt.Errorf("error parsing ip value")
-var ErrNotComparable = fmt.Errorf("incompatible types in comparison")
-
 // Value defines the interface for all Cedar values (String, Long, Set, Record, Boolean, etc ...)
 //
 // Implementations of Value _must_ be able to be safely copied shallowly, which means they must either be immutable

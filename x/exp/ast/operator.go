@@ -137,6 +137,14 @@ func (lhs Node) Has(attr types.String) Node {
 	return NewNode(NodeTypeHas{StrOpNode: StrOpNode{Arg: lhs.v, Value: attr}})
 }
 
+func (lhs Node) GetTag(rhs Node) Node {
+	return NewNode(NodeTypeGetTag{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
+}
+
+func (lhs Node) HasTag(rhs Node) Node {
+	return NewNode(NodeTypeHasTag{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
+}
+
 //  ___ ____   _       _     _
 // |_ _|  _ \ / \   __| | __| |_ __ ___  ___ ___
 //  | || |_) / _ \ / _` |/ _` | '__/ _ \/ __/ __|
@@ -162,3 +170,33 @@ func (lhs Node) IsLoopback() Node {
 func (lhs Node) IsInRange(rhs Node) Node {
 	return NewMethodCall(lhs, "isInRange", rhs)
 }
+
+//  ____        _       _   _
+// |  _ \  __ _| |_ ___| |_(_)_ __ ___   ___
+// | | | |/ _` | __/ _ \ __| | '_ ` _ \ / _ \
+// | |_| | (_| | ||  __/ |_| | | | | | |  __/
+// |____/ \__,_|\__\___|\__|_|_| |_| |_|\___|
+
+func (lhs Node) Offset(rhs Node) Node { return NewMethodCall(lhs, "offset", rhs) }
+
+func (lhs Node) DurationSince(rhs Node) Node { return NewMethodCall(lhs, "durationSince", rhs) }
+
+func (lhs Node) ToDate() Node { return NewMethodCall(lhs, "toDate") }
+
+func (lhs Node) ToTime() Node { return NewMethodCall(lhs, "toTime") }
+
+//  ____                  _   _
+// |  _ \ _   _ _ __ __ _| |_(_) ___  _ __
+// | | | | | | | '__/ _` | __| |/ _ \| '_ \
+// | |_| | |_| | | | (_| | |_| | (_) | | | |
+// |____/ \__,_|_|  \__,_|\__|_|\___/|_| |_|
+
+func (lhs Node) ToDays() Node { return NewMethodCall(lhs, "toDays") }
+
+func (lhs Node) ToHours() Node { return NewMethodCall(lhs, "toHours") }
+
+func (lhs Node) ToMinutes() Node { return NewMethodCall(lhs, "toMinutes") }
+
+func (lhs Node) ToSeconds() Node { return NewMethodCall(lhs, "toSeconds") }
+
+func (lhs Node) ToMilliseconds() Node { return NewMethodCall(lhs, "toMilliseconds") }

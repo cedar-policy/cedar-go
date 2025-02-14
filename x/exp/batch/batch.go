@@ -1,17 +1,25 @@
+// Package batch allows for performant batch evaluations of Cedar policy given a set of principals, actions, resources,
+// and/or context as variables. The batch evaluation takes advantage of a form of [partial evaluation] to whittle the
+// policy set down to just those policies which refer to the set of unknown variables. This allows for queries over a
+// policy set, such as "to which resources can user A connect when the request comes from outside the United States?"
+// which can run much faster than a brute force trawl through every possible authorization request.
+//
+// [partial evaluation]: https://en.wikipedia.org/wiki/Partial_evaluation
 package batch
 
 import (
-    "context"
-    "fmt"
-    "maps"
-    "slices"
+	"context"
+	"errors"
+	"fmt"
+	"maps"
+	"slices"
 
-    "github.com/cedar-policy/cedar-go"
-    "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/internal/consts"
-    "github.com/cedar-policy/cedar-go/internal/eval"
-    "github.com/cedar-policy/cedar-go/internal/mapset"
-    "github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go"
+	"github.com/cedar-policy/cedar-go/internal/consts"
+	"github.com/cedar-policy/cedar-go/internal/eval"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
+	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 // Ignore returns a value that should be ignored during batch evaluation.
@@ -48,7 +56,7 @@ type Result struct {
 
 // Callback is a function that is called for each single batch authorization with
 // a Result.
-type Callback func(Result)
+type Callback func(Result) error
 
 type idEvaler struct {
     Policy *ast.Policy
@@ -100,66 +108,71 @@ var errInvalidPart = fmt.Errorf("invalid part")
 //   - It will error in case any of PARC are an incorrect type at authorization.
 //   - It will error in case there are unbound variables.
 //   - It will error in case there are unused variables.
+//   - It will error in case of a callback error.
 //
 // The result passed to the callback must be used / cloned immediately and not modified.
-func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entities, request Request, cb Callback) error {
-    be := &batchEvaler{}
-    var found mapset.MapSet[types.String]
-    findVariables(&found, request.Principal)
-    findVariables(&found, request.Action)
-    findVariables(&found, request.Resource)
-    findVariables(&found, request.Context)
-    var err error
-    found.Iterate(func(key types.String) bool {
-        if _, ok := request.Variables[key]; !ok {
-            err = fmt.Errorf("%w: %v", errUnboundVariable, key)
-            return false
-        }
-        return true
-    })
-    if err != nil {
-        return err
-    }
-    for k := range request.Variables {
-        if !found.Contains(k) {
-            return fmt.Errorf("%w: %v", errUnusedVariable, k)
-        }
-    }
-    for _, vs := range request.Variables {
-        if len(vs) == 0 {
-            return nil
-        }
-    }
-    pm := ps.Map()
-    be.policies = make(map[types.PolicyID]*ast.Policy, len(pm.StaticPolicies))
-    for k, p := range pm.StaticPolicies {
-        be.policies[k] = (*ast.Policy)(p.AST())
-    }
-    be.callback = cb
-    switch {
-    case request.Principal == nil:
-        return fmt.Errorf("%w: principal", errMissingPart)
-    case request.Action == nil:
-        return fmt.Errorf("%w: action", errMissingPart)
-    case request.Resource == nil:
-        return fmt.Errorf("%w: resource", errMissingPart)
-    case request.Context == nil:
-        return fmt.Errorf("%w: context", errMissingPart)
-    }
-    be.env = eval.Env{
-        Entities:  entityMap,
-        Principal: request.Principal,
-        Action:    request.Action,
-        Resource:  request.Resource,
-        Context:   request.Context,
-    }
-    be.Values = Values{}
-    for k, v := range request.Variables {
-        be.Variables = append(be.Variables, variableItem{Key: k, Values: v})
-    }
-    slices.SortFunc(be.Variables, func(a, b variableItem) int {
-        return len(a.Values) - len(b.Values)
-    })
+func Authorize(ctx context.Context, ps *cedar.PolicySet, entities types.EntityGetter, request Request, cb Callback) error {
+	be := &batchEvaler{}
+	var found mapset.MapSet[types.String]
+	findVariables(&found, request.Principal)
+	findVariables(&found, request.Action)
+	findVariables(&found, request.Resource)
+	findVariables(&found, request.Context)
+	var err error
+	found.Iterate(func(key types.String) bool {
+		if _, ok := request.Variables[key]; !ok {
+			err = fmt.Errorf("%w: %v", errUnboundVariable, key)
+			return false
+		}
+		return true
+	})
+	if err != nil {
+		return err
+	}
+	for k := range request.Variables {
+		if !found.Contains(k) {
+			return fmt.Errorf("%w: %v", errUnusedVariable, k)
+		}
+	}
+	for _, vs := range request.Variables {
+		if len(vs) == 0 {
+			return nil
+		}
+	}
+	pm := ps.Map()
+	be.policies = make(map[types.PolicyID]*ast.Policy, len(pm))
+	for k, p := range pm {
+		be.policies[k] = (*ast.Policy)(p.AST())
+	}
+	be.callback = cb
+	switch {
+	case request.Principal == nil:
+		return fmt.Errorf("%w: principal", errMissingPart)
+	case request.Action == nil:
+		return fmt.Errorf("%w: action", errMissingPart)
+	case request.Resource == nil:
+		return fmt.Errorf("%w: resource", errMissingPart)
+	case request.Context == nil:
+		return fmt.Errorf("%w: context", errMissingPart)
+	}
+	if entities == nil {
+		var zero types.EntityMap
+		entities = zero
+	}
+	be.env = eval.Env{
+		Entities:  entities,
+		Principal: request.Principal,
+		Action:    request.Action,
+		Resource:  request.Resource,
+		Context:   request.Context,
+	}
+	be.Values = Values{}
+	for k, v := range request.Variables {
+		be.Variables = append(be.Variables, variableItem{Key: k, Values: v})
+	}
+	slices.SortFunc(be.Variables, func(a, b variableItem) int {
+		return len(a.Values) - len(b.Values)
+	})
 
     // resolve ignores if no variables exist
     if len(be.Variables) == 0 {
@@ -167,7 +180,7 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entityMap types.Entitie
         fixIgnores(be)
     }
 
-    return doBatch(ctx, be)
+	return errors.Join(doBatch(ctx, be), ctx.Err())
 }
 
 func doPartial(be *batchEvaler) {
@@ -260,25 +273,24 @@ func doBatch(ctx context.Context, be *batchEvaler) error {
 }
 
 func diagnosticAuthzWithCallback(be *batchEvaler) error {
-    var res Result
-    var err error
-    if res.Request.Principal, err = eval.ValueToEntity(be.env.Principal); err != nil {
-        return fmt.Errorf("%w: %w", errInvalidPart, err)
-    }
-    if res.Request.Action, err = eval.ValueToEntity(be.env.Action); err != nil {
-        return fmt.Errorf("%w: %w", errInvalidPart, err)
-    }
-    if res.Request.Resource, err = eval.ValueToEntity(be.env.Resource); err != nil {
-        return fmt.Errorf("%w: %w", errInvalidPart, err)
-    }
-    if res.Request.Context, err = eval.ValueToRecord(be.env.Context); err != nil {
-        return fmt.Errorf("%w: %w", errInvalidPart, err)
-    }
-    res.Values = be.Values
-    batchCompile(be)
-    res.Decision, res.Diagnostic = isAuthorized(be.evalers, be.env)
-    be.callback(res)
-    return nil
+	var res Result
+	var err error
+	if res.Request.Principal, err = eval.ValueToEntity(be.env.Principal); err != nil {
+		return fmt.Errorf("%w: %w", errInvalidPart, err)
+	}
+	if res.Request.Action, err = eval.ValueToEntity(be.env.Action); err != nil {
+		return fmt.Errorf("%w: %w", errInvalidPart, err)
+	}
+	if res.Request.Resource, err = eval.ValueToEntity(be.env.Resource); err != nil {
+		return fmt.Errorf("%w: %w", errInvalidPart, err)
+	}
+	if res.Request.Context, err = eval.ValueToRecord(be.env.Context); err != nil {
+		return fmt.Errorf("%w: %w", errInvalidPart, err)
+	}
+	res.Values = be.Values
+	batchCompile(be)
+	res.Decision, res.Diagnostic = isAuthorized(be.evalers, be.env)
+	return be.callback(res)
 }
 
 func isAuthorized(ps map[types.PolicyID]*idEvaler, env eval.Env) (types.Decision, types.Diagnostic) {
@@ -377,9 +389,9 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
             return true
         })
 
-        return types.NewSet(newSlice), true
-    }
-    return r, false
+		return types.NewSet(newSlice...), true
+	}
+	return r, false
 }
 
 func findVariables(found *mapset.MapSet[types.String], r types.Value) {

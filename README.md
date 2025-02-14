@@ -5,6 +5,7 @@
 ![Build and Test](https://github.com/cedar-policy/cedar-go/actions/workflows/build_and_test.yml/badge.svg)
 ![golangci-lint](https://github.com/cedar-policy/cedar-go/actions/workflows/golangci-lint.yml/badge.svg)
 ![Nightly Corpus Test](https://github.com/cedar-policy/cedar-go/actions/workflows/corpus.yml/badge.svg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/cedar-policy/cedar-go.svg)](https://pkg.go.dev/github.com/cedar-policy/cedar-go)
 
 This repository contains source code of the Go implementation of the [Cedar](https://www.cedarpolicy.com/) policy language.
 
@@ -39,10 +40,11 @@ The Go implementation includes:
 
 The Go implementation does not yet include:
 
-- examples and CLI applications
-- schema support and the validator
+- CLI applications
+- schema support and the [validator](https://docs.cedarpolicy.com/policies/validation.html)
 - the formatter
 - partial evaluation
+- support for [policy templates](https://docs.cedarpolicy.com/policies/templates.html)
 
 ## Quick Start
 
@@ -57,7 +59,6 @@ import (
 	"log"
 
 	cedar "github.com/cedar-policy/cedar-go"
-	"github.com/cedar-policy/cedar-go/types"
 )
 
 const policyCedar = `permit (
@@ -87,17 +88,20 @@ func main() {
 	}
 
 	ps := cedar.NewPolicySet()
-	ps.Store("policy0", &policy)
+	ps.Add("policy0", &policy)
 
-	var entities types.Entities
+	var entities cedar.EntityMap
 	if err := json.Unmarshal([]byte(entitiesJSON), &entities); err != nil {
 		log.Fatal(err)
 	}
+	
 	req := cedar.Request{
-		Principal: types.EntityUID{Type: "User", ID: "alice"},
-		Action:    types.EntityUID{Type: "Action", ID: "view"},
-		Resource:  types.EntityUID{Type: "Photo", ID: "VacationPhoto94.jpg"},
-		Context:   types.Record{},
+		Principal: cedar.NewEntityUID("User", "alice"),
+		Action:    cedar.NewEntityUID("Action", "view"),
+		Resource:  cedar.NewEntityUID("Photo", "VacationPhoto94.jpg"),
+		Context:   cedar.NewRecord(cedar.RecordMap{
+			"demoRequest": cedar.True,
+        }),
 	}
 
 	ok, _ := ps.IsAuthorized(entities, req)
@@ -115,6 +119,13 @@ This request is allowed because `VacationPhoto94.jpg` belongs to `Album::"jane_v
 
 If you'd like to see more details on what can be expressed as Cedar policies, see the [documentation](https://docs.cedarpolicy.com).
 
+## Packages
+The cedar-go module houses four public packages:
+ * [cedar](.) - The main package for interacting with the module, including parsing policies and entities and authorizing requests.
+ * [ast](ast/) - Programmatic construction of Cedar ASTs
+ * [types](types/) - Basic types common to multiple packages. For convenience, most of these are also projected through the cedar package.
+ * [x/exp/batch](x/exp/batch/) - An experimental batch authorization API supporting high-performance variable substitution via partial evaluation.
+
 ## Documentation
 
 General documentation for Cedar is available at [docs.cedarpolicy.com](https://docs.cedarpolicy.com), with source code in the [cedar-policy/cedar-docs](https://github.com/cedar-policy/cedar-docs/) repository.
@@ -125,13 +136,37 @@ Generated documentation for the latest version of the Go implementation can be a
 If you're looking to integrate Cedar into a production system, please be sure the read the [security best practices](https://docs.cedarpolicy.com/other/security.html)
 
 ## Backward Compatibility Considerations
-
-x/exp - code in this subrepository is not subject to the Go 1
-compatibility promise.
-
-While in development (0.x.y), each tagged release may contain breaking changes.
+- `x/exp` - code in this directory is not subject to the semantic versioning constraints of the rest of the module and breaking changes may be made at any time.
+- Variadics may be added to functions that do not have them to expand the arguments of a function or method.
+- Concrete types may be replaced with compatible interfaces to expand the variety of arguments a function or method can take.
 
 ## Change log
+
+### New features in 1.0.0
+- AST builder methods for Cedar datetime and duration literals and their extension methods have been added
+- AST builder methods for adding extension function calls with uninterpreted strings
+- Small improvement in evaluation runtime performance for large, shallow entity graphs.
+
+### Upgrading from 0.4.x to 1.0.0
+
+- The `Parents` field on `types.Entity` has been changed to an immutable set type with an interface similar to `types.Set`
+- The `UnsafeDecimal()` constructor for the `types.Decimal` type has been removed and replaced with the following safe constructors, which return error on overflow:
+  - `NewDecimal(int64 i, int exponent) (Decimal, error)`
+  - `NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error)`
+  - `NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error)`
+- The `Value` field on `types.Decimal` has been made private. Instances of `Decimal` can be compared with one another via the new `Compare` method.
+- `types.DecimalPrecision` has been made private
+- The following error types have been made private: `types.ErrDateitme`, `types.ErrDecimal`, `types.ErrDuration`, `types.ErrIP`, `types.ErrNotComparable`
+- The following datetime and duration-related constructors have been renamed:
+  - `types.FromStdTime()` has been renamed to `types.NewDatetime()`
+  - `types.DatetimeFromMillis()` has been renamed to `types.NewDatetimeFromMillis()`
+  - `types.FromStdDuration()` has been renamed to `types.NewDuration()`
+  - `types.DurationFromMillis()` has been renamed to `types.NewDurationFromMillis()`
+- `types.Entities` has been renamed to `types.EntityMap`
+- Because `types.Entity` is now immutable, `types.EntityMap` now stores items by value rather than by pointer
+- `PolicySet.Store()` has been renamed to `PolicySet.Add()`
+- `PolicySet.Delete()` has been renamed to `PolicySet.Remove()`
+- `types.Set()` now takes variadic arguments of type `types.Value` instead of a single `[]types.Value` argument
 
 ### New features in 0.4.0
 

@@ -3,12 +3,12 @@ package cedar
 import (
     "bytes"
 
-    "github.com/cedar-policy/cedar-go/ast"
-    internalast "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/internal/eval"
-    "github.com/cedar-policy/cedar-go/internal/json"
-    "github.com/cedar-policy/cedar-go/internal/parser"
-    "github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/ast"
+	"github.com/cedar-policy/cedar-go/internal/eval"
+	"github.com/cedar-policy/cedar-go/internal/json"
+	"github.com/cedar-policy/cedar-go/internal/parser"
+	"github.com/cedar-policy/cedar-go/types"
+	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 // A Policy is the parsed form of a single Cedar language policy statement.
@@ -42,6 +42,9 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
     return nil
 }
 
+// MarshalCedar encodes a single Policy statement in the human-readable format specified by the [Cedar documentation].
+//
+// [Cedar documentation]: https://docs.cedarpolicy.com/policies/syntax-grammar.html
 func (p *Policy) MarshalCedar() []byte {
     cedarPolicy := (*parser.Policy)(p.ast)
 
@@ -51,6 +54,9 @@ func (p *Policy) MarshalCedar() []byte {
     return buf.Bytes()
 }
 
+// UnmarshalCedar parses and compiles a single Policy statement in the human-readable format specified by the [Cedar documentation].
+//
+// [Cedar documentation]: https://docs.cedarpolicy.com/policies/syntax-grammar.html
 func (p *Policy) UnmarshalCedar(b []byte) error {
     var cedarPolicy parser.Policy
     if err := cedarPolicy.UnmarshalCedar(b); err != nil {
@@ -60,8 +66,8 @@ func (p *Policy) UnmarshalCedar(b []byte) error {
     return nil
 }
 
-// NewPolicyFromAST lets you create a new policy statement from a programatically created AST.
-// Do not modify the *ast.Template after passing it into NewPolicyFromAST.
+// NewPolicyFromAST lets you create a new policy statement from a programmatically created AST.
+// Do not modify the *ast.Policy after passing it into NewPolicyFromAST.
 func NewPolicyFromAST(astIn *ast.Policy) *Policy {
     p := newPolicy((*internalast.Policy)(astIn))
     return p

@@ -14,8 +14,8 @@ type Set struct {
 	hashVal uint64
 }
 
-// NewSet returns an immutable Set given a Go slice of Values. Duplicates are removed and order is not preserved.
-func NewSet(v []Value) Set {
+// NewSet returns an immutable Set given a variadic set of Values. Duplicates are removed and order is not preserved.
+func NewSet(v ...Value) Set {
 	var set map[uint64]Value
 	if v != nil {
 		set = make(map[uint64]Value, len(v))
@@ -125,7 +125,7 @@ func (v *Set) UnmarshalJSON(b []byte) error {
 		vals[i] = vv.Value
 	}
 
-	*v = NewSet(vals)
+	*v = NewSet(vals...)
 	return nil
 }
 

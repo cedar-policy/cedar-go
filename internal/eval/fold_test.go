@@ -3,10 +3,11 @@ package eval
 import (
 	"net/netip"
 	"testing"
+	"time"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func TestFoldNode(t *testing.T) {
@@ -21,7 +22,7 @@ func TestFoldNode(t *testing.T) {
 		},
 		{"set-bake",
 			ast.Set(ast.True()),
-			ast.Value(types.NewSet([]types.Value{types.True})),
+			ast.Value(types.NewSet(types.True)),
 		},
 		{"record-fold",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(6).Multiply(ast.Long(7))}}),
@@ -29,7 +30,7 @@ func TestFoldNode(t *testing.T) {
 		},
 		{"set-fold",
 			ast.Set(ast.Long(6).Multiply(ast.Long(7))),
-			ast.Value(types.NewSet([]types.Value{types.Long(42)})),
+			ast.Value(types.NewSet(types.Long(42))),
 		},
 		{"record-blocked",
 			ast.Record(ast.Pairs{{Key: "key", Value: ast.Long(6).Multiply(ast.Context())}}),
@@ -205,7 +206,7 @@ func TestFoldPolicy(t *testing.T) {
 		{
 			"valueSetNodes",
 			ast.Permit().When(ast.Set(ast.Long(42), ast.Long(43))),
-			ast.Permit().When(ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43)}))),
+			ast.Permit().When(ast.Value(types.NewSet(types.Long(42), types.Long(43)))),
 		},
 		{
 			"valueRecordElements",
@@ -283,23 +284,43 @@ func TestFoldPolicy(t *testing.T) {
 			ast.Permit().When(ast.Long(42).GreaterThanOrEqual(ast.String("test"))),
 		},
 		{
+			"opLessThanComparable",
+			ast.Permit().When(ast.Datetime(time.UnixMilli(42)).LessThan(ast.Datetime(time.UnixMilli(43)))),
+			ast.Permit().When(ast.True()),
+		},
+		{
+			"opLessThanOrEqualComparable",
+			ast.Permit().When(ast.Datetime(time.UnixMilli(42)).LessThanOrEqual(ast.Datetime(time.UnixMilli(43)))),
+			ast.Permit().When(ast.True()),
+		},
+		{
+			"opGreaterThanComparable",
+			ast.Permit().When(ast.Datetime(time.UnixMilli(42)).GreaterThan(ast.Datetime(time.UnixMilli(43)))),
+			ast.Permit().When(ast.False()),
+		},
+		{
+			"opGreaterThanOrEqualComparable",
+			ast.Permit().When(ast.Datetime(time.UnixMilli(42)).GreaterThanOrEqual(ast.Datetime(time.UnixMilli(43)))),
+			ast.Permit().When(ast.False()),
+		},
+		{
 			"opLessThanExt",
-			ast.Permit().When(ast.Value(types.UnsafeDecimal(42)).DecimalLessThan(ast.Value(types.UnsafeDecimal(43)))),
+			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalLessThan(ast.Value(testutil.Must(types.NewDecimalFromInt(43))))),
 			ast.Permit().When(ast.True()),
 		},
 		{
 			"opLessThanOrEqualExt",
-			ast.Permit().When(ast.Value(types.UnsafeDecimal(42)).DecimalLessThanOrEqual(ast.Value(types.UnsafeDecimal(43)))),
+			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalLessThanOrEqual(ast.Value(testutil.Must(types.NewDecimalFromInt(43))))),
 			ast.Permit().When(ast.True()),
 		},
 		{
 			"opGreaterThanExt",
-			ast.Permit().When(ast.Value(types.UnsafeDecimal(42)).DecimalGreaterThan(ast.Value(types.UnsafeDecimal(43)))),
+			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalGreaterThan(ast.Value(testutil.Must(types.NewDecimalFromInt(43))))),
 			ast.Permit().When(ast.False()),
 		},
 		{
 			"opGreaterThanOrEqualExt",
-			ast.Permit().When(ast.Value(types.UnsafeDecimal(42)).DecimalGreaterThanOrEqual(ast.Value(types.UnsafeDecimal(43)))),
+			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42))).DecimalGreaterThanOrEqual(ast.Value(testutil.Must(types.NewDecimalFromInt(43))))),
 			ast.Permit().When(ast.False()),
 		},
 		{
@@ -451,6 +472,26 @@ func TestFoldPolicy(t *testing.T) {
 			"opHasEntity",
 			ast.Permit().When(ast.EntityUID("T", "1").Has("key")),
 			ast.Permit().When(ast.EntityUID("T", "1").Has("key")),
+		},
+		{
+			"opGetTagInvalidType",
+			ast.Permit().When(ast.Long(42).GetTag(ast.String("key"))),
+			ast.Permit().When(ast.Long(42).GetTag(ast.String("key"))),
+		},
+		{
+			"opHasTagInvalidType",
+			ast.Permit().When(ast.Long(42).HasTag(ast.String("key"))),
+			ast.Permit().When(ast.Long(42).HasTag(ast.String("key"))),
+		},
+		{
+			"opGetTag",
+			ast.Permit().When(ast.EntityUID("T", "1").GetTag(ast.String("key"))),
+			ast.Permit().When(ast.EntityUID("T", "1").GetTag(ast.String("key"))),
+		},
+		{
+			"opHasTag",
+			ast.Permit().When(ast.EntityUID("T", "1").HasTag(ast.String("key"))),
+			ast.Permit().When(ast.EntityUID("T", "1").HasTag(ast.String("key"))),
 		},
 		{
 			"opIsIpv4",

@@ -3,75 +3,19 @@ package ast_test
 import (
 	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/ast"
-	internalast "github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
+	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
-// These tests serve mostly as examples of how to translate from Cedar text into programmatic AST construction. They
-// don't verify anything.
-func TestAstExamples(t *testing.T) {
-	t.Parallel()
-
-	johnny := types.NewEntityUID("User", "johnny")
-	sow := types.NewEntityUID("Action", "sow")
-	cast := types.NewEntityUID("Action", "cast")
-
-	// @example("one")
-	// permit (
-	//     principal == User::"johnny"
-	//     action in [Action::"sow", Action::"cast"]
-	//     resource
-	// )
-	// when { true }
-	// unless { false };
-	_ = ast.Annotation("example", "one").
-		Permit().
-		PrincipalIsIn("User", johnny).
-		ActionInSet(sow, cast).
-		When(ast.True()).
-		Unless(ast.False())
-
-	// @example("two")
-	// forbid (principal, action, resource)
-	// when { resource.tags.contains("private") }
-	// unless { resource in principal.allowed_resources };
-	private := "private"
-	_ = ast.Annotation("example", "two").
-		Forbid().
-		When(
-			ast.Resource().Access("tags").Contains(ast.String(private)),
-		).
-		Unless(
-			ast.Resource().In(ast.Principal().Access("allowed_resources")),
-		)
-
-	// forbid (principal, action, resource)
-	// when { {x: "value"}.x == "value" }
-	// when { {x: 1 + context.fooCount}.x == 3 }
-	// when { [1, (2 + 3) * 4, context.fooCount].contains(1) };
-	simpleRecord := types.NewRecord(types.RecordMap{
-		"x": types.String("value"),
-	})
-	_ = ast.Forbid().
-		When(
-			ast.Value(simpleRecord).Access("x").Equal(ast.String("value")),
-		).
-		When(
-			ast.Record(ast.Pairs{{Key: "x", Value: ast.Long(1).Add(ast.Context().Access("fooCount"))}}).Access("x").Equal(ast.Long(3)),
-		).
-		When(
-			ast.Set(
-				ast.Long(1),
-				ast.Long(2).Add(ast.Long(3)).Multiply(ast.Long(4)),
-				ast.Context().Access("fooCount"),
-			).Contains(ast.Long(1)),
-		)
-}
-
 func TestASTByTable(t *testing.T) {
+	type CustomString string
+	type CustomBool bool
+	type CustomInt int
+	type CustomInt64 int64
 	t.Parallel()
 	tests := []struct {
 		name string
@@ -204,6 +148,16 @@ func TestASTByTable(t *testing.T) {
 			internalast.Permit().When(internalast.Boolean(true)),
 		},
 		{
+			"customValueBoolFalse",
+			ast.Permit().When(ast.Boolean(CustomBool(false))),
+			internalast.Permit().When(internalast.Boolean(false)),
+		},
+		{
+			"customValueBoolTrue",
+			ast.Permit().When(ast.Boolean(CustomBool(true))),
+			internalast.Permit().When(internalast.Boolean(true)),
+		},
+		{
 			"valueTrue",
 			ast.Permit().When(ast.True()),
 			internalast.Permit().When(internalast.True()),
@@ -217,6 +171,21 @@ func TestASTByTable(t *testing.T) {
 			"valueString",
 			ast.Permit().When(ast.String("cedar")),
 			internalast.Permit().When(internalast.String("cedar")),
+		},
+		{
+			"customValueString",
+			ast.Permit().When(ast.String(CustomString("cedar"))),
+			internalast.Permit().When(internalast.String("cedar")),
+		},
+		{
+			"customValueInt",
+			ast.Permit().When(ast.Long(CustomInt(42))),
+			internalast.Permit().When(internalast.Long(42)),
+		},
+		{
+			"customValueInt64",
+			ast.Permit().When(ast.Long(CustomInt64(42))),
+			internalast.Permit().When(internalast.Long(42)),
 		},
 		{
 			"valueLong",
@@ -379,6 +348,16 @@ func TestASTByTable(t *testing.T) {
 			internalast.Permit().When(internalast.Long(42).Has("key")),
 		},
 		{
+			"opGetTag",
+			ast.Permit().When(ast.EntityUID("T", "1").GetTag(ast.String("key"))),
+			internalast.Permit().When(internalast.EntityUID("T", "1").GetTag(internalast.String("key"))),
+		},
+		{
+			"opsHasTag",
+			ast.Permit().When(ast.EntityUID("T", "1").HasTag(ast.String("key"))),
+			internalast.Permit().When(internalast.EntityUID("T", "1").HasTag(internalast.String("key"))),
+		},
+		{
 			"opIsIpv4",
 			ast.Permit().When(ast.Long(42).IsIpv4()),
 			internalast.Permit().When(internalast.Long(42).IsIpv4()),
@@ -402,6 +381,71 @@ func TestASTByTable(t *testing.T) {
 			"opIsInRange",
 			ast.Permit().When(ast.Long(42).IsInRange(ast.Long(43))),
 			internalast.Permit().When(internalast.Long(42).IsInRange(internalast.Long(43))),
+		},
+		{
+			"opOffset",
+			ast.Permit().When(ast.Datetime(time.Time{}).Offset(ast.Duration(time.Duration(100)))),
+			internalast.Permit().When(internalast.Datetime(time.Time{}).Offset(internalast.Duration(time.Duration(100)))),
+		},
+		{
+			"opDurationSince",
+			ast.Permit().When(ast.Datetime(time.Time{}).DurationSince(ast.Datetime(time.Time{}))),
+			internalast.Permit().When(internalast.Datetime(time.Time{}).DurationSince(internalast.Datetime(time.Time{}))),
+		},
+		{
+			"opToDate",
+			ast.Permit().When(ast.Datetime(time.Time{}).ToDate()),
+			internalast.Permit().When(internalast.Datetime(time.Time{}).ToDate()),
+		},
+		{
+			"opToTime",
+			ast.Permit().When(ast.Datetime(time.Time{}).ToTime()),
+			internalast.Permit().When(internalast.Datetime(time.Time{}).ToTime()),
+		},
+		{
+			"opToDays",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToDays()),
+			internalast.Permit().When(internalast.Duration(100).ToDays()),
+		},
+		{
+			"opToHours",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToHours()),
+			internalast.Permit().When(internalast.Duration(100).ToHours()),
+		},
+		{
+			"opToMinutes",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToMinutes()),
+			internalast.Permit().When(internalast.Duration(100).ToMinutes()),
+		},
+		{
+			"opToSeconds",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToSeconds()),
+			internalast.Permit().When(internalast.Duration(100).ToSeconds()),
+		},
+		{
+			"opToMilliseconds",
+			ast.Permit().When(ast.Duration(time.Duration(100)).ToMilliseconds()),
+			internalast.Permit().When(internalast.Duration(100).ToMilliseconds()),
+		},
+		{
+			"decimalExtension",
+			ast.Permit().When(ast.DecimalExtensionCall(ast.Value(types.String("3.14")))),
+			internalast.Permit().When(internalast.ExtensionCall("decimal", internalast.String("3.14"))),
+		},
+		{
+			"ipExtension",
+			ast.Permit().When(ast.IPExtensionCall(ast.Value(types.String("127.0.0.1")))),
+			internalast.Permit().When(internalast.ExtensionCall("ip", internalast.String("127.0.0.1"))),
+		},
+		{
+			"datetime",
+			ast.Permit().When(ast.DatetimeExtensionCall(ast.Value(types.String("2006-01-02T15:04:05Z07:00")))),
+			internalast.Permit().When(internalast.ExtensionCall("datetime", internalast.String("2006-01-02T15:04:05Z07:00"))),
+		},
+		{
+			"duration",
+			ast.Permit().When(ast.DurationExtensionCall(ast.Value(types.String("1d2h3m4s5ms")))),
+			internalast.Permit().When(internalast.ExtensionCall("duration", internalast.String("1d2h3m4s5ms"))),
 		},
 	}
 

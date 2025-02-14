@@ -5,6 +5,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
+	"golang.org/x/exp/constraints"
 )
 
 //  _____
@@ -30,8 +31,8 @@ type String = types.String
 
 // Other Cedar types
 
-type Entities = types.Entities
 type Entity = types.Entity
+type EntityMap = types.EntityMap
 type EntityType = types.EntityType
 type EntityUIDSet = types.EntityUIDSet
 type Pattern = types.Pattern
@@ -39,6 +40,7 @@ type Wildcard = types.Wildcard
 
 // cedar-go types
 
+type EntityGetter = types.EntityGetter
 type Value = types.Value
 
 //   ____                _              _
@@ -52,34 +54,30 @@ const (
 	False = types.False
 )
 
-const (
-	DecimalPrecision = types.DecimalPrecision
-)
-
 //   ____                _                   _
 //  / ___|___  _ __  ___| |_ _ __ _   _  ___| |_ ___  _ __ ___
 // | |   / _ \| '_ \/ __| __| '__| | | |/ __| __/ _ \| '__/ __|
 // | |__| (_) | | | \__ \ |_| |  | |_| | (__| || (_) | |  \__ \
 //  \____\___/|_| |_|___/\__|_|   \__,_|\___|\__\___/|_|  |___/
 
-// DatetimeFromMillis returns a Datetime from milliseconds
-func DatetimeFromMillis(ms int64) Datetime {
-	return types.DatetimeFromMillis(ms)
+// NewDatetimeFromMillis returns a Datetime from milliseconds
+func NewDatetimeFromMillis(ms int64) Datetime {
+	return types.NewDatetimeFromMillis(ms)
 }
 
-// DurationFromMillis returns a Duration from milliseconds
-func DurationFromMillis(ms int64) Duration {
-	return types.DurationFromMillis(ms)
+// NewDurationFromMillis returns a Duration from milliseconds
+func NewDurationFromMillis(ms int64) Duration {
+	return types.NewDurationFromMillis(ms)
 }
 
-// FromStdDuration returns a Cedar Duration from a Go time.Duration
-func FromStdDuration(d time.Duration) Duration {
-	return types.FromStdDuration(d)
+// NewDuration returns a Cedar Duration from a Go time.Duration
+func NewDuration(d time.Duration) Duration {
+	return types.NewDuration(d)
 }
 
-// FromStdTime returns a Cedar Datetime from a Go time.Time value
-func FromStdTime(t time.Time) Datetime {
-	return types.FromStdTime(t)
+// NewDatetime returns a Cedar Datetime from a Go time.Time value
+func NewDatetime(t time.Time) Datetime {
+	return types.NewDatetime(t)
 }
 
 // NewEntityUID returns an EntityUID given an EntityType and identifier
@@ -96,7 +94,7 @@ func NewEntityUIDSet(args ...EntityUID) EntityUIDSet {
 // The pattern components may be one of string, cedar.String, or cedar.Wildcard.  Any other types will
 // cause a panic.
 func NewPattern(components ...any) Pattern {
-	return types.NewPattern(components)
+	return types.NewPattern(components...)
 }
 
 // NewRecord returns an immutable Record given a Go map of Strings to Values
@@ -104,13 +102,29 @@ func NewRecord(r RecordMap) Record {
 	return types.NewRecord(r)
 }
 
-// NewSet returns an immutable Set given a Go slice of Values. Duplicates are removed and order is not preserved.
-func NewSet(s []types.Value) Set {
-	return types.NewSet(s)
+// NewSet returns an immutable Set given a variadic set of Values. Duplicates are removed and order is not preserved.
+func NewSet(s ...types.Value) Set {
+	return types.NewSet(s...)
 }
 
-// UnsafeDecimal creates a decimal via unsafe conversion from int, int64, float64.
-// Precision may be lost and overflows may occur.
-func UnsafeDecimal[T int | int64 | float64](v T) Decimal {
-	return types.UnsafeDecimal(v)
+// NewDecimal returns a Decimal value of i * 10^exponent.
+func NewDecimal(i int64, exponent int) (Decimal, error) {
+	return types.NewDecimal(i, exponent)
+}
+
+// NewDecimalFromInt returns a Decimal with the whole integer value provided
+func NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error) {
+	return types.NewDecimalFromInt(i)
+}
+
+// NewDecimalFromFloat returns a Decimal that approximates the given floating point value.
+// The value of the Decimal is calculated by multiplying it by 10^4, truncating it to
+// an int64 representation to cut off any digits beyond the four allowed, and passing it
+// as an integer to NewDecimal() with -4 as the exponent.
+//
+// WARNING: decimal representations of more than 6 significant digits for float32s and 15
+// significant digits for float64s can be lossy in terms of precision. To create a precise
+// Decimal above those sizes, use the NewDecimal constructor.
+func NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error) {
+	return types.NewDecimalFromFloat(f)
 }

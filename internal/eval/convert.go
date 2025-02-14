@@ -3,9 +3,9 @@ package eval
 import (
 	"fmt"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func toEval(n ast.IsNode) Evaler {
@@ -14,6 +14,10 @@ func toEval(n ast.IsNode) Evaler {
 		return newAttributeAccessEval(toEval(v.Arg), v.Value)
 	case ast.NodeTypeHas:
 		return newHasEval(toEval(v.Arg), v.Value)
+	case ast.NodeTypeGetTag:
+		return newGetTagEval(toEval(v.Left), toEval(v.Right))
+	case ast.NodeTypeHasTag:
+		return newHasTagEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeLike:
 		return newLikeEval(toEval(v.Arg), v.Value)
 	case ast.NodeTypeIfThenElse:

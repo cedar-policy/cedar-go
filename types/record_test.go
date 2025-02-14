@@ -41,6 +41,12 @@ func TestRecord(t *testing.T) {
 			"two":  types.Long(2),
 			"nest": twoElems,
 		})
+		sameHash1 := types.NewRecord(types.RecordMap{
+			"key": types.Long(0),
+		})
+		sameHash2 := types.NewRecord(types.RecordMap{
+			"key": testutil.Must(types.NewDecimalFromInt(0)),
+		})
 
 		testutil.FatalIf(t, !empty.Equal(empty), "%v not Equal to %v", empty, empty)
 		testutil.FatalIf(t, !empty.Equal(empty2), "%v not Equal to %v", empty, empty2)
@@ -55,6 +61,9 @@ func TestRecord(t *testing.T) {
 		testutil.FatalIf(t, nested.Equal(twoElems), "%v Equal to %v", nested, twoElems)
 		testutil.FatalIf(t, twoElems.Equal(differentValues), "%v Equal to %v", twoElems, differentValues)
 		testutil.FatalIf(t, twoElems.Equal(differentKeys), "%v Equal to %v", twoElems, differentKeys)
+
+		testutil.FatalIf(t, sameHash1.Equal(sameHash2), "%v Equal to %v", sameHash1, sameHash2)
+
 	})
 
 	t.Run("string", func(t *testing.T) {

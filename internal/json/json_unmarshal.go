@@ -6,10 +6,10 @@ import (
     "fmt"
     "strings"
 
-    "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/internal/consts"
-    "github.com/cedar-policy/cedar-go/internal/extensions"
-    "github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/internal/consts"
+	"github.com/cedar-policy/cedar-go/internal/extensions"
+	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 type isPrincipalResourceScopeNode interface {
@@ -284,37 +284,41 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
     case j.Negate != nil:
         return j.Negate.ToNode(ast.Negate)
 
-    // Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
-    case j.Equals != nil:
-        return j.Equals.ToNode(ast.Node.Equal)
-    case j.NotEquals != nil:
-        return j.NotEquals.ToNode(ast.Node.NotEqual)
-    case j.In != nil:
-        return j.In.ToNode(ast.Node.In)
-    case j.LessThan != nil:
-        return j.LessThan.ToNode(ast.Node.LessThan)
-    case j.LessThanOrEqual != nil:
-        return j.LessThanOrEqual.ToNode(ast.Node.LessThanOrEqual)
-    case j.GreaterThan != nil:
-        return j.GreaterThan.ToNode(ast.Node.GreaterThan)
-    case j.GreaterThanOrEqual != nil:
-        return j.GreaterThanOrEqual.ToNode(ast.Node.GreaterThanOrEqual)
-    case j.And != nil:
-        return j.And.ToNode(ast.Node.And)
-    case j.Or != nil:
-        return j.Or.ToNode(ast.Node.Or)
-    case j.Add != nil:
-        return j.Add.ToNode(ast.Node.Add)
-    case j.Subtract != nil:
-        return j.Subtract.ToNode(ast.Node.Subtract)
-    case j.Multiply != nil:
-        return j.Multiply.ToNode(ast.Node.Multiply)
-    case j.Contains != nil:
-        return j.Contains.ToNode(ast.Node.Contains)
-    case j.ContainsAll != nil:
-        return j.ContainsAll.ToNode(ast.Node.ContainsAll)
-    case j.ContainsAny != nil:
-        return j.ContainsAny.ToNode(ast.Node.ContainsAny)
+	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny, hasTag, getTag
+	case j.Equals != nil:
+		return j.Equals.ToNode(ast.Node.Equal)
+	case j.NotEquals != nil:
+		return j.NotEquals.ToNode(ast.Node.NotEqual)
+	case j.In != nil:
+		return j.In.ToNode(ast.Node.In)
+	case j.LessThan != nil:
+		return j.LessThan.ToNode(ast.Node.LessThan)
+	case j.LessThanOrEqual != nil:
+		return j.LessThanOrEqual.ToNode(ast.Node.LessThanOrEqual)
+	case j.GreaterThan != nil:
+		return j.GreaterThan.ToNode(ast.Node.GreaterThan)
+	case j.GreaterThanOrEqual != nil:
+		return j.GreaterThanOrEqual.ToNode(ast.Node.GreaterThanOrEqual)
+	case j.And != nil:
+		return j.And.ToNode(ast.Node.And)
+	case j.Or != nil:
+		return j.Or.ToNode(ast.Node.Or)
+	case j.Add != nil:
+		return j.Add.ToNode(ast.Node.Add)
+	case j.Subtract != nil:
+		return j.Subtract.ToNode(ast.Node.Subtract)
+	case j.Multiply != nil:
+		return j.Multiply.ToNode(ast.Node.Multiply)
+	case j.Contains != nil:
+		return j.Contains.ToNode(ast.Node.Contains)
+	case j.ContainsAll != nil:
+		return j.ContainsAll.ToNode(ast.Node.ContainsAll)
+	case j.ContainsAny != nil:
+		return j.ContainsAny.ToNode(ast.Node.ContainsAny)
+	case j.GetTag != nil:
+		return j.GetTag.ToNode(ast.Node.GetTag)
+	case j.HasTag != nil:
+		return j.HasTag.ToNode(ast.Node.HasTag)
 
     // ., has
     case j.Access != nil:

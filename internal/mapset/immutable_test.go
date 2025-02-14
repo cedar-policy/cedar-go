@@ -8,15 +8,15 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
-func immutableHashSetMustNotContain[T comparable](t *testing.T, s ImmutableMapSet[T], item T) {
+func immutableMapSetMustNotContain[T comparable](t *testing.T, s ImmutableMapSet[T], item T) {
 	testutil.FatalIf(t, s.Contains(item), "set %v unexpectedly contained item %v", s, 1)
 }
 
-func TestImmutableHashSet(t *testing.T) {
+func TestImmutableMapSet(t *testing.T) {
 	t.Run("empty set contains nothing", func(t *testing.T) {
 		s := Immutable[int]()
 		testutil.Equals(t, s.Len(), 0)
-		immutableHashSetMustNotContain(t, s, 1)
+		immutableMapSetMustNotContain(t, s, 1)
 	})
 
 	t.Run("one element", func(t *testing.T) {

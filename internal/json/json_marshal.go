@@ -4,8 +4,8 @@ import (
     "encoding/json"
     "fmt"
 
-    "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
@@ -74,20 +74,17 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
     }
 }
 
-func unaryToJSON(dest **unaryJSON, src ast.UnaryNode) error {
-    n := ast.UnaryNode(src)
-    res := &unaryJSON{}
-    res.Arg.FromNode(n.Arg)
-    *dest = res
-    return nil
+func unaryToJSON(dest **unaryJSON, src ast.UnaryNode) {
+	res := &unaryJSON{}
+	res.Arg.FromNode(src.Arg)
+	*dest = res
 }
 
 func binaryToJSON(dest **binaryJSON, src ast.BinaryNode) {
-    n := ast.BinaryNode(src)
-    res := &binaryJSON{}
-    res.Left.FromNode(n.Left)
-    res.Right.FromNode(n.Right)
-    *dest = res
+	res := &binaryJSON{}
+	res.Left.FromNode(src.Left)
+	res.Right.FromNode(src.Right)
+	*dest = res
 }
 
 func arrayToJSON(dest *arrayJSON, args []ast.IsNode) {
@@ -203,52 +200,58 @@ func (j *nodeJSON) FromNode(src ast.IsNode) {
         unaryToJSON(&j.Negate, t.UnaryNode)
         return
 
-    // Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
-    case ast.NodeTypeAdd:
-        binaryToJSON(&j.Add, t.BinaryNode)
-        return
-    case ast.NodeTypeAnd:
-        binaryToJSON(&j.And, t.BinaryNode)
-        return
-    case ast.NodeTypeContains:
-        binaryToJSON(&j.Contains, t.BinaryNode)
-        return
-    case ast.NodeTypeContainsAll:
-        binaryToJSON(&j.ContainsAll, t.BinaryNode)
-        return
-    case ast.NodeTypeContainsAny:
-        binaryToJSON(&j.ContainsAny, t.BinaryNode)
-        return
-    case ast.NodeTypeEquals:
-        binaryToJSON(&j.Equals, t.BinaryNode)
-        return
-    case ast.NodeTypeGreaterThan:
-        binaryToJSON(&j.GreaterThan, t.BinaryNode)
-        return
-    case ast.NodeTypeGreaterThanOrEqual:
-        binaryToJSON(&j.GreaterThanOrEqual, t.BinaryNode)
-        return
-    case ast.NodeTypeIn:
-        binaryToJSON(&j.In, t.BinaryNode)
-        return
-    case ast.NodeTypeLessThan:
-        binaryToJSON(&j.LessThan, t.BinaryNode)
-        return
-    case ast.NodeTypeLessThanOrEqual:
-        binaryToJSON(&j.LessThanOrEqual, t.BinaryNode)
-        return
-    case ast.NodeTypeMult:
-        binaryToJSON(&j.Multiply, t.BinaryNode)
-        return
-    case ast.NodeTypeNotEquals:
-        binaryToJSON(&j.NotEquals, t.BinaryNode)
-        return
-    case ast.NodeTypeOr:
-        binaryToJSON(&j.Or, t.BinaryNode)
-        return
-    case ast.NodeTypeSub:
-        binaryToJSON(&j.Subtract, t.BinaryNode)
-        return
+	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny, hasTag, getTag
+	case ast.NodeTypeAdd:
+		binaryToJSON(&j.Add, t.BinaryNode)
+		return
+	case ast.NodeTypeAnd:
+		binaryToJSON(&j.And, t.BinaryNode)
+		return
+	case ast.NodeTypeContains:
+		binaryToJSON(&j.Contains, t.BinaryNode)
+		return
+	case ast.NodeTypeContainsAll:
+		binaryToJSON(&j.ContainsAll, t.BinaryNode)
+		return
+	case ast.NodeTypeContainsAny:
+		binaryToJSON(&j.ContainsAny, t.BinaryNode)
+		return
+	case ast.NodeTypeEquals:
+		binaryToJSON(&j.Equals, t.BinaryNode)
+		return
+	case ast.NodeTypeGreaterThan:
+		binaryToJSON(&j.GreaterThan, t.BinaryNode)
+		return
+	case ast.NodeTypeGreaterThanOrEqual:
+		binaryToJSON(&j.GreaterThanOrEqual, t.BinaryNode)
+		return
+	case ast.NodeTypeIn:
+		binaryToJSON(&j.In, t.BinaryNode)
+		return
+	case ast.NodeTypeLessThan:
+		binaryToJSON(&j.LessThan, t.BinaryNode)
+		return
+	case ast.NodeTypeLessThanOrEqual:
+		binaryToJSON(&j.LessThanOrEqual, t.BinaryNode)
+		return
+	case ast.NodeTypeMult:
+		binaryToJSON(&j.Multiply, t.BinaryNode)
+		return
+	case ast.NodeTypeNotEquals:
+		binaryToJSON(&j.NotEquals, t.BinaryNode)
+		return
+	case ast.NodeTypeOr:
+		binaryToJSON(&j.Or, t.BinaryNode)
+		return
+	case ast.NodeTypeSub:
+		binaryToJSON(&j.Subtract, t.BinaryNode)
+		return
+	case ast.NodeTypeGetTag:
+		binaryToJSON(&j.GetTag, t.BinaryNode)
+		return
+	case ast.NodeTypeHasTag:
+		binaryToJSON(&j.HasTag, t.BinaryNode)
+		return
 
     // ., has
     // Access *strJSON `json:"."`

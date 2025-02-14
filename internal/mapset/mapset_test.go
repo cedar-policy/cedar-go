@@ -12,7 +12,7 @@ func hashSetMustNotContain[T comparable](t *testing.T, s *MapSet[T], item T) {
 	testutil.FatalIf(t, s.Contains(item), "set %v unexpectedly contained item %v", s, 1)
 }
 
-func TestHashSet(t *testing.T) {
+func TestMapSet(t *testing.T) {
 	t.Run("empty set contains nothing", func(t *testing.T) {
 		s := Make[int]()
 		testutil.Equals(t, s.Len(), 0)
@@ -148,6 +148,12 @@ func TestHashSet(t *testing.T) {
 
 		testutil.OK(t, err)
 		testutil.Equals(t, string(out), "[]")
+	})
+
+	t.Run("marshal error", func(t *testing.T) {
+		s := FromItems(complex(0, 0))
+		_, err := json.Marshal(s)
+		testutil.Error(t, err)
 	})
 
 	t.Run("encode json one int", func(t *testing.T) {

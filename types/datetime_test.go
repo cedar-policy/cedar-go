@@ -1,10 +1,12 @@
 package types_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -104,7 +106,7 @@ func TestDatetime(t *testing.T) {
 			t.Run(fmt.Sprintf("%d_%s->%s", ti, tt.in, tt.errStr), func(t *testing.T) {
 				t.Parallel()
 				_, err := types.ParseDatetime(tt.in)
-				testutil.ErrorIs(t, err, types.ErrDatetime)
+				testutil.ErrorIs(t, err, internal.ErrDatetime)
 				testutil.Equals(t, err.Error(), tt.errStr)
 			})
 		}
@@ -112,16 +114,24 @@ func TestDatetime(t *testing.T) {
 
 	t.Run("Construct", func(t *testing.T) {
 		t.Parallel()
-		one := types.DatetimeFromMillis(1)
-		two := types.FromStdTime(time.UnixMilli(1))
+		one := types.NewDatetimeFromMillis(1)
+		two := types.NewDatetime(time.UnixMilli(1))
 		testutil.Equals(t, one.Milliseconds(), two.Milliseconds())
+	})
+
+	t.Run("Time", func(t *testing.T) {
+		t.Parallel()
+		in := types.NewDatetime(time.UnixMilli(42))
+		got := in.Time()
+		want := time.UnixMilli(42).UTC()
+		testutil.Equals(t, got, want)
 	})
 
 	t.Run("Equal", func(t *testing.T) {
 		t.Parallel()
-		one := types.DatetimeFromMillis(1)
-		one2 := types.FromStdTime(time.UnixMilli(1))
-		zero := types.FromStdTime(time.UnixMilli(0))
+		one := types.NewDatetimeFromMillis(1)
+		one2 := types.NewDatetime(time.UnixMilli(1))
+		zero := types.NewDatetime(time.UnixMilli(0))
 		f := types.Boolean(false)
 		testutil.FatalIf(t, !one.Equal(one), "%v not Equal to %v", one, one)
 		testutil.FatalIf(t, !one.Equal(one2), "%v not Equal to %v", one, one2)
@@ -132,8 +142,8 @@ func TestDatetime(t *testing.T) {
 
 	t.Run("LessThan", func(t *testing.T) {
 		t.Parallel()
-		one := types.FromStdTime(time.UnixMilli(1))
-		zero := types.FromStdTime(time.UnixMilli(0))
+		one := types.NewDatetime(time.UnixMilli(1))
+		zero := types.NewDatetime(time.UnixMilli(0))
 		f := types.Boolean(false)
 
 		tests := []struct {
@@ -145,7 +155,7 @@ func TestDatetime(t *testing.T) {
 			{one, zero, false, nil},
 			{zero, one, true, nil},
 			{zero, zero, false, nil},
-			{zero, f, false, types.ErrNotComparable},
+			{zero, f, false, internal.ErrNotComparable},
 		}
 
 		for ti, tt := range tests {
@@ -162,8 +172,8 @@ func TestDatetime(t *testing.T) {
 
 	t.Run("LessThanOrEqual", func(t *testing.T) {
 		t.Parallel()
-		one := types.FromStdTime(time.UnixMilli(1))
-		zero := types.FromStdTime(time.UnixMilli(0))
+		one := types.NewDatetime(time.UnixMilli(1))
+		zero := types.NewDatetime(time.UnixMilli(0))
 		f := types.Boolean(false)
 
 		tests := []struct {
@@ -175,7 +185,7 @@ func TestDatetime(t *testing.T) {
 			{one, zero, false, nil},
 			{zero, one, true, nil},
 			{zero, zero, true, nil},
-			{zero, f, false, types.ErrNotComparable},
+			{zero, f, false, internal.ErrNotComparable},
 		}
 
 		for ti, tt := range tests {
@@ -191,13 +201,30 @@ func TestDatetime(t *testing.T) {
 
 	t.Run("MarshalCedar", func(t *testing.T) {
 		t.Parallel()
-		testutil.Equals(t, string(types.FromStdTime(time.UnixMilli(42)).MarshalCedar()), `datetime("1970-01-01T00:00:00.042Z")`)
+		testutil.Equals(t, string(types.NewDatetime(time.UnixMilli(42)).MarshalCedar()), `datetime("1970-01-01T00:00:00.042Z")`)
 	})
 
 	t.Run("MarshalJSON", func(t *testing.T) {
 		t.Parallel()
-		bs, err := types.FromStdTime(time.UnixMilli(42)).MarshalJSON()
+		expected := `{
+			"__extn": {
+				"fn": "datetime",
+				"arg": "1970-01-01T00:00:00.042Z"
+			}
+		}`
+		dt1 := types.NewDatetime(time.UnixMilli(42))
+		testutil.JSONMarshalsTo(t, dt1, expected)
+
+		var dt2 types.Datetime
+		err := json.Unmarshal([]byte(expected), &dt2)
 		testutil.OK(t, err)
-		testutil.Equals(t, string(bs), `{"__extn":{"fn":"datetime","arg":"1970-01-01T00:00:00.042Z"}}`)
+		testutil.Equals(t, dt1, dt2)
+	})
+
+	t.Run("UnmarshalJSON/error", func(t *testing.T) {
+		t.Parallel()
+		var dt2 types.Datetime
+		err := json.Unmarshal([]byte("{}"), &dt2)
+		testutil.Error(t, err)
 	})
 }

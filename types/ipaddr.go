@@ -2,12 +2,15 @@ package types
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"hash/fnv"
 	"net/netip"
 	"strings"
+
+	"github.com/cedar-policy/cedar-go/internal"
 )
+
+var errIP = internal.ErrIP
 
 // An IPAddr is value that represents an IP address. It can be either IPv4 or IPv6.
 // The value can represent an individual address or a range of addresses.
@@ -17,13 +20,13 @@ type IPAddr netip.Prefix
 func ParseIPAddr(s string) (IPAddr, error) {
 	// We disallow IPv4-mapped IPv6 addresses in dotted notation because Cedar does.
 	if strings.Count(s, ":") >= 2 && strings.Count(s, ".") >= 2 {
-		return IPAddr{}, fmt.Errorf("%w: cannot parse IPv4 addresses embedded in IPv6 addresses", ErrIP)
+		return IPAddr{}, fmt.Errorf("%w: cannot parse IPv4 addresses embedded in IPv6 addresses", errIP)
 	} else if net, err := netip.ParsePrefix(s); err == nil {
 		return IPAddr(net), nil
 	} else if addr, err := netip.ParseAddr(s); err == nil {
 		return IPAddr(netip.PrefixFrom(addr, addr.BitLen())), nil
 	} else {
-		return IPAddr{}, fmt.Errorf("%w: error parsing IP address %s", ErrIP, s)
+		return IPAddr{}, fmt.Errorf("%w: error parsing IP address %s", errIP, s)
 	}
 }
 
@@ -100,33 +103,18 @@ func (c IPAddr) Contains(o IPAddr) bool {
 	return c.Prefix().Contains(o.Addr()) && c.Prefix().Bits() <= o.Prefix().Bits()
 }
 
+// UnmarshalJSON implements encoding/json.Unmarshaler for IPAddr
+//
+// It is capable of unmarshaling 3 different representations supported by Cedar
+//   - { "__extn": { "fn": "ip", "arg": "12.34.56.78" }}
+//   - { "fn": "ip", "arg": "12.34.56.78" }
+//   - "12.34.56.78"
 func (v *IPAddr) UnmarshalJSON(b []byte) error {
-	var arg string
-	if len(b) > 0 && b[0] == '"' {
-		if err := json.Unmarshal(b, &arg); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-	} else {
-		// NOTE: cedar supports two other forms, for now we're only supporting the smallest implicit explicit form.
-		// The following are not supported:
-		// "ip(\"192.168.0.42\")"
-		// {"fn":"ip","arg":"192.168.0.42"}
-		var res extValueJSON
-		if err := json.Unmarshal(b, &res); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-		if res.Extn == nil {
-			return errJSONExtNotFound
-		}
-		if res.Extn.Fn != "ip" {
-			return errJSONExtFnMatch
-		}
-		arg = res.Extn.Arg
-	}
-	vv, err := ParseIPAddr(arg)
+	vv, err := unmarshalExtensionValue(b, "ip", ParseIPAddr)
 	if err != nil {
 		return err
 	}
+
 	*v = vv
 	return nil
 }

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 // foldPolicy takes in a given policy and attempts as much constant folding as possible.
@@ -55,7 +55,7 @@ func tryFold(nodes []ast.IsNode,
 	}
 	if allFolded {
 		eval := mkEval(values)
-		v, err := eval.Eval(Env{})
+		v, err := eval.Eval(Env{Entities: types.EntityMap{}})
 		if err == nil {
 			return ast.NodeValue{Value: v}
 		}
@@ -81,6 +81,8 @@ func tryFoldUnary(v ast.UnaryNode, mkEval func(a Evaler) Evaler, wrap func(b ast
 }
 
 // fold takes in an ast.Node and finds does as much constant folding as is possible given no PARC data.
+//
+//nolint:revive
 func fold(n ast.IsNode) ast.IsNode {
 	switch v := n.(type) {
 	case ast.NodeTypeAccess:
@@ -107,6 +109,26 @@ func fold(n ast.IsNode) ast.IsNode {
 			},
 			func(nodes []ast.IsNode) ast.IsNode {
 				return ast.NodeTypeHas{StrOpNode: ast.StrOpNode{Arg: nodes[0], Value: v.Value}}
+			},
+		)
+	case ast.NodeTypeGetTag:
+		return tryFold(
+			[]ast.IsNode{v.Left, v.Right},
+			func(_ []types.Value) Evaler {
+				return newErrorEval(fmt.Errorf("fold.GetTag.EntityUID"))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeGetTag{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
+			},
+		)
+	case ast.NodeTypeHasTag:
+		return tryFold(
+			[]ast.IsNode{v.Left, v.Right},
+			func(_ []types.Value) Evaler {
+				return newErrorEval(fmt.Errorf("fold.HasTag.EntityUID"))
+			},
+			func(nodes []ast.IsNode) ast.IsNode {
+				return ast.NodeTypeHasTag{BinaryNode: ast.BinaryNode{Left: nodes[0], Right: nodes[1]}}
 			},
 		)
 	case ast.NodeTypeLike:
@@ -228,13 +250,13 @@ func fold(n ast.IsNode) ast.IsNode {
 	case ast.NodeTypeNotEquals:
 		return tryFoldBinary(v.BinaryNode, newNotEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeNotEquals{BinaryNode: b} })
 	case ast.NodeTypeGreaterThan:
-		return tryFoldBinary(v.BinaryNode, newLongGreaterThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThan{BinaryNode: b} })
+		return tryFoldBinary(v.BinaryNode, newComparableValueGreaterThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThan{BinaryNode: b} })
 	case ast.NodeTypeGreaterThanOrEqual:
-		return tryFoldBinary(v.BinaryNode, newLongGreaterThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThanOrEqual{BinaryNode: b} })
+		return tryFoldBinary(v.BinaryNode, newComparableValueGreaterThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeGreaterThanOrEqual{BinaryNode: b} })
 	case ast.NodeTypeLessThan:
-		return tryFoldBinary(v.BinaryNode, newLongLessThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThan{BinaryNode: b} })
+		return tryFoldBinary(v.BinaryNode, newComparableValueLessThanEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThan{BinaryNode: b} })
 	case ast.NodeTypeLessThanOrEqual:
-		return tryFoldBinary(v.BinaryNode, newLongLessThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThanOrEqual{BinaryNode: b} })
+		return tryFoldBinary(v.BinaryNode, newComparableValueLessThanOrEqualEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeLessThanOrEqual{BinaryNode: b} })
 	case ast.NodeTypeSub:
 		return tryFoldBinary(v.BinaryNode, newSubtractEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeSub{BinaryNode: b} })
 	case ast.NodeTypeAdd:

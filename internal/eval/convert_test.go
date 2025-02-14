@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cedar-policy/cedar-go/internal/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func TestToEval(t *testing.T) {
@@ -27,6 +27,18 @@ func TestToEval(t *testing.T) {
 		{
 			"has",
 			ast.Value(types.NewRecord(types.RecordMap{"key": types.Long(42)})).Has("key"),
+			types.True,
+			testutil.OK,
+		},
+		{
+			"getTag",
+			ast.EntityUID("T", "ID").GetTag(ast.String("key")),
+			types.Long(42),
+			testutil.OK,
+		},
+		{
+			"hasTag",
+			ast.EntityUID("T", "ID").HasTag(ast.String("key")),
 			types.True,
 			testutil.OK,
 		},
@@ -69,7 +81,7 @@ func TestToEval(t *testing.T) {
 		{
 			"set",
 			ast.Set(ast.Long(42)),
-			types.NewSet([]types.Value{types.Long(42)}),
+			types.NewSet(types.Long(42)),
 			testutil.OK,
 		},
 		{
@@ -182,19 +194,19 @@ func TestToEval(t *testing.T) {
 		},
 		{
 			"contains",
-			ast.Value(types.NewSet([]types.Value{types.Long(42)})).Contains(ast.Long(42)),
+			ast.Value(types.NewSet(types.Long(42))).Contains(ast.Long(42)),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"containsAll",
-			ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43), types.Long(44)})).ContainsAll(ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43)}))),
+			ast.Value(types.NewSet(types.Long(42), types.Long(43), types.Long(44))).ContainsAll(ast.Value(types.NewSet(types.Long(42), types.Long(43)))),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"containsAny",
-			ast.Value(types.NewSet([]types.Value{types.Long(42), types.Long(43), types.Long(44)})).ContainsAny(ast.Value(types.NewSet([]types.Value{types.Long(1), types.Long(42)}))),
+			ast.Value(types.NewSet(types.Long(42), types.Long(43), types.Long(44))).ContainsAny(ast.Value(types.NewSet(types.Long(1), types.Long(42)))),
 			types.True,
 			testutil.OK,
 		},
@@ -207,97 +219,97 @@ func TestToEval(t *testing.T) {
 		{
 			"decimal",
 			ast.ExtensionCall("decimal", ast.String("42.42")),
-			types.UnsafeDecimal(42.42),
+			testutil.Must(types.NewDecimal(4242, -2)),
 			testutil.OK,
 		},
 		{
 			"datetime",
 			ast.ExtensionCall("datetime", ast.String("1970-01-01T00:00:00.001Z")),
-			types.FromStdTime(time.UnixMilli(1)),
+			types.NewDatetime(time.UnixMilli(1)),
 			testutil.OK,
 		},
 		{
 			"duration",
 			ast.ExtensionCall("duration", ast.String("1ms")),
-			types.FromStdDuration(1 * time.Millisecond),
+			types.NewDuration(1 * time.Millisecond),
 			testutil.OK,
 		},
 		{
 			"toDate",
-			ast.ExtensionCall("toDate", ast.Value(types.FromStdTime(time.UnixMilli(1)))),
-			types.FromStdTime(time.UnixMilli(0)),
+			ast.ExtensionCall("toDate", ast.Value(types.NewDatetime(time.UnixMilli(1)))),
+			types.NewDatetime(time.UnixMilli(0)),
 			testutil.OK,
 		},
 		{
 			"toTime",
-			ast.ExtensionCall("toTime", ast.Value(types.FromStdTime(time.UnixMilli(1)))),
-			types.FromStdDuration(1 * time.Millisecond),
+			ast.ExtensionCall("toTime", ast.Value(types.NewDatetime(time.UnixMilli(1)))),
+			types.NewDuration(1 * time.Millisecond),
 			testutil.OK,
 		},
 		{
 			"toDays",
-			ast.ExtensionCall("toDays", ast.Value(types.FromStdDuration(time.Duration(0)))),
+			ast.ExtensionCall("toDays", ast.Value(types.NewDuration(time.Duration(0)))),
 			types.Long(0),
 			testutil.OK,
 		},
 		{
 			"toHours",
-			ast.ExtensionCall("toHours", ast.Value(types.FromStdDuration(time.Duration(0)))),
+			ast.ExtensionCall("toHours", ast.Value(types.NewDuration(time.Duration(0)))),
 			types.Long(0),
 			testutil.OK,
 		},
 		{
 			"toMinutes",
-			ast.ExtensionCall("toMinutes", ast.Value(types.FromStdDuration(time.Duration(0)))),
+			ast.ExtensionCall("toMinutes", ast.Value(types.NewDuration(time.Duration(0)))),
 			types.Long(0),
 			testutil.OK,
 		},
 		{
 			"toSeconds",
-			ast.ExtensionCall("toSeconds", ast.Value(types.FromStdDuration(time.Duration(0)))),
+			ast.ExtensionCall("toSeconds", ast.Value(types.NewDuration(time.Duration(0)))),
 			types.Long(0),
 			testutil.OK,
 		},
 		{
 			"toMilliseconds",
-			ast.ExtensionCall("toMilliseconds", ast.Value(types.FromStdDuration(time.Duration(0)))),
+			ast.ExtensionCall("toMilliseconds", ast.Value(types.NewDuration(time.Duration(0)))),
 			types.Long(0),
 			testutil.OK,
 		},
 		{
 			"offset",
-			ast.ExtensionCall("offset", ast.Value(types.FromStdTime(time.UnixMilli(0))), ast.Value(types.FromStdDuration(1*time.Millisecond))),
-			types.FromStdTime(time.UnixMilli(1)),
+			ast.ExtensionCall("offset", ast.Value(types.NewDatetime(time.UnixMilli(0))), ast.Value(types.NewDuration(1*time.Millisecond))),
+			types.NewDatetime(time.UnixMilli(1)),
 			testutil.OK,
 		},
 		{
 			"durationSince",
-			ast.ExtensionCall("durationSince", ast.Value(types.FromStdTime(time.UnixMilli(1))), ast.Value(types.FromStdTime(time.UnixMilli(1)))),
-			types.FromStdDuration(time.Duration(0)),
+			ast.ExtensionCall("durationSince", ast.Value(types.NewDatetime(time.UnixMilli(1))), ast.Value(types.NewDatetime(time.UnixMilli(1)))),
+			types.NewDuration(time.Duration(0)),
 			testutil.OK,
 		},
 
 		{
 			"lessThan",
-			ast.ExtensionCall("lessThan", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),
+			ast.ExtensionCall("lessThan", ast.Value(testutil.Must(types.NewDecimal(42, 0))), ast.Value(testutil.Must(types.NewDecimalFromInt(43)))),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"lessThanOrEqual",
-			ast.ExtensionCall("lessThanOrEqual", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),
+			ast.ExtensionCall("lessThanOrEqual", ast.Value(testutil.Must(types.NewDecimal(42, 0))), ast.Value(testutil.Must(types.NewDecimalFromInt(43)))),
 			types.True,
 			testutil.OK,
 		},
 		{
 			"greaterThan",
-			ast.ExtensionCall("greaterThan", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),
+			ast.ExtensionCall("greaterThan", ast.Value(testutil.Must(types.NewDecimal(42, 0))), ast.Value(testutil.Must(types.NewDecimalFromInt(43)))),
 			types.False,
 			testutil.OK,
 		},
 		{
 			"greaterThanOrEqual",
-			ast.ExtensionCall("greaterThanOrEqual", ast.Value(types.UnsafeDecimal(42.0)), ast.Value(types.UnsafeDecimal(43))),
+			ast.ExtensionCall("greaterThanOrEqual", ast.Value(testutil.Must(types.NewDecimal(42, 0))), ast.Value(testutil.Must(types.NewDecimalFromInt(43)))),
 			types.False,
 			testutil.OK,
 		},
@@ -355,6 +367,11 @@ func TestToEval(t *testing.T) {
 				Action:    types.NewEntityUID("Action", "test"),
 				Resource:  types.NewEntityUID("Resource", "database"),
 				Context:   types.Record{},
+				Entities: types.EntityMap{
+					types.NewEntityUID("T", "ID"): types.Entity{
+						Tags: types.NewRecord(types.RecordMap{"key": types.Long(42)}),
+					},
+				},
 			})
 			tt.err(t, err)
 			testutil.Equals(t, out, tt.out)

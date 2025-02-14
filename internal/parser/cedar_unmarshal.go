@@ -5,11 +5,11 @@ import (
     "strconv"
     "strings"
 
-    "github.com/cedar-policy/cedar-go/internal/ast"
-    "github.com/cedar-policy/cedar-go/internal/consts"
-    "github.com/cedar-policy/cedar-go/internal/extensions"
-    "github.com/cedar-policy/cedar-go/internal/mapset"
-    "github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/internal/consts"
+	"github.com/cedar-policy/cedar-go/internal/extensions"
+	"github.com/cedar-policy/cedar-go/internal/mapset"
+	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func (p *PolicySlice) UnmarshalCedar(b []byte) error {
@@ -944,26 +944,30 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
             }
             p.advance() // expressions guarantees ")"
 
-            var knownMethod func(ast.Node, ast.Node) ast.Node
-            switch methodName {
-            case "contains":
-                knownMethod = ast.Node.Contains
-            case "containsAll":
-                knownMethod = ast.Node.ContainsAll
-            case "containsAny":
-                knownMethod = ast.Node.ContainsAny
-            default:
-                // Although the Cedar grammar says that any name can be provided here, the reference implementation
-                // actually checks at parse time whether the name corresponds to a known extension method.
-                i, ok := extensions.ExtMap[types.Path(methodName)]
-                if !ok {
-                    return ast.Node{}, false, p.errorf("`%v` is not a method", methodName)
-                }
-                if !i.IsMethod {
-                    return ast.Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
-                }
-                return ast.NewMethodCall(lhs, types.Path(methodName), exprs...), true, nil
-            }
+			var knownMethod func(ast.Node, ast.Node) ast.Node
+			switch methodName {
+			case "contains":
+				knownMethod = ast.Node.Contains
+			case "containsAll":
+				knownMethod = ast.Node.ContainsAll
+			case "containsAny":
+				knownMethod = ast.Node.ContainsAny
+			case "hasTag":
+				knownMethod = ast.Node.HasTag
+			case "getTag":
+				knownMethod = ast.Node.GetTag
+			default:
+				// Although the Cedar grammar says that any name can be provided here, the reference implementation
+				// actually checks at parse time whether the name corresponds to a known extension method.
+				i, ok := extensions.ExtMap[types.Path(methodName)]
+				if !ok {
+					return ast.Node{}, false, p.errorf("`%v` is not a method", methodName)
+				}
+				if !i.IsMethod {
+					return ast.Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
+				}
+				return ast.NewMethodCall(lhs, types.Path(methodName), exprs...), true, nil
+			}
 
             if len(exprs) != 1 {
                 return ast.Node{}, false, p.errorf("%v expects one argument", methodName)

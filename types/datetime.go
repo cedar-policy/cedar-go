@@ -1,14 +1,16 @@
 package types
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
 	"unicode"
+
+	"github.com/cedar-policy/cedar-go/internal"
 )
+
+var errDatetime = internal.ErrDatetime
 
 // Datetime represents a Cedar datetime value
 type Datetime struct {
@@ -16,13 +18,14 @@ type Datetime struct {
 	value int64
 }
 
-// FromStdTime returns a Cedar Datetime from a Go time.Time value
-func FromStdTime(t time.Time) Datetime {
+// NewDatetime returns a Cedar Datetime from a Go time.Time value
+func NewDatetime(t time.Time) Datetime {
 	return Datetime{value: t.UnixMilli()}
 }
 
-// DatetimeFromMillis returns a Datetime from milliseconds
-func DatetimeFromMillis(ms int64) Datetime {
+// NewDatetimeFromMillis returns a Datetime from a count of milliseconds since
+// January 1, 1970 @ 00:00:00 UTC.
+func NewDatetimeFromMillis(ms int64) Datetime {
 	return Datetime{value: ms}
 }
 
@@ -44,7 +47,7 @@ func ParseDatetime(s string) (Datetime, error) {
 
 	length := len(s)
 	if length < 10 {
-		return Datetime{}, fmt.Errorf("%w: string too short", ErrDatetime)
+		return Datetime{}, fmt.Errorf("%w: string too short", errDatetime)
 	}
 
 	// Date: YYYY-MM-DD
@@ -57,7 +60,7 @@ func ParseDatetime(s string) (Datetime, error) {
 		unicode.IsDigit(rune(s[1])) &&
 		unicode.IsDigit(rune(s[2])) &&
 		unicode.IsDigit(rune(s[3]))) {
-		return Datetime{}, fmt.Errorf("%w: invalid year", ErrDatetime)
+		return Datetime{}, fmt.Errorf("%w: invalid year", errDatetime)
 	}
 	year = 1000*int(rune(s[0])-'0') +
 		100*int(rune(s[1])-'0') +
@@ -65,24 +68,24 @@ func ParseDatetime(s string) (Datetime, error) {
 		int(rune(s[3])-'0')
 
 	if s[4] != '-' {
-		return Datetime{}, fmt.Errorf("%w: unexpected character %s", ErrDatetime, strconv.QuoteRune(rune(s[4])))
+		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[4])))
 	}
 
 	// MM
 	if !(unicode.IsDigit(rune(s[5])) &&
 		unicode.IsDigit(rune(s[6]))) {
-		return Datetime{}, fmt.Errorf("%w: invalid month", ErrDatetime)
+		return Datetime{}, fmt.Errorf("%w: invalid month", errDatetime)
 	}
 	month = 10*int(rune(s[5])-'0') + int(rune(s[6])-'0')
 
 	if s[7] != '-' {
-		return Datetime{}, fmt.Errorf("%w: unexpected character %s", ErrDatetime, strconv.QuoteRune(rune(s[7])))
+		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[7])))
 	}
 
 	// DD
 	if !(unicode.IsDigit(rune(s[8])) &&
 		unicode.IsDigit(rune(s[9]))) {
-		return Datetime{}, fmt.Errorf("%w: invalid day", ErrDatetime)
+		return Datetime{}, fmt.Errorf("%w: invalid day", errDatetime)
 	}
 	day = 10*int(rune(s[8])-'0') + int(rune(s[9])-'0')
 
@@ -94,7 +97,7 @@ func ParseDatetime(s string) (Datetime, error) {
 
 	// If the length is less than 20, we can't have a valid time.
 	if length < 20 {
-		return Datetime{}, fmt.Errorf("%w: invalid time", ErrDatetime)
+		return Datetime{}, fmt.Errorf("%w: invalid time", errDatetime)
 	}
 
 	// Time: Thh:mm:ss?
@@ -106,32 +109,32 @@ func ParseDatetime(s string) (Datetime, error) {
 	// ? is at 19, and... we'll skip to get back to that.
 
 	if s[10] != 'T' {
-		return Datetime{}, fmt.Errorf("%w: unexpected character %s", ErrDatetime, strconv.QuoteRune(rune(s[10])))
+		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[10])))
 	}
 
 	if !(unicode.IsDigit(rune(s[11])) &&
 		unicode.IsDigit(rune(s[12]))) {
-		return Datetime{}, fmt.Errorf("%w: invalid hour", ErrDatetime)
+		return Datetime{}, fmt.Errorf("%w: invalid hour", errDatetime)
 	}
 	hour = 10*int(rune(s[11])-'0') + int(rune(s[12])-'0')
 
 	if s[13] != ':' {
-		return Datetime{}, fmt.Errorf("%w: unexpected character %s", ErrDatetime, strconv.QuoteRune(rune(s[13])))
+		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[13])))
 	}
 
 	if !(unicode.IsDigit(rune(s[14])) &&
 		unicode.IsDigit(rune(s[15]))) {
-		return Datetime{}, fmt.Errorf("%w: invalid minute", ErrDatetime)
+		return Datetime{}, fmt.Errorf("%w: invalid minute", errDatetime)
 	}
 	minute = 10*int(rune(s[14])-'0') + int(rune(s[15])-'0')
 
 	if s[16] != ':' {
-		return Datetime{}, fmt.Errorf("%w: unexpected character %s", ErrDatetime, strconv.QuoteRune(rune(s[16])))
+		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[16])))
 	}
 
 	if !(unicode.IsDigit(rune(s[17])) &&
 		unicode.IsDigit(rune(s[18]))) {
-		return Datetime{}, fmt.Errorf("%w: invalid second", ErrDatetime)
+		return Datetime{}, fmt.Errorf("%w: invalid second", errDatetime)
 	}
 	second = 10*int(rune(s[17])-'0') + int(rune(s[18])-'0')
 
@@ -142,13 +145,13 @@ func ParseDatetime(s string) (Datetime, error) {
 	trailerOffset := 19
 	if s[19] == '.' {
 		if length < 23 {
-			return Datetime{}, fmt.Errorf("%w: invalid millisecond", ErrDatetime)
+			return Datetime{}, fmt.Errorf("%w: invalid millisecond", errDatetime)
 		}
 
 		if !(unicode.IsDigit(rune(s[20])) &&
 			unicode.IsDigit(rune(s[21])) &&
 			unicode.IsDigit(rune(s[22]))) {
-			return Datetime{}, fmt.Errorf("%w: invalid millisecond", ErrDatetime)
+			return Datetime{}, fmt.Errorf("%w: invalid millisecond", errDatetime)
 		}
 
 		milli = 100*int(rune(s[20])-'0') + 10*int(rune(s[21])-'0') + int(rune(s[22])-'0')
@@ -156,7 +159,7 @@ func ParseDatetime(s string) (Datetime, error) {
 	}
 
 	if length == trailerOffset {
-		return Datetime{}, fmt.Errorf("%w: expected time zone designator", ErrDatetime)
+		return Datetime{}, fmt.Errorf("%w: expected time zone designator", errDatetime)
 	}
 
 	// At this point, we can only have 2 possible lengths. Anything else is an error.
@@ -164,7 +167,7 @@ func ParseDatetime(s string) (Datetime, error) {
 	case 'Z':
 		if length > trailerOffset+1 {
 			// If something comes after the Z, it's an error
-			return Datetime{}, fmt.Errorf("%w: unexpected trailer after time zone designator", ErrDatetime)
+			return Datetime{}, fmt.Errorf("%w: unexpected trailer after time zone designator", errDatetime)
 		}
 	case '+', '-':
 		sign := 1
@@ -173,9 +176,9 @@ func ParseDatetime(s string) (Datetime, error) {
 		}
 
 		if length > trailerOffset+5 {
-			return Datetime{}, fmt.Errorf("%w: unexpected trailer after time zone designator", ErrDatetime)
+			return Datetime{}, fmt.Errorf("%w: unexpected trailer after time zone designator", errDatetime)
 		} else if length != trailerOffset+5 {
-			return Datetime{}, fmt.Errorf("%w: invalid time zone offset", ErrDatetime)
+			return Datetime{}, fmt.Errorf("%w: invalid time zone offset", errDatetime)
 		}
 
 		// get the time zone offset hhmm.
@@ -183,7 +186,7 @@ func ParseDatetime(s string) (Datetime, error) {
 			unicode.IsDigit(rune(s[trailerOffset+2])) &&
 			unicode.IsDigit(rune(s[trailerOffset+3])) &&
 			unicode.IsDigit(rune(s[trailerOffset+4]))) {
-			return Datetime{}, fmt.Errorf("%w: invalid time zone offset", ErrDatetime)
+			return Datetime{}, fmt.Errorf("%w: invalid time zone offset", errDatetime)
 		}
 
 		hh := time.Duration(10*int64(rune(s[trailerOffset+1])-'0')+int64(rune(s[trailerOffset+2])-'0')) * time.Hour
@@ -191,7 +194,7 @@ func ParseDatetime(s string) (Datetime, error) {
 		offset = time.Duration(sign) * (hh + mm)
 
 	default:
-		return Datetime{}, fmt.Errorf("%w: invalid time zone designator", ErrDatetime)
+		return Datetime{}, fmt.Errorf("%w: invalid time zone designator", errDatetime)
 	}
 
 	t := time.Date(year, time.Month(month), day,
@@ -213,7 +216,7 @@ func (a Datetime) Equal(bi Value) bool {
 func (a Datetime) LessThan(bi Value) (bool, error) {
 	b, ok := bi.(Datetime)
 	if !ok {
-		return false, ErrNotComparable
+		return false, internal.ErrNotComparable
 	}
 	return a.value < b.value, nil
 }
@@ -224,7 +227,7 @@ func (a Datetime) LessThan(bi Value) (bool, error) {
 func (a Datetime) LessThanOrEqual(bi Value) (bool, error) {
 	b, ok := bi.(Datetime)
 	if !ok {
-		return false, ErrNotComparable
+		return false, internal.ErrNotComparable
 	}
 	return a.value <= b.value, nil
 }
@@ -242,46 +245,16 @@ func (a Datetime) String() string {
 
 // UnmarshalJSON implements encoding/json.Unmarshaler for Datetime
 //
-// It is capable of unmarshaling 4 different representations supported by Cedar
-// - { "__extn": { "fn": "datetime", "arg": "1970-01-01" }}
-// - { "fn": "datetime", "arg": "1970-01-01" }
-// - "datetime(\"1970-01-01\")"
-// - "1970-01-01"
+// It is capable of unmarshaling 3 different representations supported by Cedar
+//   - { "__extn": { "fn": "datetime", "arg": "1970-01-01" }}
+//   - { "fn": "datetime", "arg": "1970-01-01" }
+//   - "1970-01-01"
 func (a *Datetime) UnmarshalJSON(b []byte) error {
-	var arg string
-	if bytes.HasPrefix(b, []byte(`"datetime(\"`)) && bytes.HasSuffix(b, []byte(`\")"`)) {
-		arg = string(b[12 : len(b)-4])
-	} else if len(b) > 0 && b[0] == '"' {
-		if err := json.Unmarshal(b, &arg); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-	} else {
-		var res extValueJSON
-		if err := json.Unmarshal(b, &res); err != nil {
-			return errors.Join(errJSONDecode, err)
-		}
-		if res.Extn == nil {
-			// If we didn't find an Extn, maybe it's just an extn.
-			var res2 extn
-			json.Unmarshal(b, &res2)
-			// We've tried Ext.Fn and Fn, so no good.
-			if res2.Fn == "" {
-				return errJSONExtNotFound
-			}
-			if res2.Fn != "datetime" {
-				return errJSONExtFnMatch
-			}
-			arg = res2.Arg
-		} else if res.Extn.Fn != "datetime" {
-			return errJSONExtFnMatch
-		} else {
-			arg = res.Extn.Arg
-		}
-	}
-	aa, err := ParseDatetime(arg)
+	aa, err := unmarshalExtensionValue(b, "datetime", ParseDatetime)
 	if err != nil {
 		return err
 	}
+
 	*a = aa
 	return nil
 }
@@ -299,6 +272,11 @@ func (a Datetime) MarshalJSON() ([]byte, error) {
 // Milliseconds returns the number of milliseconds since the Unix epoch
 func (a Datetime) Milliseconds() int64 {
 	return a.value
+}
+
+// Time returns the UTC time.Time representation of a Datetime.
+func (a Datetime) Time() time.Time {
+	return time.UnixMilli(a.value).UTC()
 }
 
 func (v Datetime) hash() uint64 {
