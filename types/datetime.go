@@ -77,6 +77,9 @@ func ParseDatetime(s string) (Datetime, error) {
 		return Datetime{}, fmt.Errorf("%w: invalid month", errDatetime)
 	}
 	month = 10*int(rune(s[5])-'0') + int(rune(s[6])-'0')
+	if month > 12 {
+		return Datetime{}, fmt.Errorf("%w: month is out of range", errDatetime)
+	}
 
 	if s[7] != '-' {
 		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[7])))
@@ -88,6 +91,9 @@ func ParseDatetime(s string) (Datetime, error) {
 		return Datetime{}, fmt.Errorf("%w: invalid day", errDatetime)
 	}
 	day = 10*int(rune(s[8])-'0') + int(rune(s[9])-'0')
+	if day > 31 {
+		return Datetime{}, fmt.Errorf("%w: day is out of range", errDatetime)
+	}
 
 	// If the length is 10, we only have a date and we're done.
 	if length == 10 {
@@ -117,6 +123,9 @@ func ParseDatetime(s string) (Datetime, error) {
 		return Datetime{}, fmt.Errorf("%w: invalid hour", errDatetime)
 	}
 	hour = 10*int(rune(s[11])-'0') + int(rune(s[12])-'0')
+	if hour > 23 {
+		return Datetime{}, fmt.Errorf("%w: hour is out of range", errDatetime)
+	}
 
 	if s[13] != ':' {
 		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[13])))
@@ -127,6 +136,9 @@ func ParseDatetime(s string) (Datetime, error) {
 		return Datetime{}, fmt.Errorf("%w: invalid minute", errDatetime)
 	}
 	minute = 10*int(rune(s[14])-'0') + int(rune(s[15])-'0')
+	if minute > 59 {
+		return Datetime{}, fmt.Errorf("%w: minute is out of range", errDatetime)
+	}
 
 	if s[16] != ':' {
 		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[16])))
@@ -137,6 +149,9 @@ func ParseDatetime(s string) (Datetime, error) {
 		return Datetime{}, fmt.Errorf("%w: invalid second", errDatetime)
 	}
 	second = 10*int(rune(s[17])-'0') + int(rune(s[18])-'0')
+	if second > 59 {
+		return Datetime{}, fmt.Errorf("%w: second is out of range", errDatetime)
+	}
 
 	// At this point, things are variable.
 	// 19 can be ., in which case we have milliseconds. (SSS)
@@ -189,9 +204,17 @@ func ParseDatetime(s string) (Datetime, error) {
 			return Datetime{}, fmt.Errorf("%w: invalid time zone offset", errDatetime)
 		}
 
-		hh := time.Duration(10*int64(rune(s[trailerOffset+1])-'0')+int64(rune(s[trailerOffset+2])-'0')) * time.Hour
-		mm := time.Duration(10*int64(rune(s[trailerOffset+3])-'0')+int64(rune(s[trailerOffset+4])-'0')) * time.Minute
-		offset = time.Duration(sign) * (hh + mm)
+		hh := time.Duration(10*int64(rune(s[trailerOffset+1])-'0') + int64(rune(s[trailerOffset+2])-'0'))
+		mm := time.Duration(10*int64(rune(s[trailerOffset+3])-'0') + int64(rune(s[trailerOffset+4])-'0'))
+
+		if hh > 23 {
+			return Datetime{}, fmt.Errorf("%w: time zone offset hours are out of range", errDatetime)
+		}
+		if mm > 59 {
+			return Datetime{}, fmt.Errorf("%w: time zone offset minutes are out of range", errDatetime)
+		}
+
+		offset = time.Duration(sign) * ((hh * time.Hour) + (mm * time.Minute))
 
 	default:
 		return Datetime{}, fmt.Errorf("%w: invalid time zone designator", errDatetime)
@@ -201,15 +224,11 @@ func ParseDatetime(s string) (Datetime, error) {
 		hour, minute, second,
 		int(time.Duration(milli)*time.Millisecond), time.UTC)
 
-	// Don't allow wrapping: https://github.com/cedar-policy/rfcs/pull/94
-	tyear, tmonth, tday := t.Date()
-	if year != tyear || time.Month(month) != tmonth || day != tday {
-		return Datetime{}, fmt.Errorf("%w: date would wrap", errDatetime)
-	}
-
-	thour, tminute, tsecond := t.Hour(), t.Minute(), t.Second()
-	if hour != thour || minute != tminute || second != tsecond {
-		return Datetime{}, fmt.Errorf("%w: time would wrap", errDatetime)
+	// Don't allow wrapping: https://github.com/cedar-policy/rfcs/pull/94, which can occur
+	// because not all months have 31 days, which is our validation range
+	_, tmonth, tday := t.Date()
+	if time.Month(month) != tmonth || day != tday {
+		return Datetime{}, fmt.Errorf("%w: invalid date", errDatetime)
 	}
 
 	t = t.Add(offset)
