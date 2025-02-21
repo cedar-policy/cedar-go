@@ -100,6 +100,17 @@ func TestDatetime(t *testing.T) {
 			{"1995-01-01T00:00:00.000-0aaa", "error parsing datetime value: invalid time zone offset"},
 			{"1995-01-01T00:00:00.000-aaaa", "error parsing datetime value: invalid time zone offset"},
 			{"1995-01-01T00:00:00.000-aaaa0", "error parsing datetime value: unexpected trailer after time zone designator"},
+
+			// Prevent Wrapping invalid dates to real dates: See: cedar-policy/rfcs#94
+			{"2024-02-30T00:00:00Z", "error parsing datetime value: date would wrap"},
+			{"2024-02-29T23:59:60Z", "error parsing datetime value: date would wrap"},
+			{"2023-02-28T23:59:60Z", "error parsing datetime value: date would wrap"},
+			{"1970-01-01T25:00:00Z", "error parsing datetime value: date would wrap"},
+			{"1970-01-32T00:00:00Z", "error parsing datetime value: date would wrap"},
+			{"1970-13-01T00:00:00Z", "error parsing datetime value: date would wrap"},
+
+			{"1970-01-01T00:00:60Z", "error parsing datetime value: time would wrap"},
+			{"1970-01-01T00:60:00Z", "error parsing datetime value: time would wrap"},
 		}
 		for ti, tt := range tests {
 			tt := tt

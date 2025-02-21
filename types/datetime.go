@@ -200,6 +200,18 @@ func ParseDatetime(s string) (Datetime, error) {
 	t := time.Date(year, time.Month(month), day,
 		hour, minute, second,
 		int(time.Duration(milli)*time.Millisecond), time.UTC)
+
+	// Don't allow wrapping: https://github.com/cedar-policy/rfcs/pull/94
+	tyear, tmonth, tday := t.Date()
+	if year != tyear || time.Month(month) != tmonth || day != tday {
+		return Datetime{}, fmt.Errorf("%w: date would wrap", errDatetime)
+	}
+
+	thour, tminute, tsecond := t.Hour(), t.Minute(), t.Second()
+	if hour != thour || minute != tminute || second != tsecond {
+		return Datetime{}, fmt.Errorf("%w: time would wrap", errDatetime)
+	}
+
 	t = t.Add(offset)
 	return Datetime{value: t.UnixMilli()}, nil
 }
