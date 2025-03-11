@@ -42,6 +42,8 @@ func TestDatetime(t *testing.T) {
 			{"1970-01-01T00:10:00-0010", "1970-01-01T00:00:00.000Z"},
 			{"1970-01-01T01:00:00-0100", "1970-01-01T00:00:00.000Z"},
 			{"1970-01-01T10:00:00-1000", "1970-01-01T00:00:00.000Z"},
+
+			{"1972-02-29T10:00:00-1000", "1972-02-29T00:00:00.000Z"},
 		}
 		for ti, tt := range tests {
 			tt := tt
@@ -100,6 +102,22 @@ func TestDatetime(t *testing.T) {
 			{"1995-01-01T00:00:00.000-0aaa", "error parsing datetime value: invalid time zone offset"},
 			{"1995-01-01T00:00:00.000-aaaa", "error parsing datetime value: invalid time zone offset"},
 			{"1995-01-01T00:00:00.000-aaaa0", "error parsing datetime value: unexpected trailer after time zone designator"},
+
+			{"1995-04-31T00:00:00Z", "error parsing datetime value: invalid date"},
+
+			// Prevent Wrapping invalid dates to real dates: See: cedar-policy/rfcs#94
+			{"2024-02-30T00:00:00Z", "error parsing datetime value: invalid date"},
+			{"2024-02-29T23:59:60Z", "error parsing datetime value: second is out of range"},
+			{"2023-02-28T23:59:60Z", "error parsing datetime value: second is out of range"},
+			{"2023-02-28T23:60:59Z", "error parsing datetime value: minute is out of range"},
+			{"1970-01-01T25:00:00Z", "error parsing datetime value: hour is out of range"},
+			{"1970-12-32T:00:00Z", "error parsing datetime value: day is out of range"},
+			{"1970-13-01T00:00:00Z", "error parsing datetime value: month is out of range"},
+
+			{"1970-01-01T00:00:00+2400", "error parsing datetime value: time zone offset hours are out of range"},
+			{"1970-01-01T00:00:00-2400", "error parsing datetime value: time zone offset hours are out of range"},
+			{"1970-01-01T00:00:00+2360", "error parsing datetime value: time zone offset minutes are out of range"},
+			{"1970-01-01T00:00:00-2360", "error parsing datetime value: time zone offset minutes are out of range"},
 		}
 		for ti, tt := range tests {
 			tt := tt
