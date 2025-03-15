@@ -98,8 +98,8 @@ var errInvalidPart = fmt.Errorf("invalid part")
 //
 // Using [Ignore] you can ask questions like "When ignoring context could this request be allowed?"
 //
-//  1. When a Permit Policy Condition refers to an ignored value, the Condition is dropped from the Policy.
-//  2. When a Forbid Policy Condition refers to an ignored value, the Policy is dropped.
+//  1. When a Permit Template Condition refers to an ignored value, the Condition is dropped from the Template.
+//  2. When a Forbid Template Condition refers to an ignored value, the Template is dropped.
 //  3. When a Scope clause refers to an ignored value, that scope clause is set to match any.
 //
 // Errors may be returned for a variety of reasons:

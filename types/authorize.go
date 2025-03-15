@@ -80,7 +80,7 @@ type Position struct {
 // request that matches the scope and conditions specified in the policy.
 type Effect bool
 
-// Each Policy has a Permit or Forbid effect that is determined during parsing.
+// Each Template has a Permit or Forbid effect that is determined during parsing.
 const (
 	Permit = Effect(true)
 	Forbid = Effect(false)
