@@ -122,11 +122,10 @@ If you'd like to see more details on what can be expressed as Cedar policies, se
 
 ## Packages
 The cedar-go module houses the following public packages:
- * [cedar](.) - The main package for interacting with the module, including parsing policies and entities and authorizing requests.
+ * [cedar](.) - The main package for interacting with the module, including parsing policies and entities, schemas, and authorizing requests.
  * [ast](ast/) - Programmatic construction of Cedar ASTs
  * [types](types/) - Basic types common to multiple packages. For convenience, most of these are also projected through the cedar package.
  * [x/exp/batch](x/exp/batch/) - An experimental batch authorization API supporting high-performance variable substitution via partial evaluation.
- * [schema](schema/) - Parsing and formatting of the human-readable Cedar schema format.
 
 ## Documentation
 
