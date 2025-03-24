@@ -89,7 +89,7 @@
                         }
                     }
                 },
-                "additionalAttributes": {
+                "tags": {
                     "type": "String"
                 }
             },
@@ -110,7 +110,7 @@
                         }
                     }
                 },
-                "additionalAttributes": {
+                "tags": {
                     "type": "String"
                 }
             },

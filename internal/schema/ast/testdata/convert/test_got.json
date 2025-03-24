@@ -88,9 +88,6 @@
                             "required": true
                         }
                     }
-                },
-                "additionalAttributes": {
-                    "type": "String"
                 }
             },
             "User2": {
@@ -109,9 +106,6 @@
                             "required": true
                         }
                     }
-                },
-                "additionalAttributes": {
-                    "type": "String"
                 }
             },
             "UserGroup": {}

@@ -19,7 +19,7 @@ type JsonNamespace struct {
 type JsonEntity struct {
 	MemberOfTypes []string  `json:"memberOfTypes,omitempty"`
 	Shape         *JsonType `json:"shape,omitempty"`
-	Tags          *JsonType `json:"additionalAttributes,omitempty"`
+	Tags          *JsonType `json:"tags,omitempty"`
 }
 
 // JsonAction defines what can perform an action and what it applies to
