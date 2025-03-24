@@ -2,6 +2,8 @@ package parser
 
 import (
     "bytes"
+    "fmt"
+    "encoding/hex"
 
     "github.com/cedar-policy/cedar-go/internal/schema/token"
 )
@@ -78,6 +80,8 @@ func (l *Lexer) lex() (pos token.Position, tok token.Type, lit string, err error
 }
 
 func (l *Lexer) lexString(quote byte) (pos token.Position, tok token.Type, lit string, err error) {
+    pos = l.pos
+    marker := 0
     var buf bytes.Buffer
     buf.WriteByte(quote)
     for {
@@ -85,6 +89,9 @@ func (l *Lexer) lexString(quote byte) (pos token.Position, tok token.Type, lit s
 
         /*!re2c
         re2c:yyfill:enable = 0;
+        re2c:flags:nested-ifs = 1;
+        re2c:define:YYBACKUP = "marker = l.cursor";
+        re2c:define:YYRESTORE = "l.cursor = marker";
         re2c:define:YYPEEK = "l.input[l.cursor]";
         re2c:define:YYSKIP = "l.cursor += 1";
 
@@ -107,17 +114,31 @@ func (l *Lexer) lexString(quote byte) (pos token.Position, tok token.Type, lit s
             }
             continue
         }
-        "\\a"  { buf.WriteByte('\a'); continue }
-        "\\b"  { buf.WriteByte('\b'); continue }
-        "\\f"  { buf.WriteByte('\f'); continue }
+        // Unicode escape sequences
+        "\\u{" [0-9A-Fa-f]+ "}" {
+            // Handle the hex digits between the braces
+            hexStr := string(l.input[marker+2:l.cursor-1])  // Strip off \u{ and }
+            if len(hexStr) % 2 != 0 {
+                hexStr = "0" + hexStr
+            }
+            var val []byte
+            val, err = hex.DecodeString(hexStr)
+            if err != nil {
+                pos = l.pos
+                lit = string(buf.Bytes())
+                err = fmt.Errorf("%w: %s", ErrInvalidString, err)
+                return
+            }
+            buf.Write(val)
+            continue
+        }
+        "\\0"  { buf.WriteByte(0); continue }
         "\\n"  { buf.WriteByte('\n'); continue }
         "\\r"  { buf.WriteByte('\r'); continue }
         "\\t"  { buf.WriteByte('\t'); continue }
-        "\\v"  { buf.WriteByte('\v'); continue }
         "\\\\" { buf.WriteByte('\\'); continue }
         "\\'"  { buf.WriteByte('\''); continue }
         "\\\"" { buf.WriteByte('"'); continue }
-        "\\?"  { buf.WriteByte('?'); continue }
         */
     }
 }

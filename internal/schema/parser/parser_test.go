@@ -3,6 +3,7 @@ package parser_test
 
 import (
 	"bytes"
+	"io/fs"
 	"os"
 	"strings"
 	"testing"
@@ -86,7 +87,7 @@ func TestParserHasErrors(t *testing.T) {
 }
 
 func TestRealFiles(t *testing.T) {
-	files, err := os.ReadDir("testdata/cases")
+	files, err := fs.ReadDir(parser.Testdata, "testdata/cases")
 	if err != nil {
 		t.Fatalf("Error reading testdata: %v", err)
 	}
@@ -101,7 +102,7 @@ func TestRealFiles(t *testing.T) {
 		}
 
 		t.Run(file.Name(), func(t *testing.T) {
-			input, err := os.ReadFile("testdata/cases/" + file.Name())
+			input, err := fs.ReadFile(parser.Testdata, "testdata/cases/"+file.Name())
 			if err != nil {
 				t.Fatalf("Error reading example schema: %v", err)
 			}

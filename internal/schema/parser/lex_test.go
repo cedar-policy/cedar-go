@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"io/fs"
 	"reflect"
 	"strings"
 	"testing"
@@ -30,7 +31,7 @@ func TestLexer(t *testing.T) {
 func TestLexerExample(t *testing.T) {
 	src := `namespace Demo {
   entity User {
-    name: id,
+    "name\0\n\r\t\"\'_\u{1}\u{001f}": id,
   };
   // Comment
   type id = String;
@@ -48,10 +49,10 @@ func TestLexerExample(t *testing.T) {
 		"ENTITY :2:3 entity",
 		"IDENT :2:10 User",
 		"LEFTBRACE :2:15 {",
-		"IDENT :3:5 name",
-		"COLON :3:9 :",
-		"IDENT :3:11 id",
-		"COMMA :3:13 ,",
+		"STRING :3:5 \"name\x00\n\r\t\"'_\x01\x00\x1f\"",
+		"COLON :3:37 :",
+		"IDENT :3:39 id",
+		"COMMA :3:41 ,",
 		"RIGHTBRACE :4:3 }",
 		"SEMICOLON :4:4 ;",
 		"COMMENT :5:3 // Comment",
@@ -76,6 +77,26 @@ func TestLexerExample(t *testing.T) {
 
 func fmtpos(pos token.Position) string {
 	return fmt.Sprintf("%s:%d:%d", pos.Filename, pos.Line, pos.Column)
+}
+
+func TestLexerOk(t *testing.T) {
+	files, err := fs.ReadDir(Testdata, "testdata/lex")
+	if err != nil {
+		t.Fatalf("Failed to read test data: %v", err)
+	}
+	for _, file := range files {
+		t.Run(file.Name(), func(t *testing.T) {
+			data, err := fs.ReadFile(Testdata, "testdata/lex/"+file.Name())
+			if err != nil {
+				t.Fatalf("Failed to read test data: %v", err)
+			}
+			l := NewLexer("<test>", data)
+			l.All()
+			if len(l.Errors) > 0 {
+				t.Errorf("Errors: %v", l.Errors)
+			}
+		})
+	}
 }
 
 func TestLexerNoPanic(t *testing.T) {

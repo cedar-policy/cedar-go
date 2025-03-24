@@ -3,7 +3,7 @@ package ast_test
 import (
 	"bytes"
 	"fmt"
-	"os"
+	"io/fs"
 	"strings"
 	"testing"
 
@@ -38,7 +38,7 @@ func TestFormatExamples(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.file, func(t *testing.T) {
-			example, err := os.ReadFile(tt.file)
+			example, err := fs.ReadFile(ast.Testdata, tt.file)
 			if err != nil {
 				t.Fatalf("open testfile %s: %v", tt.file, err)
 			}

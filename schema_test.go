@@ -6,13 +6,6 @@ import (
 	"testing"
 )
 
-func TestNewSchema(t *testing.T) {
-	s := NewSchema()
-	if s == nil {
-		t.Error("NewSchema() returned nil")
-	}
-}
-
 func TestSchemaCedarMarshalUnmarshal(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -47,8 +40,9 @@ func TestSchemaCedarMarshalUnmarshal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewSchema()
-			err := s.UnmarshalCedar("test.cedar", []byte(tt.input))
+			var s Schema
+			s.SetFilename("test.cedar")
+			err := s.UnmarshalCedar([]byte(tt.input))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UnmarshalCedar() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -67,8 +61,9 @@ func TestSchemaCedarMarshalUnmarshal(t *testing.T) {
 
 			// For valid schemas, unmarshaling and marshaling should preserve content
 			if !tt.wantErr {
-				s2 := NewSchema()
-				err = s2.UnmarshalCedar("test.cedar", out)
+				var s2 Schema
+				s2.SetFilename("test.cedar")
+				err = s2.UnmarshalCedar(out)
 				if err != nil {
 					t.Errorf("UnmarshalCedar() second pass error = %v", err)
 					return
@@ -89,7 +84,8 @@ func TestSchemaCedarMarshalUnmarshal(t *testing.T) {
 }
 
 func TestSchemaCedarMarshalEmpty(t *testing.T) {
-	s := NewSchema()
+	var s Schema
+	s.SetFilename("test.cedar")
 	out, err := s.MarshalCedar()
 	if err != nil {
 		t.Errorf("MarshalCedar() error = %v", err)
@@ -101,7 +97,8 @@ func TestSchemaCedarMarshalEmpty(t *testing.T) {
 }
 
 func TestSchemaJSONMarshalEmpty(t *testing.T) {
-	s := NewSchema()
+	var s Schema
+	s.SetFilename("test.json")
 	out, err := s.MarshalJSON()
 	if err != nil {
 		t.Errorf("MarshalJSON() error = %v", err)
@@ -148,7 +145,8 @@ func TestSchemaJSONMarshalUnmarshal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewSchema()
+			var s Schema
+			s.SetFilename("test.json")
 			err := s.UnmarshalJSON([]byte(tt.input))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
@@ -176,22 +174,23 @@ func TestSchemaJSONMarshalUnmarshal(t *testing.T) {
 }
 
 func TestSchemaCrossFormatMarshaling(t *testing.T) {
-	t.Run("JSON to Cedar marshaling not allowed", func(t *testing.T) {
-		s := NewSchema()
+	t.Run("JSON to Cedar Marshalling", func(t *testing.T) {
+		var s Schema
 		err := s.UnmarshalJSON([]byte(`{}`))
 		if err != nil {
 			t.Fatalf("UnmarshalJSON() error = %v", err)
 		}
 
 		_, err = s.MarshalCedar()
-		if err == nil {
-			t.Error("MarshalCedar() should return error after UnmarshalJSON")
+		if err != nil {
+			t.Error("MarshalCedar() should not return error after UnmarshalJSON")
 		}
 	})
 
 	t.Run("Cedar to JSON marshaling allowed", func(t *testing.T) {
-		s := NewSchema()
-		err := s.UnmarshalCedar("test.cedar", []byte(`namespace test {}`))
+		var s Schema
+		s.SetFilename("test.cedar")
+		err := s.UnmarshalCedar([]byte(`namespace test {}`))
 		if err != nil {
 			t.Fatalf("UnmarshalCedar() error = %v", err)
 		}

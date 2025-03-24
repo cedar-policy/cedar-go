@@ -1,27 +1,29 @@
 type Anon = String;
-action AnonAct;
+action "AnonAct";
 namespace PhotoFlash {
   type LongAlias = Long;
-  action groupAction1;
-  action groupAction2;
-  entity User, User2 in UserGroup = {
+  entity Photo in Album {
+    "account": Account,
+    "private": Bool,
+  };
+  entity User in UserGroup {
+    "department": String,
+    "jobLevel": Long,
+  } tags String;
+  entity User2 in UserGroup {
     "department": String,
     "jobLevel": Long,
   } tags String;
   entity UserGroup;
-  entity Album in Album = {
-    "account": Account,
-    "private": Bool,
-  };
-  entity Account = {
+  entity Account {
     "admins"?: Set<User>,
     "owner": User,
   };
-  entity Photo in Album = {
+  entity Album in Album {
     "account": Account,
     "private": Bool,
   };
-  action "uploadPhoto" in groupAction1 appliesTo {
+  action "uploadPhoto" in "groupAction1" appliesTo {
     principal: User,
     resource: Album,
     context: {
@@ -30,20 +32,22 @@ namespace PhotoFlash {
         "file_size": Long,
         "file_type": String,
       },
-    }
+    },
   };
-  action "viewPhoto" in [groupAction1, groupAction2, random::nested::name::"actionGroup"] appliesTo {
+  action "viewPhoto" in ["groupAction1", "groupAction2", random::nested::name::"actionGroup"] appliesTo {
     principal: User,
     resource: Photo,
     context: {
       "authenticated": Bool,
-    }
+    },
   };
+  action "groupAction1";
+  action "groupAction2";
   action "listAlbums" appliesTo {
     principal: User,
     resource: Account,
     context: {
       "authenticated": Bool,
-    }
+    },
   };
 }

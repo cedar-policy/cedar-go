@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"reflect"
 	"testing"
@@ -15,7 +16,7 @@ import (
 func TestConvertHumanToJson(t *testing.T) {
 	// Generate testdata/test_want.json by running:
 	// 	cedar translate-schema --direction human-to-json -s testdata/test.cedarschema
-	exampleHuman, err := os.ReadFile("testdata/convert/test.cedarschema")
+	exampleHuman, err := fs.ReadFile(ast.Testdata, "testdata/convert/test.cedarschema")
 	if err != nil {
 		t.Fatalf("Error reading example schema: %v", err)
 	}
@@ -24,11 +25,7 @@ func TestConvertHumanToJson(t *testing.T) {
 		t.Fatalf("Error parsing example schema: %v", err)
 	}
 
-	jsonSchema, err := ast.Convert(schema)
-	if err != nil {
-		t.Fatalf("Error marshalling schema to JSON: %v", err)
-	}
-
+	jsonSchema := ast.ConvertHuman2Json(schema)
 	var got bytes.Buffer
 	enc := json.NewEncoder(&got)
 	enc.SetIndent("", "    ")
@@ -37,7 +34,7 @@ func TestConvertHumanToJson(t *testing.T) {
 		t.Fatalf("Error dumping JSON: %v", err)
 	}
 
-	want, err := os.ReadFile("testdata/convert/test_want.json")
+	want, err := fs.ReadFile(ast.Testdata, "testdata/convert/test_want.json")
 	if err != nil {
 		t.Fatalf("Error reading example JSON schema: %v", err)
 	}

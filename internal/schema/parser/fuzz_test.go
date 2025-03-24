@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"os"
+	"io/fs"
 	"testing"
 )
 
@@ -25,7 +25,7 @@ func FuzzParseSchema(f *testing.F) {
 }
 
 func read(file string) []byte {
-	contents, err := os.ReadFile(file)
+	contents, err := fs.ReadFile(Testdata, file)
 	if err != nil {
 		panic(err)
 	}

@@ -2,7 +2,7 @@ package ast_test
 
 import (
 	"fmt"
-	"os"
+	"io/fs"
 	"strings"
 	"testing"
 
@@ -23,7 +23,7 @@ func TestAstScope(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test, func(t *testing.T) {
-			src, err := os.ReadFile(test)
+			src, err := fs.ReadFile(ast.Testdata, test)
 			if err != nil {
 				t.Fatalf("Error reading test schema: %v", err)
 			}
