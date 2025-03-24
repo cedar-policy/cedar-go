@@ -12,7 +12,7 @@ import (
 // and entity definitions and also provide documentation.
 //
 // Schemas can be represented in either JSON (*JSON functions) or Human-readable formats (*Cedar functions) just like policies.
-// Marshalling and unmarshalling between the formats is allowed, except from a JSON schema into a human-readable one.
+// Marshalling and unmarshalling between the formats is allowed.
 type Schema struct {
 	filename    string
 	jsonSchema  ast.JsonSchema
@@ -32,8 +32,7 @@ func (old *Schema) UnmarshalCedar(src []byte) (err error) {
 	return nil
 }
 
-// MarshalCedar serializes the schema into the human readable format. This function can only be called on schemas
-// that are initialized with UnmarshalCedar, not with UnmarshalJSON.
+// MarshalCedar serializes the schema into the human readable format.
 func (s *Schema) MarshalCedar() ([]byte, error) {
 	if s.jsonSchema != nil {
 		s.humanSchema = ast.ConvertJSON2Human(s.jsonSchema)
