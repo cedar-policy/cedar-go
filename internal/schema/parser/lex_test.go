@@ -166,7 +166,7 @@ func FuzzLexer(f *testing.F) {
 		f.Add([]byte(seed))
 	}
 
-	f.Fuzz(func(t *testing.T, data []byte) {
+	f.Fuzz(func(_ *testing.T, data []byte) {
 		l := NewLexer("<fuzz>", data)
 		for {
 			_, tok, _, _ := l.lex()

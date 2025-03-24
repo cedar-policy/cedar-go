@@ -53,7 +53,7 @@ func TestAstScope(t *testing.T) {
 				}
 				chain = append(chain, node)
 				return true
-			}, func(n ast.Node) bool {
+			}, func(ast.Node) bool {
 				chain = chain[:len(chain)-1]
 				return true
 			})

@@ -18,8 +18,6 @@ var (
 	ErrBailout = errors.New("too many errors")
 )
 
-type Option func(p *Parser)
-
 // ParseFile parses src bytes as human-readable Cedar schema and returns the AST. Parsing the human readable format
 // preserves comments, ordering, etc...
 //
@@ -32,7 +30,7 @@ type Option func(p *Parser)
 //	_, err := ParseFile(...)
 //	var errs []error
 //	errors.As(err, &errs)
-func ParseFile(filename string, src []byte, opts ...Option) (schema *ast.Schema, err error) {
+func ParseFile(filename string, src []byte) (schema *ast.Schema, err error) {
 	lex := NewLexer(filename, src)
 	p := &Parser{lex: lex}
 	defer func() {

@@ -30,39 +30,51 @@ func ConvertJSON2Human(js JsonSchema) *Schema {
 func convertJsonNamespace(name string, js *JsonNamespace) *Namespace {
 	ns := &Namespace{}
 	if name != "" {
-		parts := strings.Split(name, "::")
-		idents := make([]*Ident, len(parts))
-		for i, part := range parts {
-			idents[i] = &Ident{Value: part}
-		}
-		ns.Name = &Path{Parts: idents}
+		ns.Name = convertJsonNamespaceName(name)
 	}
 
 	// Convert common types
-	for name, ct := range js.CommonTypes {
-		ns.Decls = append(ns.Decls, &CommonTypeDecl{
+	ns.Decls = append(ns.Decls, convertJsonCommonTypes(js.CommonTypes)...)
+
+	// Convert entity types
+	ns.Decls = append(ns.Decls, convertJsonEntityTypes(js.EntityTypes)...)
+
+	// Convert actions
+	ns.Decls = append(ns.Decls, convertJsonActions(js.Actions)...)
+
+	return ns
+}
+
+func convertJsonNamespaceName(name string) *Path {
+	parts := strings.Split(name, "::")
+	idents := make([]*Ident, len(parts))
+	for i, part := range parts {
+		idents[i] = &Ident{Value: part}
+	}
+	return &Path{Parts: idents}
+}
+
+func convertJsonCommonTypes(types map[string]*JsonCommonType) []Declaration {
+	decls := make([]Declaration, 0, len(types))
+	for name, ct := range types {
+		decls = append(decls, &CommonTypeDecl{
 			Name:  &Ident{Value: name},
 			Value: convertJsonType(ct.JsonType),
 		})
 	}
+	return decls
+}
 
-	// Convert entity types
-	for name, et := range js.EntityTypes {
+func convertJsonEntityTypes(types map[string]*JsonEntity) []Declaration {
+	decls := make([]Declaration, 0, len(types))
+	for name, et := range types {
 		entity := &Entity{
 			Names: []*Ident{{Value: name}},
 		}
 
 		// Convert memberOfTypes
 		if len(et.MemberOfTypes) > 0 {
-			entity.In = make([]*Path, len(et.MemberOfTypes))
-			for i, t := range et.MemberOfTypes {
-				parts := strings.Split(t, "::")
-				idents := make([]*Ident, len(parts))
-				for j, part := range parts {
-					idents[j] = &Ident{Value: part}
-				}
-				entity.In[i] = &Path{Parts: idents}
-			}
+			entity.In = convertJsonMemberOfTypes(et.MemberOfTypes)
 		}
 
 		// Convert shape
@@ -77,75 +89,85 @@ func convertJsonNamespace(name string, js *JsonNamespace) *Namespace {
 			entity.Tags = convertJsonType(et.Tags)
 		}
 
-		ns.Decls = append(ns.Decls, entity)
+		decls = append(decls, entity)
 	}
+	return decls
+}
 
-	// Convert actions
-	for name, act := range js.Actions {
+func convertJsonMemberOfTypes(types []string) []*Path {
+	paths := make([]*Path, len(types))
+	for i, t := range types {
+		parts := strings.Split(t, "::")
+		idents := make([]*Ident, len(parts))
+		for j, part := range parts {
+			idents[j] = &Ident{Value: part}
+		}
+		paths[i] = &Path{Parts: idents}
+	}
+	return paths
+}
+
+func convertJsonActions(actions map[string]*JsonAction) []Declaration {
+	decls := make([]Declaration, 0, len(actions))
+	for name, act := range actions {
 		action := &Action{
 			Names: []Name{&String{QuotedVal: fmt.Sprintf("%q", name)}},
 		}
 
 		// Convert memberOf
 		if len(act.MemberOf) > 0 {
-			action.In = make([]*Ref, len(act.MemberOf))
-			for i, m := range act.MemberOf {
-				ref := &Ref{
-					Name: &String{QuotedVal: fmt.Sprintf("%q", m.ID)},
-				}
-				if m.Type != "" {
-					parts := strings.Split(m.Type, "::")
-					ref.Namespace = make([]*Ident, len(parts))
-					for j, part := range parts {
-						ref.Namespace[j] = &Ident{Value: part}
-					}
-				}
-				action.In[i] = ref
-			}
+			action.In = convertJsonMemberOf(act.MemberOf)
 		}
 
 		// Convert appliesTo
 		if act.AppliesTo != nil {
-			action.AppliesTo = &AppliesTo{}
-
-			// Convert principal types
-			if len(act.AppliesTo.PrincipalTypes) > 0 {
-				action.AppliesTo.Principal = make([]*Path, len(act.AppliesTo.PrincipalTypes))
-				for i, t := range act.AppliesTo.PrincipalTypes {
-					parts := strings.Split(t, "::")
-					idents := make([]*Ident, len(parts))
-					for j, part := range parts {
-						idents[j] = &Ident{Value: part}
-					}
-					action.AppliesTo.Principal[i] = &Path{Parts: idents}
-				}
-			}
-
-			// Convert resource types
-			if len(act.AppliesTo.ResourceTypes) > 0 {
-				action.AppliesTo.Resource = make([]*Path, len(act.AppliesTo.ResourceTypes))
-				for i, t := range act.AppliesTo.ResourceTypes {
-					parts := strings.Split(t, "::")
-					idents := make([]*Ident, len(parts))
-					for j, part := range parts {
-						idents[j] = &Ident{Value: part}
-					}
-					action.AppliesTo.Resource[i] = &Path{Parts: idents}
-				}
-			}
-
-			// Convert context
-			if act.AppliesTo.Context != nil {
-				if context, ok := convertJsonType(act.AppliesTo.Context).(*RecordType); ok {
-					action.AppliesTo.Context = context
-				}
-			}
+			action.AppliesTo = convertJsonAppliesTo(act.AppliesTo)
 		}
 
-		ns.Decls = append(ns.Decls, action)
+		decls = append(decls, action)
+	}
+	return decls
+}
+
+func convertJsonMemberOf(members []*JsonMember) []*Ref {
+	refs := make([]*Ref, len(members))
+	for i, m := range members {
+		ref := &Ref{
+			Name: &String{QuotedVal: fmt.Sprintf("%q", m.ID)},
+		}
+		if m.Type != "" {
+			parts := strings.Split(m.Type, "::")
+			ref.Namespace = make([]*Ident, len(parts))
+			for j, part := range parts {
+				ref.Namespace[j] = &Ident{Value: part}
+			}
+		}
+		refs[i] = ref
+	}
+	return refs
+}
+
+func convertJsonAppliesTo(appliesTo *JsonAppliesTo) *AppliesTo {
+	at := &AppliesTo{}
+
+	// Convert principal types
+	if len(appliesTo.PrincipalTypes) > 0 {
+		at.Principal = convertJsonMemberOfTypes(appliesTo.PrincipalTypes)
 	}
 
-	return ns
+	// Convert resource types
+	if len(appliesTo.ResourceTypes) > 0 {
+		at.Resource = convertJsonMemberOfTypes(appliesTo.ResourceTypes)
+	}
+
+	// Convert context
+	if appliesTo.Context != nil {
+		if context, ok := convertJsonType(appliesTo.Context).(*RecordType); ok {
+			at.Context = context
+		}
+	}
+
+	return at
 }
 
 func convertJsonType(js *JsonType) Type {

@@ -11,7 +11,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/schema/token"
 )
 
-func TestIsNode(t *testing.T) {
+func TestIsNode(*testing.T) {
 	// Test all isNode() implementations
 	(&Schema{}).isNode()
 	(&Namespace{}).isNode()
@@ -32,7 +32,7 @@ func TestIsNode(t *testing.T) {
 	// No assertions needed since we just want coverage for these marker methods
 }
 
-func TestIsDecl(t *testing.T) {
+func TestIsDecl(*testing.T) {
 	// Test all isDecl() implementations
 	(&Entity{}).isDecl()
 	(&Action{}).isDecl()
@@ -43,7 +43,7 @@ func TestIsDecl(t *testing.T) {
 	// No assertions needed since we just want coverage for these marker methods
 }
 
-func TestIsType(t *testing.T) {
+func TestIsType(*testing.T) {
 	// Test all isType() implementations
 	(&RecordType{}).isType()
 	(&SetType{}).isType()
@@ -52,7 +52,7 @@ func TestIsType(t *testing.T) {
 	// No assertions needed since we just want coverage for these marker methods
 }
 
-func TestIsName(t *testing.T) {
+func TestIsName(*testing.T) {
 	// Test all isName() implementations
 	(&String{}).isName()
 	(&Ident{}).isName()

@@ -23,12 +23,12 @@ type Schema struct {
 //
 // Any errors returned will have file positions matching filename.
 func (old *Schema) UnmarshalCedar(src []byte) (err error) {
-	var new Schema
-	new.humanSchema, err = parser.ParseFile(old.filename, src, nil)
+	var s Schema
+	s.humanSchema, err = parser.ParseFile(old.filename, src)
 	if err != nil {
 		return err
 	}
-	*old = new
+	*old = s
 	return nil
 }
 
@@ -48,13 +48,13 @@ func (s *Schema) MarshalCedar() ([]byte, error) {
 
 // UnmarshalJSON deserializes the JSON schema from src or returns an error if the JSON is not valid schema JSON.
 func (old *Schema) UnmarshalJSON(src []byte) error {
-	var new Schema
-	err := json.Unmarshal(src, &new.jsonSchema)
+	var s Schema
+	err := json.Unmarshal(src, &s.jsonSchema)
 	if err != nil {
 		return err
 	}
-	new.filename = old.filename
-	*old = new
+	s.filename = old.filename
+	*old = s
 	return nil
 }
 
