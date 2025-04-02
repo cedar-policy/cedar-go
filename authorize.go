@@ -38,7 +38,7 @@ func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decis
 	// - All policy should be run to collect errors
 	// - For permit, all permits must be run to collect annotations
 	// - For forbid, forbids must be run to collect annotations
-	for id, po := range p.policies {
+	for id, po := range p.policies.StaticPolicies {
 		result, err := po.eval.Eval(env)
 		if err != nil {
 			diag.Errors = append(diag.Errors, DiagnosticError{PolicyID: id, Position: po.Position(), Message: err.Error()})

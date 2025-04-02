@@ -10,11 +10,11 @@ func (s Scope) All() ScopeTypeAll {
 	return ScopeTypeAll{}
 }
 
-func (s Scope) Eq(entity types.EntityUID) ScopeTypeEq {
+func (s Scope) Eq(entity types.EntityReference) ScopeTypeEq {
 	return ScopeTypeEq{Entity: entity}
 }
 
-func (s Scope) In(entity types.EntityUID) ScopeTypeIn {
+func (s Scope) In(entity types.EntityReference) ScopeTypeIn {
 	return ScopeTypeIn{Entity: entity}
 }
 
@@ -26,16 +26,16 @@ func (s Scope) Is(entityType types.EntityType) ScopeTypeIs {
 	return ScopeTypeIs{Type: entityType}
 }
 
-func (s Scope) IsIn(entityType types.EntityType, entity types.EntityUID) ScopeTypeIsIn {
+func (s Scope) IsIn(entityType types.EntityType, entity types.EntityReference) ScopeTypeIsIn {
 	return ScopeTypeIsIn{Type: entityType, Entity: entity}
 }
 
-func (p *Policy) PrincipalEq(entity types.EntityUID) *Policy {
+func (p *Policy) PrincipalEq(entity types.EntityReference) *Policy {
 	p.Principal = Scope{}.Eq(entity)
 	return p
 }
 
-func (p *Policy) PrincipalIn(entity types.EntityUID) *Policy {
+func (p *Policy) PrincipalIn(entity types.EntityReference) *Policy {
 	p.Principal = Scope{}.In(entity)
 	return p
 }
@@ -45,7 +45,7 @@ func (p *Policy) PrincipalIs(entityType types.EntityType) *Policy {
 	return p
 }
 
-func (p *Policy) PrincipalIsIn(entityType types.EntityType, entity types.EntityUID) *Policy {
+func (p *Policy) PrincipalIsIn(entityType types.EntityType, entity types.EntityReference) *Policy {
 	p.Principal = Scope{}.IsIn(entityType, entity)
 	return p
 }
@@ -65,12 +65,12 @@ func (p *Policy) ActionInSet(entities ...types.EntityUID) *Policy {
 	return p
 }
 
-func (p *Policy) ResourceEq(entity types.EntityUID) *Policy {
+func (p *Policy) ResourceEq(entity types.EntityReference) *Policy {
 	p.Resource = Scope{}.Eq(entity)
 	return p
 }
 
-func (p *Policy) ResourceIn(entity types.EntityUID) *Policy {
+func (p *Policy) ResourceIn(entity types.EntityReference) *Policy {
 	p.Resource = Scope{}.In(entity)
 	return p
 }
@@ -80,7 +80,7 @@ func (p *Policy) ResourceIs(entityType types.EntityType) *Policy {
 	return p
 }
 
-func (p *Policy) ResourceIsIn(entityType types.EntityType, entity types.EntityUID) *Policy {
+func (p *Policy) ResourceIsIn(entityType types.EntityType, entity types.EntityReference) *Policy {
 	p.Resource = Scope{}.IsIn(entityType, entity)
 	return p
 }
@@ -127,12 +127,26 @@ type ScopeTypeAll struct {
 	ResourceScopeNode
 }
 
+func (t ScopeTypeAll) Slot() (slotID types.SlotID, found bool) {
+	return "", false
+}
+
 type ScopeTypeEq struct {
 	ScopeNode
 	PrincipalScopeNode
 	ActionScopeNode
 	ResourceScopeNode
-	Entity types.EntityUID
+	Entity types.EntityReference
+}
+
+func (t ScopeTypeEq) Slot() (slotID types.SlotID, found bool) {
+	switch et := t.Entity.(type) {
+	case types.VariableSlot:
+		slotID = et.ID
+		found = true
+	}
+
+	return
 }
 
 type ScopeTypeIn struct {
@@ -140,7 +154,17 @@ type ScopeTypeIn struct {
 	PrincipalScopeNode
 	ActionScopeNode
 	ResourceScopeNode
-	Entity types.EntityUID
+	Entity types.EntityReference
+}
+
+func (t ScopeTypeIn) Slot() (slotID types.SlotID, found bool) {
+	switch et := t.Entity.(type) {
+	case types.VariableSlot:
+		slotID = et.ID
+		found = true
+	}
+
+	return
 }
 
 type ScopeTypeInSet struct {
@@ -156,10 +180,24 @@ type ScopeTypeIs struct {
 	Type types.EntityType
 }
 
+func (t ScopeTypeIs) Slot() (slotID types.SlotID, found bool) {
+	return "", false
+}
+
 type ScopeTypeIsIn struct {
 	ScopeNode
 	PrincipalScopeNode
 	ResourceScopeNode
 	Type   types.EntityType
-	Entity types.EntityUID
+	Entity types.EntityReference
+}
+
+func (t ScopeTypeIsIn) Slot() (slotID types.SlotID, found bool) {
+	switch et := t.Entity.(type) {
+	case types.VariableSlot:
+		slotID = et.ID
+		found = true
+	}
+
+	return
 }

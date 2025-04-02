@@ -17,7 +17,8 @@ type policyJSON struct {
 
 // scopeInJSON uses the implicit form of EntityUID JSON serialization to match the Rust SDK
 type scopeInJSON struct {
-	Entity types.ImplicitlyMarshaledEntityUID `json:"entity"`
+	Entity *types.ImplicitlyMarshaledEntityUID `json:"entity,omitempty"`
+	Slot   *string                             `json:"slot,omitempty"`
 }
 
 // scopeJSON uses the implicit form of EntityUID JSON serialization to match the Rust SDK
@@ -27,6 +28,7 @@ type scopeJSON struct {
 	Entities   []types.ImplicitlyMarshaledEntityUID `json:"entities,omitempty"`
 	EntityType string                               `json:"entity_type,omitempty"`
 	In         *scopeInJSON                         `json:"in,omitempty"`
+	Slot       *string                              `json:"slot,omitempty"`
 }
 
 type conditionJSON struct {

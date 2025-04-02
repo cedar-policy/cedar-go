@@ -465,6 +465,60 @@ when { (if true then 2 else 3 * 4) == 2 };`,
 when { (if true then 2 else 3) * 4 == 8 };`,
 			ast.Permit().When(ast.IfThenElse(ast.True(), ast.Long(2), ast.Long(3)).Multiply(ast.Long(4)).Equal(ast.Long(8))),
 		},
+		{
+			"principal variable",
+			`permit (
+    principal == ?principal,
+    action,
+    resource
+);`,
+			ast.Permit().PrincipalEq(types.VariableSlot{ID: types.PrincipalSlot}).AddSlot(types.PrincipalSlot),
+		},
+		{
+			"principal template variable with in operator",
+			`permit (
+    principal in ?principal,
+    action,
+    resource
+);`,
+			ast.Permit().PrincipalIn(types.VariableSlot{ID: types.PrincipalSlot}).AddSlot(types.PrincipalSlot),
+		},
+		{
+			"principal template variable with is in operator",
+			`permit (
+    principal is User in ?principal,
+    action,
+    resource
+);`,
+			ast.Permit().PrincipalIsIn("User", types.VariableSlot{ID: types.PrincipalSlot}).AddSlot(types.PrincipalSlot),
+		},
+		{
+			"resource template variable",
+			`permit (
+    principal,
+    action,
+    resource == ?resource
+);`,
+			ast.Permit().ResourceEq(types.VariableSlot{ID: types.ResourceSlot}).AddSlot(types.ResourceSlot),
+		},
+		{
+			"resource template variable with in operator",
+			`permit (
+    principal,
+    action,
+    resource in ?resource
+);`,
+			ast.Permit().ResourceIn(types.VariableSlot{ID: types.ResourceSlot}).AddSlot(types.ResourceSlot),
+		},
+		{
+			"resource template variable with is in operator",
+			`permit (
+    principal,
+    action,
+    resource is Photo in ?resource
+);`,
+			ast.Permit().ResourceIsIn("Photo", types.VariableSlot{ID: types.ResourceSlot}).AddSlot(types.ResourceSlot),
+		},
 	}
 
 	for _, tt := range parseTests {
@@ -537,7 +591,7 @@ func TestParsePolicySet(t *testing.T) {
 
 		expectedPolicy := ast.Permit()
 		expectedPolicy.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
-		testutil.Equals(t, policies[0], (*parser.Policy)(expectedPolicy))
+		testutil.Equals(t, policies.StaticPolicies[0], (*parser.Policy)(expectedPolicy))
 	})
 	t.Run("two policies", func(t *testing.T) {
 		policyStr := []byte(`permit (
@@ -555,11 +609,11 @@ func TestParsePolicySet(t *testing.T) {
 
 		expectedPolicy0 := ast.Permit()
 		expectedPolicy0.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
-		testutil.Equals(t, policies[0], (*parser.Policy)(expectedPolicy0))
+		testutil.Equals(t, policies.StaticPolicies[0], (*parser.Policy)(expectedPolicy0))
 
 		expectedPolicy1 := ast.Forbid()
 		expectedPolicy1.Position = ast.Position{Offset: 53, Line: 6, Column: 3}
-		testutil.Equals(t, policies[1], (*parser.Policy)(expectedPolicy1))
+		testutil.Equals(t, policies.StaticPolicies[1], (*parser.Policy)(expectedPolicy1))
 	})
 }
 

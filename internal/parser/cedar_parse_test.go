@@ -331,7 +331,7 @@ func TestParse(t *testing.T) {
 
 			// N.B. Until we support the re-rendering of comments, we have to ignore the position for the purposes of
 			// these tests (see test "ex1")
-			for _, pp := range policies {
+			for _, pp := range policies.StaticPolicies {
 				pp.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
 
 				var buf bytes.Buffer
@@ -341,7 +341,7 @@ func TestParse(t *testing.T) {
 				err = p2.UnmarshalCedar(buf.Bytes())
 				testutil.OK(t, err)
 
-				testutil.Equals(t, p2[0], pp)
+				testutil.Equals(t, p2.StaticPolicies[0], pp)
 			}
 		})
 	}
@@ -364,8 +364,8 @@ permit( principal, action, resource );
 	var out parser.PolicySlice
 	err := out.UnmarshalCedar([]byte(in))
 	testutil.OK(t, err)
-	testutil.Equals(t, len(out), 3)
-	testutil.Equals(t, out[0].Position, ast.Position{Offset: 17, Line: 2, Column: 1})
-	testutil.Equals(t, out[1].Position, ast.Position{Offset: 86, Line: 7, Column: 3})
-	testutil.Equals(t, out[2].Position, ast.Position{Offset: 148, Line: 10, Column: 2})
+	testutil.Equals(t, len(out.StaticPolicies), 3)
+	testutil.Equals(t, out.StaticPolicies[0].Position, ast.Position{Offset: 17, Line: 2, Column: 1})
+	testutil.Equals(t, out.StaticPolicies[1].Position, ast.Position{Offset: 86, Line: 7, Column: 3})
+	testutil.Equals(t, out.StaticPolicies[2].Position, ast.Position{Offset: 148, Line: 10, Column: 2})
 }

@@ -36,6 +36,10 @@ type Position struct {
 	Column   int    // column number, starting at 1 (character count per line)
 }
 
+type templateContext struct {
+	slots []types.SlotID
+}
+
 type Policy struct {
 	Effect      Effect
 	Annotations []AnnotationType // duplicate keys are prevented via the builders
@@ -44,6 +48,8 @@ type Policy struct {
 	Resource    IsResourceScopeNode
 	Conditions  []ConditionType
 	Position    Position
+
+	tplCtx templateContext
 }
 
 func newPolicy(effect Effect, annotations []AnnotationType) *Policy {
@@ -72,4 +78,30 @@ func (p *Policy) When(node Node) *Policy {
 func (p *Policy) Unless(node Node) *Policy {
 	p.Conditions = append(p.Conditions, ConditionType{Condition: ConditionUnless, Body: node.v})
 	return p
+}
+
+func (p *Policy) AddSlot(slotID types.SlotID) *Policy {
+	p.tplCtx.slots = append(p.tplCtx.slots, slotID)
+	return p
+}
+
+func (p *Policy) Slots() []types.SlotID {
+	return p.tplCtx.slots
+}
+
+func (p *Policy) Clone() Policy {
+	clonedPolicy := Policy{
+		Effect:      p.Effect,
+		Annotations: append([]AnnotationType(nil), p.Annotations...),
+		Principal:   p.Principal,
+		Action:      p.Action,
+		Resource:    p.Resource,
+		Conditions:  append([]ConditionType(nil), p.Conditions...),
+		Position:    p.Position,
+		tplCtx: templateContext{
+			slots: append([]types.SlotID(nil), p.tplCtx.slots...),
+		},
+	}
+
+	return clonedPolicy
 }

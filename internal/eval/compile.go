@@ -66,9 +66,9 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 	case ast.ScopeTypeAll:
 		return ast.True()
 	case ast.ScopeTypeEq:
-		return ast.NewNode(varNode).Equal(ast.Value(t.Entity))
+		return ast.NewNode(varNode).Equal(ast.Value(entityReferenceToUID(t.Entity)))
 	case ast.ScopeTypeIn:
-		return ast.NewNode(varNode).In(ast.Value(t.Entity))
+		return ast.NewNode(varNode).In(ast.Value(entityReferenceToUID(t.Entity)))
 	case ast.ScopeTypeInSet:
 		vals := make([]types.Value, len(t.Entities))
 		for i, e := range t.Entities {
@@ -79,8 +79,19 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 		return ast.NewNode(varNode).Is(t.Type)
 
 	case ast.ScopeTypeIsIn:
-		return ast.NewNode(varNode).IsIn(t.Type, ast.Value(t.Entity))
+		return ast.NewNode(varNode).IsIn(t.Type, ast.Value(entityReferenceToUID(t.Entity)))
 	default:
 		panic(fmt.Sprintf("unknown scope type %T", t))
+	}
+}
+
+func entityReferenceToUID(ef types.EntityReference) types.EntityUID {
+	switch e := ef.(type) {
+	case types.EntityUID:
+		return e
+	case types.VariableSlot:
+		panic("variable slot cannot be evaluated, you should instantiate a template-linked policy first")
+	default:
+		panic(fmt.Sprintf("unknown entity reference type %T", e))
 	}
 }

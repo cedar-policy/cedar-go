@@ -18,7 +18,9 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
 		return err
 	}
 
-	var policySet PolicySlice
+	var policySet []*Policy
+	var templateSet []*Template
+
 	parser := newParser(tokens)
 	for !parser.peek().isEOF() {
 		var policy Policy
@@ -26,10 +28,17 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
 			return err
 		}
 
-		policySet = append(policySet, &policy)
+		if len(policy.unwrap().Slots()) > 0 {
+			t := Template(policy)
+			templateSet = append(templateSet, &t)
+		} else {
+			policySet = append(policySet, &policy)
+		}
 	}
 
-	*p = policySet
+	p.StaticPolicies = policySet
+	p.Templates = templateSet
+
 	return nil
 }
 
@@ -184,6 +193,13 @@ func (p *parser) effect(a *ast.Annotations) (*ast.Policy, error) {
 	return nil, p.errorf("unexpected effect: %v", next.Text)
 }
 
+func addSlotToPolicy(entRef types.EntityReference, p *ast.Policy) {
+	switch varSlot := entRef.(type) {
+	case types.VariableSlot:
+		p.AddSlot(varSlot.ID)
+	}
+}
+
 func (p *parser) principal(policy *ast.Policy) error {
 	if err := p.exact(consts.Principal); err != nil {
 		return err
@@ -191,10 +207,12 @@ func (p *parser) principal(policy *ast.Policy) error {
 	switch p.peek().Text {
 	case "==":
 		p.advance()
-		entity, err := p.entity()
+		entity, err := p.entityReference()
 		if err != nil {
 			return err
 		}
+
+		addSlotToPolicy(entity, policy)
 		policy.PrincipalEq(entity)
 		return nil
 	case "is":
@@ -205,10 +223,12 @@ func (p *parser) principal(policy *ast.Policy) error {
 		}
 		if p.peek().Text == "in" {
 			p.advance()
-			entity, err := p.entity()
+			entity, err := p.entityReference()
 			if err != nil {
 				return err
 			}
+
+			addSlotToPolicy(entity, policy)
 			policy.PrincipalIsIn(path, entity)
 			return nil
 		}
@@ -217,10 +237,12 @@ func (p *parser) principal(policy *ast.Policy) error {
 		return nil
 	case "in":
 		p.advance()
-		entity, err := p.entity()
+		entity, err := p.entityReference()
 		if err != nil {
 			return err
 		}
+
+		addSlotToPolicy(entity, policy)
 		policy.PrincipalIn(entity)
 		return nil
 	}
@@ -230,10 +252,38 @@ func (p *parser) principal(policy *ast.Policy) error {
 
 func (p *parser) entity() (types.EntityUID, error) {
 	var res types.EntityUID
+
 	t := p.advance()
 	if !t.isIdent() {
 		return res, p.errorf("expected ident")
 	}
+
+	return p.entityFirstPathPreread(types.EntityType(t.Text))
+}
+
+func (p *parser) entityReference() (types.EntityReference, error) {
+	var res types.EntityUID
+
+	if p.peek().Type == TokenOperator && p.peek().Text == "?" {
+		p.advance() // consume `?`
+		t := p.advance()
+
+		varName := "?" + t.Text
+		switch varName {
+		case string(types.PrincipalSlot):
+			return types.VariableSlot{ID: types.PrincipalSlot}, nil
+		case string(types.ResourceSlot):
+			return types.VariableSlot{ID: types.ResourceSlot}, nil
+		}
+
+		return nil, p.errorf("unknown variable name %v", varName)
+	}
+
+	t := p.advance()
+	if !t.isIdent() {
+		return res, p.errorf("expected ident")
+	}
+
 	return p.entityFirstPathPreread(types.EntityType(t.Text))
 }
 
@@ -347,10 +397,12 @@ func (p *parser) resource(policy *ast.Policy) error {
 	switch p.peek().Text {
 	case "==":
 		p.advance()
-		entity, err := p.entity()
+		entity, err := p.entityReference()
 		if err != nil {
 			return err
 		}
+
+		addSlotToPolicy(entity, policy)
 		policy.ResourceEq(entity)
 		return nil
 	case "is":
@@ -361,10 +413,12 @@ func (p *parser) resource(policy *ast.Policy) error {
 		}
 		if p.peek().Text == "in" {
 			p.advance()
-			entity, err := p.entity()
+			entity, err := p.entityReference()
 			if err != nil {
 				return err
 			}
+
+			addSlotToPolicy(entity, policy)
 			policy.ResourceIsIn(path, entity)
 			return nil
 		}
@@ -373,10 +427,12 @@ func (p *parser) resource(policy *ast.Policy) error {
 		return nil
 	case "in":
 		p.advance()
-		entity, err := p.entity()
+		entity, err := p.entityReference()
 		if err != nil {
 			return err
 		}
+
+		addSlotToPolicy(entity, policy)
 		policy.ResourceIn(entity)
 		return nil
 	}

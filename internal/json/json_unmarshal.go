@@ -15,6 +15,68 @@ import (
 type isPrincipalResourceScopeNode interface {
 	ast.IsPrincipalScopeNode
 	ast.IsResourceScopeNode
+	Slot() (types.SlotID, bool)
+}
+
+func slotID(id *string) (types.SlotID, error) {
+	sid := *id
+
+	switch sid {
+	case string(types.PrincipalSlot):
+		return types.PrincipalSlot, nil
+	case string(types.ResourceSlot):
+		return types.ResourceSlot, nil
+	default:
+		return "", fmt.Errorf("unknown slot ID: %v", sid)
+	}
+}
+
+func scopeEntityReference(s *scopeJSON) (types.EntityReference, error) {
+	var ref types.EntityReference
+
+	if s.Entity == nil && s.Slot == nil {
+		return nil, fmt.Errorf("entity or slot should be set")
+	}
+
+	switch {
+	case s.Slot != nil:
+		id, err := slotID(s.Slot)
+		if err != nil {
+			return nil, err
+		}
+
+		ref = types.VariableSlot{ID: id}
+	case s.Entity != nil:
+		ref = types.EntityUID(*s.Entity)
+	default:
+		return nil, fmt.Errorf("missing entity and slot")
+	}
+
+	return ref, nil
+}
+
+func scopeInEntityReference(s *scopeInJSON) (types.EntityReference, error) {
+	var ref types.EntityReference
+
+	if s.Entity == nil && s.Slot == nil {
+		return nil, fmt.Errorf("entity or slot should be set")
+	}
+
+	switch {
+	case s.Slot != nil:
+		id, err := slotID(s.Slot)
+		if err != nil {
+			return nil, err
+		}
+
+		ref = types.VariableSlot{ID: id}
+	case s.Entity != nil:
+		ref = types.EntityUID(*s.Entity)
+	default:
+		return nil, fmt.Errorf("missing entity and slot")
+	}
+
+	return ref, nil
 }
 
 func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, error) {
@@ -22,21 +84,43 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 	case "All":
 		return ast.Scope{}.All(), nil
 	case "==":
-		if s.Entity == nil {
-			return nil, fmt.Errorf("missing entity")
+		var ref types.EntityReference
+
+		switch {
+		case s.Slot != nil:
+			id, err := slotID(s.Slot)
+			if err != nil {
+				return nil, err
+			}
+
+			ref = types.VariableSlot{ID: id}
+		case s.Entity != nil:
+			ref = types.EntityUID(*s.Entity)
+		default:
+			return nil, fmt.Errorf("missing entity and slot")
 		}
-		return ast.Scope{}.Eq(types.EntityUID(*s.Entity)), nil
+
+		return ast.Scope{}.Eq(ref), nil
 	case "in":
-		if s.Entity == nil {
-			return nil, fmt.Errorf("missing entity")
+		ref, err := scopeEntityReference(s)
+		if err != nil {
+			return nil, err
 		}
-		return ast.Scope{}.In(types.EntityUID(*s.Entity)), nil
+
+		return ast.Scope{}.In(ref), nil
 	case "is":
 		if s.In == nil {
 			return ast.Scope{}.Is(types.EntityType(s.EntityType)), nil
 		}
-		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), types.EntityUID(s.In.Entity)), nil
+
+		ref, err := scopeInEntityReference(s.In)
+		if err != nil {
+			return nil, err
+		}
+
+		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), ref), nil
 	}
+
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }
 
@@ -304,19 +388,40 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 	for k, v := range j.Annotations {
 		p.unwrap().Annotate(types.Ident(k), types.String(v))
 	}
-	var err error
-	p.Principal, err = j.Principal.ToPrincipalResourceNode()
+
+	principal, err := j.Principal.ToPrincipalResourceNode()
 	if err != nil {
 		return fmt.Errorf("error in principal: %w", err)
 	}
+
+	p.Principal = principal
+	if slot, found := principal.Slot(); found {
+		if slot != types.PrincipalSlot {
+			return fmt.Errorf("variable used in principal slot is not %s", types.PrincipalSlot)
+		}
+
+		p.unwrap().AddSlot(slot)
+	}
+
 	p.Action, err = j.Action.ToActionNode()
 	if err != nil {
 		return fmt.Errorf("error in action: %w", err)
 	}
-	p.Resource, err = j.Resource.ToPrincipalResourceNode()
+
+	resource, err := j.Resource.ToPrincipalResourceNode()
 	if err != nil {
 		return fmt.Errorf("error in resource: %w", err)
 	}
+
+	p.Resource = resource
+	if slot, found := resource.Slot(); found {
+		if slot != types.ResourceSlot {
+			return fmt.Errorf("variable used in resource slot is not %s", types.ResourceSlot)
+		}
+
+		p.unwrap().AddSlot(slot)
+	}
+
 	for _, c := range j.Conditions {
 		n, err := c.Body.ToNode()
 		if err != nil {

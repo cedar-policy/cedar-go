@@ -139,14 +139,14 @@ func partialScopeEval(env Env, ent types.Value, in ast.IsScopeNode) (evaled bool
 	case ast.ScopeTypeEq:
 		return true, e == t.Entity
 	case ast.ScopeTypeIn:
-		return true, entityInOne(env, e, t.Entity)
+		return true, entityInOne(env, e, entityReferenceToUID(t.Entity))
 	case ast.ScopeTypeInSet:
 		set := mapset.Immutable(t.Entities...)
 		return true, entityInSet(env, e, set)
 	case ast.ScopeTypeIs:
 		return true, e.Type == t.Type
 	case ast.ScopeTypeIsIn:
-		return true, e.Type == t.Type && entityInOne(env, e, t.Entity)
+		return true, e.Type == t.Type && entityInOne(env, e, entityReferenceToUID(t.Entity))
 	default:
 		panic(fmt.Sprintf("unknown scope type %T", t))
 	}
