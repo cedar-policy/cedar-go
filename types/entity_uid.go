@@ -38,6 +38,8 @@ func (a EntityUID) Equal(bi Value) bool {
 	return ok && a == b
 }
 
+func (a EntityUID) isEntityReference() {}
+
 // String produces a string representation of the EntityUID, e.g. `Type::"id"`.
 func (v EntityUID) String() string { return string(v.Type) + "::" + strconv.Quote(string(v.ID)) }
 
