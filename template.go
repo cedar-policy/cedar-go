@@ -51,7 +51,7 @@ func (p LinkedPolicy) MarshalJSON() ([]byte, error) {
 	return pl.MarshalJSON()
 }
 
-func (p PolicySet) StoreLinkedPolicy(lp LinkedPolicy) {
+func (p PolicySet) AddLinkedPolicy(lp LinkedPolicy) {
 	policy, err := lp.Render()
 	if err != nil {
 		return

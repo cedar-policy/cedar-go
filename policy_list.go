@@ -25,7 +25,11 @@ func NewPolicyListFromBytes(fileName string, document []byte) (PolicyList, error
 	for _, p := range policySlice.StaticPolicies {
 		p.SetFilename(fileName)
 	}
-	//todo: set template filename
+
+	for _, p := range policySlice.Templates {
+		p.SetFilename(fileName)
+	}
+
 	return policySlice, nil
 }
 

@@ -8,7 +8,6 @@ func (p *Policy) unwrap() *ast.Policy {
 	return (*ast.Policy)(p)
 }
 
-//todo: fix
 type PolicySlice struct {
 	StaticPolicies []*Policy
 	Templates      []*Template
