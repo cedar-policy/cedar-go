@@ -8,6 +8,69 @@ import (
 	"testing"
 )
 
+func TestPolicySetTemplateManagement(t *testing.T) {
+	t.Run("template round-trip", func(t *testing.T) {
+		policySet := cedar.NewPolicySet()
+
+		var templateBody parser.Policy
+		templateString := `@id("test_template")
+permit (
+   principal == ?principal,
+   action,
+   resource
+);`
+		testutil.OK(t, templateBody.UnmarshalCedar([]byte(templateString)))
+		template := cedar.Template(templateBody)
+
+		templateID := cedar.PolicyID("test_template_id")
+		added := policySet.AddTemplate(templateID, &template)
+		testutil.Equals(t, added, true)
+
+		retrievedTemplate := policySet.GetTemplate(templateID)
+		testutil.Equals(t, retrievedTemplate != nil, true)
+
+		originalBytes := template.MarshalCedar()
+		retrievedBytes := retrievedTemplate.MarshalCedar()
+		testutil.Equals(t, string(retrievedBytes), string(originalBytes))
+
+		removed := policySet.RemoveTemplate(templateID)
+		testutil.Equals(t, removed, true)
+
+		retrievedTemplateAfterRemoval := policySet.GetTemplate(templateID)
+		testutil.Equals(t, retrievedTemplateAfterRemoval, (*cedar.Template)(nil))
+	})
+
+	t.Run("remove non-existent template", func(t *testing.T) {
+		policySet := cedar.NewPolicySet()
+		templateID := cedar.PolicyID("non_existent_template")
+		removed := policySet.RemoveTemplate(templateID)
+		testutil.Equals(t, removed, false)
+	})
+
+	t.Run("add template with existing ID", func(t *testing.T) {
+		policySet := cedar.NewPolicySet()
+		templateID := cedar.PolicyID("duplicate_template_id")
+
+		var templateBody parser.Policy
+		templateString := `@id("test_template")
+permit (
+   principal,
+   action,
+   resource
+);`
+		testutil.OK(t, templateBody.UnmarshalCedar([]byte(templateString)))
+		template := cedar.Template(templateBody)
+
+		// First add should succeed
+		isNew := policySet.AddTemplate(templateID, &template)
+		testutil.Equals(t, isNew, true)
+
+		// Second add with same ID should return false
+		isNew = policySet.AddTemplate(templateID, &template)
+		testutil.Equals(t, isNew, false)
+	})
+}
+
 func TestLinkTemplateToPolicy(t *testing.T) {
 	linkTests := []struct {
 		Name           string
