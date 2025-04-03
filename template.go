@@ -18,6 +18,11 @@ func (p *Template) MarshalCedar() []byte {
 	return buf.Bytes()
 }
 
+// SetFilename sets the filename of this template.
+func (p *Template) SetFilename(fileName string) {
+	p.Position.Filename = fileName
+}
+
 type LinkedPolicy parser.LinkedPolicy
 
 func LinkTemplate(template Template, templateID string, linkID string, slotEnv map[types.SlotID]types.EntityUID) LinkedPolicy {
