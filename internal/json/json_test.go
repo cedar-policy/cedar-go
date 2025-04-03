@@ -504,6 +504,18 @@ func TestUnmarshalJSON(t *testing.T) {
 			ast.Permit().ResourceIsIn("Photo", types.VariableSlot{ID: types.ResourceSlot}).AddSlot(types.ResourceSlot),
 			testutil.OK,
 		},
+		{
+			"fail if entity and slot present with equal operator",
+			`{"effect":"permit","principal":{"op":"==", "slot": "?principal", "entity": {"type": "User", "id": "12UA45"}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			nil,
+			testutil.Error,
+		},
+		{
+			"fail if entity and slot present with in operator",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"in", "slot": "?resource", "entity": {"type": "User", "id": "12UA45"}}}`,
+			nil,
+			testutil.Error,
+		},
 	}
 
 	for _, tt := range tests {

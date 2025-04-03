@@ -34,6 +34,10 @@ func slotID(id *string) (types.SlotID, error) {
 func scopeEntityReference(s *scopeJSON) (types.EntityReference, error) {
 	var ref types.EntityReference
 
+	if s.Entity != nil && s.Slot != nil {
+		return nil, fmt.Errorf("both entity and slot are set")
+	}
+
 	if s.Entity == nil && s.Slot == nil {
 		return nil, fmt.Errorf("entity or slot should be set")
 	}
@@ -57,6 +61,10 @@ func scopeEntityReference(s *scopeJSON) (types.EntityReference, error) {
 
 func scopeInEntityReference(s *scopeInJSON) (types.EntityReference, error) {
 	var ref types.EntityReference
+
+	if s.Entity != nil && s.Slot != nil {
+		return nil, fmt.Errorf("both entity and slot are set")
+	}
 
 	if s.Entity == nil && s.Slot == nil {
 		return nil, fmt.Errorf("entity or slot should be set")
@@ -84,20 +92,9 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 	case "All":
 		return ast.Scope{}.All(), nil
 	case "==":
-		var ref types.EntityReference
-
-		switch {
-		case s.Slot != nil:
-			id, err := slotID(s.Slot)
-			if err != nil {
-				return nil, err
-			}
-
-			ref = types.VariableSlot{ID: id}
-		case s.Entity != nil:
-			ref = types.EntityUID(*s.Entity)
-		default:
-			return nil, fmt.Errorf("missing entity and slot")
+		ref, err := scopeEntityReference(s)
+		if err != nil {
+			return nil, err
 		}
 
 		return ast.Scope{}.Eq(ref), nil
