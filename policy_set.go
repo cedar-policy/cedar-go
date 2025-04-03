@@ -74,8 +74,6 @@ func (p PolicySet) Get(policyID PolicyID) *Policy {
 	return p.policies.StaticPolicies[policyID]
 }
 
-//todo: add support for templates in Add and Remove
-
 // Add inserts or updates a policy with the given ID. Returns true if a policy
 // with the given ID did not already exist in the set.
 func (p *PolicySet) Add(policyID PolicyID, policy *Policy) bool {
