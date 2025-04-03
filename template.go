@@ -51,11 +51,33 @@ func (p LinkedPolicy) MarshalJSON() ([]byte, error) {
 	return pl.MarshalJSON()
 }
 
-func (p PolicySet) AddLinkedPolicy(lp LinkedPolicy) {
+func (p *PolicySet) AddLinkedPolicy(lp LinkedPolicy) {
 	policy, err := lp.Render()
 	if err != nil {
 		return
 	}
 
 	p.Add(PolicyID(lp.LinkID), policy)
+}
+
+// GetTemplate returns the Template with the given ID. If a template with the given ID
+// does not exist, nil is returned.
+func (p PolicySet) GetTemplate(templateID PolicyID) *Template {
+	return p.policies.Templates[templateID]
+}
+
+// AddTemplate inserts or updates a template with the given ID. Returns true if a template
+// with the given ID did not already exist in the set.
+func (p *PolicySet) AddTemplate(templateID PolicyID, template *Template) bool {
+	_, exists := p.policies.Templates[templateID]
+	p.policies.Templates[templateID] = template
+	return !exists
+}
+
+// RemoveTemplate removes a template from the PolicySet. Returns true if a template with
+// the given ID already existed in the set.
+func (p *PolicySet) RemoveTemplate(templateID PolicyID) bool {
+	_, exists := p.policies.Templates[templateID]
+	delete(p.policies.Templates, templateID)
+	return exists
 }
