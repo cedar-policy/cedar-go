@@ -189,6 +189,9 @@ func (j *nodeJSON) FromNode(src ast.IsNode) {
 	case ast.NodeTypeContainsAny:
 		binaryToJSON(&j.ContainsAny, t.BinaryNode)
 		return
+	case ast.NodeTypeIsEmpty:
+		unaryToJSON(&j.IsEmpty, t.UnaryNode)
+		return
 	case ast.NodeTypeEquals:
 		binaryToJSON(&j.Equals, t.BinaryNode)
 		return

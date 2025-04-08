@@ -87,6 +87,8 @@ func toEval(n ast.IsNode) Evaler {
 		return newContainsAllEval(toEval(v.Left), toEval(v.Right))
 	case ast.NodeTypeContainsAny:
 		return newContainsAnyEval(toEval(v.Left), toEval(v.Right))
+	case ast.NodeTypeIsEmpty:
+		return newIsEmptyEval(toEval(v.Arg))
 	default:
 		panic(fmt.Sprintf("unknown node type %T", v))
 	}

@@ -211,6 +211,12 @@ func TestToEval(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			"isEmpty",
+			ast.Value(types.NewSet(types.Long(42), types.Long(43), types.Long(44))).IsEmpty(),
+			types.False,
+			testutil.OK,
+		},
+		{
 			"ip",
 			ast.ExtensionCall("ip", ast.String("127.0.0.42/16")),
 			types.IPAddr(netip.MustParsePrefix("127.0.0.42/16")),

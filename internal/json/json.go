@@ -93,11 +93,12 @@ type nodeJSON struct {
 	// Slot
 	// Unknown
 
-	// ! or neg operators
-	Not    *unaryJSON `json:"!,omitempty"`
-	Negate *unaryJSON `json:"neg,omitempty"`
+	// !, neg, and isEmpty operators
+	Not     *unaryJSON `json:"!,omitempty"`
+	Negate  *unaryJSON `json:"neg,omitempty"`
+	IsEmpty *unaryJSON `json:"isEmpty,omitempty"`
 
-	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny
+	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny, getTag, hasTag
 	Equals             *binaryJSON `json:"==,omitempty"`
 	NotEquals          *binaryJSON `json:"!=,omitempty"`
 	In                 *binaryJSON `json:"in,omitempty"`

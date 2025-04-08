@@ -269,6 +269,8 @@ func fold(n ast.IsNode) ast.IsNode {
 		return tryFoldBinary(v.BinaryNode, newContainsAllEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContainsAll{BinaryNode: b} })
 	case ast.NodeTypeContainsAny:
 		return tryFoldBinary(v.BinaryNode, newContainsAnyEval, func(b ast.BinaryNode) ast.IsNode { return ast.NodeTypeContainsAny{BinaryNode: b} })
+	case ast.NodeTypeIsEmpty:
+		return tryFoldUnary(v.UnaryNode, newIsEmptyEval, func(b ast.UnaryNode) ast.IsNode { return ast.NodeTypeIsEmpty{UnaryNode: b} })
 	default:
 		panic(fmt.Sprintf("unknown node type %T", v))
 	}

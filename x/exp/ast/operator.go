@@ -145,6 +145,10 @@ func (lhs Node) HasTag(rhs Node) Node {
 	return NewNode(NodeTypeHasTag{BinaryNode: BinaryNode{Left: lhs.v, Right: rhs.v}})
 }
 
+func (lhs Node) IsEmpty() Node {
+	return NewNode(NodeTypeIsEmpty{UnaryNode: UnaryNode{lhs.v}})
+}
+
 //  ___ ____   _       _     _
 // |_ _|  _ \ / \   __| | __| |_ __ ___  ___ ___
 //  | || |_) / _ \ / _` |/ _` | '__/ _ \/ __/ __|

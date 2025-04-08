@@ -232,6 +232,8 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 		return j.ContainsAll.ToNode(ast.Node.ContainsAll)
 	case j.ContainsAny != nil:
 		return j.ContainsAny.ToNode(ast.Node.ContainsAny)
+	case j.IsEmpty != nil:
+		return j.IsEmpty.ToNode(ast.Node.IsEmpty)
 	case j.GetTag != nil:
 		return j.GetTag.ToNode(ast.Node.GetTag)
 	case j.HasTag != nil:
