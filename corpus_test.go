@@ -147,6 +147,16 @@ func TestCorpus(t *testing.T) {
 				t.Fatal("error unmarshalling test", err)
 			}
 
+			schemaContent, err := fdm.GetFileData(tt.Schema)
+			if err != nil {
+				t.Fatal("error reading schema content", err)
+			}
+			var s cedar.Schema
+			s.SetFilename("test.schema")
+			if err := s.UnmarshalCedar(schemaContent); err != nil {
+				t.Fatal("error parsing schema", err, "\n===\n", string(schemaContent))
+			}
+
 			policyContent, err := fdm.GetFileData(tt.Policies)
 			if err != nil {
 				t.Fatal("error reading policy content", err)
