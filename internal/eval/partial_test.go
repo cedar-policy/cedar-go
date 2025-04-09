@@ -1203,6 +1203,24 @@ func TestPartialBasic(t *testing.T) {
 			testutil.Error,
 		},
 		{
+			"opIsEmptyKeep",
+			ast.Set(ast.Context()).IsEmpty(),
+			ast.Set(ast.Context()).IsEmpty(),
+			testutil.OK,
+		},
+		{
+			"opIsEmptyFold",
+			ast.Set(ast.Long(42)).IsEmpty(),
+			ast.False(),
+			testutil.OK,
+		},
+		{
+			"opIsEmptyError",
+			ast.String("test").IsEmpty(),
+			nul,
+			testutil.Error,
+		},
+		{
 			"opAccessKeep",
 			ast.Context().Access("key"),
 			ast.Context().Access("key"),
@@ -1262,8 +1280,6 @@ func TestPartialBasic(t *testing.T) {
 			nul,
 			testutil.Error,
 		},
-		/*
-		 */
 	}
 
 	for _, tt := range tests {

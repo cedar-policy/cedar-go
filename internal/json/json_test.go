@@ -367,6 +367,13 @@ func TestUnmarshalJSON(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			"isEmpty",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"isEmpty":{"arg":{"Value":42}}}}]}`,
+			ast.Permit().When(ast.Long(42).IsEmpty()),
+			testutil.OK,
+		},
+		{
 			"access",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{".":{"left":{"Var":"context"},"attr":"key"}}}]}`,

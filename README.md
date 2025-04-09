@@ -142,6 +142,12 @@ If you're looking to integrate Cedar into a production system, please be sure th
 
 ## Change log
 
+### New features in 1.2.0
+- Support for the .isEmpty() operator.
+
+### New features in 1.1.0
+- Support for entity tags via the .getTag() and .hasTag() operators.
+
 ### New features in 1.0.0
 - AST builder methods for Cedar datetime and duration literals and their extension methods have been added
 - AST builder methods for adding extension function calls with uninterpreted strings

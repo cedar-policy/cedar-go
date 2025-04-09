@@ -682,8 +682,12 @@ func (p *parser) member() (ast.Node, error) {
 	for {
 		var ok bool
 		res, ok, err = p.access(res)
+		if err != nil {
+			return ast.Node{}, err
+		}
+
 		if !ok {
-			return res, err
+			return res, nil
 		}
 	}
 }
@@ -868,6 +872,20 @@ func (p *parser) recordEntry() (string, ast.Node, error) {
 	return key, value, nil
 }
 
+func (p *parser) parseZeroArgMethodCall(methodName string, f func() ast.Node, args []ast.Node) (ast.Node, error) {
+	if len(args) != 0 {
+		return ast.Node{}, p.errorf("%v expects no arguments", methodName)
+	}
+	return f(), nil
+}
+
+func (p *parser) parseOneArgMethodCall(methodName string, f func(ast.Node) ast.Node, args []ast.Node) (ast.Node, error) {
+	if len(args) != 1 {
+		return ast.Node{}, p.errorf("%v expects one argument", methodName)
+	}
+	return f(args[0]), nil
+}
+
 func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 	t := p.peek()
 	switch t.Text {
@@ -886,18 +904,20 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 			}
 			p.advance() // expressions guarantees ")"
 
-			var knownMethod func(ast.Node, ast.Node) ast.Node
+			var n ast.Node
 			switch methodName {
 			case "contains":
-				knownMethod = ast.Node.Contains
+				n, err = p.parseOneArgMethodCall(methodName, lhs.Contains, exprs)
 			case "containsAll":
-				knownMethod = ast.Node.ContainsAll
+				n, err = p.parseOneArgMethodCall(methodName, lhs.ContainsAll, exprs)
 			case "containsAny":
-				knownMethod = ast.Node.ContainsAny
+				n, err = p.parseOneArgMethodCall(methodName, lhs.ContainsAny, exprs)
 			case "hasTag":
-				knownMethod = ast.Node.HasTag
+				n, err = p.parseOneArgMethodCall(methodName, lhs.HasTag, exprs)
 			case "getTag":
-				knownMethod = ast.Node.GetTag
+				n, err = p.parseOneArgMethodCall(methodName, lhs.GetTag, exprs)
+			case "isEmpty":
+				n, err = p.parseZeroArgMethodCall(methodName, lhs.IsEmpty, exprs)
 			default:
 				// Although the Cedar grammar says that any name can be provided here, the reference implementation
 				// actually checks at parse time whether the name corresponds to a known extension method.
@@ -908,16 +928,17 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 				if !i.IsMethod {
 					return ast.Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
 				}
-				return ast.NewMethodCall(lhs, types.Path(methodName), exprs...), true, nil
+				n = ast.NewMethodCall(lhs, types.Path(methodName), exprs...)
 			}
 
-			if len(exprs) != 1 {
-				return ast.Node{}, false, p.errorf("%v expects one argument", methodName)
+			if err != nil {
+				return ast.Node{}, false, err
 			}
-			return knownMethod(lhs, exprs[0]), true, nil
-		} else {
-			return lhs.Access(types.String(t.Text)), true, nil
+
+			return n, true, nil
 		}
+
+		return lhs.Access(types.String(t.Text)), true, nil
 	case "[":
 		p.advance()
 		t := p.advance()

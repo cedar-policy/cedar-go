@@ -162,6 +162,10 @@ type NodeTypeContainsAny struct {
 	BinaryNode
 }
 
+type NodeTypeIsEmpty struct {
+	UnaryNode
+}
+
 type NodeValue struct {
 	Value types.Value
 }

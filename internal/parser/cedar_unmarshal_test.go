@@ -189,6 +189,12 @@ when { context.strings.containsAny(["foo"]) };`,
 			ast.Permit().When(ast.Context().Access("strings").ContainsAny(ast.Set(ast.String("foo")))),
 		},
 		{
+			"isEmpty method call",
+			`permit ( principal, action, resource )
+when { context.strings.isEmpty() };`,
+			ast.Permit().When(ast.Context().Access("strings").IsEmpty()),
+		},
+		{
 			"extension method call",
 			`permit ( principal, action, resource )
 when { context.sourceIP.isIpv4() };`,
@@ -595,6 +601,8 @@ func TestParseApproximateErrors(t *testing.T) {
 		{"reservedKeywordAsAttributeAccess", `permit (principal, action, resource) when { context.false }`, "expected ident"},
 		{"invalidPrimary", `permit (principal, action, resource) when { foobar }`, "invalid primary"},
 		{"unexpectedTokenInEntityOrExtFun", `permit (principal, action, resource) when { A::B 42 }`, "unexpected token"},
+		{"unexpectedZeroArgMethodArity", `permit (principal, action, resource) when { context.set.isEmpty("foo") }`, "isEmpty expects no arguments"},
+		{"unexpectedOneArgMethodArity", `permit (principal, action, resource) when { context.set.contains() }`, "contains expects one argument"},
 	}
 	for _, tt := range tests {
 		tt := tt

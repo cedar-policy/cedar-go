@@ -1298,6 +1298,53 @@ func TestContainsAnyNode(t *testing.T) {
 	})
 }
 
+func TestIsEmptyNode(t *testing.T) {
+	t.Parallel()
+	{
+		tests := []struct {
+			name string
+			lhs  Evaler
+			err  error
+		}{
+			{"LhsError", newErrorEval(errTest), errTest},
+			{"LhsTypeError", newLiteralEval(types.True), ErrType},
+		}
+		for _, tt := range tests {
+			tt := tt
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				n := newIsEmptyEval(tt.lhs)
+				v, err := n.Eval(Env{})
+				testutil.ErrorIs(t, err, tt.err)
+				AssertZeroValue(t, v)
+			})
+		}
+	}
+	{
+		empty := types.Set{}
+		trueOnly := types.NewSet(types.True)
+
+		tests := []struct {
+			name   string
+			lhs    Evaler
+			result bool
+		}{
+			{"emptyEmpty", newLiteralEval(empty), true},
+			{"trueAndOneEmpty", newLiteralEval(trueOnly), false},
+		}
+		for _, tt := range tests {
+			tt := tt
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				n := newIsEmptyEval(tt.lhs)
+				v, err := n.Eval(Env{})
+				testutil.OK(t, err)
+				AssertBoolValue(t, v, tt.result)
+			})
+		}
+	}
+}
+
 func TestRecordLiteralNode(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

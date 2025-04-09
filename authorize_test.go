@@ -809,6 +809,17 @@ func TestIsAuthorized(t *testing.T) {
 			Want:      true,
 			DiagErr:   0,
 		},
+		{
+			Name:      "isEmpty",
+			Policy:    `permit(principal, action, resource) when { context.foo.isEmpty() && !context.bar.isEmpty() };`,
+			Entities:  cedar.EntityMap{},
+			Principal: cedar.NewEntityUID("Principal", "1"),
+			Action:    cedar.NewEntityUID("Action", "action"),
+			Resource:  cedar.NewEntityUID("Resource", "resource"),
+			Context:   cedar.NewRecord(cedar.RecordMap{"foo": cedar.NewSet(), "bar": cedar.NewSet(types.Long(1))}),
+			Want:      true,
+			DiagErr:   0,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

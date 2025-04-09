@@ -713,6 +713,23 @@ func (n *containsAnyEval) Eval(env Env) (types.Value, error) {
 	return types.Boolean(result), nil
 }
 
+// isEmptyEval
+type isEmptyEval struct {
+	lhs Evaler
+}
+
+func newIsEmptyEval(lhs Evaler) Evaler {
+	return &isEmptyEval{lhs: lhs}
+}
+
+func (n *isEmptyEval) Eval(env Env) (types.Value, error) {
+	lhs, err := evalSet(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Boolean(lhs.Len() == 0), nil
+}
+
 // recordLiteralEval
 type recordLiteralEval struct {
 	elements map[types.String]Evaler
@@ -1035,6 +1052,7 @@ func (n *isEval) Eval(env Env) (types.Value, error) {
 	return types.Boolean(lhs.Type == n.rhs), nil
 }
 
+// isInEval
 type isInEval struct {
 	lhs Evaler
 	is  types.EntityType

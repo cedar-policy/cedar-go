@@ -203,6 +203,11 @@ func (n NodeTypeContainsAny) marshalCedar(buf *bytes.Buffer) {
 	buf.WriteRune(')')
 }
 
+func (n NodeTypeIsEmpty) marshalCedar(buf *bytes.Buffer) {
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeIsEmpty.Arg, buf)
+	buf.WriteString(".isEmpty()")
+}
+
 func (n NodeTypeGetTag) marshalCedar(buf *bytes.Buffer) {
 	marshalChildNode(n.precedenceLevel(), n.NodeTypeGetTag.Left, buf)
 	buf.WriteString(".getTag(")
@@ -345,33 +350,33 @@ func astNodeToMarshalNode(astNode ast.IsNode) IsNode {
 	case ast.NodeTypeAnd:
 		return NodeTypeAnd{v}
 	case ast.NodeTypeLessThan:
-		return NodeTypeLessThan{v, RelationNode{}}
+		return NodeTypeLessThan{v, relationPrecedenceNode{}}
 	case ast.NodeTypeLessThanOrEqual:
-		return NodeTypeLessThanOrEqual{v, RelationNode{}}
+		return NodeTypeLessThanOrEqual{v, relationPrecedenceNode{}}
 	case ast.NodeTypeGreaterThan:
-		return NodeTypeGreaterThan{v, RelationNode{}}
+		return NodeTypeGreaterThan{v, relationPrecedenceNode{}}
 	case ast.NodeTypeGreaterThanOrEqual:
-		return NodeTypeGreaterThanOrEqual{v, RelationNode{}}
+		return NodeTypeGreaterThanOrEqual{v, relationPrecedenceNode{}}
 	case ast.NodeTypeNotEquals:
-		return NodeTypeNotEquals{v, RelationNode{}}
+		return NodeTypeNotEquals{v, relationPrecedenceNode{}}
 	case ast.NodeTypeEquals:
-		return NodeTypeEquals{v, RelationNode{}}
+		return NodeTypeEquals{v, relationPrecedenceNode{}}
 	case ast.NodeTypeIn:
-		return NodeTypeIn{v, RelationNode{}}
+		return NodeTypeIn{v, relationPrecedenceNode{}}
 	case ast.NodeTypeHas:
-		return NodeTypeHas{v, RelationNode{}}
+		return NodeTypeHas{v, relationPrecedenceNode{}}
 	case ast.NodeTypeHasTag:
-		return NodeTypeHasTag{v, RelationNode{}}
+		return NodeTypeHasTag{v, accessPrecedenceNode{}}
 	case ast.NodeTypeLike:
-		return NodeTypeLike{v, RelationNode{}}
+		return NodeTypeLike{v, relationPrecedenceNode{}}
 	case ast.NodeTypeIs:
-		return NodeTypeIs{v, RelationNode{}}
+		return NodeTypeIs{v, relationPrecedenceNode{}}
 	case ast.NodeTypeIsIn:
-		return NodeTypeIsIn{v, RelationNode{}}
+		return NodeTypeIsIn{v, relationPrecedenceNode{}}
 	case ast.NodeTypeSub:
-		return NodeTypeSub{v, AddNode{}}
+		return NodeTypeSub{v, addPrecedenceNode{}}
 	case ast.NodeTypeAdd:
-		return NodeTypeAdd{v, AddNode{}}
+		return NodeTypeAdd{v, addPrecedenceNode{}}
 	case ast.NodeTypeMult:
 		return NodeTypeMult{v}
 	case ast.NodeTypeNegate:
@@ -379,25 +384,27 @@ func astNodeToMarshalNode(astNode ast.IsNode) IsNode {
 	case ast.NodeTypeNot:
 		return NodeTypeNot{v, UnaryNode{}}
 	case ast.NodeTypeAccess:
-		return NodeTypeAccess{v}
+		return NodeTypeAccess{v, accessPrecedenceNode{}}
 	case ast.NodeTypeGetTag:
-		return NodeTypeGetTag{v}
+		return NodeTypeGetTag{v, accessPrecedenceNode{}}
 	case ast.NodeTypeExtensionCall:
-		return NodeTypeExtensionCall{v}
+		return NodeTypeExtensionCall{v, accessPrecedenceNode{}}
 	case ast.NodeTypeContains:
-		return NodeTypeContains{v, ContainsNode{}}
+		return NodeTypeContains{v, accessPrecedenceNode{}}
 	case ast.NodeTypeContainsAll:
-		return NodeTypeContainsAll{v, ContainsNode{}}
+		return NodeTypeContainsAll{v, accessPrecedenceNode{}}
 	case ast.NodeTypeContainsAny:
-		return NodeTypeContainsAny{v, ContainsNode{}}
+		return NodeTypeContainsAny{v, accessPrecedenceNode{}}
+	case ast.NodeTypeIsEmpty:
+		return NodeTypeIsEmpty{v, accessPrecedenceNode{}}
 	case ast.NodeValue:
-		return NodeValue{v, PrimaryNode{}}
+		return NodeValue{v, primaryPrecedenceNode{}}
 	case ast.NodeTypeRecord:
-		return NodeTypeRecord{v, PrimaryNode{}}
+		return NodeTypeRecord{v, primaryPrecedenceNode{}}
 	case ast.NodeTypeSet:
-		return NodeTypeSet{v, PrimaryNode{}}
+		return NodeTypeSet{v, primaryPrecedenceNode{}}
 	case ast.NodeTypeVariable:
-		return NodeTypeVariable{v, PrimaryNode{}}
+		return NodeTypeVariable{v, primaryPrecedenceNode{}}
 	default:
 		panic(fmt.Sprintf("unknown node type %T", v))
 	}
