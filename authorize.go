@@ -7,21 +7,6 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-//revive:disable:exported
-
-type Request = types.Request
-type Decision = types.Decision
-type Diagnostic = types.Diagnostic
-type DiagnosticReason = types.DiagnosticReason
-type DiagnosticError = types.DiagnosticError
-
-const (
-	Allow = types.Allow
-	Deny  = types.Deny
-)
-
-//revive:enable:exported
-
 // Authorize uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
 func Authorize(policies iter.Seq2[PolicyID, *Policy], entities types.EntityGetter, req Request) (Decision, Diagnostic) {

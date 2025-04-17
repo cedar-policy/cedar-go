@@ -137,6 +137,7 @@ func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decis
 	return Authorize(maps.All(p.policies), entities, req)
 }
 
+// All returns an iterator over the (PolicyID, *Policy) tuples in the PolicySet
 func (p *PolicySet) All() iter.Seq2[PolicyID, *Policy] {
 	return func(yield func(PolicyID, *Policy) bool) {
 		for k, v := range p.policies {
