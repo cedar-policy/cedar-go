@@ -5,6 +5,8 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
+//revive:disable:exported
+
 type Request = types.Request
 type Decision = types.Decision
 type Diagnostic = types.Diagnostic
@@ -15,6 +17,8 @@ const (
 	Allow = types.Allow
 	Deny  = types.Deny
 )
+
+//revive:enable:exported
 
 // IsAuthorized uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.

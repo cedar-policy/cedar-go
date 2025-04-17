@@ -99,7 +99,7 @@ func marshalEffect(e ast.Effect, buf *bytes.Buffer) {
 }
 
 func (n NodeTypeVariable) marshalCedar(buf *bytes.Buffer) {
-	buf.WriteString(string(n.NodeTypeVariable.Name))
+	buf.WriteString(string(n.Name))
 }
 
 func marshalCondition(c ast.ConditionType, buf *bytes.Buffer) {
@@ -115,7 +115,7 @@ func marshalCondition(c ast.ConditionType, buf *bytes.Buffer) {
 }
 
 func (n NodeValue) marshalCedar(buf *bytes.Buffer) {
-	buf.Write(n.NodeValue.Value.MarshalCedar())
+	buf.Write(n.Value.MarshalCedar())
 }
 
 func marshalChildNode(thisNodePrecedence nodePrecedenceLevel, childAstNode ast.IsNode, buf *bytes.Buffer) {
@@ -149,29 +149,29 @@ func canMarshalAsIdent(s string) bool {
 }
 
 func (n NodeTypeAccess) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeAccess.Arg, buf)
+	marshalChildNode(n.precedenceLevel(), n.Arg, buf)
 
-	if canMarshalAsIdent(string(n.NodeTypeAccess.Value)) {
+	if canMarshalAsIdent(string(n.Value)) {
 		buf.WriteRune('.')
-		buf.WriteString(string(n.NodeTypeAccess.Value))
+		buf.WriteString(string(n.Value))
 	} else {
 		buf.WriteRune('[')
-		buf.Write(n.NodeTypeAccess.Value.MarshalCedar())
+		buf.Write(n.Value.MarshalCedar())
 		buf.WriteRune(']')
 	}
 }
 
 func (n NodeTypeExtensionCall) marshalCedar(buf *bytes.Buffer) {
 	var args []ast.IsNode
-	info := extensions.ExtMap[n.NodeTypeExtensionCall.Name]
+	info := extensions.ExtMap[n.Name]
 	if info.IsMethod {
-		marshalChildNode(n.precedenceLevel(), n.NodeTypeExtensionCall.Args[0], buf)
+		marshalChildNode(n.precedenceLevel(), n.Args[0], buf)
 		buf.WriteRune('.')
-		args = n.NodeTypeExtensionCall.Args[1:]
+		args = n.Args[1:]
 	} else {
-		args = n.NodeTypeExtensionCall.Args
+		args = n.Args
 	}
-	buf.WriteString(string(n.NodeTypeExtensionCall.Name))
+	buf.WriteString(string(n.Name))
 	buf.WriteRune('(')
 	for i := range args {
 		marshalChildNode(n.precedenceLevel(), args[i], buf)
@@ -183,50 +183,50 @@ func (n NodeTypeExtensionCall) marshalCedar(buf *bytes.Buffer) {
 }
 
 func (n NodeTypeContains) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeContains.Left, buf)
+	marshalChildNode(n.precedenceLevel(), n.Left, buf)
 	buf.WriteString(".contains(")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeContains.Right, buf)
+	marshalChildNode(n.precedenceLevel(), n.Right, buf)
 	buf.WriteRune(')')
 }
 
 func (n NodeTypeContainsAll) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeContainsAll.Left, buf)
+	marshalChildNode(n.precedenceLevel(), n.Left, buf)
 	buf.WriteString(".containsAll(")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeContainsAll.Right, buf)
+	marshalChildNode(n.precedenceLevel(), n.Right, buf)
 	buf.WriteRune(')')
 }
 
 func (n NodeTypeContainsAny) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeContainsAny.Left, buf)
+	marshalChildNode(n.precedenceLevel(), n.Left, buf)
 	buf.WriteString(".containsAny(")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeContainsAny.Right, buf)
+	marshalChildNode(n.precedenceLevel(), n.Right, buf)
 	buf.WriteRune(')')
 }
 
 func (n NodeTypeIsEmpty) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeIsEmpty.Arg, buf)
+	marshalChildNode(n.precedenceLevel(), n.Arg, buf)
 	buf.WriteString(".isEmpty()")
 }
 
 func (n NodeTypeGetTag) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeGetTag.Left, buf)
+	marshalChildNode(n.precedenceLevel(), n.Left, buf)
 	buf.WriteString(".getTag(")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeGetTag.Right, buf)
+	marshalChildNode(n.precedenceLevel(), n.Right, buf)
 	buf.WriteRune(')')
 }
 
 func (n NodeTypeHasTag) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeHasTag.Left, buf)
+	marshalChildNode(n.precedenceLevel(), n.Left, buf)
 	buf.WriteString(".hasTag(")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeHasTag.Right, buf)
+	marshalChildNode(n.precedenceLevel(), n.Right, buf)
 	buf.WriteRune(')')
 }
 
 func (n NodeTypeSet) marshalCedar(buf *bytes.Buffer) {
 	buf.WriteRune('[')
-	for i := range n.NodeTypeSet.Elements {
-		marshalChildNode(n.precedenceLevel(), n.NodeTypeSet.Elements[i], buf)
-		if i != len(n.NodeTypeSet.Elements)-1 {
+	for i := range n.Elements {
+		marshalChildNode(n.precedenceLevel(), n.Elements[i], buf)
+		if i != len(n.Elements)-1 {
 			buf.WriteString(", ")
 		}
 	}
@@ -235,11 +235,11 @@ func (n NodeTypeSet) marshalCedar(buf *bytes.Buffer) {
 
 func (n NodeTypeRecord) marshalCedar(buf *bytes.Buffer) {
 	buf.WriteRune('{')
-	for i := range n.NodeTypeRecord.Elements {
-		buf.Write(n.NodeTypeRecord.Elements[i].Key.MarshalCedar())
+	for i := range n.Elements {
+		buf.Write(n.Elements[i].Key.MarshalCedar())
 		buf.WriteString(":")
 		marshalChildNode(n.precedenceLevel(), n.NodeTypeRecord.Elements[i].Value, buf)
-		if i != len(n.NodeTypeRecord.Elements)-1 {
+		if i != len(n.Elements)-1 {
 			buf.WriteString(", ")
 		}
 	}
@@ -255,90 +255,90 @@ func marshalInfixBinaryOp(n ast.BinaryNode, precedence nodePrecedenceLevel, op s
 }
 
 func (n NodeTypeMult) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeMult.BinaryNode, n.precedenceLevel(), "*", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), "*", buf)
 }
 
 func (n NodeTypeAdd) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeAdd.BinaryNode, n.precedenceLevel(), "+", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), "+", buf)
 }
 
 func (n NodeTypeSub) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeSub.BinaryNode, n.precedenceLevel(), "-", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), "-", buf)
 }
 
 func (n NodeTypeLessThan) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeLessThan.BinaryNode, n.precedenceLevel(), "<", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), "<", buf)
 }
 
 func (n NodeTypeLessThanOrEqual) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeLessThanOrEqual.BinaryNode, n.precedenceLevel(), "<=", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), "<=", buf)
 }
 
 func (n NodeTypeGreaterThan) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeGreaterThan.BinaryNode, n.precedenceLevel(), ">", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), ">", buf)
 }
 
 func (n NodeTypeGreaterThanOrEqual) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeGreaterThanOrEqual.BinaryNode, n.precedenceLevel(), ">=", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), ">=", buf)
 }
 
 func (n NodeTypeEquals) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeEquals.BinaryNode, n.precedenceLevel(), "==", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), "==", buf)
 }
 
 func (n NodeTypeNotEquals) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeNotEquals.BinaryNode, n.precedenceLevel(), "!=", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), "!=", buf)
 }
 
 func (n NodeTypeIn) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeIn.BinaryNode, n.precedenceLevel(), "in", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), "in", buf)
 }
 
 func (n NodeTypeAnd) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeAnd.BinaryNode, n.precedenceLevel(), "&&", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), "&&", buf)
 }
 
 func (n NodeTypeOr) marshalCedar(buf *bytes.Buffer) {
-	marshalInfixBinaryOp(n.NodeTypeOr.BinaryNode, n.precedenceLevel(), "||", buf)
+	marshalInfixBinaryOp(n.BinaryNode, n.precedenceLevel(), "||", buf)
 }
 
 func (n NodeTypeHas) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeHas.Arg, buf)
+	marshalChildNode(n.precedenceLevel(), n.Arg, buf)
 	buf.WriteString(" has ")
-	if canMarshalAsIdent(string(n.NodeTypeHas.Value)) {
-		buf.WriteString(string(n.NodeTypeHas.Value))
+	if canMarshalAsIdent(string(n.Value)) {
+		buf.WriteString(string(n.Value))
 	} else {
-		buf.Write(n.NodeTypeHas.Value.MarshalCedar())
+		buf.Write(n.Value.MarshalCedar())
 	}
 }
 
 func (n NodeTypeIs) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeIs.Left, buf)
+	marshalChildNode(n.precedenceLevel(), n.Left, buf)
 	buf.WriteString(" is ")
-	buf.WriteString(string(n.NodeTypeIs.EntityType))
+	buf.WriteString(string(n.EntityType))
 }
 
 func (n NodeTypeIsIn) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeIsIn.Left, buf)
+	marshalChildNode(n.precedenceLevel(), n.Left, buf)
 	buf.WriteString(" is ")
-	buf.WriteString(string(n.NodeTypeIsIn.EntityType))
+	buf.WriteString(string(n.EntityType))
 	buf.WriteString(" in ")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeIsIn.Entity, buf)
+	marshalChildNode(n.precedenceLevel(), n.Entity, buf)
 }
 
 func (n NodeTypeLike) marshalCedar(buf *bytes.Buffer) {
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeLike.Arg, buf)
+	marshalChildNode(n.precedenceLevel(), n.Arg, buf)
 	buf.WriteString(" like ")
-	buf.Write(n.NodeTypeLike.Value.MarshalCedar())
+	buf.Write(n.Value.MarshalCedar())
 }
 
 func (n NodeTypeIf) marshalCedar(buf *bytes.Buffer) {
 	buf.WriteString("if ")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeIfThenElse.If, buf)
+	marshalChildNode(n.precedenceLevel(), n.If, buf)
 	buf.WriteString(" then ")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeIfThenElse.Then, buf)
+	marshalChildNode(n.precedenceLevel(), n.Then, buf)
 	buf.WriteString(" else ")
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeIfThenElse.Else, buf)
+	marshalChildNode(n.precedenceLevel(), n.Else, buf)
 }
 
 func astNodeToMarshalNode(astNode ast.IsNode) IsNode {

@@ -146,7 +146,7 @@ func (p *parser) annotation(a *ast.Annotations, known *mapset.MapSet[string]) er
 	// As of 2024-09-13, the ability to use reserved keywords for annotation keys is not documented in the Cedar schema.
 	// This ability was added to the Rust implementation in this commit:
 	// https://github.com/cedar-policy/cedar/commit/5f62c6df06b59abc5634d6668198a826839c6fb7
-	if !(t.isIdent() || t.isReservedKeyword()) {
+	if !t.isIdent() && !t.isReservedKeyword() {
 		return p.errorf("expected ident or reserved keyword")
 	}
 	name := t.Text
@@ -175,9 +175,10 @@ func (p *parser) annotation(a *ast.Annotations, known *mapset.MapSet[string]) er
 
 func (p *parser) effect(a *ast.Annotations) (*ast.Policy, error) {
 	next := p.advance()
-	if next.Text == "permit" {
+	switch next.Text {
+	case "permit":
 		return a.Permit(), nil
-	} else if next.Text == "forbid" {
+	case "forbid":
 		return a.Forbid(), nil
 	}
 
@@ -310,14 +311,14 @@ func (p *parser) action(policy *ast.Policy) error {
 			policy.ActionInSet(entities...)
 			p.advance() // entlist guarantees "]"
 			return nil
-		} else {
-			entity, err := p.entity()
-			if err != nil {
-				return err
-			}
-			policy.ActionIn(entity)
-			return nil
 		}
+
+		entity, err := p.entity()
+		if err != nil {
+			return err
+		}
+		policy.ActionIn(entity)
+		return nil
 	}
 
 	return nil
@@ -498,13 +499,14 @@ func (p *parser) relation() (ast.Node, error) {
 
 	t := p.peek()
 
-	if t.Text == "has" {
+	switch t.Text {
+	case "has":
 		p.advance()
 		return p.has(lhs)
-	} else if t.Text == "like" {
+	case "like":
 		p.advance()
 		return p.like(lhs)
-	} else if t.Text == "is" {
+	case "is":
 		p.advance()
 		return p.is(lhs)
 	}
@@ -719,14 +721,14 @@ func (p *parser) primary() (ast.Node, error) {
 		if next.Text == "::" || next.Text == "(" {
 			return p.entityOrExtFun(t.Text)
 		}
-		switch {
-		case t.Text == consts.Principal:
+		switch t.Text {
+		case consts.Principal:
 			res = ast.Principal()
-		case t.Text == consts.Action:
+		case consts.Action:
 			res = ast.Action()
-		case t.Text == consts.Resource:
+		case consts.Resource:
 			res = ast.Resource()
-		case t.Text == consts.Context:
+		case consts.Context:
 			res = ast.Context()
 		default:
 			return res, p.errorf("invalid primary")

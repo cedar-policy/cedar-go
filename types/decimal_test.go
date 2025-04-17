@@ -123,10 +123,10 @@ func TestDecimal(t *testing.T) {
 		testutil.FatalIf(t, zero.Equal(one), "%v Equal to %v", zero, one)
 		testutil.FatalIf(t, zero.Equal(f), "%v Equal to %v", zero, f)
 
-		max := testutil.Must(types.NewDecimal(9223372036854775807, -4))
-		testutil.Equals(t, max, testutil.Must(types.ParseDecimal("922337203685477.5807")))
-		min := testutil.Must(types.NewDecimal(-9223372036854775808, -4))
-		testutil.Equals(t, min, testutil.Must(types.ParseDecimal("-922337203685477.5808")))
+		maxVal := testutil.Must(types.NewDecimal(9223372036854775807, -4))
+		testutil.Equals(t, maxVal, testutil.Must(types.ParseDecimal("922337203685477.5807")))
+		minVal := testutil.Must(types.NewDecimal(-9223372036854775808, -4))
+		testutil.Equals(t, minVal, testutil.Must(types.ParseDecimal("-922337203685477.5808")))
 	})
 
 	t.Run("Compare", func(t *testing.T) {

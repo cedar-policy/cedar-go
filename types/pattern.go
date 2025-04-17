@@ -62,7 +62,7 @@ func (p Pattern) MarshalCedar() []byte {
 		// TODO: This is wrong. It needs to escape unicode the Rustic way.
 		quotedString := strconv.Quote(comp.Literal)
 		quotedString = quotedString[1 : len(quotedString)-1]
-		quotedString = strings.Replace(quotedString, "*", "\\*", -1)
+		quotedString = strings.ReplaceAll(quotedString, "*", "\\*")
 		buf.WriteString(quotedString)
 	}
 	buf.WriteRune('"')

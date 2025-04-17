@@ -136,7 +136,7 @@ func isInToJSON(dest **isJSON, src ast.NodeTypeIsIn) {
 	*dest = res
 }
 
-func (j *nodeJSON) FromNode(src ast.IsNode) {
+func (n *nodeJSON) FromNode(src ast.IsNode) {
 	switch t := src.(type) {
 	// Value
 	// Value *json.RawMessage `json:"Value"` // could be any
@@ -146,135 +146,135 @@ func (j *nodeJSON) FromNode(src ast.IsNode) {
 		// IP      arrayJSON `json:"ip"`
 		switch tt := t.Value.(type) {
 		case types.Decimal:
-			extToJSON(&j.ExtensionCall, "decimal", tt)
+			extToJSON(&n.ExtensionCall, "decimal", tt)
 			return
 		case types.IPAddr:
-			extToJSON(&j.ExtensionCall, "ip", tt)
+			extToJSON(&n.ExtensionCall, "ip", tt)
 			return
 		}
 		val := valueJSON{v: t.Value}
-		j.Value = &val
+		n.Value = &val
 		return
 
 	// Var
 	// Var *string `json:"Var"`
 	case ast.NodeTypeVariable:
 		val := string(t.Name)
-		j.Var = &val
+		n.Var = &val
 		return
 
 	// ! or neg operators
 	// Not    *unaryJSON `json:"!"`
 	// Negate *unaryJSON `json:"neg"`
 	case ast.NodeTypeNot:
-		unaryToJSON(&j.Not, t.UnaryNode)
+		unaryToJSON(&n.Not, t.UnaryNode)
 		return
 	case ast.NodeTypeNegate:
-		unaryToJSON(&j.Negate, t.UnaryNode)
+		unaryToJSON(&n.Negate, t.UnaryNode)
 		return
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny, hasTag, getTag
 	case ast.NodeTypeAdd:
-		binaryToJSON(&j.Add, t.BinaryNode)
+		binaryToJSON(&n.Add, t.BinaryNode)
 		return
 	case ast.NodeTypeAnd:
-		binaryToJSON(&j.And, t.BinaryNode)
+		binaryToJSON(&n.And, t.BinaryNode)
 		return
 	case ast.NodeTypeContains:
-		binaryToJSON(&j.Contains, t.BinaryNode)
+		binaryToJSON(&n.Contains, t.BinaryNode)
 		return
 	case ast.NodeTypeContainsAll:
-		binaryToJSON(&j.ContainsAll, t.BinaryNode)
+		binaryToJSON(&n.ContainsAll, t.BinaryNode)
 		return
 	case ast.NodeTypeContainsAny:
-		binaryToJSON(&j.ContainsAny, t.BinaryNode)
+		binaryToJSON(&n.ContainsAny, t.BinaryNode)
 		return
 	case ast.NodeTypeIsEmpty:
-		unaryToJSON(&j.IsEmpty, t.UnaryNode)
+		unaryToJSON(&n.IsEmpty, t.UnaryNode)
 		return
 	case ast.NodeTypeEquals:
-		binaryToJSON(&j.Equals, t.BinaryNode)
+		binaryToJSON(&n.Equals, t.BinaryNode)
 		return
 	case ast.NodeTypeGreaterThan:
-		binaryToJSON(&j.GreaterThan, t.BinaryNode)
+		binaryToJSON(&n.GreaterThan, t.BinaryNode)
 		return
 	case ast.NodeTypeGreaterThanOrEqual:
-		binaryToJSON(&j.GreaterThanOrEqual, t.BinaryNode)
+		binaryToJSON(&n.GreaterThanOrEqual, t.BinaryNode)
 		return
 	case ast.NodeTypeIn:
-		binaryToJSON(&j.In, t.BinaryNode)
+		binaryToJSON(&n.In, t.BinaryNode)
 		return
 	case ast.NodeTypeLessThan:
-		binaryToJSON(&j.LessThan, t.BinaryNode)
+		binaryToJSON(&n.LessThan, t.BinaryNode)
 		return
 	case ast.NodeTypeLessThanOrEqual:
-		binaryToJSON(&j.LessThanOrEqual, t.BinaryNode)
+		binaryToJSON(&n.LessThanOrEqual, t.BinaryNode)
 		return
 	case ast.NodeTypeMult:
-		binaryToJSON(&j.Multiply, t.BinaryNode)
+		binaryToJSON(&n.Multiply, t.BinaryNode)
 		return
 	case ast.NodeTypeNotEquals:
-		binaryToJSON(&j.NotEquals, t.BinaryNode)
+		binaryToJSON(&n.NotEquals, t.BinaryNode)
 		return
 	case ast.NodeTypeOr:
-		binaryToJSON(&j.Or, t.BinaryNode)
+		binaryToJSON(&n.Or, t.BinaryNode)
 		return
 	case ast.NodeTypeSub:
-		binaryToJSON(&j.Subtract, t.BinaryNode)
+		binaryToJSON(&n.Subtract, t.BinaryNode)
 		return
 	case ast.NodeTypeGetTag:
-		binaryToJSON(&j.GetTag, t.BinaryNode)
+		binaryToJSON(&n.GetTag, t.BinaryNode)
 		return
 	case ast.NodeTypeHasTag:
-		binaryToJSON(&j.HasTag, t.BinaryNode)
+		binaryToJSON(&n.HasTag, t.BinaryNode)
 		return
 
 	// ., has
 	// Access *strJSON `json:"."`
 	// Has    *strJSON `json:"has"`
 	case ast.NodeTypeAccess:
-		strToJSON(&j.Access, t.StrOpNode)
+		strToJSON(&n.Access, t.StrOpNode)
 		return
 	case ast.NodeTypeHas:
-		strToJSON(&j.Has, t.StrOpNode)
+		strToJSON(&n.Has, t.StrOpNode)
 		return
 	// is
 	case ast.NodeTypeIs:
-		isToJSON(&j.Is, t)
+		isToJSON(&n.Is, t)
 		return
 	case ast.NodeTypeIsIn:
-		isInToJSON(&j.Is, t)
+		isInToJSON(&n.Is, t)
 		return
 
 	// like
 	// Like *strJSON `json:"like"`
 	case ast.NodeTypeLike:
-		likeToJSON(&j.Like, t)
+		likeToJSON(&n.Like, t)
 		return
 
 	// if-then-else
 	// IfThenElse *ifThenElseJSON `json:"if-then-else"`
 	case ast.NodeTypeIfThenElse:
-		ifToJSON(&j.IfThenElse, t)
+		ifToJSON(&n.IfThenElse, t)
 		return
 
 	// Set
 	// Set arrayJSON `json:"Set"`
 	case ast.NodeTypeSet:
-		arrayToJSON(&j.Set, t.Elements)
+		arrayToJSON(&n.Set, t.Elements)
 		return
 
 	// Record
 	// Record recordJSON `json:"Record"`
 	case ast.NodeTypeRecord:
-		recordToJSON(&j.Record, t)
+		recordToJSON(&n.Record, t)
 		return
 
 	// Any other method: ip, decimal, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
 	// ExtensionMethod map[string]arrayJSON `json:"-"`
 	case ast.NodeTypeExtensionCall:
-		j.ExtensionCall = extensionJSON{}
-		extCallToJSON(j.ExtensionCall, t)
+		n.ExtensionCall = extensionJSON{}
+		extCallToJSON(n.ExtensionCall, t)
 		return
 	default:
 		panic(fmt.Sprintf("unknown node type %T", t))
@@ -283,13 +283,13 @@ func (j *nodeJSON) FromNode(src ast.IsNode) {
 
 }
 
-func (j *nodeJSON) MarshalJSON() ([]byte, error) {
-	if len(j.ExtensionCall) > 0 {
-		return json.Marshal(j.ExtensionCall)
+func (n *nodeJSON) MarshalJSON() ([]byte, error) {
+	if len(n.ExtensionCall) > 0 {
+		return json.Marshal(n.ExtensionCall)
 	}
 
 	type nodeJSONAlias nodeJSON
-	return json.Marshal((*nodeJSONAlias)(j))
+	return json.Marshal((*nodeJSONAlias)(n))
 }
 
 type Policy ast.Policy
