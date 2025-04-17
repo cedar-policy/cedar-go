@@ -1,6 +1,8 @@
 package cedar
 
 import (
+	"iter"
+
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -20,9 +22,9 @@ const (
 
 //revive:enable:exported
 
-// IsAuthorized uses the combination of the PolicySet and Entities to determine
+// Authorize uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
-func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decision, Diagnostic) {
+func Authorize(policies iter.Seq2[PolicyID, *Policy], entities types.EntityGetter, req Request) (Decision, Diagnostic) {
 	if entities == nil {
 		var zero types.EntityMap
 		entities = zero
@@ -42,7 +44,7 @@ func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decis
 	// - All policy should be run to collect errors
 	// - For permit, all permits must be run to collect annotations
 	// - For forbid, forbids must be run to collect annotations
-	for id, po := range p.policies {
+	for id, po := range policies {
 		result, err := po.eval.Eval(env)
 		if err != nil {
 			diag.Errors = append(diag.Errors, DiagnosticError{PolicyID: id, Position: po.Position(), Message: err.Error()})

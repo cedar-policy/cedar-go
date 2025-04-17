@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"maps"
 	"slices"
 
@@ -126,4 +127,22 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 		p.policies[PolicyID(k)] = newPolicy((*internalast.Policy)(v))
 	}
 	return nil
+}
+
+// IsAuthorized uses the combination of the PolicySet and Entities to determine
+// if the given Request to determine Decision and Diagnostic.
+//
+// Deprecated: Use the Authorize() function instead
+func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decision, Diagnostic) {
+	return Authorize(maps.All(p.policies), entities, req)
+}
+
+func (p *PolicySet) All() iter.Seq2[PolicyID, *Policy] {
+	return func(yield func(PolicyID, *Policy) bool) {
+		for k, v := range p.policies {
+			if !yield(k, v) {
+				break
+			}
+		}
+	}
 }
