@@ -134,7 +134,7 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 //
 // Deprecated: Use the Authorize() function instead
 func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decision, Diagnostic) {
-	return Authorize(maps.All(p.policies), entities, req)
+	return Authorize(p.All(), entities, req)
 }
 
 // All returns an iterator over the (PolicyID, *Policy) tuples in the PolicySet
