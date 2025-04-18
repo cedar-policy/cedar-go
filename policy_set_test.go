@@ -156,3 +156,56 @@ func TestPolicySetJSON(t *testing.T) {
 		testutil.Equals(t, string(out), `{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}}}`)
 	})
 }
+
+func TestAll(t *testing.T) {
+	t.Parallel()
+	t.Run("all", func(t *testing.T) {
+		t.Parallel()
+
+		policies := map[cedar.PolicyID]*cedar.Policy{
+			"policy0": cedar.NewPolicyFromAST(ast.Forbid()),
+			"policy1": cedar.NewPolicyFromAST(ast.Forbid()),
+			"policy2": cedar.NewPolicyFromAST(ast.Forbid()),
+		}
+
+		ps := cedar.NewPolicySet()
+		for k, v := range policies {
+			ps.Add(k, v)
+		}
+
+		got := map[cedar.PolicyID]*cedar.Policy{}
+		for k, v := range ps.All() {
+			got[k] = v
+		}
+
+		testutil.Equals(t, policies, got)
+	})
+
+	t.Run("break early", func(t *testing.T) {
+		t.Parallel()
+
+		policies := map[cedar.PolicyID]*cedar.Policy{
+			"policy0": cedar.NewPolicyFromAST(ast.Forbid()),
+			"policy1": cedar.NewPolicyFromAST(ast.Forbid()),
+			"policy2": cedar.NewPolicyFromAST(ast.Forbid()),
+		}
+
+		ps := cedar.NewPolicySet()
+		for k, v := range policies {
+			ps.Add(k, v)
+		}
+
+		got := map[cedar.PolicyID]*cedar.Policy{}
+		for k, v := range ps.All() {
+			got[k] = v
+			if len(got) == 2 {
+				break
+			}
+		}
+
+		testutil.Equals(t, len(got), 2)
+		for k, v := range got {
+			testutil.Equals(t, policies[k], v)
+		}
+	})
+}
