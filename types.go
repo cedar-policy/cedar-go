@@ -8,6 +8,8 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
+//revive:disable:exported
+
 //  _____
 // |_   _|   _ _ __   ___  ___
 //   | || | | | '_ \ / _ \/ __|
@@ -53,6 +55,8 @@ const (
 	True  = types.True
 	False = types.False
 )
+
+//revive:enable:exported
 
 //   ____                _                   _
 //  / ___|___  _ __  ___| |_ _ __ _   _  ___| |_ ___  _ __ ___

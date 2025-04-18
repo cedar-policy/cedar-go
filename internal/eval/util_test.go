@@ -88,9 +88,9 @@ func TestUtil(t *testing.T) {
 				"foo": types.Boolean(true),
 				"bar": types.Long(1),
 			})
-			map_, err := ValueToRecord(v)
+			record, err := ValueToRecord(v)
 			testutil.OK(t, err)
-			v2 := map_
+			v2 := record
 			testutil.FatalIf(t, !v.Equal(v2), "got %v want %v", v, v2)
 		})
 

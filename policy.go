@@ -11,6 +11,20 @@ import (
 	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
+//revive:disable:exported
+type Annotations = types.Annotations
+
+type Effect = types.Effect
+
+const (
+	Permit = types.Permit
+	Forbid = types.Forbid
+)
+
+type Position = types.Position
+
+//revive:enable:exported
+
 // A Policy is the parsed form of a single Cedar language policy statement.
 type Policy struct {
 	eval eval.BoolEvaler // determines if a policy matches a request.
@@ -73,8 +87,6 @@ func NewPolicyFromAST(astIn *ast.Policy) *Policy {
 	return p
 }
 
-type Annotations = types.Annotations
-
 // Annotations retrieves the annotations associated with this policy.
 func (p *Policy) Annotations() Annotations {
 	res := make(Annotations, len(p.ast.Annotations))
@@ -84,19 +96,10 @@ func (p *Policy) Annotations() Annotations {
 	return res
 }
 
-type Effect = types.Effect
-
-const (
-	Permit = types.Permit
-	Forbid = types.Forbid
-)
-
 // Effect retrieves the effect of this policy.
 func (p *Policy) Effect() Effect {
 	return Effect(p.ast.Effect)
 }
-
-type Position = types.Position
 
 // Position retrieves the position of this policy.
 func (p *Policy) Position() Position {

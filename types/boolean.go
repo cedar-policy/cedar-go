@@ -8,24 +8,24 @@ const (
 	False = Boolean(false)
 )
 
-func (a Boolean) Equal(bi Value) bool {
-	b, ok := bi.(Boolean)
-	return ok && a == b
+func (b Boolean) Equal(bi Value) bool {
+	bo, ok := bi.(Boolean)
+	return ok && b == bo
 }
 
 // String produces a string representation of the Boolean, e.g. `true`.
-func (v Boolean) String() string { return string(v.MarshalCedar()) }
+func (b Boolean) String() string { return string(b.MarshalCedar()) }
 
 // MarshalCedar produces a valid MarshalCedar language representation of the Boolean, e.g. `true`.
-func (v Boolean) MarshalCedar() []byte {
-	if v {
+func (b Boolean) MarshalCedar() []byte {
+	if b {
 		return []byte("true")
 	}
 	return []byte("false")
 }
 
-func (v Boolean) hash() uint64 {
-	if v {
+func (b Boolean) hash() uint64 {
+	if b {
 		return 1
 	}
 	return 0

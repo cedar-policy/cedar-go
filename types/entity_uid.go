@@ -29,55 +29,55 @@ func NewEntityUID(typ EntityType, id String) EntityUID {
 }
 
 // IsZero returns true if the EntityUID has an empty Type and ID.
-func (a EntityUID) IsZero() bool {
-	return a.Type == "" && a.ID == ""
+func (e EntityUID) IsZero() bool {
+	return e.Type == "" && e.ID == ""
 }
 
-func (a EntityUID) Equal(bi Value) bool {
+func (e EntityUID) Equal(bi Value) bool {
 	b, ok := bi.(EntityUID)
-	return ok && a == b
+	return ok && e == b
 }
 
 // String produces a string representation of the EntityUID, e.g. `Type::"id"`.
-func (v EntityUID) String() string { return string(v.Type) + "::" + strconv.Quote(string(v.ID)) }
+func (e EntityUID) String() string { return string(e.Type) + "::" + strconv.Quote(string(e.ID)) }
 
 // MarshalCedar produces a valid MarshalCedar language representation of the EntityUID, e.g. `Type::"id"`.
-func (v EntityUID) MarshalCedar() []byte {
-	return []byte(v.String())
+func (e EntityUID) MarshalCedar() []byte {
+	return []byte(e.String())
 }
 
-func (v *EntityUID) UnmarshalJSON(b []byte) error {
+func (e *EntityUID) UnmarshalJSON(b []byte) error {
 	// TODO: review after adding support for schemas
 	var res entityValueJSON
 	if err := json.Unmarshal(b, &res); err != nil {
 		return err
 	}
 	if res.Entity != nil {
-		v.Type = EntityType(res.Entity.Type)
-		v.ID = String(res.Entity.ID)
+		e.Type = EntityType(res.Entity.Type)
+		e.ID = String(res.Entity.ID)
 		return nil
 	} else if res.Type != nil && res.ID != nil { // require both Type and ID to parse "implicit" JSON
-		v.Type = EntityType(*res.Type)
-		v.ID = String(*res.ID)
+		e.Type = EntityType(*res.Type)
+		e.ID = String(*res.ID)
 		return nil
 	}
 	return errJSONEntityNotFound
 }
 
 // MarshalJSON marshals the EntityUID into JSON using the explicit form.
-func (v EntityUID) MarshalJSON() ([]byte, error) {
+func (e EntityUID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(entityValueJSON{
 		Entity: &extEntity{
-			Type: string(v.Type),
-			ID:   string(v.ID),
+			Type: string(e.Type),
+			ID:   string(e.ID),
 		},
 	})
 }
 
-func (v EntityUID) hash() uint64 {
+func (e EntityUID) hash() uint64 {
 	h := fnv.New64()
-	_, _ = h.Write([]byte(v.Type))
-	_, _ = h.Write([]byte(v.ID))
+	_, _ = h.Write([]byte(e.Type))
+	_, _ = h.Write([]byte(e.ID))
 	return h.Sum64()
 }
 

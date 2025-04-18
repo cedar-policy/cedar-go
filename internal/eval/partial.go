@@ -423,31 +423,31 @@ func isFalse(in ast.IsNode) bool {
 }
 
 func partialIfThenElse(env Env, v ast.NodeTypeIfThenElse) (ast.IsNode, error) {
-	if_, ifErr := partial(env, v.If)
+	ifNode, ifErr := partial(env, v.If)
 	switch {
 	case errors.Is(ifErr, errVariable):
 	case ifErr != nil:
 		return nil, ifErr
-	case isNonBoolValue(if_):
+	case isNonBoolValue(ifNode):
 		return nil, fmt.Errorf("%w: ifThenElse expected bool", ErrType)
-	case isTrue(if_):
+	case isTrue(ifNode):
 		return partial(env, v.Then)
-	case isFalse(if_):
+	case isFalse(ifNode):
 		return partial(env, v.Else)
 	}
-	then, thenErr := partial(env, v.Then)
+	thenNode, thenErr := partial(env, v.Then)
 	if errors.Is(thenErr, errIgnore) {
 		return nil, thenErr
 	} else if thenErr != nil && !errors.Is(thenErr, errVariable) {
-		then = extError(thenErr)
+		thenNode = extError(thenErr)
 	}
-	else_, elseErr := partial(env, v.Else)
+	elseNode, elseErr := partial(env, v.Else)
 	if errors.Is(elseErr, errIgnore) {
 		return nil, elseErr
 	} else if elseErr != nil && !errors.Is(elseErr, errVariable) {
-		else_ = extError(elseErr)
+		elseNode = extError(elseErr)
 	}
-	return ast.NodeTypeIfThenElse{If: if_, Then: then, Else: else_}, nil
+	return ast.NodeTypeIfThenElse{If: ifNode, Then: thenNode, Else: elseNode}, nil
 }
 
 func partialAnd(env Env, v ast.NodeTypeAnd) (ast.IsNode, error) {

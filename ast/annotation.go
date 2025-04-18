@@ -5,6 +5,7 @@ import (
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
+// Annotations allows access to Cedar annotations on a policy
 type Annotations ast.Annotations
 
 func (a *Annotations) unwrap() *ast.Annotations {
@@ -41,7 +42,8 @@ func (a *Annotations) Forbid() *Policy {
 	return wrapPolicy(a.unwrap().Forbid())
 }
 
-// If a previous annotation exists with the same key, this builder will replace it.
+// Annotate adds an annotation to a Policy. If a previous annotation exists with the same key, this builder will
+// replace it.
 func (p *Policy) Annotate(key types.Ident, value types.String) *Policy {
 	return wrapPolicy(p.unwrap().Annotate(key, value))
 }

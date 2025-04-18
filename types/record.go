@@ -77,12 +77,12 @@ func (r Record) Map() RecordMap {
 }
 
 // Equals returns true if the records are Equal.
-func (a Record) Equal(bi Value) bool {
+func (r Record) Equal(bi Value) bool {
 	b, ok := bi.(Record)
-	if !ok || len(a.m) != len(b.m) || a.hashVal != b.hashVal {
+	if !ok || len(r.m) != len(b.m) || r.hashVal != b.hashVal {
 		return false
 	}
-	for k, av := range a.m {
+	for k, av := range r.m {
 		bv, ok := b.m[k]
 		if !ok || !av.Equal(bv) {
 			return false
@@ -91,7 +91,7 @@ func (a Record) Equal(bi Value) bool {
 	return true
 }
 
-func (v *Record) UnmarshalJSON(b []byte) error {
+func (r *Record) UnmarshalJSON(b []byte) error {
 	var res map[string]explicitValue
 	err := json.Unmarshal(b, &res)
 	if err != nil {
@@ -101,16 +101,16 @@ func (v *Record) UnmarshalJSON(b []byte) error {
 	for kk, vv := range res {
 		m[String(kk)] = vv.Value
 	}
-	*v = NewRecord(m)
+	*r = NewRecord(m)
 	return nil
 }
 
 // MarshalJSON marshals the Record into JSON, the marshaller uses the explicit
 // JSON form for all the values in the Record.
-func (v Record) MarshalJSON() ([]byte, error) {
+func (r Record) MarshalJSON() ([]byte, error) {
 	w := &bytes.Buffer{}
 	w.WriteByte('{')
-	keys := maps.Keys(v.m)
+	keys := maps.Keys(r.m)
 	slices.Sort(keys)
 	for i, kk := range keys {
 		if i > 0 {
@@ -119,7 +119,7 @@ func (v Record) MarshalJSON() ([]byte, error) {
 		kb, _ := json.Marshal(kk) // json.Marshal cannot error on strings
 		w.Write(kb)
 		w.WriteByte(':')
-		vv := v.m[kk]
+		vv := r.m[kk]
 		vb, err := json.Marshal(vv)
 		if err != nil {
 			return nil, err
@@ -154,6 +154,6 @@ func (r Record) MarshalCedar() []byte {
 	return sb.Bytes()
 }
 
-func (v Record) hash() uint64 {
-	return v.hashVal
+func (r Record) hash() uint64 {
+	return r.hashVal
 }

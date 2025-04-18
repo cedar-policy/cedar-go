@@ -13,6 +13,7 @@ import (
 	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
+//revive:disable-next-line:exported
 type PolicyID = types.PolicyID
 
 // PolicyMap is a map of policy IDs to policy

@@ -90,17 +90,17 @@ func (s Set) Slice() []Value {
 }
 
 // Equal returns true if the sets are Equal.
-func (as Set) Equal(bi Value) bool {
+func (s Set) Equal(bi Value) bool {
 	bs, ok := bi.(Set)
 	if !ok {
 		return false
 	}
 
-	if len(as.s) != len(bs.s) || as.hashVal != bs.hashVal {
+	if len(s.s) != len(bs.s) || s.hashVal != bs.hashVal {
 		return false
 	}
 
-	for _, v := range as.s {
+	for _, v := range s.s {
 		if !bs.Contains(v) {
 			return false
 		}
@@ -113,7 +113,7 @@ func (v *explicitValue) UnmarshalJSON(b []byte) error {
 }
 
 // UnmarshalJSON parses a JSON-encoded Cedar set literal into a Set
-func (v *Set) UnmarshalJSON(b []byte) error {
+func (s *Set) UnmarshalJSON(b []byte) error {
 	var res []explicitValue
 	err := json.Unmarshal(b, &res)
 	if err != nil {
@@ -125,22 +125,22 @@ func (v *Set) UnmarshalJSON(b []byte) error {
 		vals[i] = vv.Value
 	}
 
-	*v = NewSet(vals...)
+	*s = NewSet(vals...)
 	return nil
 }
 
 // MarshalJSON marshals the Set into JSON.
 // Set elements are rendered in hash order, which may differ from the original order.
-func (v Set) MarshalJSON() ([]byte, error) {
+func (s Set) MarshalJSON() ([]byte, error) {
 	w := &bytes.Buffer{}
 	w.WriteByte('[')
-	orderedKeys := maps.Keys(v.s)
+	orderedKeys := maps.Keys(s.s)
 	slices.Sort(orderedKeys)
 	for i, k := range orderedKeys {
 		if i != 0 {
 			w.WriteByte(',')
 		}
-		b, err := json.Marshal(v.s[k])
+		b, err := json.Marshal(s.s[k])
 		if err != nil {
 			return nil, err
 		}
@@ -151,25 +151,25 @@ func (v Set) MarshalJSON() ([]byte, error) {
 }
 
 // String produces a string representation of the Set, e.g. `[1,2,3]`.
-func (v Set) String() string { return string(v.MarshalCedar()) }
+func (s Set) String() string { return string(s.MarshalCedar()) }
 
 // MarshalCedar produces a valid MarshalCedar language representation of the Set, e.g. `[1,2,3]`.
 // Set elements are rendered in hash order, which may differ from the original order.
-func (v Set) MarshalCedar() []byte {
+func (s Set) MarshalCedar() []byte {
 	var sb bytes.Buffer
 	sb.WriteRune('[')
-	orderedKeys := maps.Keys(v.s)
+	orderedKeys := maps.Keys(s.s)
 	slices.Sort(orderedKeys)
 	for i, k := range orderedKeys {
 		if i != 0 {
 			sb.WriteString(", ")
 		}
-		sb.Write(v.s[k].MarshalCedar())
+		sb.Write(s.s[k].MarshalCedar())
 	}
 	sb.WriteRune(']')
 	return sb.Bytes()
 }
 
-func (v Set) hash() uint64 {
-	return v.hashVal
+func (s Set) hash() uint64 {
+	return s.hashVal
 }

@@ -132,46 +132,46 @@ func ParseDuration(s string) (Duration, error) {
 }
 
 // Equal returns true if the input represents the same duration
-func (a Duration) Equal(bi Value) bool {
+func (d Duration) Equal(bi Value) bool {
 	b, ok := bi.(Duration)
-	return ok && a == b
+	return ok && d == b
 }
 
 // LessThan returns true if value is less than the argument and they
 // are both Duration values, or an error indicating they aren't
 // comparable otherwise
-func (a Duration) LessThan(bi Value) (bool, error) {
+func (d Duration) LessThan(bi Value) (bool, error) {
 	b, ok := bi.(Duration)
 	if !ok {
 		return false, internal.ErrNotComparable
 	}
-	return a.value < b.value, nil
+	return d.value < b.value, nil
 }
 
 // LessThan returns true if value is less than or equal to the
 // argument and they are both Duration values, or an error indicating
 // they aren't comparable otherwise
-func (a Duration) LessThanOrEqual(bi Value) (bool, error) {
+func (d Duration) LessThanOrEqual(bi Value) (bool, error) {
 	b, ok := bi.(Duration)
 	if !ok {
 		return false, internal.ErrNotComparable
 	}
-	return a.value <= b.value, nil
+	return d.value <= b.value, nil
 }
 
 // MarshalCedar produces a valid MarshalCedar language representation of the Duration, e.g. `decimal("12.34")`.
-func (v Duration) MarshalCedar() []byte { return []byte(`duration("` + v.String() + `")`) }
+func (d Duration) MarshalCedar() []byte { return []byte(`duration("` + d.String() + `")`) }
 
 // String produces a string representation of the Duration
-func (v Duration) String() string {
+func (d Duration) String() string {
 	var res bytes.Buffer
-	if v.value == 0 {
+	if d.value == 0 {
 		return "0ms"
 	}
 
-	remaining := v.value
-	if v.value < 0 {
-		remaining = -v.value
+	remaining := d.value
+	if d.value < 0 {
+		remaining = -d.value
 		res.WriteByte('-')
 	}
 
@@ -217,68 +217,68 @@ func (v Duration) String() string {
 //   - { "__extn": { "fn": "duration", "arg": "1h10m" }}
 //   - { "fn": "duration", "arg": "1h10m" }
 //   - "1h10m"
-func (v *Duration) UnmarshalJSON(b []byte) error {
+func (d *Duration) UnmarshalJSON(b []byte) error {
 	vv, err := unmarshalExtensionValue(b, "duration", ParseDuration)
 	if err != nil {
 		return err
 	}
 
-	*v = vv
+	*d = vv
 	return nil
 }
 
 // MarshalJSON marshals the Duration into JSON using the explicit form.
-func (v Duration) MarshalJSON() ([]byte, error) {
+func (d Duration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(extValueJSON{
 		Extn: &extn{
 			Fn:  "duration",
-			Arg: v.String(),
+			Arg: d.String(),
 		},
 	})
 }
 
 // ToDays returns the number of days this Duration represents,
 // truncating when fractional
-func (v Duration) ToDays() int64 {
-	return v.value / consts.MillisPerDay
+func (d Duration) ToDays() int64 {
+	return d.value / consts.MillisPerDay
 }
 
 // ToHours returns the number of hours this Duration represents,
 // truncating when fractional
-func (v Duration) ToHours() int64 {
-	return v.value / consts.MillisPerHour
+func (d Duration) ToHours() int64 {
+	return d.value / consts.MillisPerHour
 }
 
 // ToMinutes returns the number of minutes this Duration represents,
 // truncating when fractional
-func (v Duration) ToMinutes() int64 {
-	return v.value / consts.MillisPerMinute
+func (d Duration) ToMinutes() int64 {
+	return d.value / consts.MillisPerMinute
 }
 
 // ToSeconds returns the number of seconds this Duration represents,
 // truncating when fractional
-func (v Duration) ToSeconds() int64 {
-	return v.value / consts.MillisPerSecond
+func (d Duration) ToSeconds() int64 {
+	return d.value / consts.MillisPerSecond
 }
 
 // ToMilliseconds returns the number of milliseconds this Duration
 // represents
-func (v Duration) ToMilliseconds() int64 {
-	return v.value
+func (d Duration) ToMilliseconds() int64 {
+	return d.value
 }
 
 // Duration returns a time.Duration representation of a Duration.  An error
 // is returned if the duration cannot be converted to a time.Duration.
-func (v Duration) Duration() (time.Duration, error) {
-	if v.value > math.MaxInt64/1000 {
+func (d Duration) Duration() (time.Duration, error) {
+	if d.value > math.MaxInt64/1000 {
 		return 0, internal.ErrDurationRange
 	}
-	if v.value < math.MinInt64/1000 {
+	if d.value < math.MinInt64/1000 {
 		return 0, internal.ErrDurationRange
 	}
-	return time.Millisecond * time.Duration(v.value), nil
+	return time.Millisecond * time.Duration(d.value), nil
 }
 
-func (v Duration) hash() uint64 {
-	return uint64(v.value)
+func (d Duration) hash() uint64 {
+	return uint64(d.value)
 }

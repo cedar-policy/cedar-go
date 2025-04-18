@@ -25,40 +25,40 @@ func ParseIPAddr(s string) (IPAddr, error) {
 		return IPAddr(net), nil
 	} else if addr, err := netip.ParseAddr(s); err == nil {
 		return IPAddr(netip.PrefixFrom(addr, addr.BitLen())), nil
-	} else {
-		return IPAddr{}, fmt.Errorf("%w: error parsing IP address %s", errIP, s)
 	}
+	return IPAddr{}, fmt.Errorf("%w: error parsing IP address %s", errIP, s)
 }
 
-func (a IPAddr) Equal(bi Value) bool {
+// Equal returns true if the argument is equal to a
+func (i IPAddr) Equal(bi Value) bool {
 	b, ok := bi.(IPAddr)
-	return ok && a == b
+	return ok && i == b
 }
 
 // MarshalCedar produces a valid MarshalCedar language representation of the IPAddr, e.g. `ip("127.0.0.1")`.
-func (v IPAddr) MarshalCedar() []byte { return []byte(`ip("` + v.String() + `")`) }
+func (i IPAddr) MarshalCedar() []byte { return []byte(`ip("` + i.String() + `")`) }
 
 // String produces a string representation of the IPAddr, e.g. `127.0.0.1`.
-func (v IPAddr) String() string {
-	if v.Prefix().Bits() == v.Addr().BitLen() {
-		return v.Addr().String()
+func (i IPAddr) String() string {
+	if i.Prefix().Bits() == i.Addr().BitLen() {
+		return i.Addr().String()
 	}
-	return v.Prefix().String()
+	return i.Prefix().String()
 }
 
-func (v IPAddr) Prefix() netip.Prefix {
-	return netip.Prefix(v)
+func (i IPAddr) Prefix() netip.Prefix {
+	return netip.Prefix(i)
 }
 
-func (v IPAddr) IsIPv4() bool {
-	return v.Addr().Is4()
+func (i IPAddr) IsIPv4() bool {
+	return i.Addr().Is4()
 }
 
-func (v IPAddr) IsIPv6() bool {
-	return v.Addr().Is6()
+func (i IPAddr) IsIPv6() bool {
+	return i.Addr().Is6()
 }
 
-func (v IPAddr) IsLoopback() bool {
+func (i IPAddr) IsLoopback() bool {
 	// This comment is in the Cedar Rust implementation:
 	//
 	// 		Loopback addresses are "127.0.0.0/8" for IpV4 and "::1" for IpV6
@@ -70,14 +70,14 @@ func (v IPAddr) IsLoopback() bool {
 	// 		The reason for IpV4 is that provided the truncated ip address is a
 	// 		loopback address, its prefix cannot be less than 8 because
 	// 		otherwise its more significant byte cannot be 127
-	return v.Prefix().Masked().Addr().IsLoopback()
+	return i.Prefix().Masked().Addr().IsLoopback()
 }
 
-func (v IPAddr) Addr() netip.Addr {
-	return netip.Prefix(v).Addr()
+func (i IPAddr) Addr() netip.Addr {
+	return netip.Prefix(i).Addr()
 }
 
-func (v IPAddr) IsMulticast() bool {
+func (i IPAddr) IsMulticast() bool {
 	// This comment is in the Cedar Rust implementation:
 	//
 	// 		Multicast addresses are "224.0.0.0/4" for IpV4 and "ff00::/8" for
@@ -90,17 +90,17 @@ func (v IPAddr) IsMulticast() bool {
 	// 		The implementation uses the property that if `ip1/prefix1` is in
 	// 		range `ip2/prefix2`, then `ip1` is in `ip2/prefix2` and `prefix1 >=
 	// 		prefix2`
-	var min_prefix_len int
-	if v.IsIPv4() {
-		min_prefix_len = 4
+	var minPrefixLen int
+	if i.IsIPv4() {
+		minPrefixLen = 4
 	} else {
-		min_prefix_len = 8
+		minPrefixLen = 8
 	}
-	return v.Addr().IsMulticast() && v.Prefix().Bits() >= min_prefix_len
+	return i.Addr().IsMulticast() && i.Prefix().Bits() >= minPrefixLen
 }
 
-func (c IPAddr) Contains(o IPAddr) bool {
-	return c.Prefix().Contains(o.Addr()) && c.Prefix().Bits() <= o.Prefix().Bits()
+func (i IPAddr) Contains(o IPAddr) bool {
+	return i.Prefix().Contains(o.Addr()) && i.Prefix().Bits() <= o.Prefix().Bits()
 }
 
 // UnmarshalJSON implements encoding/json.Unmarshaler for IPAddr
@@ -109,37 +109,37 @@ func (c IPAddr) Contains(o IPAddr) bool {
 //   - { "__extn": { "fn": "ip", "arg": "12.34.56.78" }}
 //   - { "fn": "ip", "arg": "12.34.56.78" }
 //   - "12.34.56.78"
-func (v *IPAddr) UnmarshalJSON(b []byte) error {
+func (i *IPAddr) UnmarshalJSON(b []byte) error {
 	vv, err := unmarshalExtensionValue(b, "ip", ParseIPAddr)
 	if err != nil {
 		return err
 	}
 
-	*v = vv
+	*i = vv
 	return nil
 }
 
 // MarshalJSON marshals the IPAddr into JSON using the explicit form.
-func (v IPAddr) MarshalJSON() ([]byte, error) {
-	if v.Prefix().Bits() == v.Prefix().Addr().BitLen() {
+func (i IPAddr) MarshalJSON() ([]byte, error) {
+	if i.Prefix().Bits() == i.Prefix().Addr().BitLen() {
 		return json.Marshal(extValueJSON{
 			Extn: &extn{
 				Fn:  "ip",
-				Arg: v.Addr().String(),
+				Arg: i.Addr().String(),
 			},
 		})
 	}
 	return json.Marshal(extValueJSON{
 		Extn: &extn{
 			Fn:  "ip",
-			Arg: v.String(),
+			Arg: i.String(),
 		},
 	})
 }
 
-func (v IPAddr) hash() uint64 {
+func (i IPAddr) hash() uint64 {
 	// MarshalBinary() cannot actually fail
-	bytes, _ := netip.Prefix(v).MarshalBinary()
+	bytes, _ := netip.Prefix(i).MarshalBinary()
 	h := fnv.New64()
 	_, _ = h.Write(bytes)
 	return h.Sum64()

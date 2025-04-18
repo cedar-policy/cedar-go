@@ -9,35 +9,35 @@ import (
 // A Long is a whole number without decimals that can range from -9223372036854775808 to 9223372036854775807.
 type Long int64
 
-func (a Long) Equal(bi Value) bool {
+func (l Long) Equal(bi Value) bool {
 	b, ok := bi.(Long)
-	return ok && a == b
+	return ok && l == b
 }
 
-func (a Long) LessThan(bi Value) (bool, error) {
+func (l Long) LessThan(bi Value) (bool, error) {
 	b, ok := bi.(Long)
 	if !ok {
 		return false, internal.ErrNotComparable
 	}
-	return a < b, nil
+	return l < b, nil
 }
 
-func (a Long) LessThanOrEqual(bi Value) (bool, error) {
+func (l Long) LessThanOrEqual(bi Value) (bool, error) {
 	b, ok := bi.(Long)
 	if !ok {
 		return false, internal.ErrNotComparable
 	}
-	return a <= b, nil
+	return l <= b, nil
 }
 
 // String produces a string representation of the Long, e.g. `42`.
-func (v Long) String() string { return fmt.Sprint(int64(v)) }
+func (l Long) String() string { return fmt.Sprint(int64(l)) }
 
 // MarshalCedar produces a valid MarshalCedar language representation of the Long, e.g. `42`.
-func (v Long) MarshalCedar() []byte {
-	return []byte(v.String())
+func (l Long) MarshalCedar() []byte {
+	return []byte(l.String())
 }
 
-func (v Long) hash() uint64 {
-	return uint64(v)
+func (l Long) hash() uint64 {
+	return uint64(l)
 }
