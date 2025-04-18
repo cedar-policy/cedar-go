@@ -144,6 +144,8 @@ If you're looking to integrate Cedar into a production system, please be sure th
 
 ### New features in 1.2.0
 - Support for the .isEmpty() operator.
+- A new top-level Authorize() function, which allows authorization against a generic policy iterator instead of requiring a PolicySet. Like the EntityGetter interface does for entities, using a generic iterator enables policy to be retrieved from external sources or for policy to be selected dynamically by the iterator implementation without having to clone an entire PolicySet. Requires Go 1.23.
+- First class Iterator support for EntityUIDSet, Record, Set, and PolicySet container types. Requires Go 1.23.
 
 ### New features in 1.1.0
 - Support for entity tags via the .getTag() and .hasTag() operators.
