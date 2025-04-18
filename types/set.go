@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/json"
+	"iter"
 	"slices"
 
 	"golang.org/x/exp/maps"
@@ -58,10 +59,23 @@ type SetIterator func(Value) bool
 
 // Iterate calls iter for each item in the Set. Returning false from the iter function causes iteration to cease.
 // Iteration order is non-deterministic.
+//
+// Deprecated: use All() instead.
 func (s Set) Iterate(iter SetIterator) {
 	for _, v := range s.s {
 		if !iter(v) {
 			break
+		}
+	}
+}
+
+// All returns an iterator over elements in the set. Iteration order is non-deterministic.
+func (s Set) All() iter.Seq[Value] {
+	return func(yield func(Value) bool) {
+		for _, item := range s.s {
+			if !yield(item) {
+				return
+			}
 		}
 	}
 }

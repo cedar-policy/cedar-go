@@ -6,7 +6,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
-func TestRecord(t *testing.T) {
+func TestRecordInternal(t *testing.T) {
 	t.Parallel()
 
 	t.Run("hash", func(t *testing.T) {

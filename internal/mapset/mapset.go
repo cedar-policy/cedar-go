@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"slices"
 
 	"golang.org/x/exp/maps"
@@ -92,10 +93,23 @@ func (h MapSet[T]) Intersects(o Container[T]) bool {
 
 // Iterate the items in the set, calling callback for each item. If the callback returns false, iteration is halted.
 // Iteration order is undefined.
+//
+// Deprecated: Use All() instead.
 func (h MapSet[T]) Iterate(callback func(item T) bool) {
 	for item := range h.m {
 		if !callback(item) {
 			break
+		}
+	}
+}
+
+// All returns an iterator over elements in the set. Iteration order is undefined.
+func (h MapSet[T]) All() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for item := range h.m {
+			if !yield(item) {
+				return
+			}
 		}
 	}
 }

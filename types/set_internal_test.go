@@ -116,11 +116,7 @@ func TestSetInternal(t *testing.T) {
 
 		testutil.Equals(t, set.Len(), 3)
 
-		var vals []Value
-		set.Iterate(func(v Value) bool {
-			vals = append(vals, v)
-			return true
-		})
+		vals := slices.Collect(set.All())
 
 		testutil.Equals(t, slices.ContainsFunc(vals, func(v Value) bool { return v.Equal(v1) }), true)
 		testutil.Equals(t, slices.ContainsFunc(vals, func(v Value) bool { return v.Equal(v2) }), true)

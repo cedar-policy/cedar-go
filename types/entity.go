@@ -18,10 +18,9 @@ type Entity struct {
 // SDK's behavior.
 func (e Entity) MarshalJSON() ([]byte, error) {
 	parents := make([]ImplicitlyMarshaledEntityUID, 0, e.Parents.Len())
-	e.Parents.Iterate(func(p EntityUID) bool {
+	for p := range e.Parents.All() {
 		parents = append(parents, ImplicitlyMarshaledEntityUID(p))
-		return true
-	})
+	}
 	slices.SortFunc(parents, func(a, b ImplicitlyMarshaledEntityUID) int {
 		if cmp := strings.Compare(string(a.Type), string(b.Type)); cmp != 0 {
 			return cmp

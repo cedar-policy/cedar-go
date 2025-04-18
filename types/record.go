@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"hash/fnv"
+	"iter"
 	"slices"
 	"strconv"
 
@@ -53,10 +54,45 @@ func (r Record) Len() int {
 type RecordIterator func(String, Value) bool
 
 // Iterate calls iter for each key/value pair in the record. Iteration order is non-deterministic.
+//
+// Deprecated: Use All(), Keys(), or Values() instead.
 func (r Record) Iterate(iter RecordIterator) {
 	for k, v := range r.m {
 		if !iter(k, v) {
 			break
+		}
+	}
+}
+
+// All returns an iterator over the keys and values in the Record. Iteration order is non-deterministic.
+func (r Record) All() iter.Seq2[String, Value] {
+	return func(yield func(String, Value) bool) {
+		for k, v := range r.m {
+			if !yield(k, v) {
+				break
+			}
+		}
+	}
+}
+
+// Keys returns an iterator over the keys in the Record. Iteration order is non-deterministic.
+func (r Record) Keys() iter.Seq[String] {
+	return func(yield func(String) bool) {
+		for k := range r.m {
+			if !yield(k) {
+				break
+			}
+		}
+	}
+}
+
+// Values returns an iterator over the keys in the Record. Iteration order is non-deterministic.
+func (r Record) Values() iter.Seq[Value] {
+	return func(yield func(Value) bool) {
+		for _, v := range r.m {
+			if !yield(v) {
+				break
+			}
 		}
 	}
 }

@@ -452,6 +452,12 @@ func TestASTByTable(t *testing.T) {
 				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeHasTag{BinaryNode: ast.BinaryNode{Left: ast.NodeValue{Value: types.Long(42)}, Right: ast.NodeValue{Value: types.String("key")}}}}}},
 		},
 		{
+			"opIsEmpty",
+			ast.Permit().When(ast.Long(42).IsEmpty()),
+			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},
+				Conditions: []ast.ConditionType{{Condition: ast.ConditionWhen, Body: ast.NodeTypeIsEmpty{UnaryNode: ast.UnaryNode{Arg: ast.NodeValue{Value: types.Long(42)}}}}}},
+		},
+		{
 			"opAccess",
 			ast.Permit().When(ast.Long(42).Access("key")),
 			ast.Policy{Effect: ast.EffectPermit, Principal: ast.ScopeTypeAll{}, Action: ast.ScopeTypeAll{}, Resource: ast.ScopeTypeAll{},

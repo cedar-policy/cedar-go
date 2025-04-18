@@ -1359,9 +1359,9 @@ func TestRecordLiteralNode(t *testing.T) {
 				"foo": newLiteralEval(types.True),
 				"bar": newLiteralEval(types.String("baz")),
 			}, types.NewRecord(types.RecordMap{
-			"foo": types.True,
-			"bar": types.String("baz"),
-		}), nil},
+				"foo": types.True,
+				"bar": types.String("baz"),
+			}), nil},
 	}
 	for _, tt := range tests {
 		tt := tt

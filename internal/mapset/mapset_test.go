@@ -109,16 +109,43 @@ func TestMapSet(t *testing.T) {
 	t.Run("iterate break early", func(t *testing.T) {
 		s1 := FromItems(1, 2, 3)
 
-		i := 0
 		var items []int
 		s1.Iterate(func(item int) bool {
-			if i == 2 {
+			if len(items) == 2 {
 				return false
 			}
 			items = append(items, item)
-			i++
 			return true
 		})
+
+		// Because iteration order is non-deterministic, all we can say is that the right number of items ended up in
+		// the set and that the items were in the original set.
+		testutil.Equals(t, len(items), 2)
+		testutil.Equals(t, s1.Contains(items[0]), true)
+		testutil.Equals(t, s1.Contains(items[1]), true)
+	})
+
+	t.Run("all", func(t *testing.T) {
+		s1 := FromItems(1, 2, 3)
+
+		s2 := Make[int]()
+		for item := range s1.All() {
+			s2.Add(item)
+		}
+
+		testutil.Equals(t, s1.Equal(s2), true)
+	})
+
+	t.Run("all break early", func(t *testing.T) {
+		s1 := FromItems(1, 2, 3)
+
+		var items []int
+		for item := range s1.All() {
+			if len(items) == 2 {
+				break
+			}
+			items = append(items, item)
+		}
 
 		// Because iteration order is non-deterministic, all we can say is that the right number of items ended up in
 		// the set and that the items were in the original set.

@@ -2,6 +2,7 @@ package mapset
 
 import (
 	"encoding/json"
+	"iter"
 )
 
 type ImmutableMapSet[T comparable] MapSet[T]
@@ -22,8 +23,15 @@ func (h ImmutableMapSet[T]) Intersects(o Container[T]) bool {
 
 // Iterate the items in the set, calling callback for each item. If the callback returns false, iteration is halted.
 // Iteration order is undefined.
+//
+// Deprecated: Use All() instead.
 func (h ImmutableMapSet[T]) Iterate(callback func(item T) bool) {
 	MapSet[T](h).Iterate(callback)
+}
+
+// All returns an iterator over elements in the set. Iteration order is undefined.
+func (h ImmutableMapSet[T]) All() iter.Seq[T] {
+	return MapSet[T](h).All()
 }
 
 func (h ImmutableMapSet[T]) Slice() []T {

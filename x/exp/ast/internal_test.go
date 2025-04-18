@@ -9,20 +9,20 @@ import (
 
 func TestIsNode(t *testing.T) {
 	t.Parallel()
-	ScopeNode{}.isScope()
 
-	StrOpNode{}.isNode()
 	BinaryNode{}.isNode()
-	NodeTypeIfThenElse{}.isNode()
-	NodeTypeLike{}.isNode()
-	NodeTypeIs{}.isNode()
-	UnaryNode{}.isNode()
 	NodeTypeExtensionCall{}.isNode()
-	NodeValue{}.isNode()
+	NodeTypeIfThenElse{}.isNode()
+	NodeTypeIsEmpty{}.isNode()
+	NodeTypeIs{}.isNode()
+	NodeTypeLike{}.isNode()
 	NodeTypeRecord{}.isNode()
 	NodeTypeSet{}.isNode()
 	NodeTypeVariable{}.isNode()
-
+	NodeValue{}.isNode()
+	ScopeNode{}.isScope()
+	StrOpNode{}.isNode()
+	UnaryNode{}.isNode()
 }
 
 func TestAsNode(t *testing.T) {

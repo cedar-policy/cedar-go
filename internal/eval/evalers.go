@@ -670,15 +670,12 @@ func (n *containsAllEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	result := true
-	rhs.Iterate(func(e types.Value) bool {
+	for e := range rhs.All() {
 		if !lhs.Contains(e) {
-			result = false
-			return false
+			return types.Boolean(false), nil
 		}
-		return true
-	})
-	return types.Boolean(result), nil
+	}
+	return types.Boolean(true), nil
 }
 
 // containsAnyEval
@@ -702,15 +699,12 @@ func (n *containsAnyEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	result := false
-	rhs.Iterate(func(e types.Value) bool {
+	for e := range rhs.All() {
 		if lhs.Contains(e) {
-			result = true
-			return false
+			return types.Boolean(true), nil
 		}
-		return true
-	})
-	return types.Boolean(result), nil
+	}
+	return types.Boolean(false), nil
 }
 
 // isEmptyEval
@@ -950,15 +944,14 @@ func entityInOne(env Env, entity types.EntityUID, parent types.EntityUID) bool {
 			if fe.Parents.Contains(parent) {
 				return true
 			}
-			fe.Parents.Iterate(func(k types.EntityUID) bool {
+			for k := range fe.Parents.All() {
 				p, ok := env.Entities.Get(k)
 				if !ok || p.Parents.Len() == 0 || k == entity || known.Contains(k) {
-					return true
+					continue
 				}
 				todo = append(todo, k)
 				known.Add(k)
-				return true
-			})
+			}
 		}
 		if len(todo) == 0 {
 			return false
@@ -979,15 +972,14 @@ func entityInSet(env Env, entity types.EntityUID, parents mapset.Container[types
 			if fe.Parents.Intersects(parents) {
 				return true
 			}
-			fe.Parents.Iterate(func(k types.EntityUID) bool {
+			for k := range fe.Parents.All() {
 				p, ok := env.Entities.Get(k)
 				if !ok || p.Parents.Len() == 0 || k == entity || known.Contains(k) {
-					return true
+					continue
 				}
 				todo = append(todo, k)
 				known.Add(k)
-				return true
-			})
+			}
 		}
 		if len(todo) == 0 {
 			return false
@@ -1016,17 +1008,12 @@ func doInEval(env Env, lhs types.EntityUID, rhs types.Value) (types.Value, error
 		return types.Boolean(entityInOne(env, lhs, rhsv)), nil
 	case types.Set:
 		query := mapset.Make[types.EntityUID](rhsv.Len())
-		var err error
-		rhsv.Iterate(func(rhv types.Value) bool {
-			var e types.EntityUID
-			if e, err = ValueToEntity(rhv); err != nil {
-				return false
+		for rhv := range rhsv.All() {
+			e, err := ValueToEntity(rhv)
+			if err != nil {
+				return zeroValue(), err
 			}
 			query.Add(e)
-			return true
-		})
-		if err != nil {
-			return zeroValue(), err
 		}
 		return types.Boolean(entityInSet(env, lhs, query)), nil
 	}
