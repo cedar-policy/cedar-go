@@ -140,8 +140,8 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entities types.EntityGe
 		}
 	}
 	pm := ps.Map()
-	be.policies = make(map[types.PolicyID]*ast.Policy, len(pm))
-	for k, p := range pm {
+	be.policies = make(map[types.PolicyID]*ast.Policy, len(pm.StaticPolicies))
+	for k, p := range pm.StaticPolicies {
 		be.policies[k] = (*ast.Policy)(p.AST())
 	}
 	be.callback = cb
