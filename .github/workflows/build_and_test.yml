@@ -19,10 +19,13 @@ jobs:
         run: go build -v ./...
 
       - name: Test
-        run: go test ./...
+        run: go test -coverprofile=coverage.out ./...
 
       - name: Lint
         uses: golangci/golangci-lint-action@v7
 
       - name: Fuzz
         run: mkdir -p testdata && go test -fuzz=FuzzParse -fuzztime 60s && go test -fuzz=FuzzTokenize -fuzztime 60s
+
+      - name: Coverage check
+        run: go tool cover -func=coverage.out | sed 's/%$//' | awk '{ if ($3 < 100.0) { printf "Insufficient code coverage for %s\n", $0; failed=1 } } END { exit failed }'
