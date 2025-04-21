@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
 	"maps"
 	"slices"
 
@@ -111,7 +112,7 @@ var errInvalidPart = fmt.Errorf("invalid part")
 //   - It will error in case of a callback error.
 //
 // The result passed to the callback must be used / cloned immediately and not modified.
-func Authorize(ctx context.Context, ps *cedar.PolicySet, entities types.EntityGetter, request Request, cb Callback) error {
+func Authorize(ctx context.Context, policies iter.Seq2[types.PolicyID, *cedar.Policy], entities types.EntityGetter, request Request, cb Callback) error {
 	be := &batchEvaler{}
 	var found mapset.MapSet[types.String]
 	findVariables(&found, request.Principal)
@@ -133,9 +134,8 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entities types.EntityGe
 			return nil
 		}
 	}
-	pm := ps.Map()
-	be.policies = make(map[types.PolicyID]*ast.Policy, len(pm))
-	for k, p := range pm {
+	be.policies = map[types.PolicyID]*ast.Policy{}
+	for k, p := range policies {
 		be.policies[k] = (*ast.Policy)(p.AST())
 	}
 	be.callback = cb

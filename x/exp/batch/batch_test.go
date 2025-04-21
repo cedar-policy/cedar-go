@@ -259,7 +259,7 @@ func TestBatch(t *testing.T) {
 			ps := cedar.NewPolicySet()
 			ps.Add("0", cedar.NewPolicyFromAST((*publicast.Policy)(tt.policy)))
 
-			err := Authorize(context.Background(), ps, tt.entities, tt.request, func(br Result) error {
+			err := Authorize(context.Background(), ps.All(), tt.entities, tt.request, func(br Result) error {
 				// Need to clone this because it could be mutated in successive authorizations
 				br.Values = maps.Clone(br.Values)
 				res = append(res, br)
@@ -278,18 +278,21 @@ func TestBatch(t *testing.T) {
 	}
 }
 
+func emptyPolicyIter(_ func(cedar.PolicyID, *cedar.Policy) bool) {
+}
+
 func TestBatchErrors(t *testing.T) {
 	t.Parallel()
 	t.Run("unboundVariables", func(t *testing.T) {
 		t.Parallel()
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: Variable("bananas"),
 		}, func(_ Result) error { return nil },
 		)
 		testutil.ErrorIs(t, err, errUnboundVariable)
 	})
 	t.Run("unusedVariables", func(t *testing.T) {
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Variables: Variables{
 				"bananas": []types.Value{types.String("test")},
 			},
@@ -300,7 +303,7 @@ func TestBatchErrors(t *testing.T) {
 
 	t.Run("nothingTodoNotError", func(t *testing.T) {
 		var total int
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: Variable("bananas"),
 			Variables: Variables{
 				"bananas": nil,
@@ -313,7 +316,7 @@ func TestBatchErrors(t *testing.T) {
 	})
 
 	t.Run("missingPrincipal", func(t *testing.T) {
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: nil,
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
@@ -323,7 +326,7 @@ func TestBatchErrors(t *testing.T) {
 		testutil.ErrorIs(t, err, errMissingPart)
 	})
 	t.Run("missingAction", func(t *testing.T) {
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    nil,
 			Resource:  types.NewEntityUID("Resource", "resource"),
@@ -333,7 +336,7 @@ func TestBatchErrors(t *testing.T) {
 		testutil.ErrorIs(t, err, errMissingPart)
 	})
 	t.Run("missingPrincipal", func(t *testing.T) {
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  nil,
@@ -343,7 +346,7 @@ func TestBatchErrors(t *testing.T) {
 		testutil.ErrorIs(t, err, errMissingPart)
 	})
 	t.Run("missingPrincipal", func(t *testing.T) {
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
@@ -356,7 +359,7 @@ func TestBatchErrors(t *testing.T) {
 	t.Run("contextCancelled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		err := Authorize(ctx, cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(ctx, emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
@@ -369,7 +372,7 @@ func TestBatchErrors(t *testing.T) {
 	t.Run("firstContextCancelled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		var total int
-		err := Authorize(ctx, cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(ctx, emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  Variable("resource"),
@@ -394,7 +397,7 @@ func TestBatchErrors(t *testing.T) {
 	t.Run("lastContextCancelled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		var total int
-		err := Authorize(ctx, cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(ctx, emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  Variable("resource"),
@@ -421,7 +424,7 @@ func TestBatchErrors(t *testing.T) {
 	t.Run("callbackErrored", func(t *testing.T) {
 		var total int
 		errWant := fmt.Errorf("errWant")
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  Variable("resource"),
@@ -448,7 +451,7 @@ func TestBatchErrors(t *testing.T) {
 	t.Run("contextAndCallbackErrored", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		errWant := fmt.Errorf("errWant")
-		err := Authorize(ctx, cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(ctx, emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  Variable("resource"),
@@ -470,7 +473,7 @@ func TestBatchErrors(t *testing.T) {
 	})
 
 	t.Run("invalidPrincipal", func(t *testing.T) {
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.String("invalid"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
@@ -480,7 +483,7 @@ func TestBatchErrors(t *testing.T) {
 		testutil.ErrorIs(t, err, errInvalidPart)
 	})
 	t.Run("invalidAction", func(t *testing.T) {
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.String("invalid"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
@@ -490,7 +493,7 @@ func TestBatchErrors(t *testing.T) {
 		testutil.ErrorIs(t, err, errInvalidPart)
 	})
 	t.Run("invalidPrincipal", func(t *testing.T) {
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.String("invalid"),
@@ -500,7 +503,7 @@ func TestBatchErrors(t *testing.T) {
 		testutil.ErrorIs(t, err, errInvalidPart)
 	})
 	t.Run("invalidPrincipal", func(t *testing.T) {
-		err := Authorize(context.Background(), cedar.NewPolicySet(), types.EntityMap{}, Request{
+		err := Authorize(context.Background(), emptyPolicyIter, types.EntityMap{}, Request{
 			Principal: types.NewEntityUID("Principal", "principal"),
 			Action:    types.NewEntityUID("Action", "action"),
 			Resource:  types.NewEntityUID("Resource", "resource"),
@@ -700,7 +703,7 @@ func TestIgnoreReasons(t *testing.T) {
 
 			var reasons []types.PolicyID
 			var total int
-			err := Authorize(context.Background(), ps, types.EntityMap{}, tt.Request, func(r Result) error {
+			err := Authorize(context.Background(), ps.All(), types.EntityMap{}, tt.Request, func(r Result) error {
 				total++
 				testutil.Equals(t, r.Decision, tt.Decision)
 				for _, v := range r.Diagnostic.Reasons {
