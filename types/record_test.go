@@ -162,49 +162,50 @@ func TestRecord(t *testing.T) {
 		t.Parallel()
 
 		tests := []struct {
-			name   string
-			rm     types.RecordMap
-			keys   mapset.ImmutableMapSet[types.String]
-			values mapset.ImmutableMapSet[types.Value]
+			name string
+			rm   types.RecordMap
 		}{
-			{name: "empty map", rm: types.RecordMap{}, keys: mapset.Immutable[types.String](), values: mapset.Immutable[types.Value]()},
+			{name: "empty map", rm: types.RecordMap{}},
 			{name: "one item", rm: types.RecordMap{"foo": types.Long(42)}},
 			{name: "two items", rm: types.RecordMap{"foo": types.Long(42), "bar": types.Long(1337)}},
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name+"/All", func(t *testing.T) {
+			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
-				record := types.NewRecord(tt.rm)
+				t.Run("All", func(t *testing.T) {
+					t.Parallel()
+					record := types.NewRecord(tt.rm)
 
-				got := types.RecordMap{}
-				for k, v := range record.All() {
-					got[k] = v
-				}
-				testutil.Equals(t, got, tt.rm)
-			})
+					got := types.RecordMap{}
+					for k, v := range record.All() {
+						got[k] = v
+					}
+					testutil.Equals(t, got, tt.rm)
+				})
 
-			t.Run(tt.name+"/Keys", func(t *testing.T) {
-				t.Parallel()
-				record := types.NewRecord(tt.rm)
+				t.Run("Keys", func(t *testing.T) {
+					t.Parallel()
+					record := types.NewRecord(tt.rm)
 
-				got := mapset.Make[types.String]()
-				for k := range record.Keys() {
-					got.Add(k)
-				}
-				testutil.Equals(t, got.Equal(mapset.Immutable(slices.Collect(maps.Keys(tt.rm))...)), true)
+					got := mapset.Make[types.String]()
+					for k := range record.Keys() {
+						got.Add(k)
+					}
+					testutil.Equals(t, got.Equal(mapset.Immutable(slices.Collect(maps.Keys(tt.rm))...)), true)
 
-			})
+				})
 
-			t.Run(tt.name+"/Values", func(t *testing.T) {
-				t.Parallel()
-				record := types.NewRecord(tt.rm)
+				t.Run("Values", func(t *testing.T) {
+					t.Parallel()
+					record := types.NewRecord(tt.rm)
 
-				got := mapset.Make[types.Value]()
-				for v := range record.Values() {
-					got.Add(v)
-				}
-				testutil.Equals(t, got.Equal(mapset.Immutable(slices.Collect(maps.Values(tt.rm))...)), true)
+					got := mapset.Make[types.Value]()
+					for v := range record.Values() {
+						got.Add(v)
+					}
+					testutil.Equals(t, got.Equal(mapset.Immutable(slices.Collect(maps.Values(tt.rm))...)), true)
+				})
 			})
 		}
 	})
@@ -227,66 +228,59 @@ func TestRecord(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			t.Run(tt.name+"/All", func(t *testing.T) {
+			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
+				t.Run("All", func(t *testing.T) {
+					t.Parallel()
 
-				got := types.RecordMap{}
-				var i int
-				for k, v := range record.All() {
-					if i == tt.breakOn {
-						break
+					got := types.RecordMap{}
+					var i int
+					for k, v := range record.All() {
+						if i == tt.breakOn {
+							break
+						}
+						i++
+						got[k] = v
 					}
-					i++
-					got[k] = v
-				}
-				testutil.Equals(t, len(got), tt.breakOn)
-			})
+					testutil.Equals(t, len(got), tt.breakOn)
+				})
 
-			t.Run(tt.name+"/Keys", func(t *testing.T) {
-				t.Parallel()
+				t.Run("Keys", func(t *testing.T) {
+					t.Parallel()
 
-				got := mapset.Make[types.String]()
-				var i int
-				for k := range record.Keys() {
-					if i == tt.breakOn {
-						break
+					got := mapset.Make[types.String]()
+					var i int
+					for k := range record.Keys() {
+						if i == tt.breakOn {
+							break
+						}
+						i++
+						got.Add(k)
 					}
-					i++
-					got.Add(k)
-				}
-				testutil.Equals(t, got.Len(), tt.breakOn)
-				for k := range got.All() {
-					_, ok := record.Get(k)
-					testutil.Equals(t, ok, true)
-				}
-			})
-
-			t.Run(tt.name+"/Values", func(t *testing.T) {
-				t.Parallel()
-
-				got := mapset.Make[types.Value]()
-				var i int
-				for k := range record.Values() {
-					if i == tt.breakOn {
-						break
+					testutil.Equals(t, got.Len(), tt.breakOn)
+					for k := range got.All() {
+						_, ok := record.Get(k)
+						testutil.Equals(t, ok, true)
 					}
-					i++
-					got.Add(k)
-				}
-				testutil.Equals(t, got.Len(), tt.breakOn)
-				for v := range got.All() {
-					testutil.Equals(t, slices.Contains(slices.Collect(maps.Values(rm)), v), true)
-				}
-			})
+				})
 
-			t.Run(tt.name+"/Values", func(t *testing.T) {
-				t.Parallel()
+				t.Run("Values", func(t *testing.T) {
+					t.Parallel()
 
-				gotValues := mapset.Make[types.Value]()
-				for v := range record.Values() {
-					gotValues.Add(v)
-				}
-				testutil.Equals(t, gotValues.Equal(mapset.Immutable(slices.Collect(maps.Values(rm))...)), true)
+					got := mapset.Make[types.Value]()
+					var i int
+					for k := range record.Values() {
+						if i == tt.breakOn {
+							break
+						}
+						i++
+						got.Add(k)
+					}
+					testutil.Equals(t, got.Len(), tt.breakOn)
+					for v := range got.All() {
+						testutil.Equals(t, slices.Contains(slices.Collect(maps.Values(rm)), v), true)
+					}
+				})
 			})
 		}
 	})
