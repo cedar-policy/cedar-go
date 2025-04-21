@@ -7,9 +7,15 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
+// AuthorizationPolicySet is an interface which abstracts an iterable set of policies.
+type AuthorizationPolicySet interface {
+	// All returns an iterator over all the policies in the set
+	All() iter.Seq2[PolicyID, *Policy]
+}
+
 // Authorize uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
-func Authorize(policies iter.Seq2[PolicyID, *Policy], entities types.EntityGetter, req Request) (Decision, Diagnostic) {
+func Authorize(policies AuthorizationPolicySet, entities types.EntityGetter, req Request) (Decision, Diagnostic) {
 	if entities == nil {
 		var zero types.EntityMap
 		entities = zero
@@ -29,7 +35,7 @@ func Authorize(policies iter.Seq2[PolicyID, *Policy], entities types.EntityGette
 	// - All policy should be run to collect errors
 	// - For permit, all permits must be run to collect annotations
 	// - For forbid, forbids must be run to collect annotations
-	for id, po := range policies {
+	for id, po := range policies.All() {
 		result, err := po.eval.Eval(env)
 		if err != nil {
 			diag.Errors = append(diag.Errors, DiagnosticError{PolicyID: id, Position: po.Position(), Message: err.Error()})

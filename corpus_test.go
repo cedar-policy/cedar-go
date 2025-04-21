@@ -198,7 +198,7 @@ func TestCorpus(t *testing.T) {
 					action := cedar.EntityUID(request.Action)
 					resource := cedar.EntityUID(request.Resource)
 					context := request.Context
-					err := batch.Authorize(ctx, policySet.All(), entities, batch.Request{
+					err := batch.Authorize(ctx, policySet, entities, batch.Request{
 						Principal: batch.Variable("principal"),
 						Action:    batch.Variable("action"),
 						Resource:  batch.Variable("resource"),
