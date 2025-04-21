@@ -139,23 +139,31 @@ If you're looking to integrate Cedar into a production system, please be sure th
 - `x/exp` - code in this directory is not subject to the semantic versioning constraints of the rest of the module and breaking changes may be made at any time.
 - Variadics may be added to functions that do not have them to expand the arguments of a function or method.
 - Concrete types may be replaced with compatible interfaces to expand the variety of arguments a function or method can take.
+- Backwards compatibility is maintained for all Go minor versions released within 6 months of a release of cedar-go.
 
 ## Change log
 
-### New features in 1.2.0
+### 1.2.0
+#### New Features
 - Support for the .isEmpty() operator.
-- A new top-level Authorize() function, which allows authorization against a generic policy iterator instead of requiring a PolicySet. Like the EntityGetter interface does for entities, using a generic iterator enables policy to be retrieved from external sources or for policy to be selected dynamically by the iterator implementation without having to clone an entire PolicySet. Requires Go 1.23.
-- First class Iterator support for EntityUIDSet, Record, Set, and PolicySet container types. Requires Go 1.23.
+- A new top-level Authorize() function, which allows authorization against a generic policy iterator (`AuthorizationPolicySet`) instead of requiring a PolicySet. Like the EntityGetter interface does for entities, using a generic iterator enables policy to be retrieved from external sources or for policy to be selected dynamically by the iterator implementation without having to clone an entire PolicySet.
+- batch.Authorize() likewise now also accepts an `AuthorizationPolicySet`.
+- First class iterator support for EntityUIDSet, Record, Set, and PolicySet container types.
 
-### New features in 1.1.0
+#### Upgrading from 1.1.0
+- cedar-go now requires Go 1.23
+
+### 1.1.0
+#### New features
 - Support for entity tags via the .getTag() and .hasTag() operators.
 
-### New features in 1.0.0
+### 1.0.0
+### New features
 - AST builder methods for Cedar datetime and duration literals and their extension methods have been added
 - AST builder methods for adding extension function calls with uninterpreted strings
 - Small improvement in evaluation runtime performance for large, shallow entity graphs.
 
-### Upgrading from 0.4.x to 1.0.0
+#### Upgrading from 0.4.x to 1.0.0
 
 - The `Parents` field on `types.Entity` has been changed to an immutable set type with an interface similar to `types.Set`
 - The `UnsafeDecimal()` constructor for the `types.Decimal` type has been removed and replaced with the following safe constructors, which return error on overflow:
@@ -176,12 +184,13 @@ If you're looking to integrate Cedar into a production system, please be sure th
 - `PolicySet.Delete()` has been renamed to `PolicySet.Remove()`
 - `types.Set()` now takes variadic arguments of type `types.Value` instead of a single `[]types.Value` argument
 
-### New features in 0.4.0
+### 0.4.0
+#### New features
 
 - `types.Set` is now implemented as a hash set, turning `Set.Contains()` into an O(1) operation, on average. This mitigates a worst case quadratic runtime for the evaluation of the `containsAny()` operator.
 - For convenience, public types, constructors, and constants from the `types` package are now exported via the `cedar` package as well.
 
-### Upgrading from 0.3.x to 0.4.x
+#### Upgrading from 0.3.x to 0.4.x
 
 - `types.Set` is now an immutable type which must be constructed via `types.NewSet()`
   - To iterate the values, use `Set.Iterate()`, which takes an iterator callback.
@@ -191,29 +200,32 @@ If you're looking to integrate Cedar into a production system, please be sure th
   - To iterate the keys and values, use `Record.Iterate()`, which takes an iterator callback.
   - All implementations of `types.Value` are now safe to copy shallowly, so `Record.DeepClone()` has been removed.
 
-### New features in 0.3.2
+### 0.3.2
+#### New features
 
 - An implementation of the `datetime` and `duration` extension types specified in [RFC 80](https://github.com/cedar-policy/rfcs/blob/main/text/0080-datetime-extension.md).
   - Note: While these types have been accepted into the language, they have not yet been formally analyzed in the [specification](https://github.com/cedar-policy/cedar-spec/).
 
-### New features in 0.3.1
+### 0.3.1
+#### New features
 
 - General performance improvements to the evaluator
 - An experimental batch evaluator has been added to `x/exp/batch`
 - Reserved keywords are now rejected in all appropriate places when parsing Cedar text
 - A parsing ambiguity between variables, entity UIDs, and extension functions has been resolved
 
-### Upgrading from 0.2.x to 0.3.x
+#### Upgrading from 0.2.x to 0.3.x
 
 - The JSON marshaling of the Position struct now uses canonical lower-case keys for its fields
 
-### New features in 0.2.0
+### 0.2.0
+#### New features
 
 - A programmatic AST is now available in the `ast` package.
 - Policy sets can be marshaled and unmarshaled from JSON.
 - Policies can also be marshaled to Cedar text.
 
-### Upgrading from 0.1.x to 0.2.x
+#### Upgrading from 0.1.x to 0.2.x
 
 - The Cedar value types have moved from the `cedar` package to the `types` package.
 - The PolicyIDs are now `strings`, previously they were numeric.
