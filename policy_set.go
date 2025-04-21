@@ -20,6 +20,11 @@ type PolicyID = types.PolicyID
 // PolicyMap is a map of policy IDs to policy
 type PolicyMap map[PolicyID]*Policy
 
+// All returns an iterator over the policy IDs and policies in the PolicyMap.
+func (p PolicyMap) All() iter.Seq2[PolicyID, *Policy] {
+	return maps.All(p)
+}
+
 // PolicySet is a set of named policies against which a request can be authorized.
 type PolicySet struct {
 	// policies are stored internally so we can handle performance, concurrency bookkeeping however we want
