@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"iter"
+	"maps"
 	"slices"
-
-	"golang.org/x/exp/maps"
 )
 
 // A Set is an immutable collection of elements that can be of the same or different types.
@@ -42,7 +41,7 @@ func NewSet(v ...Value) Set {
 	// Special case hashVal for empty set to 0 so that the return value of Value.hash() of Set{} and NewSet([]Value{})
 	// are the same
 	var hashVal uint64
-	for _, v := range maps.Values(set) {
+	for v := range maps.Values(set) {
 		hashVal += v.hash()
 	}
 
@@ -100,7 +99,7 @@ func (s Set) Slice() []Value {
 	if s.s == nil {
 		return nil
 	}
-	return maps.Values(s.s)
+	return slices.Collect(maps.Values(s.s))
 }
 
 // Equal returns true if the sets are Equal.
@@ -148,7 +147,7 @@ func (s *Set) UnmarshalJSON(b []byte) error {
 func (s Set) MarshalJSON() ([]byte, error) {
 	w := &bytes.Buffer{}
 	w.WriteByte('[')
-	orderedKeys := maps.Keys(s.s)
+	orderedKeys := slices.Collect(maps.Keys(s.s))
 	slices.Sort(orderedKeys)
 	for i, k := range orderedKeys {
 		if i != 0 {
@@ -172,7 +171,7 @@ func (s Set) String() string { return string(s.MarshalCedar()) }
 func (s Set) MarshalCedar() []byte {
 	var sb bytes.Buffer
 	sb.WriteRune('[')
-	orderedKeys := maps.Keys(s.s)
+	orderedKeys := slices.Collect(maps.Keys(s.s))
 	slices.Sort(orderedKeys)
 	for i, k := range orderedKeys {
 		if i != 0 {

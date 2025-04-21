@@ -63,10 +63,10 @@ func TestMapSet(t *testing.T) {
 
 	t.Run("slice", func(t *testing.T) {
 		s := Make[int]()
-		testutil.Equals(t, s.Slice(), []int{})
+		testutil.Equals(t, s.Slice(), []int(nil))
 
 		s = Make[int](10)
-		testutil.Equals(t, s.Slice(), []int{})
+		testutil.Equals(t, s.Slice(), []int(nil))
 
 		inSlice := []int{1, 2, 3}
 		s = FromItems(inSlice...)

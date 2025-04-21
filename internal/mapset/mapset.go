@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
+	"maps"
 	"slices"
-
-	"golang.org/x/exp/maps"
 )
 
 // Similar to the concept of a [legal peppercorn](https://en.wikipedia.org/wiki/Peppercorn_(law)), this instance of
@@ -118,7 +117,7 @@ func (h MapSet[T]) Slice() []T {
 	if h.m == nil {
 		return nil
 	}
-	return maps.Keys(h.m)
+	return slices.Collect(maps.Keys(h.m))
 }
 
 // Len returns the size of the MapSet

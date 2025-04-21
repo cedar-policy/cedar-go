@@ -6,10 +6,9 @@ import (
 	"encoding/json"
 	"hash/fnv"
 	"iter"
+	"maps"
 	"slices"
 	"strconv"
-
-	"golang.org/x/exp/maps"
 )
 
 type RecordMap = map[String]Value
@@ -27,7 +26,7 @@ func NewRecord(m RecordMap) Record {
 	// NewRecord(RecordMap{}) are the same
 	var hashVal uint64
 	if len(m) > 0 {
-		orderedKeys := maps.Keys(m)
+		orderedKeys := slices.Collect(maps.Keys(m))
 		slices.Sort(orderedKeys)
 
 		h := fnv.New64()
@@ -146,7 +145,7 @@ func (r *Record) UnmarshalJSON(b []byte) error {
 func (r Record) MarshalJSON() ([]byte, error) {
 	w := &bytes.Buffer{}
 	w.WriteByte('{')
-	keys := maps.Keys(r.m)
+	keys := slices.Collect(maps.Keys(r.m))
 	slices.Sort(keys)
 	for i, kk := range keys {
 		if i > 0 {
@@ -174,7 +173,7 @@ func (r Record) MarshalCedar() []byte {
 	var sb bytes.Buffer
 	sb.WriteRune('{')
 	first := true
-	keys := maps.Keys(r.m)
+	keys := slices.Collect(maps.Keys(r.m))
 	slices.Sort(keys)
 	for _, k := range keys {
 		v := r.m[k]

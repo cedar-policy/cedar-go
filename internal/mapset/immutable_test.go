@@ -39,7 +39,7 @@ func TestImmutableMapSet(t *testing.T) {
 
 	t.Run("slice", func(t *testing.T) {
 		s := Immutable[int]()
-		testutil.Equals(t, s.Slice(), []int{})
+		testutil.Equals(t, s.Slice(), []int(nil))
 
 		inSlice := []int{1, 2, 3}
 		s = Immutable[int](inSlice...)
