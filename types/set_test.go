@@ -136,6 +136,77 @@ func TestSet(t *testing.T) {
 		}
 	})
 
+	t.Run("AllEntire", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name   string
+			values []types.Value
+		}{
+			{name: "empty set", values: nil},
+			{name: "one item", values: []types.Value{types.Long(42)}},
+			{name: "two items", values: []types.Value{types.Long(42), types.Long(1337)}},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				set := types.NewSet(tt.values...)
+
+				var got []types.Value
+				for v := range set.All() {
+					got = append(got, v)
+				}
+
+				testutil.Equals(t, len(got), len(tt.values))
+				for _, v := range got {
+					testutil.FatalIf(
+						t,
+						!slices.ContainsFunc(tt.values, func(vv types.Value) bool { return vv.Equal(v) }),
+						"value %v not in input slice %v", v, tt.values,
+					)
+				}
+			})
+		}
+	})
+
+	t.Run("IteratePartial", func(t *testing.T) {
+		t.Parallel()
+
+		set := types.NewSet(types.Long(42), types.Long(1337))
+
+		// It would be nice to know which element or elements were returned when iteration ends early, but iteration
+		// order for Sets is non-deterministic
+		tests := []struct {
+			name    string
+			breakOn int
+		}{
+			{name: "empty record", breakOn: 0},
+			{name: "one item", breakOn: 1},
+			{name: "two items", breakOn: 2},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				var got []types.Value
+				var i int
+				for v := range set.All() {
+					if i == tt.breakOn {
+						break
+					}
+					i++
+					got = append(got, v)
+				}
+
+				testutil.Equals(t, len(got), tt.breakOn)
+				for _, g := range got {
+					testutil.FatalIf(t, !set.Contains(g), "got value %v which is not in set %v", g, set)
+				}
+			})
+		}
+	})
+
 	t.Run("Slice", func(t *testing.T) {
 		t.Parallel()
 

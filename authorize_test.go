@@ -835,6 +835,15 @@ func TestIsAuthorized(t *testing.T) {
 			})
 			testutil.Equals(t, len(diag.Errors), tt.DiagErr)
 			testutil.Equals(t, ok, tt.Want)
+
+			ok, diag = cedar.Authorize(ps, tt.Entities, cedar.Request{
+				Principal: tt.Principal,
+				Action:    tt.Action,
+				Resource:  tt.Resource,
+				Context:   tt.Context,
+			})
+			testutil.Equals(t, len(diag.Errors), tt.DiagErr)
+			testutil.Equals(t, ok, tt.Want)
 		})
 	}
 }

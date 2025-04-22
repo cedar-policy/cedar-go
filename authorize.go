@@ -1,28 +1,21 @@
 package cedar
 
 import (
+	"iter"
+
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-//revive:disable:exported
+// AuthorizationPolicySet is an interface which abstracts an iterable set of policies.
+type AuthorizationPolicySet interface {
+	// All returns an iterator over all the policies in the set
+	All() iter.Seq2[PolicyID, *Policy]
+}
 
-type Request = types.Request
-type Decision = types.Decision
-type Diagnostic = types.Diagnostic
-type DiagnosticReason = types.DiagnosticReason
-type DiagnosticError = types.DiagnosticError
-
-const (
-	Allow = types.Allow
-	Deny  = types.Deny
-)
-
-//revive:enable:exported
-
-// IsAuthorized uses the combination of the PolicySet and Entities to determine
+// Authorize uses the combination of the PolicySet and Entities to determine
 // if the given Request to determine Decision and Diagnostic.
-func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decision, Diagnostic) {
+func Authorize(policies AuthorizationPolicySet, entities types.EntityGetter, req Request) (Decision, Diagnostic) {
 	if entities == nil {
 		var zero types.EntityMap
 		entities = zero
@@ -42,7 +35,7 @@ func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decis
 	// - All policy should be run to collect errors
 	// - For permit, all permits must be run to collect annotations
 	// - For forbid, forbids must be run to collect annotations
-	for id, po := range p.policies {
+	for id, po := range policies.All() {
 		result, err := po.eval.Eval(env)
 		if err != nil {
 			diag.Errors = append(diag.Errors, DiagnosticError{PolicyID: id, Position: po.Position(), Message: err.Error()})

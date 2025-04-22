@@ -106,19 +106,19 @@ type IsResourceScopeNode interface {
 
 type ScopeNode struct{}
 
-func (n ScopeNode) isScope() {}
+func (n ScopeNode) isScope() { _ = 0 } // No-op statement injected for code coverage instrumentation
 
 type PrincipalScopeNode struct{}
 
-func (n PrincipalScopeNode) isPrincipalScope() {}
+func (n PrincipalScopeNode) isPrincipalScope() { _ = 0 } // No-op statement injected for code coverage instrumentation
 
 type ActionScopeNode struct{}
 
-func (n ActionScopeNode) isActionScope() {}
+func (n ActionScopeNode) isActionScope() { _ = 0 } // No-op statement injected for code coverage instrumentation
 
 type ResourceScopeNode struct{}
 
-func (n ResourceScopeNode) isResourceScope() {}
+func (n ResourceScopeNode) isResourceScope() { _ = 0 } // No-op statement injected for code coverage instrumentation
 
 type ScopeTypeAll struct {
 	ScopeNode

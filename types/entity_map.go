@@ -2,10 +2,9 @@ package types
 
 import (
 	"encoding/json"
+	"maps"
 	"slices"
 	"strings"
-
-	"golang.org/x/exp/maps"
 )
 
 // An EntityGetter is an interface for retrieving an Entity by EntityUID.
@@ -21,7 +20,7 @@ var _ EntityGetter = EntityMap{}
 type EntityMap map[EntityUID]Entity
 
 func (e EntityMap) MarshalJSON() ([]byte, error) {
-	s := maps.Values(e)
+	s := slices.Collect(maps.Values(e))
 	slices.SortFunc(s, func(a, b Entity) int {
 		return strings.Compare(a.UID.String(), b.UID.String())
 	})

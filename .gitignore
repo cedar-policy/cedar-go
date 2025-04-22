@@ -1,3 +1,4 @@
 .idea/
 tmp/
 .DS_Store
+coverage.out

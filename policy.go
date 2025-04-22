@@ -7,23 +7,8 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/json"
 	"github.com/cedar-policy/cedar-go/internal/parser"
-	"github.com/cedar-policy/cedar-go/types"
 	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
-
-//revive:disable:exported
-type Annotations = types.Annotations
-
-type Effect = types.Effect
-
-const (
-	Permit = types.Permit
-	Forbid = types.Forbid
-)
-
-type Position = types.Position
-
-//revive:enable:exported
 
 // A Policy is the parsed form of a single Cedar language policy statement.
 type Policy struct {

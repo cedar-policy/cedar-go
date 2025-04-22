@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"maps"
 	"slices"
 
@@ -18,6 +19,11 @@ type PolicyID = types.PolicyID
 
 // PolicyMap is a map of policy IDs to policy
 type PolicyMap map[PolicyID]*Policy
+
+// All returns an iterator over the policy IDs and policies in the PolicyMap.
+func (p PolicyMap) All() iter.Seq2[PolicyID, *Policy] {
+	return maps.All(p)
+}
 
 // PolicySet is a set of named policies against which a request can be authorized.
 type PolicySet struct {
@@ -126,4 +132,23 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 		p.policies[PolicyID(k)] = newPolicy((*internalast.Policy)(v))
 	}
 	return nil
+}
+
+// IsAuthorized uses the combination of the PolicySet and Entities to determine
+// if the given Request to determine Decision and Diagnostic.
+//
+// Deprecated: Use the Authorize() function instead
+func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decision, Diagnostic) {
+	return Authorize(&p, entities, req)
+}
+
+// All returns an iterator over the (PolicyID, *Policy) tuples in the PolicySet
+func (p *PolicySet) All() iter.Seq2[PolicyID, *Policy] {
+	return func(yield func(PolicyID, *Policy) bool) {
+		for k, v := range p.policies {
+			if !yield(k, v) {
+				break
+			}
+		}
+	}
 }

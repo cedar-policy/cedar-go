@@ -338,6 +338,11 @@ func TestASTByTable(t *testing.T) {
 			internalast.Permit().When(internalast.Long(42).ContainsAny(internalast.Long(43))),
 		},
 		{
+			"opContainsIsEmpty",
+			ast.Permit().When(ast.Long(42).IsEmpty()),
+			internalast.Permit().When(internalast.Long(42).IsEmpty()),
+		},
+		{
 			"opAccess",
 			ast.Permit().When(ast.Long(42).Access("key")),
 			internalast.Permit().When(internalast.Long(42).Access("key")),

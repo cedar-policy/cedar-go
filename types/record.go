@@ -5,10 +5,10 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"hash/fnv"
+	"iter"
+	"maps"
 	"slices"
 	"strconv"
-
-	"golang.org/x/exp/maps"
 )
 
 type RecordMap = map[String]Value
@@ -26,7 +26,7 @@ func NewRecord(m RecordMap) Record {
 	// NewRecord(RecordMap{}) are the same
 	var hashVal uint64
 	if len(m) > 0 {
-		orderedKeys := maps.Keys(m)
+		orderedKeys := slices.Collect(maps.Keys(m))
 		slices.Sort(orderedKeys)
 
 		h := fnv.New64()
@@ -53,10 +53,45 @@ func (r Record) Len() int {
 type RecordIterator func(String, Value) bool
 
 // Iterate calls iter for each key/value pair in the record. Iteration order is non-deterministic.
+//
+// Deprecated: Use All(), Keys(), or Values() instead.
 func (r Record) Iterate(iter RecordIterator) {
 	for k, v := range r.m {
 		if !iter(k, v) {
 			break
+		}
+	}
+}
+
+// All returns an iterator over the keys and values in the Record. Iteration order is non-deterministic.
+func (r Record) All() iter.Seq2[String, Value] {
+	return func(yield func(String, Value) bool) {
+		for k, v := range r.m {
+			if !yield(k, v) {
+				break
+			}
+		}
+	}
+}
+
+// Keys returns an iterator over the keys in the Record. Iteration order is non-deterministic.
+func (r Record) Keys() iter.Seq[String] {
+	return func(yield func(String) bool) {
+		for k := range r.m {
+			if !yield(k) {
+				break
+			}
+		}
+	}
+}
+
+// Values returns an iterator over the keys in the Record. Iteration order is non-deterministic.
+func (r Record) Values() iter.Seq[Value] {
+	return func(yield func(Value) bool) {
+		for _, v := range r.m {
+			if !yield(v) {
+				break
+			}
 		}
 	}
 }
@@ -110,7 +145,7 @@ func (r *Record) UnmarshalJSON(b []byte) error {
 func (r Record) MarshalJSON() ([]byte, error) {
 	w := &bytes.Buffer{}
 	w.WriteByte('{')
-	keys := maps.Keys(r.m)
+	keys := slices.Collect(maps.Keys(r.m))
 	slices.Sort(keys)
 	for i, kk := range keys {
 		if i > 0 {
@@ -138,7 +173,7 @@ func (r Record) MarshalCedar() []byte {
 	var sb bytes.Buffer
 	sb.WriteRune('{')
 	first := true
-	keys := maps.Keys(r.m)
+	keys := slices.Collect(maps.Keys(r.m))
 	slices.Sort(keys)
 	for _, k := range keys {
 		v := r.m[k]
