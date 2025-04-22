@@ -56,7 +56,7 @@ func NewPolicySetFromBytes(fileName string, document []byte) (*PolicySet, error)
 
 // Get returns the Policy with the given ID. If a policy with the given ID
 // does not exist, nil is returned.
-func (p PolicySet) Get(policyID PolicyID) *Policy {
+func (p *PolicySet) Get(policyID PolicyID) *Policy {
 	return p.policies[policyID]
 }
 
@@ -77,6 +77,8 @@ func (p *PolicySet) Remove(policyID PolicyID) bool {
 }
 
 // Map returns a new PolicyMap instance of the policies in the PolicySet.
+//
+// Deprecated: use the iterator returned by All() like so: maps.Collect(ps.All())
 func (p *PolicySet) Map() PolicyMap {
 	return maps.Clone(p.policies)
 }
@@ -138,8 +140,8 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 // if the given Request to determine Decision and Diagnostic.
 //
 // Deprecated: Use the Authorize() function instead
-func (p PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decision, Diagnostic) {
-	return Authorize(&p, entities, req)
+func (p *PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decision, Diagnostic) {
+	return Authorize(p, entities, req)
 }
 
 // All returns an iterator over the (PolicyID, *Policy) tuples in the PolicySet
