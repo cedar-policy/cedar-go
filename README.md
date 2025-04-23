@@ -143,11 +143,16 @@ If you're looking to integrate Cedar into a production system, please be sure th
 
 ## Change log
 
+### 1.2.1
+#### New Features
+- Fixes the name of `AuthorizationPolicySet` and receiver types for `PolicySet.Get()` and `PolicySet.IsAuthorized()`
+- Retracts 1.2.0
+
 ### 1.2.0
 #### New Features
 - Support for the .isEmpty() operator.
-- A new top-level Authorize() function, which allows authorization against a generic policy iterator (`AuthorizationPolicySet`) instead of requiring a PolicySet. Like the EntityGetter interface does for entities, using a generic iterator enables policy to be retrieved from external sources or for policy to be selected dynamically by the iterator implementation without having to clone an entire PolicySet.
-- batch.Authorize() likewise now also accepts an `AuthorizationPolicySet`.
+- A new top-level Authorize() function, which allows authorization against a generic policy iterator (`PolicyIterator`) instead of requiring a `PolicySet`. Like the `EntityGetter` interface does for entities, using a generic iterator enables policy to be retrieved from external sources or for policy to be selected dynamically by the iterator implementation without having to clone an entire `PolicySet`.
+- batch.Authorize() likewise now also accepts a `PolicyIterator`.
 - First class iterator support for EntityUIDSet, Record, Set, and PolicySet container types.
 
 #### Upgrading from 1.1.0

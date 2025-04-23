@@ -111,7 +111,7 @@ var errInvalidPart = fmt.Errorf("invalid part")
 //   - It will error in case of a callback error.
 //
 // The result passed to the callback must be used / cloned immediately and not modified.
-func Authorize(ctx context.Context, policies cedar.AuthorizationPolicySet, entities types.EntityGetter, request Request, cb Callback) error {
+func Authorize(ctx context.Context, policies cedar.PolicyIterator, entities types.EntityGetter, request Request, cb Callback) error {
 	be := &batchEvaler{}
 	var found mapset.MapSet[types.String]
 	findVariables(&found, request.Principal)
