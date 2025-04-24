@@ -1,4 +1,4 @@
-package cedar
+package schema
 
 import (
 	"encoding/json"
@@ -86,13 +86,10 @@ func TestSchemaCedarMarshalUnmarshal(t *testing.T) {
 func TestSchemaCedarMarshalEmpty(t *testing.T) {
 	var s Schema
 	s.SetFilename("test.cedar")
-	out, err := s.MarshalCedar()
-	if err != nil {
-		t.Errorf("MarshalCedar() error = %v", err)
+	_, err := s.MarshalCedar()
+	if err == nil {
+		t.Errorf("MarshalCedar() should return an error for empty schema")
 		return
-	}
-	if len(out) != 0 {
-		t.Errorf("MarshalCedar() produced non-empty output for empty schema")
 	}
 }
 

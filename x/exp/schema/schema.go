@@ -1,8 +1,9 @@
-package cedar
+package schema
 
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
 	"github.com/cedar-policy/cedar-go/internal/schema/parser"
@@ -28,6 +29,9 @@ func (old *Schema) UnmarshalCedar(src []byte) (err error) {
 	if err != nil {
 		return err
 	}
+	if old.filename != "" {
+		s.filename = old.filename
+	}
 	*old = s
 	return nil
 }
@@ -38,7 +42,7 @@ func (s *Schema) MarshalCedar() ([]byte, error) {
 		s.humanSchema = ast.ConvertJSON2Human(s.jsonSchema)
 	}
 	if s.humanSchema == nil {
-		return nil, nil
+		return nil, fmt.Errorf("schema is empty")
 	}
 	var buf bytes.Buffer
 	err := ast.Format(s.humanSchema, &buf)

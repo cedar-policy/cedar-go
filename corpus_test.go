@@ -16,6 +16,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/batch"
+	"github.com/cedar-policy/cedar-go/x/exp/schema"
 )
 
 // jsonEntity is not part of entityValue as I can find
@@ -151,7 +152,7 @@ func TestCorpus(t *testing.T) {
 			if err != nil {
 				t.Fatal("error reading schema content", err)
 			}
-			var s cedar.Schema
+			var s schema.Schema
 			s.SetFilename("test.schema")
 			if err := s.UnmarshalCedar(schemaContent); err != nil {
 				t.Fatal("error parsing schema", err, "\n===\n", string(schemaContent))
