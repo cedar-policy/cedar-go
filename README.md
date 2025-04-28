@@ -3,7 +3,6 @@
 ![Cedar Logo](https://github.com/cedar-policy/cedar/blob/main/logo.svg)
 
 ![Build and Test](https://github.com/cedar-policy/cedar-go/actions/workflows/build_and_test.yml/badge.svg)
-![golangci-lint](https://github.com/cedar-policy/cedar-go/actions/workflows/golangci-lint.yml/badge.svg)
 ![Nightly Corpus Test](https://github.com/cedar-policy/cedar-go/actions/workflows/corpus.yml/badge.svg)
 [![Go Reference](https://pkg.go.dev/badge/github.com/cedar-policy/cedar-go.svg)](https://pkg.go.dev/github.com/cedar-policy/cedar-go)
 
