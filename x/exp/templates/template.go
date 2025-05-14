@@ -2,9 +2,11 @@ package templates
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 // Template represents a Cedar policy template that can be linked with slot values
@@ -28,6 +30,12 @@ func (p *Template) SetFilename(fileName string) {
 	p.Position.Filename = fileName
 }
 
+func (p *Template) Slots() []types.SlotID {
+	x := (*ast.Policy)(p)
+
+	return x.Slots()
+}
+
 // LinkedPolicy represents a template that has been linked with specific slot values.
 // It's a wrapper around the internal parser.LinkedPolicy type.
 //type LinkedPolicy parser.LinkedPolicy
@@ -46,11 +54,26 @@ type LinkedPolicy struct {
 //   - slotEnv: A map of slot IDs to entity UIDs that will be substituted into the template
 //
 // Returns a LinkedPolicy that can be rendered into a concrete Policy.
-func (p *PolicySet) LinkTemplate(templateID cedar.PolicyID, linkID cedar.PolicyID, slotEnv map[types.SlotID]types.EntityUID) LinkedPolicy {
+func (p *PolicySet) LinkTemplate(templateID cedar.PolicyID, linkID cedar.PolicyID, slotEnv map[types.SlotID]types.EntityUID) error {
+	template := p.GetTemplate(templateID)
+	if template == nil {
+		return fmt.Errorf("template %s not found", templateID)
+	}
+
+	if len(slotEnv) < len(template.Slots()) {
+		return fmt.Errorf("template %s requires %d variables, slot env has %d", templateID, len(template.Slots()), len(slotEnv))
+	}
+
+	for _, slotID := range template.Slots() {
+		if _, ok := slotEnv[slotID]; !ok {
+			return fmt.Errorf("template %s requires variable %s, missing from slot env", templateID, slotID)
+		}
+	}
+
 	link := LinkedPolicy{templateID, linkID, slotEnv}
 	p.links[linkID] = &link
 
-	return link
+	return nil
 }
 
 // GetTemplate returns the Template with the given ID.

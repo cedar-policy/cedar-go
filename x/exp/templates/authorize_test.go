@@ -24,6 +24,7 @@ func TestIsAuthorizedFromLinkedPolicies(t *testing.T) {
 		Want                        cedar.Decision
 		DiagErr                     int
 		ParseErr                    bool
+		LinkErr                     bool
 	}{
 		{
 			Name:       "simple-permit",
@@ -38,7 +39,184 @@ func TestIsAuthorizedFromLinkedPolicies(t *testing.T) {
 			Want:       cedar.Allow,
 			DiagErr:    0,
 		},
+		{
+			Name:       "simple-forbid",
+			Policy:     `forbid(principal == ?principal,action,resource);`,
+			TemplateID: "template0",
+			LinkEnv:    map[types.SlotID]types.EntityUID{"?principal": cuzco},
+			Entities:   cedar.EntityMap{},
+			Principal:  cuzco,
+			Action:     dropTable,
+			Resource:   cedar.NewEntityUID("table", "whatever"),
+			Context:    cedar.Record{},
+			Want:       cedar.Deny,
+			DiagErr:    0,
+		},
+		{
+			Name:       "permit-resource-equals",
+			Policy:     `permit(principal,action,resource == ?resource);`,
+			TemplateID: "template0",
+			LinkEnv:    map[types.SlotID]types.EntityUID{"?resource": cedar.NewEntityUID("table", "whatever")},
+			Entities:   cedar.EntityMap{},
+			Principal:  cuzco,
+			Action:     dropTable,
+			Resource:   cedar.NewEntityUID("table", "whatever"),
+			Context:    cedar.Record{},
+			Want:       cedar.Allow,
+			DiagErr:    0,
+		},
+		{
+			Name:       "permit-when-in-hierarchy",
+			Policy:     `permit(principal in ?principal,action,resource);`,
+			TemplateID: "template0",
+			LinkEnv:    map[types.SlotID]types.EntityUID{"?principal": cedar.NewEntityUID("team", "osiris")},
+			Entities: cedar.EntityMap{
+				cuzco: cedar.Entity{
+					UID:     cuzco,
+					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("team", "osiris")),
+				},
+			},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  cedar.NewEntityUID("table", "whatever"),
+			Context:   cedar.Record{},
+			Want:      cedar.Allow,
+			DiagErr:   0,
+		},
+		{
+			Name:       "permit-when-condition",
+			Policy:     `permit(principal == ?principal,action,resource) when { context.x == 42 };`,
+			TemplateID: "template0",
+			LinkEnv:    map[types.SlotID]types.EntityUID{"?principal": cuzco},
+			Entities:   cedar.EntityMap{},
+			Principal:  cuzco,
+			Action:     dropTable,
+			Resource:   cedar.NewEntityUID("table", "whatever"),
+			Context:    cedar.NewRecord(cedar.RecordMap{"x": cedar.Long(42)}),
+			Want:       cedar.Allow,
+			DiagErr:    0,
+		},
+		{
+			Name:       "permit-when-condition-fails",
+			Policy:     `permit(principal == ?principal,action,resource) when { context.x == 42 };`,
+			TemplateID: "template0",
+			LinkEnv:    map[types.SlotID]types.EntityUID{"?principal": cuzco},
+			Entities:   cedar.EntityMap{},
+			Principal:  cuzco,
+			Action:     dropTable,
+			Resource:   cedar.NewEntityUID("table", "whatever"),
+			Context:    cedar.NewRecord(cedar.RecordMap{"x": cedar.Long(43)}),
+			Want:       cedar.Deny,
+			DiagErr:    0,
+		},
+		{
+			Name:       "permit-requires-entities",
+			Policy:     `permit(principal == ?principal,action,resource) when { principal.x == 42 };`,
+			TemplateID: "template0",
+			LinkEnv:    map[types.SlotID]types.EntityUID{"?principal": cuzco},
+			Entities: cedar.EntityMap{
+				cuzco: cedar.Entity{
+					UID:        cuzco,
+					Attributes: cedar.NewRecord(cedar.RecordMap{"x": cedar.Long(42)}),
+				},
+			},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  cedar.NewEntityUID("table", "whatever"),
+			Context:   cedar.Record{},
+			Want:      cedar.Allow,
+			DiagErr:   0,
+		},
+		{
+			Name:       "multiple-slots-without-action",
+			Policy:     `permit(principal == ?principal,action,resource == ?resource);`,
+			TemplateID: "template0",
+			LinkEnv: map[types.SlotID]types.EntityUID{
+				"?principal": cuzco,
+				"?resource":  cedar.NewEntityUID("table", "whatever"),
+			},
+			Entities:  cedar.EntityMap{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  cedar.NewEntityUID("table", "whatever"),
+			Context:   cedar.Record{},
+			Want:      cedar.Allow,
+			DiagErr:   0,
+		},
+		{
+			Name:       "incorrect-env-size",
+			Policy:     `permit(principal == ?principal,action,resource == ?resource);`,
+			TemplateID: "template0",
+			LinkEnv: map[types.SlotID]types.EntityUID{
+				"?principal": cuzco,
+				// Missing ?resource slot
+			},
+			Entities:  cedar.EntityMap{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  cedar.NewEntityUID("table", "whatever"),
+			Context:   cedar.Record{},
+			Want:      cedar.Deny,
+			LinkErr:   true,
+		},
+		{
+			Name:       "missing-template-slot",
+			Policy:     `permit(principal == ?principal,action,resource == ?resource);`,
+			TemplateID: "template0",
+			LinkEnv: map[types.SlotID]types.EntityUID{
+				"?resource": cedar.NewEntityUID("table", "whatever"),
+			},
+			Entities:  cedar.EntityMap{},
+			Principal: cuzco,
+			Action:    dropTable,
+			Resource:  cedar.NewEntityUID("table", "whatever"),
+			Context:   cedar.Record{},
+			Want:      cedar.Deny,
+			LinkErr:   true,
+		},
+		{
+			Name:       "error-in-policy",
+			Policy:     `permit(principal == ?principal,action,resource) when { resource in "foo" };`,
+			TemplateID: "template0",
+			LinkEnv:    map[types.SlotID]types.EntityUID{"?principal": cuzco},
+			Entities:   cedar.EntityMap{},
+			Principal:  cuzco,
+			Action:     dropTable,
+			Resource:   cedar.NewEntityUID("table", "whatever"),
+			Context:    cedar.Record{},
+			Want:       cedar.Deny,
+			DiagErr:    1,
+		},
+		{
+			Name:       "permit-unless",
+			Policy:     `permit(principal == ?principal,action,resource) unless { context.x > 100 };`,
+			TemplateID: "template0",
+			LinkEnv:    map[types.SlotID]types.EntityUID{"?principal": cuzco},
+			Entities:   cedar.EntityMap{},
+			Principal:  cuzco,
+			Action:     dropTable,
+			Resource:   cedar.NewEntityUID("table", "whatever"),
+			Context:    cedar.NewRecord(cedar.RecordMap{"x": cedar.Long(50)}),
+			Want:       cedar.Allow,
+			DiagErr:    0,
+		},
+		{
+			Name:       "variable-used-in-wrong-place",
+			Policy:     `permit(principal is coder,action,resource) when { principal == ?principal };`,
+			TemplateID: "template0",
+			LinkEnv:    map[types.SlotID]types.EntityUID{"?principal": cuzco},
+			Entities:   cedar.EntityMap{},
+			Principal:  cuzco,
+			Action:     dropTable,
+			Resource:   cedar.NewEntityUID("table", "whatever"),
+			Context:    cedar.Record{},
+			Want:       cedar.Deny,
+			DiagErr:    0,
+			ParseErr:   true,
+			LinkErr:    true,
+		},
 	}
+
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.Name, func(t *testing.T) {
@@ -46,7 +224,8 @@ func TestIsAuthorizedFromLinkedPolicies(t *testing.T) {
 			ps, err := templates.NewPolicySetFromBytes("policy.cedar", []byte(tt.Policy))
 			testutil.Equals(t, err != nil, tt.ParseErr)
 
-			ps.LinkTemplate(tt.TemplateID, "link0", tt.LinkEnv)
+			err = ps.LinkTemplate(tt.TemplateID, "link0", tt.LinkEnv)
+			testutil.Equals(t, err != nil, tt.LinkErr)
 
 			ok, diag := cedar.Authorize(ps, tt.Entities, cedar.Request{
 				Principal: tt.Principal,
