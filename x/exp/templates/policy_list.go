@@ -3,14 +3,15 @@ package templates
 import (
 	"bytes"
 	"fmt"
+	"github.com/cedar-policy/cedar-go"
+	"github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/parser"
-	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 // PolicyList represents a list of un-named Policy's. Cedar documents, unlike the PolicySet form, don't have a means of
 // naming individual policies.
 type PolicyList struct {
-	StaticPolicies []*Policy
+	StaticPolicies []*cedar.Policy
 	Templates      []*Template
 }
 
@@ -40,9 +41,9 @@ func (p *PolicyList) UnmarshalCedar(b []byte) error {
 		return fmt.Errorf("parser error: %w", err)
 	}
 
-	staticPolicies := make([]*Policy, 0, len(res.StaticPolicies))
+	staticPolicies := make([]*cedar.Policy, 0, len(res.StaticPolicies))
 	for _, p := range res.StaticPolicies {
-		newPolicy := newPolicy((*internalast.Policy)(p))
+		newPolicy := cedar.NewPolicyFromAST((*ast.Policy)(p))
 		staticPolicies = append(staticPolicies, newPolicy)
 	}
 
