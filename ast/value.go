@@ -59,6 +59,7 @@ type Pair struct {
 	Value Node
 }
 
+// Pairs is a slice of Pair elements
 type Pairs []Pair
 
 // Record creates a record node.  In the case where duplicate keys exist, the latter value will be preserved.
@@ -75,15 +76,17 @@ func EntityUID(typ types.Ident, id types.String) Node {
 	return wrapNode(ast.EntityUID(typ, id))
 }
 
-// IPAddr creates an value node containing an IPAddr.
+// IPAddr creates a value node containing an IPAddr.
 func IPAddr[T netip.Prefix | types.IPAddr](i T) Node {
 	return wrapNode(ast.IPAddr(types.IPAddr(i)))
 }
 
+// Datetime creates a value node containing a timestamp
 func Datetime(t time.Time) Node {
 	return Value(types.NewDatetime(t))
 }
 
+// Duration creates a value node containing a duration
 func Duration(d time.Duration) Node {
 	return Value(types.NewDuration(d))
 }

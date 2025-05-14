@@ -21,19 +21,19 @@ type StrOpNode struct {
 	Value types.String
 }
 
-func (n StrOpNode) isNode() {}
+func (n StrOpNode) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
 
 type BinaryNode struct {
 	Left, Right IsNode
 }
 
-func (n BinaryNode) isNode() {}
+func (n BinaryNode) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
 
 type NodeTypeIfThenElse struct {
 	If, Then, Else IsNode
 }
 
-func (n NodeTypeIfThenElse) isNode() {}
+func (n NodeTypeIfThenElse) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
 
 type NodeTypeOr struct{ BinaryNode }
 
@@ -74,14 +74,14 @@ type NodeTypeLike struct {
 	Value types.Pattern
 }
 
-func (n NodeTypeLike) isNode() {}
+func (n NodeTypeLike) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
 
 type NodeTypeIs struct {
 	Left       IsNode
 	EntityType types.EntityType
 }
 
-func (n NodeTypeIs) isNode() {}
+func (n NodeTypeIs) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
 
 type NodeTypeIsIn struct {
 	NodeTypeIs
@@ -106,7 +106,7 @@ type UnaryNode struct {
 	Arg IsNode
 }
 
-func (n UnaryNode) isNode() {}
+func (n UnaryNode) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
 
 type NodeTypeNegate struct{ UnaryNode }
 type NodeTypeNot struct{ UnaryNode }
@@ -120,7 +120,7 @@ type NodeTypeExtensionCall struct {
 	Args []IsNode
 }
 
-func (n NodeTypeExtensionCall) isNode() {}
+func (n NodeTypeExtensionCall) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
 
 func stripNodes(args []Node) []IsNode {
 	if args == nil {
@@ -162,11 +162,15 @@ type NodeTypeContainsAny struct {
 	BinaryNode
 }
 
+type NodeTypeIsEmpty struct {
+	UnaryNode
+}
+
 type NodeValue struct {
 	Value types.Value
 }
 
-func (n NodeValue) isNode() {}
+func (n NodeValue) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
 
 type RecordElementNode struct {
 	Key   types.String
@@ -177,19 +181,19 @@ type NodeTypeRecord struct {
 	Elements []RecordElementNode
 }
 
-func (n NodeTypeRecord) isNode() {}
+func (n NodeTypeRecord) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
 
 type NodeTypeSet struct {
 	Elements []IsNode
 }
 
-func (n NodeTypeSet) isNode() {}
+func (n NodeTypeSet) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
 
 type NodeTypeVariable struct {
 	Name types.String
 }
 
-func (n NodeTypeVariable) isNode() {}
+func (n NodeTypeVariable) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
 
 type IsNode interface {
 	isNode()

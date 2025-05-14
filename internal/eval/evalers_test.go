@@ -26,8 +26,7 @@ func AssertValue(t *testing.T, got, want types.Value) {
 	t.Helper()
 	testutil.FatalIf(
 		t,
-		!((got == zeroValue() && want == zeroValue()) ||
-			(got != zeroValue() && want != zeroValue() && got.Equal(want))),
+		(got != zeroValue() || want != zeroValue()) && (got == zeroValue() || want == zeroValue() || !got.Equal(want)),
 		"got %v want %v", got, want)
 }
 
@@ -990,10 +989,10 @@ func TestComparableValueComparisonNodes(t *testing.T) {
 func TestIfThenElseNode(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name             string
-		if_, then, else_ Evaler
-		result           types.Value
-		err              error
+		name                       string
+		ifNode, thenNode, elseNode Evaler
+		result                     types.Value
+		err                        error
 	}{
 		{"Then", newLiteralEval(types.True), newLiteralEval(types.Long(42)),
 			newLiteralEval(types.Long(-1)), types.Long(42),
@@ -1010,7 +1009,7 @@ func TestIfThenElseNode(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			n := newIfThenElseEval(tt.if_, tt.then, tt.else_)
+			n := newIfThenElseEval(tt.ifNode, tt.thenNode, tt.elseNode)
 			v, err := n.Eval(Env{})
 			testutil.ErrorIs(t, err, tt.err)
 			testutil.Equals(t, v, tt.result)
@@ -1296,6 +1295,53 @@ func TestContainsAnyNode(t *testing.T) {
 		testutil.OK(t, err)
 		testutil.Equals(t, val.(types.Boolean), types.False)
 	})
+}
+
+func TestIsEmptyNode(t *testing.T) {
+	t.Parallel()
+	{
+		tests := []struct {
+			name string
+			lhs  Evaler
+			err  error
+		}{
+			{"LhsError", newErrorEval(errTest), errTest},
+			{"LhsTypeError", newLiteralEval(types.True), ErrType},
+		}
+		for _, tt := range tests {
+			tt := tt
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				n := newIsEmptyEval(tt.lhs)
+				v, err := n.Eval(Env{})
+				testutil.ErrorIs(t, err, tt.err)
+				AssertZeroValue(t, v)
+			})
+		}
+	}
+	{
+		empty := types.Set{}
+		trueOnly := types.NewSet(types.True)
+
+		tests := []struct {
+			name   string
+			lhs    Evaler
+			result bool
+		}{
+			{"emptyEmpty", newLiteralEval(empty), true},
+			{"trueAndOneEmpty", newLiteralEval(trueOnly), false},
+		}
+		for _, tt := range tests {
+			tt := tt
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				n := newIsEmptyEval(tt.lhs)
+				v, err := n.Eval(Env{})
+				testutil.OK(t, err)
+				AssertBoolValue(t, v, tt.result)
+			})
+		}
+	}
 }
 
 func TestRecordLiteralNode(t *testing.T) {
@@ -1815,11 +1861,9 @@ func TestEntityIn(t *testing.T) {
 			testutil.Equals(t, res, tt.result)
 		})
 	}
+	// This test will run for a very long time (O(2^100)) if there isn't caching.
 	t.Run("exponentialWithoutCaching", func(t *testing.T) {
-		t.Parallel(
-		// This test will run for a very long time (O(2^100)) if there isn't caching.
-		)
-
+		t.Parallel()
 		entityMap := types.EntityMap{}
 		for i := 0; i < 100; i++ {
 			p := types.NewEntityUIDSet(

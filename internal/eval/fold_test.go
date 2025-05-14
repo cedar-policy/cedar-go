@@ -454,6 +454,11 @@ func TestFoldPolicy(t *testing.T) {
 			ast.Permit().When(ast.Long(42).ContainsAny(ast.Long(43))),
 		},
 		{
+			"opIsEmpty",
+			ast.Permit().When(ast.Long(42).IsEmpty()),
+			ast.Permit().When(ast.Long(42).IsEmpty()),
+		},
+		{
 			"opAccess",
 			ast.Permit().When(ast.Long(42).Access("key")),
 			ast.Permit().When(ast.Long(42).Access("key")),

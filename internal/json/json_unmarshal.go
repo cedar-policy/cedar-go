@@ -191,19 +191,19 @@ func (j isJSON) ToNode() (ast.Node, error) {
 	return left.Is(types.EntityType(j.EntityType)), nil
 }
 func (j ifThenElseJSON) ToNode() (ast.Node, error) {
-	if_, err := j.If.ToNode()
+	ifNode, err := j.If.ToNode()
 	if err != nil {
 		return ast.Node{}, fmt.Errorf("error in if: %w", err)
 	}
-	then, err := j.Then.ToNode()
+	thenNode, err := j.Then.ToNode()
 	if err != nil {
 		return ast.Node{}, fmt.Errorf("error in then: %w", err)
 	}
-	else_, err := j.Else.ToNode()
+	elseNode, err := j.Else.ToNode()
 	if err != nil {
 		return ast.Node{}, fmt.Errorf("error in else: %w", err)
 	}
-	return ast.IfThenElse(if_, then, else_), nil
+	return ast.IfThenElse(ifNode, thenNode, elseNode), nil
 }
 func (j arrayJSON) ToNode() (ast.Node, error) {
 	var nodes []ast.Node
@@ -253,15 +253,15 @@ func (e extensionJSON) ToNode() (ast.Node, error) {
 	return ast.NewExtensionCall(types.Path(k), argNodes...), nil
 }
 
-func (j nodeJSON) ToNode() (ast.Node, error) {
+func (n nodeJSON) ToNode() (ast.Node, error) {
 	switch {
 	// Value
-	case j.Value != nil:
-		return ast.Value(j.Value.v), nil
+	case n.Value != nil:
+		return ast.Value(n.Value.v), nil
 
 	// Var
-	case j.Var != nil:
-		switch *j.Var {
+	case n.Var != nil:
+		switch *n.Var {
 		case consts.Principal:
 			return ast.Principal(), nil
 		case consts.Action:
@@ -271,82 +271,84 @@ func (j nodeJSON) ToNode() (ast.Node, error) {
 		case consts.Context:
 			return ast.Context(), nil
 		}
-		return ast.Node{}, fmt.Errorf("unknown variable: %v", j.Var)
+		return ast.Node{}, fmt.Errorf("unknown variable: %v", n.Var)
 
 	// Slot
 	// Unknown
 
 	// ! or neg operators
-	case j.Not != nil:
-		return j.Not.ToNode(ast.Not)
-	case j.Negate != nil:
-		return j.Negate.ToNode(ast.Negate)
+	case n.Not != nil:
+		return n.Not.ToNode(ast.Not)
+	case n.Negate != nil:
+		return n.Negate.ToNode(ast.Negate)
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny, hasTag, getTag
-	case j.Equals != nil:
-		return j.Equals.ToNode(ast.Node.Equal)
-	case j.NotEquals != nil:
-		return j.NotEquals.ToNode(ast.Node.NotEqual)
-	case j.In != nil:
-		return j.In.ToNode(ast.Node.In)
-	case j.LessThan != nil:
-		return j.LessThan.ToNode(ast.Node.LessThan)
-	case j.LessThanOrEqual != nil:
-		return j.LessThanOrEqual.ToNode(ast.Node.LessThanOrEqual)
-	case j.GreaterThan != nil:
-		return j.GreaterThan.ToNode(ast.Node.GreaterThan)
-	case j.GreaterThanOrEqual != nil:
-		return j.GreaterThanOrEqual.ToNode(ast.Node.GreaterThanOrEqual)
-	case j.And != nil:
-		return j.And.ToNode(ast.Node.And)
-	case j.Or != nil:
-		return j.Or.ToNode(ast.Node.Or)
-	case j.Add != nil:
-		return j.Add.ToNode(ast.Node.Add)
-	case j.Subtract != nil:
-		return j.Subtract.ToNode(ast.Node.Subtract)
-	case j.Multiply != nil:
-		return j.Multiply.ToNode(ast.Node.Multiply)
-	case j.Contains != nil:
-		return j.Contains.ToNode(ast.Node.Contains)
-	case j.ContainsAll != nil:
-		return j.ContainsAll.ToNode(ast.Node.ContainsAll)
-	case j.ContainsAny != nil:
-		return j.ContainsAny.ToNode(ast.Node.ContainsAny)
-	case j.GetTag != nil:
-		return j.GetTag.ToNode(ast.Node.GetTag)
-	case j.HasTag != nil:
-		return j.HasTag.ToNode(ast.Node.HasTag)
+	case n.Equals != nil:
+		return n.Equals.ToNode(ast.Node.Equal)
+	case n.NotEquals != nil:
+		return n.NotEquals.ToNode(ast.Node.NotEqual)
+	case n.In != nil:
+		return n.In.ToNode(ast.Node.In)
+	case n.LessThan != nil:
+		return n.LessThan.ToNode(ast.Node.LessThan)
+	case n.LessThanOrEqual != nil:
+		return n.LessThanOrEqual.ToNode(ast.Node.LessThanOrEqual)
+	case n.GreaterThan != nil:
+		return n.GreaterThan.ToNode(ast.Node.GreaterThan)
+	case n.GreaterThanOrEqual != nil:
+		return n.GreaterThanOrEqual.ToNode(ast.Node.GreaterThanOrEqual)
+	case n.And != nil:
+		return n.And.ToNode(ast.Node.And)
+	case n.Or != nil:
+		return n.Or.ToNode(ast.Node.Or)
+	case n.Add != nil:
+		return n.Add.ToNode(ast.Node.Add)
+	case n.Subtract != nil:
+		return n.Subtract.ToNode(ast.Node.Subtract)
+	case n.Multiply != nil:
+		return n.Multiply.ToNode(ast.Node.Multiply)
+	case n.Contains != nil:
+		return n.Contains.ToNode(ast.Node.Contains)
+	case n.ContainsAll != nil:
+		return n.ContainsAll.ToNode(ast.Node.ContainsAll)
+	case n.ContainsAny != nil:
+		return n.ContainsAny.ToNode(ast.Node.ContainsAny)
+	case n.IsEmpty != nil:
+		return n.IsEmpty.ToNode(ast.Node.IsEmpty)
+	case n.GetTag != nil:
+		return n.GetTag.ToNode(ast.Node.GetTag)
+	case n.HasTag != nil:
+		return n.HasTag.ToNode(ast.Node.HasTag)
 
 	// ., has
-	case j.Access != nil:
-		return j.Access.ToNode(ast.Node.Access)
-	case j.Has != nil:
-		return j.Has.ToNode(ast.Node.Has)
+	case n.Access != nil:
+		return n.Access.ToNode(ast.Node.Access)
+	case n.Has != nil:
+		return n.Has.ToNode(ast.Node.Has)
 
 	// is
-	case j.Is != nil:
-		return j.Is.ToNode()
+	case n.Is != nil:
+		return n.Is.ToNode()
 
 	// like
-	case j.Like != nil:
-		return j.Like.ToNode(ast.Node.Like)
+	case n.Like != nil:
+		return n.Like.ToNode(ast.Node.Like)
 
 	// if-then-else
-	case j.IfThenElse != nil:
-		return j.IfThenElse.ToNode()
+	case n.IfThenElse != nil:
+		return n.IfThenElse.ToNode()
 
 	// Set
-	case j.Set != nil:
-		return j.Set.ToNode()
+	case n.Set != nil:
+		return n.Set.ToNode()
 
 	// Record
-	case j.Record != nil:
-		return j.Record.ToNode()
+	case n.Record != nil:
+		return n.Record.ToNode()
 
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
 	default:
-		return j.ExtensionCall.ToNode()
+		return n.ExtensionCall.ToNode()
 	}
 }
 

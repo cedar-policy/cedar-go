@@ -8,6 +8,8 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
+//revive:disable:exported
+
 //  _____
 // |_   _|   _ _ __   ___  ___
 //   | || | | | '_ \ / _ \/ __|
@@ -43,6 +45,28 @@ type Wildcard = types.Wildcard
 type EntityGetter = types.EntityGetter
 type Value = types.Value
 
+type Request = types.Request
+type Decision = types.Decision
+type Diagnostic = types.Diagnostic
+type DiagnosticReason = types.DiagnosticReason
+type DiagnosticError = types.DiagnosticError
+
+const (
+	Allow = types.Allow
+	Deny  = types.Deny
+)
+
+type Effect = types.Effect
+
+const (
+	Permit = types.Permit
+	Forbid = types.Forbid
+)
+
+type Annotations = types.Annotations
+
+type Position = types.Position
+
 //   ____                _              _
 //  / ___|___  _ __  ___| |_ __ _ _ __ | |_ ___
 // | |   / _ \| '_ \/ __| __/ _` | '_ \| __/ __|
@@ -53,6 +77,8 @@ const (
 	True  = types.True
 	False = types.False
 )
+
+//revive:enable:exported
 
 //   ____                _                   _
 //  / ___|___  _ __  ___| |_ _ __ _   _  ___| |_ ___  _ __ ___

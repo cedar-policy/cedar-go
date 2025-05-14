@@ -7,7 +7,6 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/json"
 	"github.com/cedar-policy/cedar-go/internal/parser"
-	"github.com/cedar-policy/cedar-go/types"
 	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
@@ -73,8 +72,6 @@ func NewPolicyFromAST(astIn *ast.Policy) *Policy {
 	return p
 }
 
-type Annotations = types.Annotations
-
 // Annotations retrieves the annotations associated with this policy.
 func (p *Policy) Annotations() Annotations {
 	res := make(Annotations, len(p.ast.Annotations))
@@ -84,19 +81,10 @@ func (p *Policy) Annotations() Annotations {
 	return res
 }
 
-type Effect = types.Effect
-
-const (
-	Permit = types.Permit
-	Forbid = types.Forbid
-)
-
 // Effect retrieves the effect of this policy.
 func (p *Policy) Effect() Effect {
 	return Effect(p.ast.Effect)
 }
-
-type Position = types.Position
 
 // Position retrieves the position of this policy.
 func (p *Policy) Position() Position {

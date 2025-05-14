@@ -98,7 +98,7 @@ func TestCorpus(t *testing.T) {
 	if err != nil {
 		t.Fatal("error reading corpus compressed archive header", err)
 	}
-	defer gzipReader.Close()
+	defer gzipReader.Close() //nolint:errcheck
 
 	buf, err := io.ReadAll(gzipReader)
 	if err != nil {

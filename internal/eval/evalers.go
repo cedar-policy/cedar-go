@@ -532,28 +532,28 @@ func (n *decimalGreaterThanOrEqualEval) Eval(env Env) (types.Value, error) {
 
 // ifThenElseEval
 type ifThenElseEval struct {
-	if_   Evaler
-	then  Evaler
-	else_ Evaler
+	ifNode   Evaler
+	thenNode Evaler
+	elseNode Evaler
 }
 
-func newIfThenElseEval(if_, then, else_ Evaler) *ifThenElseEval {
+func newIfThenElseEval(ifNode, thenNode, elseNode Evaler) *ifThenElseEval {
 	return &ifThenElseEval{
-		if_:   if_,
-		then:  then,
-		else_: else_,
+		ifNode:   ifNode,
+		thenNode: thenNode,
+		elseNode: elseNode,
 	}
 }
 
 func (n *ifThenElseEval) Eval(env Env) (types.Value, error) {
-	cond, err := evalBool(n.if_, env)
+	cond, err := evalBool(n.ifNode, env)
 	if err != nil {
 		return zeroValue(), err
 	}
 	if cond {
-		return n.then.Eval(env)
+		return n.thenNode.Eval(env)
 	}
-	return n.else_.Eval(env)
+	return n.elseNode.Eval(env)
 }
 
 // notEqualNode
@@ -670,15 +670,12 @@ func (n *containsAllEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	result := true
-	rhs.Iterate(func(e types.Value) bool {
+	for e := range rhs.All() {
 		if !lhs.Contains(e) {
-			result = false
-			return false
+			return types.Boolean(false), nil
 		}
-		return true
-	})
-	return types.Boolean(result), nil
+	}
+	return types.Boolean(true), nil
 }
 
 // containsAnyEval
@@ -702,15 +699,29 @@ func (n *containsAnyEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	result := false
-	rhs.Iterate(func(e types.Value) bool {
+	for e := range rhs.All() {
 		if lhs.Contains(e) {
-			result = true
-			return false
+			return types.Boolean(true), nil
 		}
-		return true
-	})
-	return types.Boolean(result), nil
+	}
+	return types.Boolean(false), nil
+}
+
+// isEmptyEval
+type isEmptyEval struct {
+	lhs Evaler
+}
+
+func newIsEmptyEval(lhs Evaler) Evaler {
+	return &isEmptyEval{lhs: lhs}
+}
+
+func (n *isEmptyEval) Eval(env Env) (types.Value, error) {
+	lhs, err := evalSet(n.lhs, env)
+	if err != nil {
+		return zeroValue(), err
+	}
+	return types.Boolean(lhs.Len() == 0), nil
 }
 
 // recordLiteralEval
@@ -933,15 +944,14 @@ func entityInOne(env Env, entity types.EntityUID, parent types.EntityUID) bool {
 			if fe.Parents.Contains(parent) {
 				return true
 			}
-			fe.Parents.Iterate(func(k types.EntityUID) bool {
+			for k := range fe.Parents.All() {
 				p, ok := env.Entities.Get(k)
 				if !ok || p.Parents.Len() == 0 || k == entity || known.Contains(k) {
-					return true
+					continue
 				}
 				todo = append(todo, k)
 				known.Add(k)
-				return true
-			})
+			}
 		}
 		if len(todo) == 0 {
 			return false
@@ -962,15 +972,14 @@ func entityInSet(env Env, entity types.EntityUID, parents mapset.Container[types
 			if fe.Parents.Intersects(parents) {
 				return true
 			}
-			fe.Parents.Iterate(func(k types.EntityUID) bool {
+			for k := range fe.Parents.All() {
 				p, ok := env.Entities.Get(k)
 				if !ok || p.Parents.Len() == 0 || k == entity || known.Contains(k) {
-					return true
+					continue
 				}
 				todo = append(todo, k)
 				known.Add(k)
-				return true
-			})
+			}
 		}
 		if len(todo) == 0 {
 			return false
@@ -999,17 +1008,12 @@ func doInEval(env Env, lhs types.EntityUID, rhs types.Value) (types.Value, error
 		return types.Boolean(entityInOne(env, lhs, rhsv)), nil
 	case types.Set:
 		query := mapset.Make[types.EntityUID](rhsv.Len())
-		var err error
-		rhsv.Iterate(func(rhv types.Value) bool {
-			var e types.EntityUID
-			if e, err = ValueToEntity(rhv); err != nil {
-				return false
+		for rhv := range rhsv.All() {
+			e, err := ValueToEntity(rhv)
+			if err != nil {
+				return zeroValue(), err
 			}
 			query.Add(e)
-			return true
-		})
-		if err != nil {
-			return zeroValue(), err
 		}
 		return types.Boolean(entityInSet(env, lhs, query)), nil
 	}
@@ -1035,6 +1039,7 @@ func (n *isEval) Eval(env Env) (types.Value, error) {
 	return types.Boolean(lhs.Type == n.rhs), nil
 }
 
+// isInEval
 type isInEval struct {
 	lhs Evaler
 	is  types.EntityType
@@ -1209,54 +1214,54 @@ func newExtensionEval(name types.Path, args []Evaler) Evaler {
 		if i.Args != len(args) {
 			return newErrorEval(fmt.Errorf("%w: %s takes %d parameter(s), but %d provided", errArity, name, i.Args, len(args)))
 		}
-		switch {
-		case name == "datetime":
+		switch name {
+		case "datetime":
 			return newDatetimeLiteralEval(args[0])
-		case name == "decimal":
+		case "decimal":
 			return newDecimalLiteralEval(args[0])
-		case name == "duration":
+		case "duration":
 			return newDurationLiteralEval(args[0])
-		case name == "ip":
+		case "ip":
 			return newIPLiteralEval(args[0])
 
-		case name == "lessThan":
+		case "lessThan":
 			return newDecimalLessThanEval(args[0], args[1])
-		case name == "lessThanOrEqual":
+		case "lessThanOrEqual":
 			return newDecimalLessThanOrEqualEval(args[0], args[1])
-		case name == "greaterThan":
+		case "greaterThan":
 			return newDecimalGreaterThanEval(args[0], args[1])
-		case name == "greaterThanOrEqual":
+		case "greaterThanOrEqual":
 			return newDecimalGreaterThanOrEqualEval(args[0], args[1])
 
-		case name == "isIpv4":
+		case "isIpv4":
 			return newIPTestEval(args[0], ipTestIPv4)
-		case name == "isIpv6":
+		case "isIpv6":
 			return newIPTestEval(args[0], ipTestIPv6)
-		case name == "isLoopback":
+		case "isLoopback":
 			return newIPTestEval(args[0], ipTestLoopback)
-		case name == "isMulticast":
+		case "isMulticast":
 			return newIPTestEval(args[0], ipTestMulticast)
-		case name == "isInRange":
+		case "isInRange":
 			return newIPIsInRangeEval(args[0], args[1])
 
-		case name == "toDate":
+		case "toDate":
 			return newToDateEval(args[0])
-		case name == "toTime":
+		case "toTime":
 			return newToTimeEval(args[0])
-		case name == "toMilliseconds":
+		case "toMilliseconds":
 			return newToMillisecondsEval(args[0])
-		case name == "toSeconds":
+		case "toSeconds":
 			return newToSecondsEval(args[0])
-		case name == "toMinutes":
+		case "toMinutes":
 			return newToMinutesEval(args[0])
-		case name == "toHours":
+		case "toHours":
 			return newToHoursEval(args[0])
-		case name == "toDays":
+		case "toDays":
 			return newToDaysEval(args[0])
 
-		case name == "offset":
+		case "offset":
 			return newOffsetEval(args[0], args[1])
-		case name == "durationSince":
+		case "durationSince":
 			return newDurationSinceEval(args[0], args[1])
 		}
 	}

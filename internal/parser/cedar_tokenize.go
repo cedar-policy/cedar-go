@@ -287,13 +287,13 @@ func (s *scanner) scanInteger(ch rune) rune {
 	return ch
 }
 
-func (s *scanner) scanHexDigits(ch rune, min, max int) rune {
+func (s *scanner) scanHexDigits(ch rune, minDigits, maxDigits int) rune {
 	n := 0
-	for n < max && rust.IsHexadecimal(ch) {
+	for n < maxDigits && rust.IsHexadecimal(ch) {
 		ch = s.next()
 		n++
 	}
-	if n < min || n > max {
+	if n < minDigits || n > maxDigits {
 		s.error("invalid char escape")
 	}
 	return ch

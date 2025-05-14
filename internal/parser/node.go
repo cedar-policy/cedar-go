@@ -24,81 +24,76 @@ func (n NodeTypeAnd) precedenceLevel() nodePrecedenceLevel {
 	return andPrecedence
 }
 
-type RelationNode struct{}
+type relationPrecedenceNode struct{}
 
-func (n RelationNode) precedenceLevel() nodePrecedenceLevel {
+func (n relationPrecedenceNode) precedenceLevel() nodePrecedenceLevel {
 	return relationPrecedence
 }
 
 type NodeTypeLessThan struct {
 	ast.NodeTypeLessThan
-	RelationNode
+	relationPrecedenceNode
 }
 
 type NodeTypeLessThanOrEqual struct {
 	ast.NodeTypeLessThanOrEqual
-	RelationNode
+	relationPrecedenceNode
 }
 type NodeTypeGreaterThan struct {
 	ast.NodeTypeGreaterThan
-	RelationNode
+	relationPrecedenceNode
 }
 type NodeTypeGreaterThanOrEqual struct {
 	ast.NodeTypeGreaterThanOrEqual
-	RelationNode
+	relationPrecedenceNode
 }
 type NodeTypeNotEquals struct {
 	ast.NodeTypeNotEquals
-	RelationNode
+	relationPrecedenceNode
 }
 type NodeTypeEquals struct {
 	ast.NodeTypeEquals
-	RelationNode
+	relationPrecedenceNode
 }
 type NodeTypeIn struct {
 	ast.NodeTypeIn
-	RelationNode
+	relationPrecedenceNode
 }
 
 type NodeTypeHas struct {
 	ast.NodeTypeHas
-	RelationNode
-}
-
-type NodeTypeHasTag struct {
-	ast.NodeTypeHasTag
-	RelationNode
+	relationPrecedenceNode
 }
 
 type NodeTypeLike struct {
 	ast.NodeTypeLike
-	RelationNode
+	relationPrecedenceNode
 }
 
 type NodeTypeIs struct {
 	ast.NodeTypeIs
-	RelationNode
+	relationPrecedenceNode
 }
 
 type NodeTypeIsIn struct {
 	ast.NodeTypeIsIn
-	RelationNode
+	relationPrecedenceNode
 }
 
-type AddNode struct{}
+type addPrecedenceNode struct{}
 
-func (n AddNode) precedenceLevel() nodePrecedenceLevel {
+func (n addPrecedenceNode) precedenceLevel() nodePrecedenceLevel {
 	return addPrecedence
 }
 
 type NodeTypeSub struct {
 	ast.NodeTypeSub
-	AddNode
+	addPrecedenceNode
 }
 
 type NodeTypeAdd struct {
 	ast.NodeTypeAdd
-	AddNode
+	addPrecedenceNode
 }
 
 type NodeTypeMult struct{ ast.NodeTypeMult }
@@ -122,67 +117,73 @@ type NodeTypeNot struct {
 	UnaryNode
 }
 
-type NodeTypeAccess struct{ ast.NodeTypeAccess }
+type accessPrecedenceNode struct{}
 
-func (n NodeTypeAccess) precedenceLevel() nodePrecedenceLevel {
+func (n accessPrecedenceNode) precedenceLevel() nodePrecedenceLevel {
 	return accessPrecedence
 }
 
-type NodeTypeGetTag struct{ ast.NodeTypeGetTag }
-
-func (n NodeTypeGetTag) precedenceLevel() nodePrecedenceLevel {
-	return accessPrecedence
+type NodeTypeAccess struct {
+	ast.NodeTypeAccess
+	accessPrecedenceNode
 }
 
-type NodeTypeExtensionCall struct{ ast.NodeTypeExtensionCall }
-
-func (n NodeTypeExtensionCall) precedenceLevel() nodePrecedenceLevel {
-	return accessPrecedence
+type NodeTypeHasTag struct {
+	ast.NodeTypeHasTag
+	accessPrecedenceNode
 }
 
-type ContainsNode struct{}
-
-func (n ContainsNode) precedenceLevel() nodePrecedenceLevel {
-	return accessPrecedence
+type NodeTypeGetTag struct {
+	ast.NodeTypeGetTag
+	accessPrecedenceNode
 }
 
+type NodeTypeExtensionCall struct {
+	ast.NodeTypeExtensionCall
+	accessPrecedenceNode
+}
 type NodeTypeContains struct {
 	ast.NodeTypeContains
-	ContainsNode
+	accessPrecedenceNode
 }
 type NodeTypeContainsAll struct {
 	ast.NodeTypeContainsAll
-	ContainsNode
+	accessPrecedenceNode
 }
 type NodeTypeContainsAny struct {
 	ast.NodeTypeContainsAny
-	ContainsNode
+	accessPrecedenceNode
 }
 
-type PrimaryNode struct{}
+type NodeTypeIsEmpty struct {
+	ast.NodeTypeIsEmpty
+	accessPrecedenceNode
+}
 
-func (n PrimaryNode) precedenceLevel() nodePrecedenceLevel {
+type primaryPrecedenceNode struct{}
+
+func (n primaryPrecedenceNode) precedenceLevel() nodePrecedenceLevel {
 	return primaryPrecedence
 }
 
 type NodeValue struct {
 	ast.NodeValue
-	PrimaryNode
+	primaryPrecedenceNode
 }
 
 type NodeTypeRecord struct {
 	ast.NodeTypeRecord
-	PrimaryNode
+	primaryPrecedenceNode
 }
 
 type NodeTypeSet struct {
 	ast.NodeTypeSet
-	PrimaryNode
+	primaryPrecedenceNode
 }
 
 type NodeTypeVariable struct {
 	ast.NodeTypeVariable
-	PrimaryNode
+	primaryPrecedenceNode
 }
 
 type nodePrecedenceLevel uint8

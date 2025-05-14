@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"maps"
 	"slices"
 
@@ -13,6 +14,7 @@ import (
 	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
+//revive:disable-next-line:exported
 type PolicyID = types.PolicyID
 
 // PolicyMap is a map of policy IDs to policy
@@ -26,6 +28,11 @@ func makePolicyMap() PolicyMap {
 		StaticPolicies: make(map[PolicyID]*Policy),
 		Templates:      make(map[PolicyID]*Template),
 	}
+}
+
+// All returns an iterator over the policy IDs and policies in the PolicyMap.
+func (p PolicyMap) All() iter.Seq2[PolicyID, *Policy] {
+	return maps.All(p)
 }
 
 // PolicySet is a set of named policies against which a request can be authorized.
@@ -91,6 +98,8 @@ func (p *PolicySet) Remove(policyID PolicyID) bool {
 }
 
 // Map returns a new PolicyMap instance of the policies in the PolicySet.
+//
+// Deprecated: use the iterator returned by All() like so: maps.Collect(ps.All())
 func (p *PolicySet) Map() PolicyMap {
 	return PolicyMap{
 		StaticPolicies: maps.Clone(p.policies.StaticPolicies),
@@ -170,4 +179,23 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 	}
 
 	return nil
+}
+
+// IsAuthorized uses the combination of the PolicySet and Entities to determine
+// if the given Request to determine Decision and Diagnostic.
+//
+// Deprecated: Use the Authorize() function instead
+func (p *PolicySet) IsAuthorized(entities types.EntityGetter, req Request) (Decision, Diagnostic) {
+	return Authorize(p, entities, req)
+}
+
+// All returns an iterator over the (PolicyID, *Policy) tuples in the PolicySet
+func (p *PolicySet) All() iter.Seq2[PolicyID, *Policy] {
+	return func(yield func(PolicyID, *Policy) bool) {
+		for k, v := range p.policies {
+			if !yield(k, v) {
+				break
+			}
+		}
+	}
 }

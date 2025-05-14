@@ -1,8 +1,11 @@
 package types_test
 
 import (
+	"maps"
+	"slices"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -108,14 +111,13 @@ func TestRecord(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				t.Parallel()
-				set := types.NewRecord(tt.values)
+				record := types.NewRecord(tt.values)
 
 				got := types.RecordMap{}
-				set.Iterate(func(k types.String, v types.Value) bool {
+				record.Iterate(func(k types.String, v types.Value) bool {
 					got[k] = v
 					return true
 				})
-
 				testutil.Equals(t, got, tt.values)
 			})
 		}
@@ -152,6 +154,133 @@ func TestRecord(t *testing.T) {
 				})
 
 				testutil.Equals(t, len(got), tt.breakOn)
+			})
+		}
+	})
+
+	t.Run("IteratorsEntire", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name string
+			rm   types.RecordMap
+		}{
+			{name: "empty map", rm: types.RecordMap{}},
+			{name: "one item", rm: types.RecordMap{"foo": types.Long(42)}},
+			{name: "two items", rm: types.RecordMap{"foo": types.Long(42), "bar": types.Long(1337)}},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				t.Run("All", func(t *testing.T) {
+					t.Parallel()
+					record := types.NewRecord(tt.rm)
+
+					got := types.RecordMap{}
+					for k, v := range record.All() {
+						got[k] = v
+					}
+					testutil.Equals(t, got, tt.rm)
+				})
+
+				t.Run("Keys", func(t *testing.T) {
+					t.Parallel()
+					record := types.NewRecord(tt.rm)
+
+					got := mapset.Make[types.String]()
+					for k := range record.Keys() {
+						got.Add(k)
+					}
+					testutil.Equals(t, got.Equal(mapset.Immutable(slices.Collect(maps.Keys(tt.rm))...)), true)
+
+				})
+
+				t.Run("Values", func(t *testing.T) {
+					t.Parallel()
+					record := types.NewRecord(tt.rm)
+
+					got := mapset.Make[types.Value]()
+					for v := range record.Values() {
+						got.Add(v)
+					}
+					testutil.Equals(t, got.Equal(mapset.Immutable(slices.Collect(maps.Values(tt.rm))...)), true)
+				})
+			})
+		}
+	})
+
+	t.Run("IteratorsPartial", func(t *testing.T) {
+		t.Parallel()
+
+		rm := types.RecordMap{"foo": types.Long(42), "bar": types.Long(1337)}
+		record := types.NewRecord(rm)
+
+		// It would be nice to know which element or elements were returned when iteration ends early, but iteration
+		// order for Records is non-deterministic
+		tests := []struct {
+			name    string
+			breakOn int
+		}{
+			{name: "empty record", breakOn: 0},
+			{name: "one item", breakOn: 1},
+			{name: "two items", breakOn: 2},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				t.Run("All", func(t *testing.T) {
+					t.Parallel()
+
+					got := types.RecordMap{}
+					var i int
+					for k, v := range record.All() {
+						if i == tt.breakOn {
+							break
+						}
+						i++
+						got[k] = v
+					}
+					testutil.Equals(t, len(got), tt.breakOn)
+				})
+
+				t.Run("Keys", func(t *testing.T) {
+					t.Parallel()
+
+					got := mapset.Make[types.String]()
+					var i int
+					for k := range record.Keys() {
+						if i == tt.breakOn {
+							break
+						}
+						i++
+						got.Add(k)
+					}
+					testutil.Equals(t, got.Len(), tt.breakOn)
+					for k := range got.All() {
+						_, ok := record.Get(k)
+						testutil.Equals(t, ok, true)
+					}
+				})
+
+				t.Run("Values", func(t *testing.T) {
+					t.Parallel()
+
+					got := mapset.Make[types.Value]()
+					var i int
+					for k := range record.Values() {
+						if i == tt.breakOn {
+							break
+						}
+						i++
+						got.Add(k)
+					}
+					testutil.Equals(t, got.Len(), tt.breakOn)
+					for v := range got.All() {
+						testutil.Equals(t, slices.Contains(slices.Collect(maps.Values(rm)), v), true)
+					}
+				})
 			})
 		}
 	})

@@ -56,10 +56,7 @@ func ParseDatetime(s string) (Datetime, error) {
 	// DD is at offset 8
 	// - is at 4 and 7
 	// YYYY
-	if !(unicode.IsDigit(rune(s[0])) &&
-		unicode.IsDigit(rune(s[1])) &&
-		unicode.IsDigit(rune(s[2])) &&
-		unicode.IsDigit(rune(s[3]))) {
+	if !unicode.IsDigit(rune(s[0])) || !unicode.IsDigit(rune(s[1])) || !unicode.IsDigit(rune(s[2])) || !unicode.IsDigit(rune(s[3])) {
 		return Datetime{}, fmt.Errorf("%w: invalid year", errDatetime)
 	}
 	year = 1000*int(rune(s[0])-'0') +
@@ -72,8 +69,7 @@ func ParseDatetime(s string) (Datetime, error) {
 	}
 
 	// MM
-	if !(unicode.IsDigit(rune(s[5])) &&
-		unicode.IsDigit(rune(s[6]))) {
+	if !unicode.IsDigit(rune(s[5])) || !unicode.IsDigit(rune(s[6])) {
 		return Datetime{}, fmt.Errorf("%w: invalid month", errDatetime)
 	}
 	month = 10*int(rune(s[5])-'0') + int(rune(s[6])-'0')
@@ -86,8 +82,7 @@ func ParseDatetime(s string) (Datetime, error) {
 	}
 
 	// DD
-	if !(unicode.IsDigit(rune(s[8])) &&
-		unicode.IsDigit(rune(s[9]))) {
+	if !unicode.IsDigit(rune(s[8])) || !unicode.IsDigit(rune(s[9])) {
 		return Datetime{}, fmt.Errorf("%w: invalid day", errDatetime)
 	}
 	day = 10*int(rune(s[8])-'0') + int(rune(s[9])-'0')
@@ -118,8 +113,7 @@ func ParseDatetime(s string) (Datetime, error) {
 		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[10])))
 	}
 
-	if !(unicode.IsDigit(rune(s[11])) &&
-		unicode.IsDigit(rune(s[12]))) {
+	if !unicode.IsDigit(rune(s[11])) || !unicode.IsDigit(rune(s[12])) {
 		return Datetime{}, fmt.Errorf("%w: invalid hour", errDatetime)
 	}
 	hour = 10*int(rune(s[11])-'0') + int(rune(s[12])-'0')
@@ -131,8 +125,7 @@ func ParseDatetime(s string) (Datetime, error) {
 		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[13])))
 	}
 
-	if !(unicode.IsDigit(rune(s[14])) &&
-		unicode.IsDigit(rune(s[15]))) {
+	if !unicode.IsDigit(rune(s[14])) || !unicode.IsDigit(rune(s[15])) {
 		return Datetime{}, fmt.Errorf("%w: invalid minute", errDatetime)
 	}
 	minute = 10*int(rune(s[14])-'0') + int(rune(s[15])-'0')
@@ -144,8 +137,7 @@ func ParseDatetime(s string) (Datetime, error) {
 		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[16])))
 	}
 
-	if !(unicode.IsDigit(rune(s[17])) &&
-		unicode.IsDigit(rune(s[18]))) {
+	if !unicode.IsDigit(rune(s[17])) || !unicode.IsDigit(rune(s[18])) {
 		return Datetime{}, fmt.Errorf("%w: invalid second", errDatetime)
 	}
 	second = 10*int(rune(s[17])-'0') + int(rune(s[18])-'0')
@@ -163,9 +155,7 @@ func ParseDatetime(s string) (Datetime, error) {
 			return Datetime{}, fmt.Errorf("%w: invalid millisecond", errDatetime)
 		}
 
-		if !(unicode.IsDigit(rune(s[20])) &&
-			unicode.IsDigit(rune(s[21])) &&
-			unicode.IsDigit(rune(s[22]))) {
+		if !unicode.IsDigit(rune(s[20])) || !unicode.IsDigit(rune(s[21])) || !unicode.IsDigit(rune(s[22])) {
 			return Datetime{}, fmt.Errorf("%w: invalid millisecond", errDatetime)
 		}
 
@@ -197,10 +187,7 @@ func ParseDatetime(s string) (Datetime, error) {
 		}
 
 		// get the time zone offset hhmm.
-		if !(unicode.IsDigit(rune(s[trailerOffset+1])) &&
-			unicode.IsDigit(rune(s[trailerOffset+2])) &&
-			unicode.IsDigit(rune(s[trailerOffset+3])) &&
-			unicode.IsDigit(rune(s[trailerOffset+4]))) {
+		if !unicode.IsDigit(rune(s[trailerOffset+1])) || !unicode.IsDigit(rune(s[trailerOffset+2])) || !unicode.IsDigit(rune(s[trailerOffset+3])) || !unicode.IsDigit(rune(s[trailerOffset+4])) {
 			return Datetime{}, fmt.Errorf("%w: invalid time zone offset", errDatetime)
 		}
 
@@ -236,42 +223,42 @@ func ParseDatetime(s string) (Datetime, error) {
 }
 
 // Equal returns true if the input represents the same timestamp.
-func (a Datetime) Equal(bi Value) bool {
+func (d Datetime) Equal(bi Value) bool {
 	b, ok := bi.(Datetime)
-	return ok && a == b
+	return ok && d == b
 }
 
 // LessThan returns true if value is less than the argument and they
 // are both Datetime values, or an error indicating they aren't
 // comparable otherwise
-func (a Datetime) LessThan(bi Value) (bool, error) {
+func (d Datetime) LessThan(bi Value) (bool, error) {
 	b, ok := bi.(Datetime)
 	if !ok {
 		return false, internal.ErrNotComparable
 	}
-	return a.value < b.value, nil
+	return d.value < b.value, nil
 }
 
 // LessThan returns true if value is less than or equal to the
 // argument and they are both Datetime values, or an error indicating
 // they aren't comparable otherwise
-func (a Datetime) LessThanOrEqual(bi Value) (bool, error) {
+func (d Datetime) LessThanOrEqual(bi Value) (bool, error) {
 	b, ok := bi.(Datetime)
 	if !ok {
 		return false, internal.ErrNotComparable
 	}
-	return a.value <= b.value, nil
+	return d.value <= b.value, nil
 }
 
 // MarshalCedar returns a []byte which, when parsed by the Cedar
 // Parser, returns an Equal Datetime value
-func (a Datetime) MarshalCedar() []byte {
-	return []byte(`datetime("` + a.String() + `")`)
+func (d Datetime) MarshalCedar() []byte {
+	return []byte(`datetime("` + d.String() + `")`)
 }
 
 // String returns an ISO 8601 millisecond precision timestamp
-func (a Datetime) String() string {
-	return time.UnixMilli(a.value).UTC().Format("2006-01-02T15:04:05.000Z")
+func (d Datetime) String() string {
+	return time.UnixMilli(d.value).UTC().Format("2006-01-02T15:04:05.000Z")
 }
 
 // UnmarshalJSON implements encoding/json.Unmarshaler for Datetime
@@ -280,36 +267,36 @@ func (a Datetime) String() string {
 //   - { "__extn": { "fn": "datetime", "arg": "1970-01-01" }}
 //   - { "fn": "datetime", "arg": "1970-01-01" }
 //   - "1970-01-01"
-func (a *Datetime) UnmarshalJSON(b []byte) error {
+func (d *Datetime) UnmarshalJSON(b []byte) error {
 	aa, err := unmarshalExtensionValue(b, "datetime", ParseDatetime)
 	if err != nil {
 		return err
 	}
 
-	*a = aa
+	*d = aa
 	return nil
 }
 
 // MarshalJSON marshals a Cedar Datetime with the explicit representation
-func (a Datetime) MarshalJSON() ([]byte, error) {
+func (d Datetime) MarshalJSON() ([]byte, error) {
 	return json.Marshal(extValueJSON{
 		Extn: &extn{
 			Fn:  "datetime",
-			Arg: a.String(),
+			Arg: d.String(),
 		},
 	})
 }
 
 // Milliseconds returns the number of milliseconds since the Unix epoch
-func (a Datetime) Milliseconds() int64 {
-	return a.value
+func (d Datetime) Milliseconds() int64 {
+	return d.value
 }
 
 // Time returns the UTC time.Time representation of a Datetime.
-func (a Datetime) Time() time.Time {
-	return time.UnixMilli(a.value).UTC()
+func (d Datetime) Time() time.Time {
+	return time.UnixMilli(d.value).UTC()
 }
 
-func (v Datetime) hash() uint64 {
-	return uint64(v.value)
+func (d Datetime) hash() uint64 {
+	return uint64(d.value)
 }

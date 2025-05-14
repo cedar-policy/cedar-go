@@ -2,12 +2,27 @@ package cedar_test
 
 import (
 	"fmt"
+	"maps"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
+
+func TestPolicyMap(t *testing.T) {
+	t.Parallel()
+	t.Run("All", func(t *testing.T) {
+		t.Parallel()
+		pm := cedar.PolicyMap{
+			"foo": cedar.NewPolicyFromAST(ast.Permit()),
+			"bar": cedar.NewPolicyFromAST(ast.Permit()),
+		}
+
+		got := maps.Collect(pm.All())
+		testutil.Equals(t, got, pm)
+	})
+}
 
 func TestNewPolicySetFromFile(t *testing.T) {
 	t.Parallel()
@@ -123,7 +138,7 @@ forbid (
 
 }
 
-func TestPolicyMap(t *testing.T) {
+func TestPolicySetMap(t *testing.T) {
 	t.Parallel()
 	ps, err := cedar.NewPolicySetFromBytes("", []byte(`permit (principal, action, resource);`))
 	testutil.OK(t, err)
@@ -154,5 +169,58 @@ func TestPolicySetJSON(t *testing.T) {
 		out, err := ps.MarshalJSON()
 		testutil.OK(t, err)
 		testutil.Equals(t, string(out), `{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}},"templates":{}}`)
+	})
+}
+
+func TestAll(t *testing.T) {
+	t.Parallel()
+	t.Run("all", func(t *testing.T) {
+		t.Parallel()
+
+		policies := map[cedar.PolicyID]*cedar.Policy{
+			"policy0": cedar.NewPolicyFromAST(ast.Forbid()),
+			"policy1": cedar.NewPolicyFromAST(ast.Forbid()),
+			"policy2": cedar.NewPolicyFromAST(ast.Forbid()),
+		}
+
+		ps := cedar.NewPolicySet()
+		for k, v := range policies {
+			ps.Add(k, v)
+		}
+
+		got := map[cedar.PolicyID]*cedar.Policy{}
+		for k, v := range ps.All() {
+			got[k] = v
+		}
+
+		testutil.Equals(t, policies, got)
+	})
+
+	t.Run("break early", func(t *testing.T) {
+		t.Parallel()
+
+		policies := map[cedar.PolicyID]*cedar.Policy{
+			"policy0": cedar.NewPolicyFromAST(ast.Forbid()),
+			"policy1": cedar.NewPolicyFromAST(ast.Forbid()),
+			"policy2": cedar.NewPolicyFromAST(ast.Forbid()),
+		}
+
+		ps := cedar.NewPolicySet()
+		for k, v := range policies {
+			ps.Add(k, v)
+		}
+
+		got := map[cedar.PolicyID]*cedar.Policy{}
+		for k, v := range ps.All() {
+			got[k] = v
+			if len(got) == 2 {
+				break
+			}
+		}
+
+		testutil.Equals(t, len(got), 2)
+		for k, v := range got {
+			testutil.Equals(t, policies[k], v)
+		}
 	})
 }

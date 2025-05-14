@@ -111,23 +111,17 @@ var errInvalidPart = fmt.Errorf("invalid part")
 //   - It will error in case of a callback error.
 //
 // The result passed to the callback must be used / cloned immediately and not modified.
-func Authorize(ctx context.Context, ps *cedar.PolicySet, entities types.EntityGetter, request Request, cb Callback) error {
+func Authorize(ctx context.Context, policies cedar.PolicyIterator, entities types.EntityGetter, request Request, cb Callback) error {
 	be := &batchEvaler{}
 	var found mapset.MapSet[types.String]
 	findVariables(&found, request.Principal)
 	findVariables(&found, request.Action)
 	findVariables(&found, request.Resource)
 	findVariables(&found, request.Context)
-	var err error
-	found.Iterate(func(key types.String) bool {
+	for key := range found.All() {
 		if _, ok := request.Variables[key]; !ok {
-			err = fmt.Errorf("%w: %v", errUnboundVariable, key)
-			return false
+			return fmt.Errorf("%w: %v", errUnboundVariable, key)
 		}
-		return true
-	})
-	if err != nil {
-		return err
 	}
 	for k := range request.Variables {
 		if !found.Contains(k) {
@@ -139,9 +133,8 @@ func Authorize(ctx context.Context, ps *cedar.PolicySet, entities types.EntityGe
 			return nil
 		}
 	}
-	pm := ps.Map()
-	be.policies = make(map[types.PolicyID]*ast.Policy, len(pm.StaticPolicies))
-	for k, p := range pm.StaticPolicies {
+	be.policies = map[types.PolicyID]*ast.Policy{}
+	for k, p := range policies.All() {
 		be.policies[k] = (*ast.Policy)(p.AST())
 	}
 	be.callback = cb
@@ -349,15 +342,14 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 		}
 	case types.Record:
 		var newMap types.RecordMap
-		t.Iterate(func(kk types.String, vv types.Value) bool {
+		for kk, vv := range t.All() {
 			if vv, delta := cloneSub(vv, k, v); delta && newMap == nil {
 				if newMap == nil {
 					newMap = t.Map()
 				}
 				newMap[kk] = vv
 			}
-			return true
-		})
+		}
 
 		if newMap == nil {
 			return t, false
@@ -368,13 +360,12 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 
 		// Look for deltas. Unfortunately, due to the indeterminate nature of the set iteration order,
 		// we can't pull the same trick as we do for Records above
-		t.Iterate(func(vv types.Value) bool {
+		for vv := range t.All() {
 			if _, delta := cloneSub(vv, k, v); delta {
 				hasDeltas = true
-				return false
+				break
 			}
-			return true
-		})
+		}
 
 		// If no deltas, just return the input Value
 		if !hasDeltas {
@@ -383,11 +374,10 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 
 		// If there were deltas, build a new Set
 		newSlice := make([]types.Value, 0, t.Len())
-		t.Iterate(func(vv types.Value) bool {
+		for vv := range t.All() {
 			vv, _ = cloneSub(vv, k, v)
 			newSlice = append(newSlice, vv)
-			return true
-		})
+		}
 
 		return types.NewSet(newSlice...), true
 	}
@@ -401,14 +391,12 @@ func findVariables(found *mapset.MapSet[types.String], r types.Value) {
 			found.Add(key)
 		}
 	case types.Record:
-		t.Iterate(func(_ types.String, vv types.Value) bool {
+		for vv := range t.Values() {
 			findVariables(found, vv)
-			return true
-		})
+		}
 	case types.Set:
-		t.Iterate(func(vv types.Value) bool {
+		for vv := range t.All() {
 			findVariables(found, vv)
-			return true
-		})
+		}
 	}
 }

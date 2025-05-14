@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"iter"
+	"maps"
 	"slices"
-
-	"golang.org/x/exp/maps"
 )
 
 // Similar to the concept of a [legal peppercorn](https://en.wikipedia.org/wiki/Peppercorn_(law)), this instance of
@@ -92,6 +92,8 @@ func (h MapSet[T]) Intersects(o Container[T]) bool {
 
 // Iterate the items in the set, calling callback for each item. If the callback returns false, iteration is halted.
 // Iteration order is undefined.
+//
+// Deprecated: Use All() instead.
 func (h MapSet[T]) Iterate(callback func(item T) bool) {
 	for item := range h.m {
 		if !callback(item) {
@@ -100,11 +102,22 @@ func (h MapSet[T]) Iterate(callback func(item T) bool) {
 	}
 }
 
+// All returns an iterator over elements in the set. Iteration order is undefined.
+func (h MapSet[T]) All() iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for item := range h.m {
+			if !yield(item) {
+				return
+			}
+		}
+	}
+}
+
 func (h MapSet[T]) Slice() []T {
 	if h.m == nil {
 		return nil
 	}
-	return maps.Keys(h.m)
+	return slices.Collect(maps.Keys(h.m))
 }
 
 // Len returns the size of the MapSet

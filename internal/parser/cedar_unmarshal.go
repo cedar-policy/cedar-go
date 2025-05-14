@@ -155,7 +155,7 @@ func (p *parser) annotation(a *ast.Annotations, known *mapset.MapSet[string]) er
 	// As of 2024-09-13, the ability to use reserved keywords for annotation keys is not documented in the Cedar schema.
 	// This ability was added to the Rust implementation in this commit:
 	// https://github.com/cedar-policy/cedar/commit/5f62c6df06b59abc5634d6668198a826839c6fb7
-	if !(t.isIdent() || t.isReservedKeyword()) {
+	if !t.isIdent() && !t.isReservedKeyword() {
 		return p.errorf("expected ident or reserved keyword")
 	}
 	name := t.Text
@@ -184,9 +184,10 @@ func (p *parser) annotation(a *ast.Annotations, known *mapset.MapSet[string]) er
 
 func (p *parser) effect(a *ast.Annotations) (*ast.Policy, error) {
 	next := p.advance()
-	if next.Text == "permit" {
+	switch next.Text {
+	case "permit":
 		return a.Permit(), nil
-	} else if next.Text == "forbid" {
+	case "forbid":
 		return a.Forbid(), nil
 	}
 
@@ -360,14 +361,14 @@ func (p *parser) action(policy *ast.Policy) error {
 			policy.ActionInSet(entities...)
 			p.advance() // entlist guarantees "]"
 			return nil
-		} else {
-			entity, err := p.entity()
-			if err != nil {
-				return err
-			}
-			policy.ActionIn(entity)
-			return nil
 		}
+
+		entity, err := p.entity()
+		if err != nil {
+			return err
+		}
+		policy.ActionIn(entity)
+		return nil
 	}
 
 	return nil
@@ -554,13 +555,14 @@ func (p *parser) relation() (ast.Node, error) {
 
 	t := p.peek()
 
-	if t.Text == "has" {
+	switch t.Text {
+	case "has":
 		p.advance()
 		return p.has(lhs)
-	} else if t.Text == "like" {
+	case "like":
 		p.advance()
 		return p.like(lhs)
-	} else if t.Text == "is" {
+	case "is":
 		p.advance()
 		return p.is(lhs)
 	}
@@ -738,8 +740,12 @@ func (p *parser) member() (ast.Node, error) {
 	for {
 		var ok bool
 		res, ok, err = p.access(res)
+		if err != nil {
+			return ast.Node{}, err
+		}
+
 		if !ok {
-			return res, err
+			return res, nil
 		}
 	}
 }
@@ -771,14 +777,14 @@ func (p *parser) primary() (ast.Node, error) {
 		if next.Text == "::" || next.Text == "(" {
 			return p.entityOrExtFun(t.Text)
 		}
-		switch {
-		case t.Text == consts.Principal:
+		switch t.Text {
+		case consts.Principal:
 			res = ast.Principal()
-		case t.Text == consts.Action:
+		case consts.Action:
 			res = ast.Action()
-		case t.Text == consts.Resource:
+		case consts.Resource:
 			res = ast.Resource()
-		case t.Text == consts.Context:
+		case consts.Context:
 			res = ast.Context()
 		default:
 			return res, p.errorf("invalid primary")
@@ -924,6 +930,20 @@ func (p *parser) recordEntry() (string, ast.Node, error) {
 	return key, value, nil
 }
 
+func (p *parser) parseZeroArgMethodCall(methodName string, f func() ast.Node, args []ast.Node) (ast.Node, error) {
+	if len(args) != 0 {
+		return ast.Node{}, p.errorf("%v expects no arguments", methodName)
+	}
+	return f(), nil
+}
+
+func (p *parser) parseOneArgMethodCall(methodName string, f func(ast.Node) ast.Node, args []ast.Node) (ast.Node, error) {
+	if len(args) != 1 {
+		return ast.Node{}, p.errorf("%v expects one argument", methodName)
+	}
+	return f(args[0]), nil
+}
+
 func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 	t := p.peek()
 	switch t.Text {
@@ -942,18 +962,20 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 			}
 			p.advance() // expressions guarantees ")"
 
-			var knownMethod func(ast.Node, ast.Node) ast.Node
+			var n ast.Node
 			switch methodName {
 			case "contains":
-				knownMethod = ast.Node.Contains
+				n, err = p.parseOneArgMethodCall(methodName, lhs.Contains, exprs)
 			case "containsAll":
-				knownMethod = ast.Node.ContainsAll
+				n, err = p.parseOneArgMethodCall(methodName, lhs.ContainsAll, exprs)
 			case "containsAny":
-				knownMethod = ast.Node.ContainsAny
+				n, err = p.parseOneArgMethodCall(methodName, lhs.ContainsAny, exprs)
 			case "hasTag":
-				knownMethod = ast.Node.HasTag
+				n, err = p.parseOneArgMethodCall(methodName, lhs.HasTag, exprs)
 			case "getTag":
-				knownMethod = ast.Node.GetTag
+				n, err = p.parseOneArgMethodCall(methodName, lhs.GetTag, exprs)
+			case "isEmpty":
+				n, err = p.parseZeroArgMethodCall(methodName, lhs.IsEmpty, exprs)
 			default:
 				// Although the Cedar grammar says that any name can be provided here, the reference implementation
 				// actually checks at parse time whether the name corresponds to a known extension method.
@@ -964,16 +986,17 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 				if !i.IsMethod {
 					return ast.Node{}, false, p.errorf("`%v` is a function, not a method", methodName)
 				}
-				return ast.NewMethodCall(lhs, types.Path(methodName), exprs...), true, nil
+				n = ast.NewMethodCall(lhs, types.Path(methodName), exprs...)
 			}
 
-			if len(exprs) != 1 {
-				return ast.Node{}, false, p.errorf("%v expects one argument", methodName)
+			if err != nil {
+				return ast.Node{}, false, err
 			}
-			return knownMethod(lhs, exprs[0]), true, nil
-		} else {
-			return lhs.Access(types.String(t.Text)), true, nil
+
+			return n, true, nil
 		}
+
+		return lhs.Access(types.String(t.Text)), true, nil
 	case "[":
 		p.advance()
 		t := p.advance()

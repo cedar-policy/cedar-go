@@ -14,6 +14,7 @@ import (
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
+// Policy represents a single Cedar policy statement
 type Policy ast.Policy
 
 func wrapPolicy(p *ast.Policy) *Policy {

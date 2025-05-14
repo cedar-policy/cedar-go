@@ -16,8 +16,7 @@ func AssertValue(t *testing.T, got, want Value) {
 	t.Helper()
 	testutil.FatalIf(
 		t,
-		!((got == zeroValue() && want == zeroValue()) ||
-			(got != zeroValue() && want != zeroValue() && got.Equal(want))),
+		(got != zeroValue() || want != zeroValue()) && (got == zeroValue() || want == zeroValue() || !got.Equal(want)),
 		"got %v want %v", got, want)
 }
 
