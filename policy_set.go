@@ -18,17 +18,7 @@ import (
 type PolicyID = types.PolicyID
 
 // PolicyMap is a map of policy IDs to policy
-type PolicyMap struct {
-	StaticPolicies map[PolicyID]*Policy
-	Templates      map[PolicyID]*Template
-}
-
-func makePolicyMap() PolicyMap {
-	return PolicyMap{
-		StaticPolicies: make(map[PolicyID]*Policy),
-		Templates:      make(map[PolicyID]*Template),
-	}
-}
+type PolicyMap map[PolicyID]*Policy
 
 // All returns an iterator over the policy IDs and policies in the PolicyMap.
 func (p PolicyMap) All() iter.Seq2[PolicyID, *Policy] {
@@ -43,7 +33,7 @@ type PolicySet struct {
 
 // NewPolicySet creates a new, empty PolicySet
 func NewPolicySet() *PolicySet {
-	return &PolicySet{policies: makePolicyMap()}
+	return &PolicySet{policies: PolicyMap{}}
 }
 
 // NewPolicySetFromBytes will create a PolicySet from the given text document with the given file name used in Position
@@ -54,46 +44,35 @@ func NewPolicySet() *PolicySet {
 func NewPolicySetFromBytes(fileName string, document []byte) (*PolicySet, error) {
 	policySlice, err := NewPolicyListFromBytes(fileName, document)
 	if err != nil {
-		return nil, err
+		return &PolicySet{}, err
 	}
-
-	pm := PolicyMap{
-		StaticPolicies: make(map[PolicyID]*Policy, len(policySlice.StaticPolicies)),
-		Templates:      make(map[PolicyID]*Template, len(policySlice.Templates)),
-	}
-
-	for i, p := range policySlice.StaticPolicies {
+	policyMap := make(PolicyMap, len(policySlice))
+	for i, p := range policySlice {
 		policyID := PolicyID(fmt.Sprintf("policy%d", i))
-		pm.StaticPolicies[policyID] = p
+		policyMap[policyID] = p
 	}
-
-	for i, t := range policySlice.Templates {
-		policyID := PolicyID(fmt.Sprintf("template%d", i))
-		pm.Templates[policyID] = t
-	}
-
-	return &PolicySet{policies: pm}, nil
+	return &PolicySet{policies: policyMap}, nil
 }
 
 // Get returns the Policy with the given ID. If a policy with the given ID
 // does not exist, nil is returned.
-func (p PolicySet) Get(policyID PolicyID) *Policy {
-	return p.policies.StaticPolicies[policyID]
+func (p *PolicySet) Get(policyID PolicyID) *Policy {
+	return p.policies[policyID]
 }
 
 // Add inserts or updates a policy with the given ID. Returns true if a policy
 // with the given ID did not already exist in the set.
 func (p *PolicySet) Add(policyID PolicyID, policy *Policy) bool {
-	_, exists := p.policies.StaticPolicies[policyID]
-	p.policies.StaticPolicies[policyID] = policy
+	_, exists := p.policies[policyID]
+	p.policies[policyID] = policy
 	return !exists
 }
 
 // Remove removes a policy from the PolicySet. Returns true if a policy with
 // the given ID already existed in the set.
 func (p *PolicySet) Remove(policyID PolicyID) bool {
-	_, exists := p.policies.StaticPolicies[policyID]
-	delete(p.policies.StaticPolicies, policyID)
+	_, exists := p.policies[policyID]
+	delete(p.policies, policyID)
 	return exists
 }
 
@@ -101,26 +80,14 @@ func (p *PolicySet) Remove(policyID PolicyID) bool {
 //
 // Deprecated: use the iterator returned by All() like so: maps.Collect(ps.All())
 func (p *PolicySet) Map() PolicyMap {
-	return PolicyMap{
-		StaticPolicies: maps.Clone(p.policies.StaticPolicies),
-		Templates:      maps.Clone(p.policies.Templates),
-	}
-}
-
-func (p PolicySet) Len() int {
-	return len(p.policies.StaticPolicies) + len(p.policies.Templates)
+	return maps.Clone(p.policies)
 }
 
 // MarshalCedar emits a concatenated Cedar representation of a PolicySet. The policy names are stripped, but policies
 // are emitted in lexicographical order by ID.
 func (p *PolicySet) MarshalCedar() []byte {
-	setSize := p.Len()
-
-	ids := make([]PolicyID, 0, setSize)
-	for k := range p.policies.StaticPolicies {
-		ids = append(ids, k)
-	}
-	for k := range p.policies.Templates {
+	ids := make([]PolicyID, 0, len(p.policies))
+	for k := range p.policies {
 		ids = append(ids, k)
 	}
 	slices.Sort(ids)
@@ -128,19 +95,14 @@ func (p *PolicySet) MarshalCedar() []byte {
 	var buf bytes.Buffer
 	i := 0
 	for _, id := range ids {
-		if policy, found := p.policies.StaticPolicies[id]; found {
-			buf.Write(policy.MarshalCedar())
-		} else {
-			template := p.policies.Templates[id]
-			buf.Write(template.MarshalCedar())
-		}
+		policy := p.policies[id]
+		buf.Write(policy.MarshalCedar())
 
-		if i < setSize-1 {
+		if i < len(p.policies)-1 {
 			buf.WriteString("\n\n")
 		}
 		i++
 	}
-
 	return buf.Bytes()
 }
 
@@ -149,16 +111,11 @@ func (p *PolicySet) MarshalCedar() []byte {
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
 func (p *PolicySet) MarshalJSON() ([]byte, error) {
 	jsonPolicySet := internaljson.PolicySetJSON{
-		StaticPolicies: make(internaljson.PolicySet, len(p.policies.StaticPolicies)),
-		Templates:      make(internaljson.TemplateSet, len(p.policies.Templates)),
+		StaticPolicies: make(internaljson.PolicySet, len(p.policies)),
 	}
-	for k, v := range p.policies.StaticPolicies {
+	for k, v := range p.policies {
 		jsonPolicySet.StaticPolicies[string(k)] = (*internaljson.Policy)(v.ast)
 	}
-	for k, v := range p.policies.Templates {
-		jsonPolicySet.Templates[string(k)] = (*internaljson.Policy)(v)
-	}
-
 	return json.Marshal(jsonPolicySet)
 }
 
@@ -171,13 +128,11 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*p = PolicySet{
-		policies: makePolicyMap(),
+		policies: make(PolicyMap, len(jsonPolicySet.StaticPolicies)),
 	}
-
 	for k, v := range jsonPolicySet.StaticPolicies {
-		p.policies.StaticPolicies[PolicyID(k)] = newPolicy((*internalast.Policy)(v))
+		p.policies[PolicyID(k)] = newPolicy((*internalast.Policy)(v))
 	}
-
 	return nil
 }
 
