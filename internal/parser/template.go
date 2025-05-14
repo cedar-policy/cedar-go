@@ -3,8 +3,8 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cedar-policy/cedar-go/x/exp/ast"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 type Template ast.Policy
@@ -47,6 +47,27 @@ func (p LinkedPolicy) Render() (Policy, error) {
 			body.Principal = linkScope(body.Principal, p.slotEnv)
 		case types.ResourceSlot:
 			body.Resource = linkScope(body.Resource, p.slotEnv)
+		default:
+			return Policy{}, fmt.Errorf("unknown variable %s", slot)
+		}
+	}
+
+	return Policy(*body), nil
+}
+
+func RenderLinkedPolicy(template *Template, slotEnv map[types.SlotID]types.EntityUID) (Policy, error) {
+	body := template.ClonePolicy().unwrap()
+
+	if len(body.Slots()) != len(slotEnv) {
+		return Policy{}, fmt.Errorf("slot env length %d does not match template slot length %d", len(slotEnv), len(body.Slots()))
+	}
+
+	for _, slot := range body.Slots() {
+		switch slot {
+		case types.PrincipalSlot:
+			body.Principal = linkScope(body.Principal, slotEnv)
+		case types.ResourceSlot:
+			body.Resource = linkScope(body.Resource, slotEnv)
 		default:
 			return Policy{}, fmt.Errorf("unknown variable %s", slot)
 		}
