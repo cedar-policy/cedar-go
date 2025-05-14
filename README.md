@@ -103,7 +103,7 @@ func main() {
         }),
 	}
 
-	ok, _ := ps.IsAuthorized(entities, req)
+	ok, _ := cedar.Authorize(ps, entities, req)
 	fmt.Println(ok)
 }
 ```
