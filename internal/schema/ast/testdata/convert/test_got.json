@@ -1,0 +1,215 @@
+{
+    "": {
+        "entityTypes": {},
+        "actions": {
+            "AnonAct": {
+                "appliesTo": null
+            }
+        },
+        "commonTypes": {
+            "Anon": {
+                "type": "String"
+            }
+        }
+    },
+    "PhotoFlash": {
+        "entityTypes": {
+            "Account": {
+                "shape": {
+                    "type": "Record",
+                    "attributes": {
+                        "admins": {
+                            "type": "Set",
+                            "required": false,
+                            "element": {
+                                "type": "EntityOrCommon",
+                                "name": "User"
+                            }
+                        },
+                        "owner": {
+                            "type": "EntityOrCommon",
+                            "required": true,
+                            "name": "User"
+                        }
+                    }
+                }
+            },
+            "Album": {
+                "memberOfTypes": [
+                    "Album"
+                ],
+                "shape": {
+                    "type": "Record",
+                    "attributes": {
+                        "account": {
+                            "type": "EntityOrCommon",
+                            "required": true,
+                            "name": "Account"
+                        },
+                        "private": {
+                            "type": "Boolean",
+                            "required": true
+                        }
+                    }
+                }
+            },
+            "Photo": {
+                "memberOfTypes": [
+                    "Album"
+                ],
+                "shape": {
+                    "type": "Record",
+                    "attributes": {
+                        "account": {
+                            "type": "EntityOrCommon",
+                            "required": true,
+                            "name": "Account"
+                        },
+                        "private": {
+                            "type": "Boolean",
+                            "required": true
+                        }
+                    }
+                }
+            },
+            "User": {
+                "memberOfTypes": [
+                    "UserGroup"
+                ],
+                "shape": {
+                    "type": "Record",
+                    "attributes": {
+                        "department": {
+                            "type": "String",
+                            "required": true
+                        },
+                        "jobLevel": {
+                            "type": "Long",
+                            "required": true
+                        }
+                    }
+                }
+            },
+            "User2": {
+                "memberOfTypes": [
+                    "UserGroup"
+                ],
+                "shape": {
+                    "type": "Record",
+                    "attributes": {
+                        "department": {
+                            "type": "String",
+                            "required": true
+                        },
+                        "jobLevel": {
+                            "type": "Long",
+                            "required": true
+                        }
+                    }
+                }
+            },
+            "UserGroup": {}
+        },
+        "actions": {
+            "groupAction1": {
+                "appliesTo": null
+            },
+            "groupAction2": {
+                "appliesTo": null
+            },
+            "listAlbums": {
+                "appliesTo": {
+                    "principalTypes": [
+                        "User"
+                    ],
+                    "resourceTypes": [
+                        "Account"
+                    ],
+                    "context": {
+                        "type": "Record",
+                        "attributes": {
+                            "authenticated": {
+                                "type": "Boolean",
+                                "required": true
+                            }
+                        }
+                    }
+                }
+            },
+            "uploadPhoto": {
+                "memberOf": [
+                    {
+                        "id": "groupAction1"
+                    }
+                ],
+                "appliesTo": {
+                    "principalTypes": [
+                        "User"
+                    ],
+                    "resourceTypes": [
+                        "Album"
+                    ],
+                    "context": {
+                        "type": "Record",
+                        "attributes": {
+                            "authenticated": {
+                                "type": "Boolean",
+                                "required": true
+                            },
+                            "photo": {
+                                "type": "Record",
+                                "required": true,
+                                "attributes": {
+                                    "file_size": {
+                                        "type": "Long",
+                                        "required": true
+                                    },
+                                    "file_type": {
+                                        "type": "String",
+                                        "required": true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "viewPhoto": {
+                "memberOf": [
+                    {
+                        "id": "groupAction1"
+                    },
+                    {
+                        "id": "groupAction2"
+                    },
+                    {
+                        "id": "actionGroup",
+                        "type": "random::nested::name"
+                    }
+                ],
+                "appliesTo": {
+                    "principalTypes": [
+                        "User"
+                    ],
+                    "resourceTypes": [
+                        "Photo"
+                    ],
+                    "context": {
+                        "type": "Record",
+                        "attributes": {
+                            "authenticated": {
+                                "type": "Boolean",
+                                "required": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "commonTypes": {
+            "LongAlias": {
+                "type": "Long"
+            }
+        }
+    }
+}
