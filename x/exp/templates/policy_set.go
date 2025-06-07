@@ -122,7 +122,6 @@ func (p *PolicySet) MarshalCedar() []byte {
 	return buf.Bytes()
 }
 
-//todo: marshal links
 // MarshalJSON encodes a PolicySet in the JSON format specified by the [Cedar documentation].
 //
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
@@ -130,12 +129,26 @@ func (p *PolicySet) MarshalJSON() ([]byte, error) {
 	jsonPolicySet := internaljson.PolicySetJSON{
 		StaticPolicies: make(internaljson.PolicySet, len(p.staticPolicies)),
 		Templates:      make(internaljson.TemplateSet, len(p.templates)),
+		TemplateLinks:  make([]internaljson.LinkedPolicy, 0, len(p.linkedPolicies)),
 	}
 	for k, v := range p.staticPolicies {
 		jsonPolicySet.StaticPolicies[string(k)] = (*internaljson.Policy)(v.AST())
 	}
 	for k, v := range p.templates {
 		jsonPolicySet.Templates[string(k)] = (*internaljson.Policy)(v.AST())
+	}
+	for _, v := range p.linkedPolicies {
+		lp := internaljson.LinkedPolicy{
+			TemplateID: string(v.templateID),
+			LinkID:     string(v.linkID),
+			Values:     make(map[string]types.ImplicitlyMarshaledEntityUID, len(v.slotEnv)),
+		}
+
+		for slotID, entityUID := range v.slotEnv {
+			lp.Values[string(slotID)] = types.ImplicitlyMarshaledEntityUID(entityUID)
+		}
+
+		jsonPolicySet.TemplateLinks = append(jsonPolicySet.TemplateLinks, lp)
 	}
 
 	return json.Marshal(jsonPolicySet)
@@ -152,6 +165,7 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 	*p = PolicySet{
 		staticPolicies: make(PolicyMap, len(jsonPolicySet.StaticPolicies)),
 		templates:      make(map[cedar.PolicyID]*Template, len(jsonPolicySet.Templates)),
+		linkedPolicies: make(map[cedar.PolicyID]*LinkedPolicy),
 	}
 	for k, v := range jsonPolicySet.StaticPolicies {
 		p.staticPolicies[cedar.PolicyID(k)] = newPolicy((*internalast.Policy)(v))
@@ -159,6 +173,23 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 	for k, v := range jsonPolicySet.Templates {
 		p.templates[cedar.PolicyID(k)] = newTemplate((*internalast.Policy)(v))
 	}
+	for _, v := range jsonPolicySet.TemplateLinks {
+		lp := &LinkedPolicy{
+			templateID: cedar.PolicyID(v.TemplateID),
+			linkID:     cedar.PolicyID(v.LinkID),
+			slotEnv:    make(map[types.SlotID]types.EntityUID, len(v.Values)),
+		}
+
+		for slotID, entityUID := range v.Values {
+			slotIDTyped := types.SlotID(slotID)
+			entityUIDTyped := types.EntityUID(entityUID)
+
+			lp.slotEnv[slotIDTyped] = entityUIDTyped
+		}
+
+		p.linkedPolicies[cedar.PolicyID(v.LinkID)] = lp
+	}
+
 	return nil
 }
 

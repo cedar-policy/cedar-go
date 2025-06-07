@@ -161,10 +161,11 @@ func TestPolicySetJSON(t *testing.T) {
 	t.Run("UnmarshalOK", func(t *testing.T) {
 		t.Parallel()
 		var ps templates.PolicySet
-		err := ps.UnmarshalJSON([]byte(`{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}},"templates":{"template0":{"effect":"permit","principal":{"op":"==","slot":"?principal"},"action":{"op":"All"},"resource":{"op":"All"}}}}`))
+		err := ps.UnmarshalJSON([]byte(`{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}},"templates":{"template0":{"effect":"permit","principal":{"op":"==","slot":"?principal"},"action":{"op":"All"},"resource":{"op":"All"}}},"templateLinks":[{"templateId":"template0","newId":"linked0","values":{"?principal":{"type":"User","id":"alice"}}}]}`))
 		testutil.OK(t, err)
-		testutil.Equals(t, len(maps.Collect(ps.All())), 1)
+		testutil.Equals(t, len(maps.Collect(ps.All())), 2)
 		testutil.Equals(t, ps.GetTemplate("template0") != nil, true)
+		testutil.Equals(t, ps.GetLinkedPolicy("linked0") != nil, true)
 	})
 
 	t.Run("MarshalOK", func(t *testing.T) {
@@ -173,9 +174,15 @@ func TestPolicySetJSON(t *testing.T) {
 
 permit (principal == ?principal, action, resource);`))
 		testutil.OK(t, err)
+
+		err = ps.LinkTemplate("template0", "linked0", map[types.SlotID]types.EntityUID{
+			"?principal": types.NewEntityUID("User", "alice"),
+		})
+		testutil.OK(t, err)
+
 		out, err := ps.MarshalJSON()
 		testutil.OK(t, err)
-		testutil.Equals(t, string(out), `{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}},"templates":{"template0":{"effect":"permit","principal":{"op":"==","slot":"?principal"},"action":{"op":"All"},"resource":{"op":"All"}}}}`)
+		testutil.Equals(t, string(out), `{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}},"templates":{"template0":{"effect":"permit","principal":{"op":"==","slot":"?principal"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}},"templateLinks":[{"templateId":"template0","newId":"linked0","values":{"?principal":{"type":"User","id":"alice"}}}]}`)
 	})
 }
 
