@@ -87,9 +87,9 @@ func scopeInEntityReference(s *scopeInJSON) (types.EntityReference, error) {
 }
 
 func isSlotValid(entRef types.EntityReference, slot types.SlotID) bool {
-	switch entRef.(type) {
+	switch v := entRef.(type) {
 	case types.SlotID:
-		return slot == types.PrincipalSlot
+		return v == slot
 	default:
 		return true
 	}
@@ -160,7 +160,7 @@ func (s *scopeJSON) ToResourceNode(policy *Policy, allowedSlot types.SlotID) err
 		}
 
 		if !isSlotValid(ref, allowedSlot) {
-			return fmt.Errorf("variable used in principal slot is not %s", allowedSlot)
+			return fmt.Errorf("variable used in resource slot is not %s", allowedSlot)
 		}
 
 		policy.unwrap().ResourceEq(ref)
@@ -173,7 +173,7 @@ func (s *scopeJSON) ToResourceNode(policy *Policy, allowedSlot types.SlotID) err
 		}
 
 		if !isSlotValid(ref, allowedSlot) {
-			return fmt.Errorf("variable used in principal slot is not %s", allowedSlot)
+			return fmt.Errorf("variable used in resource slot is not %s", allowedSlot)
 		}
 
 		policy.unwrap().ResourceIn(ref)
@@ -192,7 +192,7 @@ func (s *scopeJSON) ToResourceNode(policy *Policy, allowedSlot types.SlotID) err
 		}
 
 		if !isSlotValid(ref, allowedSlot) {
-			return fmt.Errorf("variable used in principal slot is not %s", allowedSlot)
+			return fmt.Errorf("variable used in resource slot is not %s", allowedSlot)
 		}
 
 		policy.unwrap().ResourceIsIn(types.EntityType(s.EntityType), ref)

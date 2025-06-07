@@ -341,6 +341,8 @@ func (p *Policy) MarshalJSON() ([]byte, error) {
 	j.Principal.FromNode(p.Principal)
 	j.Action.FromNode(p.Action)
 	j.Resource.FromNode(p.Resource)
+
+	j.Conditions = make([]conditionJSON, 0, len(p.Conditions)) // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html#policy-set-format
 	for _, c := range p.Conditions {
 		var cond conditionJSON
 		cond.Kind = "when"

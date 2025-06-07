@@ -18,6 +18,11 @@ import (
 
 type PolicyMap map[cedar.PolicyID]*Policy
 
+// All returns an iterator over the policy IDs and policies in the PolicyMap.
+func (p PolicyMap) All() iter.Seq2[cedar.PolicyID, *Policy] {
+	return maps.All(p)
+}
+
 // PolicySet is a set of named policies against which a request can be authorized.
 type PolicySet struct {
 	// policies are stored internally so we can handle performance, concurrency bookkeeping however we want
@@ -117,16 +122,22 @@ func (p *PolicySet) MarshalCedar() []byte {
 	return buf.Bytes()
 }
 
+//todo: marshal links
 // MarshalJSON encodes a PolicySet in the JSON format specified by the [Cedar documentation].
 //
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
 func (p *PolicySet) MarshalJSON() ([]byte, error) {
 	jsonPolicySet := internaljson.PolicySetJSON{
 		StaticPolicies: make(internaljson.PolicySet, len(p.staticPolicies)),
+		Templates:      make(internaljson.TemplateSet, len(p.templates)),
 	}
 	for k, v := range p.staticPolicies {
 		jsonPolicySet.StaticPolicies[string(k)] = (*internaljson.Policy)(v.AST())
 	}
+	for k, v := range p.templates {
+		jsonPolicySet.Templates[string(k)] = (*internaljson.Policy)(v.AST())
+	}
+
 	return json.Marshal(jsonPolicySet)
 }
 
@@ -140,9 +151,13 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 	}
 	*p = PolicySet{
 		staticPolicies: make(PolicyMap, len(jsonPolicySet.StaticPolicies)),
+		templates:      make(map[cedar.PolicyID]*Template, len(jsonPolicySet.Templates)),
 	}
 	for k, v := range jsonPolicySet.StaticPolicies {
-		p.staticPolicies[cedar.PolicyID(k)] = newPolicy((*internalast.Policy)(v)) // NewPolicyFromAST((*ast.Policy)(v))
+		p.staticPolicies[cedar.PolicyID(k)] = newPolicy((*internalast.Policy)(v))
+	}
+	for k, v := range jsonPolicySet.Templates {
+		p.templates[cedar.PolicyID(k)] = newTemplate((*internalast.Policy)(v))
 	}
 	return nil
 }
@@ -186,33 +201,6 @@ func (p *PolicySet) render(link LinkedPolicy) (*Policy, error) {
 	astPolicy := internalast.Policy(policy)
 
 	return newPolicy(&astPolicy), nil
-}
-
-// Template represents a Cedar policy template that can be linked with slot values
-// to create concrete policies. It's a wrapper around the internal parser.Policy type.
-type Template parser.Policy
-
-// MarshalCedar serializes the Template into its Cedar language representation.
-// Returns the serialized template as a byte slice.
-func (p *Template) MarshalCedar() []byte {
-	cedarPolicy := (*parser.Policy)(p)
-
-	var buf bytes.Buffer
-	cedarPolicy.MarshalCedar(&buf)
-
-	return buf.Bytes()
-}
-
-// SetFilename sets the filename of this template.
-// This is useful for error reporting and debugging purposes.
-func (p *Template) SetFilename(fileName string) {
-	p.Position.Filename = fileName
-}
-
-func (p *Template) Slots() []types.SlotID {
-	x := (*internalast.Policy)(p)
-
-	return x.Slots()
 }
 
 // LinkedPolicy represents a template that has been linked with specific slot values.
