@@ -15,7 +15,6 @@ import (
 type isPrincipalResourceScopeNode interface {
 	ast.IsPrincipalScopeNode
 	ast.IsResourceScopeNode
-	Slot() (types.SlotID, bool)
 }
 
 func slotID(id *string) (types.SlotID, error) {
@@ -87,7 +86,16 @@ func scopeInEntityReference(s *scopeInJSON) (types.EntityReference, error) {
 	return ref, nil
 }
 
-func (s *scopeJSON) ToPrincipalNode(policy *Policy) error {
+func isSlotValid(entRef types.EntityReference, slot types.SlotID) bool {
+	switch entRef.(type) {
+	case types.SlotID:
+		return slot == types.PrincipalSlot
+	default:
+		return true
+	}
+}
+
+func (s *scopeJSON) ToPrincipalNode(policy *Policy, allowedSlot types.SlotID) error {
 	switch s.Op {
 	case "All":
 		return nil
@@ -97,6 +105,10 @@ func (s *scopeJSON) ToPrincipalNode(policy *Policy) error {
 			return err
 		}
 
+		if !isSlotValid(ref, allowedSlot) {
+			return fmt.Errorf("variable used in principal slot is not %s", allowedSlot)
+		}
+
 		policy.unwrap().PrincipalEq(ref)
 
 		return nil
@@ -104,6 +116,10 @@ func (s *scopeJSON) ToPrincipalNode(policy *Policy) error {
 		ref, err := scopeEntityReference(s)
 		if err != nil {
 			return err
+		}
+
+		if !isSlotValid(ref, allowedSlot) {
+			return fmt.Errorf("variable used in principal slot is not %s", allowedSlot)
 		}
 
 		policy.unwrap().PrincipalIn(ref)
@@ -121,6 +137,10 @@ func (s *scopeJSON) ToPrincipalNode(policy *Policy) error {
 			return err
 		}
 
+		if !isSlotValid(ref, allowedSlot) {
+			return fmt.Errorf("variable used in principal slot is not %s", allowedSlot)
+		}
+
 		policy.unwrap().PrincipalIsIn(types.EntityType(s.EntityType), ref)
 
 		return nil
@@ -129,7 +149,7 @@ func (s *scopeJSON) ToPrincipalNode(policy *Policy) error {
 	return fmt.Errorf("unknown op: %v", s.Op)
 }
 
-func (s *scopeJSON) ToResourceNode(policy *Policy) error {
+func (s *scopeJSON) ToResourceNode(policy *Policy, allowedSlot types.SlotID) error {
 	switch s.Op {
 	case "All":
 		return nil
@@ -139,6 +159,10 @@ func (s *scopeJSON) ToResourceNode(policy *Policy) error {
 			return err
 		}
 
+		if !isSlotValid(ref, allowedSlot) {
+			return fmt.Errorf("variable used in principal slot is not %s", allowedSlot)
+		}
+
 		policy.unwrap().ResourceEq(ref)
 
 		return nil
@@ -146,6 +170,10 @@ func (s *scopeJSON) ToResourceNode(policy *Policy) error {
 		ref, err := scopeEntityReference(s)
 		if err != nil {
 			return err
+		}
+
+		if !isSlotValid(ref, allowedSlot) {
+			return fmt.Errorf("variable used in principal slot is not %s", allowedSlot)
 		}
 
 		policy.unwrap().ResourceIn(ref)
@@ -161,6 +189,10 @@ func (s *scopeJSON) ToResourceNode(policy *Policy) error {
 		ref, err := scopeInEntityReference(s.In)
 		if err != nil {
 			return err
+		}
+
+		if !isSlotValid(ref, allowedSlot) {
+			return fmt.Errorf("variable used in principal slot is not %s", allowedSlot)
 		}
 
 		policy.unwrap().ResourceIsIn(types.EntityType(s.EntityType), ref)
@@ -438,38 +470,20 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		p.unwrap().Annotate(types.Ident(k), types.String(v))
 	}
 
-	err := j.Principal.ToPrincipalNode(p)
+	err := j.Principal.ToPrincipalNode(p, types.PrincipalSlot)
 	if err != nil {
 		return fmt.Errorf("error in principal: %w", err)
 	}
-
-	//p.Principal = principal
-	//if slot, found := principal.Slot(); found {
-	//	if slot != types.PrincipalSlot {
-	//		return fmt.Errorf("variable used in principal slot is not %s", types.PrincipalSlot)
-	//	}
-	//
-	//	p.unwrap().AddSlot(slot)
-	//}
 
 	p.Action, err = j.Action.ToActionNode()
 	if err != nil {
 		return fmt.Errorf("error in action: %w", err)
 	}
 
-	err = j.Resource.ToResourceNode(p)
+	err = j.Resource.ToResourceNode(p, types.ResourceSlot)
 	if err != nil {
 		return fmt.Errorf("error in resource: %w", err)
 	}
-
-	//p.Resource = resource
-	//if slot, found := resource.Slot(); found {
-	//	if slot != types.ResourceSlot {
-	//		return fmt.Errorf("variable used in resource slot is not %s", types.ResourceSlot)
-	//	}
-	//
-	//	p.unwrap().AddSlot(slot)
-	//}
 
 	for _, c := range j.Conditions {
 		n, err := c.Body.ToNode()

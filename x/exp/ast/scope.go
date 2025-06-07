@@ -129,10 +129,6 @@ type ScopeTypeAll struct {
 	ResourceScopeNode
 }
 
-func (t ScopeTypeAll) Slot() (slotID types.SlotID, found bool) {
-	return "", false
-}
-
 type ScopeTypeEq struct {
 	ScopeNode
 	PrincipalScopeNode
@@ -141,32 +137,12 @@ type ScopeTypeEq struct {
 	Entity types.EntityReference
 }
 
-func (t ScopeTypeEq) Slot() (slotID types.SlotID, found bool) {
-	switch et := t.Entity.(type) {
-	case types.SlotID:
-		slotID = et
-		found = true
-	}
-
-	return
-}
-
 type ScopeTypeIn struct {
 	ScopeNode
 	PrincipalScopeNode
 	ActionScopeNode
 	ResourceScopeNode
 	Entity types.EntityReference
-}
-
-func (t ScopeTypeIn) Slot() (slotID types.SlotID, found bool) {
-	switch et := t.Entity.(type) {
-	case types.SlotID:
-		slotID = et
-		found = true
-	}
-
-	return
 }
 
 type ScopeTypeInSet struct {
@@ -182,24 +158,10 @@ type ScopeTypeIs struct {
 	Type types.EntityType
 }
 
-func (t ScopeTypeIs) Slot() (slotID types.SlotID, found bool) {
-	return "", false
-}
-
 type ScopeTypeIsIn struct {
 	ScopeNode
 	PrincipalScopeNode
 	ResourceScopeNode
 	Type   types.EntityType
 	Entity types.EntityReference
-}
-
-func (t ScopeTypeIsIn) Slot() (slotID types.SlotID, found bool) {
-	switch et := t.Entity.(type) {
-	case types.SlotID:
-		slotID = et
-		found = true
-	}
-
-	return
 }
