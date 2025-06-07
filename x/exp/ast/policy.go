@@ -80,8 +80,12 @@ func (p *Policy) Unless(node Node) *Policy {
 	return p
 }
 
-func (p *Policy) AddSlot(slotID types.SlotID) *Policy {
-	p.tplCtx.slots = append(p.tplCtx.slots, slotID)
+func (p *Policy) addSlot(entRef types.EntityReference) *Policy {
+	switch v := entRef.(type) {
+	case types.SlotID:
+		p.tplCtx.slots = append(p.tplCtx.slots, v)
+	}
+
 	return p
 }
 

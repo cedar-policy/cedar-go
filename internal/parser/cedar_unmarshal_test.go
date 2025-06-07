@@ -478,7 +478,7 @@ when { (if true then 2 else 3) * 4 == 8 };`,
     action,
     resource
 );`,
-			ast.Permit().PrincipalEq(types.PrincipalSlot).AddSlot(types.PrincipalSlot),
+			ast.Permit().PrincipalEq(types.PrincipalSlot),
 		},
 		{
 			"principal template variable with in operator",
@@ -487,7 +487,7 @@ when { (if true then 2 else 3) * 4 == 8 };`,
     action,
     resource
 );`,
-			ast.Permit().PrincipalIn(types.PrincipalSlot).AddSlot(types.PrincipalSlot),
+			ast.Permit().PrincipalIn(types.PrincipalSlot),
 		},
 		{
 			"principal template variable with is in operator",
@@ -496,7 +496,7 @@ when { (if true then 2 else 3) * 4 == 8 };`,
     action,
     resource
 );`,
-			ast.Permit().PrincipalIsIn("User", types.PrincipalSlot).AddSlot(types.PrincipalSlot),
+			ast.Permit().PrincipalIsIn("User", types.PrincipalSlot),
 		},
 		{
 			"resource template variable",
@@ -505,7 +505,7 @@ when { (if true then 2 else 3) * 4 == 8 };`,
     action,
     resource == ?resource
 );`,
-			ast.Permit().ResourceEq(types.ResourceSlot).AddSlot(types.ResourceSlot),
+			ast.Permit().ResourceEq(types.ResourceSlot),
 		},
 		{
 			"resource template variable with in operator",
@@ -514,7 +514,7 @@ when { (if true then 2 else 3) * 4 == 8 };`,
     action,
     resource in ?resource
 );`,
-			ast.Permit().ResourceIn(types.ResourceSlot).AddSlot(types.ResourceSlot),
+			ast.Permit().ResourceIn(types.ResourceSlot),
 		},
 		{
 			"resource template variable with is in operator",
@@ -523,7 +523,7 @@ when { (if true then 2 else 3) * 4 == 8 };`,
     action,
     resource is Photo in ?resource
 );`,
-			ast.Permit().ResourceIsIn("Photo", types.ResourceSlot).AddSlot(types.ResourceSlot),
+			ast.Permit().ResourceIsIn("Photo", types.ResourceSlot),
 		},
 	}
 

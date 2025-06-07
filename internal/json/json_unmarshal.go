@@ -87,38 +87,88 @@ func scopeInEntityReference(s *scopeInJSON) (types.EntityReference, error) {
 	return ref, nil
 }
 
-func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, error) {
+func (s *scopeJSON) ToPrincipalNode(policy *Policy) error {
 	switch s.Op {
 	case "All":
-		return ast.Scope{}.All(), nil
+		return nil
 	case "==":
 		ref, err := scopeEntityReference(s)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		return ast.Scope{}.Eq(ref), nil
+		policy.unwrap().PrincipalEq(ref)
+
+		return nil
 	case "in":
 		ref, err := scopeEntityReference(s)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		return ast.Scope{}.In(ref), nil
+		policy.unwrap().PrincipalIn(ref)
+
+		return nil
 	case "is":
 		if s.In == nil {
-			return ast.Scope{}.Is(types.EntityType(s.EntityType)), nil
+			policy.unwrap().PrincipalIs(types.EntityType(s.EntityType))
+
+			return nil
 		}
 
 		ref, err := scopeInEntityReference(s.In)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), ref), nil
+		policy.unwrap().PrincipalIsIn(types.EntityType(s.EntityType), ref)
+
+		return nil
 	}
 
-	return nil, fmt.Errorf("unknown op: %v", s.Op)
+	return fmt.Errorf("unknown op: %v", s.Op)
+}
+
+func (s *scopeJSON) ToResourceNode(policy *Policy) error {
+	switch s.Op {
+	case "All":
+		return nil
+	case "==":
+		ref, err := scopeEntityReference(s)
+		if err != nil {
+			return err
+		}
+
+		policy.unwrap().ResourceEq(ref)
+
+		return nil
+	case "in":
+		ref, err := scopeEntityReference(s)
+		if err != nil {
+			return err
+		}
+
+		policy.unwrap().ResourceIn(ref)
+
+		return nil
+	case "is":
+		if s.In == nil {
+			policy.unwrap().ResourceIs(types.EntityType(s.EntityType))
+
+			return nil
+		}
+
+		ref, err := scopeInEntityReference(s.In)
+		if err != nil {
+			return err
+		}
+
+		policy.unwrap().ResourceIsIn(types.EntityType(s.EntityType), ref)
+
+		return nil
+	}
+
+	return fmt.Errorf("unknown op: %v", s.Op)
 }
 
 func (s *scopeJSON) ToActionNode() (ast.IsActionScopeNode, error) {
@@ -388,38 +438,38 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		p.unwrap().Annotate(types.Ident(k), types.String(v))
 	}
 
-	principal, err := j.Principal.ToPrincipalResourceNode()
+	err := j.Principal.ToPrincipalNode(p)
 	if err != nil {
 		return fmt.Errorf("error in principal: %w", err)
 	}
 
-	p.Principal = principal
-	if slot, found := principal.Slot(); found {
-		if slot != types.PrincipalSlot {
-			return fmt.Errorf("variable used in principal slot is not %s", types.PrincipalSlot)
-		}
-
-		p.unwrap().AddSlot(slot)
-	}
+	//p.Principal = principal
+	//if slot, found := principal.Slot(); found {
+	//	if slot != types.PrincipalSlot {
+	//		return fmt.Errorf("variable used in principal slot is not %s", types.PrincipalSlot)
+	//	}
+	//
+	//	p.unwrap().AddSlot(slot)
+	//}
 
 	p.Action, err = j.Action.ToActionNode()
 	if err != nil {
 		return fmt.Errorf("error in action: %w", err)
 	}
 
-	resource, err := j.Resource.ToPrincipalResourceNode()
+	err = j.Resource.ToResourceNode(p)
 	if err != nil {
 		return fmt.Errorf("error in resource: %w", err)
 	}
 
-	p.Resource = resource
-	if slot, found := resource.Slot(); found {
-		if slot != types.ResourceSlot {
-			return fmt.Errorf("variable used in resource slot is not %s", types.ResourceSlot)
-		}
-
-		p.unwrap().AddSlot(slot)
-	}
+	//p.Resource = resource
+	//if slot, found := resource.Slot(); found {
+	//	if slot != types.ResourceSlot {
+	//		return fmt.Errorf("variable used in resource slot is not %s", types.ResourceSlot)
+	//	}
+	//
+	//	p.unwrap().AddSlot(slot)
+	//}
 
 	for _, c := range j.Conditions {
 		n, err := c.Body.ToNode()

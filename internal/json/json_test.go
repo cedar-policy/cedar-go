@@ -478,37 +478,37 @@ func TestUnmarshalJSON(t *testing.T) {
 		{
 			"principal template variable",
 			`{"effect":"permit","principal":{"op":"==", "slot": "?principal"},"action":{"op":"All"},"resource":{"op":"All"}}`,
-			ast.Permit().PrincipalEq(types.PrincipalSlot).AddSlot(types.PrincipalSlot),
+			ast.Permit().PrincipalEq(types.PrincipalSlot),
 			testutil.OK,
 		},
 		{
 			"principal template variable with in operator",
 			`{"effect":"permit","principal":{"op":"in", "slot": "?principal"},"action":{"op":"All"},"resource":{"op":"All"}}`,
-			ast.Permit().PrincipalIn(types.PrincipalSlot).AddSlot(types.PrincipalSlot),
+			ast.Permit().PrincipalIn(types.PrincipalSlot),
 			testutil.OK,
 		},
 		{
 			"principal template variable with is in operator",
 			`{"effect":"permit","principal":{"op":"is", "entity_type": "User", "in": {"slot": "?principal"} },"action":{"op":"All"},"resource":{"op":"All"}}`,
-			ast.Permit().PrincipalIsIn("User", types.PrincipalSlot).AddSlot(types.PrincipalSlot),
+			ast.Permit().PrincipalIsIn("User", types.PrincipalSlot),
 			testutil.OK,
 		},
 		{
 			"resource template variable",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"==", "slot": "?resource"}}`,
-			ast.Permit().ResourceEq(types.ResourceSlot).AddSlot(types.ResourceSlot),
+			ast.Permit().ResourceEq(types.ResourceSlot),
 			testutil.OK,
 		},
 		{
 			"resource template variable with in operator",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"in", "slot": "?resource"}}`,
-			ast.Permit().ResourceIn(types.ResourceSlot).AddSlot(types.ResourceSlot),
+			ast.Permit().ResourceIn(types.ResourceSlot),
 			testutil.OK,
 		},
 		{
 			"resource template variable with is in operator",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is", "entity_type": "Photo", "in": {"slot": "?resource"} }}`,
-			ast.Permit().ResourceIsIn("Photo", types.ResourceSlot).AddSlot(types.ResourceSlot),
+			ast.Permit().ResourceIsIn("Photo", types.ResourceSlot),
 			testutil.OK,
 		},
 		{

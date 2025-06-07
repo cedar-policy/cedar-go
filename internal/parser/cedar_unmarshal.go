@@ -194,13 +194,6 @@ func (p *parser) effect(a *ast.Annotations) (*ast.Policy, error) {
 	return nil, p.errorf("unexpected effect: %v", next.Text)
 }
 
-func addSlotToPolicy(entRef types.EntityReference, p *ast.Policy) {
-	switch varSlot := entRef.(type) {
-	case types.SlotID:
-		p.AddSlot(varSlot)
-	}
-}
-
 func (p *parser) principal(policy *ast.Policy) error {
 	if err := p.exact(consts.Principal); err != nil {
 		return err
@@ -213,7 +206,6 @@ func (p *parser) principal(policy *ast.Policy) error {
 			return err
 		}
 
-		addSlotToPolicy(entity, policy)
 		policy.PrincipalEq(entity)
 		return nil
 	case "is":
@@ -229,7 +221,6 @@ func (p *parser) principal(policy *ast.Policy) error {
 				return err
 			}
 
-			addSlotToPolicy(entity, policy)
 			policy.PrincipalIsIn(path, entity)
 			return nil
 		}
@@ -243,7 +234,6 @@ func (p *parser) principal(policy *ast.Policy) error {
 			return err
 		}
 
-		addSlotToPolicy(entity, policy)
 		policy.PrincipalIn(entity)
 		return nil
 	}
@@ -403,7 +393,6 @@ func (p *parser) resource(policy *ast.Policy) error {
 			return err
 		}
 
-		addSlotToPolicy(entity, policy)
 		policy.ResourceEq(entity)
 		return nil
 	case "is":
@@ -419,7 +408,6 @@ func (p *parser) resource(policy *ast.Policy) error {
 				return err
 			}
 
-			addSlotToPolicy(entity, policy)
 			policy.ResourceIsIn(path, entity)
 			return nil
 		}
@@ -433,7 +421,6 @@ func (p *parser) resource(policy *ast.Policy) error {
 			return err
 		}
 
-		addSlotToPolicy(entity, policy)
 		policy.ResourceIn(entity)
 		return nil
 	}
