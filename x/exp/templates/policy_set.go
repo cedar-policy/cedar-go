@@ -21,18 +21,18 @@ type PolicyMap map[cedar.PolicyID]*Policy
 // PolicySet is a set of named policies against which a request can be authorized.
 type PolicySet struct {
 	// policies are stored internally so we can handle performance, concurrency bookkeeping however we want
-	policies PolicyMap
+	staticPolicies PolicyMap
+	linkedPolicies map[cedar.PolicyID]*LinkedPolicy
 
 	templates map[cedar.PolicyID]*Template
-	links     map[cedar.PolicyID]*LinkedPolicy
 }
 
 // NewPolicySet creates a new, empty PolicySet
 func NewPolicySet() *PolicySet {
 	return &PolicySet{
-		policies:  PolicyMap{},
-		templates: make(map[cedar.PolicyID]*Template),
-		links:     make(map[cedar.PolicyID]*LinkedPolicy),
+		staticPolicies: PolicyMap{},
+		templates:      make(map[cedar.PolicyID]*Template),
+		linkedPolicies: make(map[cedar.PolicyID]*LinkedPolicy),
 	}
 }
 
@@ -58,44 +58,47 @@ func NewPolicySetFromBytes(fileName string, document []byte) (*PolicySet, error)
 		templateMap[policyID] = p
 	}
 
-	return &PolicySet{policies: policyMap, templates: templateMap, links: make(map[cedar.PolicyID]*LinkedPolicy)}, nil
+	return &PolicySet{staticPolicies: policyMap, templates: templateMap, linkedPolicies: make(map[cedar.PolicyID]*LinkedPolicy)}, nil
 }
 
 // Get returns the Policy with the given ID. If a policy with the given ID
 // does not exist, nil is returned.
 func (p *PolicySet) Get(policyID cedar.PolicyID) *Policy {
-	return p.policies[policyID]
+	return p.staticPolicies[policyID]
 }
 
 // Add inserts or updates a policy with the given ID. Returns true if a policy
 // with the given ID did not already exist in the set.
 func (p *PolicySet) Add(policyID cedar.PolicyID, policy *Policy) bool {
-	_, exists := p.policies[policyID]
-	p.policies[policyID] = policy
+	_, exists := p.staticPolicies[policyID]
+	p.staticPolicies[policyID] = policy
 	return !exists
 }
 
-// todo: check to see if it's a static policy or a linked policy
 // Remove removes a policy from the PolicySet. Returns true if a policy with
 // the given ID already existed in the set.
 func (p *PolicySet) Remove(policyID cedar.PolicyID) bool {
-	_, exists := p.policies[policyID]
-	delete(p.policies, policyID)
-	return exists
+	_, staticExists := p.staticPolicies[policyID]
+	delete(p.staticPolicies, policyID)
+
+	_, linkExists := p.linkedPolicies[policyID]
+	delete(p.linkedPolicies, policyID)
+
+	return staticExists || linkExists
 }
 
 // Map returns a new PolicyMap instance of the policies in the PolicySet.
 //
 // Deprecated: use the iterator returned by All() like so: maps.Collect(ps.All())
 func (p *PolicySet) Map() PolicyMap {
-	return maps.Clone(p.policies)
+	return maps.Clone(p.staticPolicies)
 }
 
 // MarshalCedar emits a concatenated Cedar representation of a PolicySet. The policy names are stripped, but policies
 // are emitted in lexicographical order by ID.
 func (p *PolicySet) MarshalCedar() []byte {
-	ids := make([]cedar.PolicyID, 0, len(p.policies))
-	for k := range p.policies {
+	ids := make([]cedar.PolicyID, 0, len(p.staticPolicies))
+	for k := range p.staticPolicies {
 		ids = append(ids, k)
 	}
 	slices.Sort(ids)
@@ -103,10 +106,10 @@ func (p *PolicySet) MarshalCedar() []byte {
 	var buf bytes.Buffer
 	i := 0
 	for _, id := range ids {
-		policy := p.policies[id]
+		policy := p.staticPolicies[id]
 		buf.Write(policy.MarshalCedar())
 
-		if i < len(p.policies)-1 {
+		if i < len(p.staticPolicies)-1 {
 			buf.WriteString("\n\n")
 		}
 		i++
@@ -119,9 +122,9 @@ func (p *PolicySet) MarshalCedar() []byte {
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
 func (p *PolicySet) MarshalJSON() ([]byte, error) {
 	jsonPolicySet := internaljson.PolicySetJSON{
-		StaticPolicies: make(internaljson.PolicySet, len(p.policies)),
+		StaticPolicies: make(internaljson.PolicySet, len(p.staticPolicies)),
 	}
-	for k, v := range p.policies {
+	for k, v := range p.staticPolicies {
 		jsonPolicySet.StaticPolicies[string(k)] = (*internaljson.Policy)(v.AST())
 	}
 	return json.Marshal(jsonPolicySet)
@@ -136,10 +139,10 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*p = PolicySet{
-		policies: make(PolicyMap, len(jsonPolicySet.StaticPolicies)),
+		staticPolicies: make(PolicyMap, len(jsonPolicySet.StaticPolicies)),
 	}
 	for k, v := range jsonPolicySet.StaticPolicies {
-		p.policies[cedar.PolicyID(k)] = newPolicy((*internalast.Policy)(v)) // NewPolicyFromAST((*ast.Policy)(v))
+		p.staticPolicies[cedar.PolicyID(k)] = newPolicy((*internalast.Policy)(v)) // NewPolicyFromAST((*ast.Policy)(v))
 	}
 	return nil
 }
@@ -147,13 +150,13 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 // All returns an iterator over the (PolicyID, *Policy) tuples in the PolicySet
 func (p *PolicySet) All() iter.Seq2[cedar.PolicyID, *Policy] {
 	return func(yield func(cedar.PolicyID, *Policy) bool) {
-		for k, v := range p.policies {
+		for k, v := range p.staticPolicies {
 			if !yield(k, v) {
 				break
 			}
 		}
 
-		for k, v := range p.links {
+		for k, v := range p.linkedPolicies {
 			// Render links on read to make template changes propagate
 			policy, err := p.render(*v)
 			if err != nil { //todo: think how to propagate this error
@@ -241,6 +244,11 @@ func (l *LinkedPolicy) LinkID() cedar.PolicyID {
 //
 // Returns a LinkedPolicy that can be rendered into a concrete Policy.
 func (p *PolicySet) LinkTemplate(templateID cedar.PolicyID, linkID cedar.PolicyID, slotEnv map[types.SlotID]types.EntityUID) error {
+	_, exists := p.staticPolicies[linkID]
+	if exists {
+		return fmt.Errorf("link ID %s already exists in the policy set", linkID)
+	}
+
 	template := p.GetTemplate(templateID)
 	if template == nil {
 		return fmt.Errorf("template %s not found", templateID)
@@ -257,7 +265,7 @@ func (p *PolicySet) LinkTemplate(templateID cedar.PolicyID, linkID cedar.PolicyI
 	}
 
 	link := LinkedPolicy{templateID, linkID, slotEnv}
-	p.links[linkID] = &link
+	p.linkedPolicies[linkID] = &link
 
 	return nil
 }
@@ -265,7 +273,7 @@ func (p *PolicySet) LinkTemplate(templateID cedar.PolicyID, linkID cedar.PolicyI
 // GetLinkedPolicy returns the LinkedPolicy associated with the given link ID.
 // If the linked policy does not exist, it returns nil.
 func (p *PolicySet) GetLinkedPolicy(linkID cedar.PolicyID) *LinkedPolicy {
-	return p.links[linkID]
+	return p.linkedPolicies[linkID]
 }
 
 // GetTemplate returns the Template with the given ID.
@@ -288,9 +296,9 @@ func (p *PolicySet) RemoveTemplate(templateID cedar.PolicyID) bool {
 	_, exists := p.templates[templateID]
 	if exists {
 		// Remove all linked policies that reference this template
-		for linkID, link := range p.links {
+		for linkID, link := range p.linkedPolicies {
 			if link.templateID == templateID {
-				delete(p.links, linkID)
+				delete(p.linkedPolicies, linkID)
 			}
 		}
 	}
