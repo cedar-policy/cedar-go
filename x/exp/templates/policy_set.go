@@ -75,6 +75,7 @@ func (p *PolicySet) Add(policyID cedar.PolicyID, policy *Policy) bool {
 	return !exists
 }
 
+// todo: check to see if it's a static policy or a linked policy
 // Remove removes a policy from the PolicySet. Returns true if a policy with
 // the given ID already existed in the set.
 func (p *PolicySet) Remove(policyID cedar.PolicyID) bool {
@@ -221,6 +222,16 @@ type LinkedPolicy struct {
 	slotEnv    map[types.SlotID]types.EntityUID
 }
 
+// TemplateID returns the PolicyID of the template associated with this LinkedPolicy.
+func (l *LinkedPolicy) TemplateID() cedar.PolicyID {
+	return l.templateID
+}
+
+// LinkID returns the PolicyID of this LinkedPolicy.
+func (l *LinkedPolicy) LinkID() cedar.PolicyID {
+	return l.linkID
+}
+
 // LinkTemplate creates a LinkedPolicy by binding slot values to a template.
 // Parameters:
 //   - template: The policy template to link
@@ -251,6 +262,12 @@ func (p *PolicySet) LinkTemplate(templateID cedar.PolicyID, linkID cedar.PolicyI
 	return nil
 }
 
+// GetLinkedPolicy returns the LinkedPolicy associated with the given link ID.
+// If the linked policy does not exist, it returns nil.
+func (p *PolicySet) GetLinkedPolicy(linkID cedar.PolicyID) *LinkedPolicy {
+	return p.links[linkID]
+}
+
 // GetTemplate returns the Template with the given ID.
 // If a template with the given ID does not exist, nil is returned.
 func (p PolicySet) GetTemplate(templateID cedar.PolicyID) *Template {
@@ -265,6 +282,7 @@ func (p *PolicySet) AddTemplate(templateID cedar.PolicyID, template *Template) b
 	return !exists
 }
 
+//todo: remove all linked policies that reference the template
 // RemoveTemplate removes a template from the PolicySet.
 // Returns true if a template with the given ID already existed in the set.
 func (p *PolicySet) RemoveTemplate(templateID cedar.PolicyID) bool {
