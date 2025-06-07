@@ -70,6 +70,38 @@ permit (
 		isNew = policySet.AddTemplate(templateID, &template)
 		testutil.Equals(t, isNew, false)
 	})
+
+	t.Run("removing template removes linked policies", func(t *testing.T) {
+		templateString := `permit (
+  principal == ?principal,
+  action,
+  resource
+);`
+		templateID := cedar.PolicyID("template0")
+
+		policySet, err := templates.NewPolicySetFromBytes("test.cedar", []byte(templateString))
+		testutil.OK(t, err)
+
+		// Link a policy to the template
+		linkID := cedar.PolicyID("linked_policy_id")
+		env := map[types.SlotID]types.EntityUID{
+			"?principal": types.NewEntityUID("User", "alice"),
+		}
+		err = policySet.LinkTemplate(templateID, linkID, env)
+		testutil.OK(t, err)
+
+		// Ensure the linked policy exists
+		linkedPolicy := policySet.GetLinkedPolicy(linkID)
+		testutil.Equals(t, linkedPolicy != nil, true)
+
+		// Remove the template
+		removed := policySet.RemoveTemplate(templateID)
+		testutil.Equals(t, removed, true)
+
+		// The linked policy should also be removed
+		linkedPolicyAfterRemoval := policySet.GetLinkedPolicy(linkID)
+		testutil.Equals(t, linkedPolicyAfterRemoval == nil, true)
+	})
 }
 
 func TestLinkTemplateToPolicy(t *testing.T) {

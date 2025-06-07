@@ -282,11 +282,19 @@ func (p *PolicySet) AddTemplate(templateID cedar.PolicyID, template *Template) b
 	return !exists
 }
 
-//todo: remove all linked policies that reference the template
 // RemoveTemplate removes a template from the PolicySet.
 // Returns true if a template with the given ID already existed in the set.
 func (p *PolicySet) RemoveTemplate(templateID cedar.PolicyID) bool {
 	_, exists := p.templates[templateID]
+	if exists {
+		// Remove all linked policies that reference this template
+		for linkID, link := range p.links {
+			if link.templateID == templateID {
+				delete(p.links, linkID)
+			}
+		}
+	}
+
 	delete(p.templates, templateID)
 	return exists
 }
