@@ -2,6 +2,7 @@ package templates
 
 import (
 	"bytes"
+
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/types"
 
@@ -112,6 +113,7 @@ func (p *Policy) AST() *ast.Policy {
 // to create concrete policies. It's a wrapper around the internal parser.Policy type.
 type Template parser.Policy
 
+// newTemplate creates a new Template from the given internal AST Policy.
 func newTemplate(astIn *internalast.Policy) *Template {
 	t := (*Template)(astIn)
 	return t
@@ -128,6 +130,8 @@ func (p *Template) MarshalCedar() []byte {
 	return buf.Bytes()
 }
 
+// UnmarshalCedar parses and compiles a single Template statement in the human-readable format specified by the Cedar documentation.
+// Returns an error if parsing fails.
 func (p *Template) UnmarshalCedar(b []byte) error {
 	var cedarPolicy parser.Policy
 	if err := cedarPolicy.UnmarshalCedar(b); err != nil {
@@ -139,9 +143,8 @@ func (p *Template) UnmarshalCedar(b []byte) error {
 	return nil
 }
 
-// MarshalJSON encodes a single Policy statement in the JSON format specified by the [Cedar documentation].
-//
-// [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
+// MarshalJSON encodes a single Template statement in the JSON format specified by the Cedar documentation.
+// Returns the JSON-encoded template as a byte slice, or an error if encoding fails.
 func (p *Template) MarshalJSON() ([]byte, error) {
 	policyAST := (*internalast.Policy)(p)
 	jsonPolicy := (*json.Policy)(policyAST)
@@ -149,9 +152,8 @@ func (p *Template) MarshalJSON() ([]byte, error) {
 	return jsonPolicy.MarshalJSON()
 }
 
-// UnmarshalJSON parses and compiles a single Policy statement in the JSON format specified by the [Cedar documentation].
-//
-// [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
+// UnmarshalJSON parses and compiles a single Template statement in the JSON format specified by the Cedar documentation.
+// Returns an error if parsing fails.
 func (p *Template) UnmarshalJSON(b []byte) error {
 	var jsonPolicy json.Policy
 	if err := jsonPolicy.UnmarshalJSON(b); err != nil {
@@ -169,6 +171,7 @@ func (p *Template) SetFilename(fileName string) {
 	p.Position.Filename = fileName
 }
 
+// Slots returns the slot IDs used in this template.
 func (p *Template) Slots() []types.SlotID {
 	policyAST := (*internalast.Policy)(p)
 	return policyAST.Slots()
