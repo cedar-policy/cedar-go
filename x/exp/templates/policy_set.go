@@ -6,8 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cedar-policy/cedar-go"
-	"github.com/cedar-policy/cedar-go/ast"
 	"github.com/cedar-policy/cedar-go/internal/parser"
+	"github.com/cedar-policy/cedar-go/types"
+	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
 	"iter"
 	"maps"
 	"slices"
@@ -15,10 +16,12 @@ import (
 	internaljson "github.com/cedar-policy/cedar-go/internal/json"
 )
 
+type PolicyMap map[cedar.PolicyID]*Policy
+
 // PolicySet is a set of named policies against which a request can be authorized.
 type PolicySet struct {
 	// policies are stored internally so we can handle performance, concurrency bookkeeping however we want
-	policies cedar.PolicyMap
+	policies PolicyMap
 
 	templates map[cedar.PolicyID]*Template
 	links     map[cedar.PolicyID]*LinkedPolicy
@@ -27,7 +30,7 @@ type PolicySet struct {
 // NewPolicySet creates a new, empty PolicySet
 func NewPolicySet() *PolicySet {
 	return &PolicySet{
-		policies:  cedar.PolicyMap{},
+		policies:  PolicyMap{},
 		templates: make(map[cedar.PolicyID]*Template),
 		links:     make(map[cedar.PolicyID]*LinkedPolicy),
 	}
@@ -43,7 +46,7 @@ func NewPolicySetFromBytes(fileName string, document []byte) (*PolicySet, error)
 	if err != nil {
 		return &PolicySet{}, err
 	}
-	policyMap := make(cedar.PolicyMap, len(policySlice.StaticPolicies))
+	policyMap := make(PolicyMap, len(policySlice.StaticPolicies))
 	for i, p := range policySlice.StaticPolicies {
 		policyID := cedar.PolicyID(fmt.Sprintf("policy%d", i))
 		policyMap[policyID] = p
@@ -60,13 +63,13 @@ func NewPolicySetFromBytes(fileName string, document []byte) (*PolicySet, error)
 
 // Get returns the Policy with the given ID. If a policy with the given ID
 // does not exist, nil is returned.
-func (p *PolicySet) Get(policyID cedar.PolicyID) *cedar.Policy {
+func (p *PolicySet) Get(policyID cedar.PolicyID) *Policy {
 	return p.policies[policyID]
 }
 
 // Add inserts or updates a policy with the given ID. Returns true if a policy
 // with the given ID did not already exist in the set.
-func (p *PolicySet) Add(policyID cedar.PolicyID, policy *cedar.Policy) bool {
+func (p *PolicySet) Add(policyID cedar.PolicyID, policy *Policy) bool {
 	_, exists := p.policies[policyID]
 	p.policies[policyID] = policy
 	return !exists
@@ -83,7 +86,7 @@ func (p *PolicySet) Remove(policyID cedar.PolicyID) bool {
 // Map returns a new PolicyMap instance of the policies in the PolicySet.
 //
 // Deprecated: use the iterator returned by All() like so: maps.Collect(ps.All())
-func (p *PolicySet) Map() cedar.PolicyMap {
+func (p *PolicySet) Map() PolicyMap {
 	return maps.Clone(p.policies)
 }
 
@@ -132,17 +135,17 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*p = PolicySet{
-		policies: make(cedar.PolicyMap, len(jsonPolicySet.StaticPolicies)),
+		policies: make(PolicyMap, len(jsonPolicySet.StaticPolicies)),
 	}
 	for k, v := range jsonPolicySet.StaticPolicies {
-		p.policies[cedar.PolicyID(k)] = cedar.NewPolicyFromAST((*ast.Policy)(v))
+		p.policies[cedar.PolicyID(k)] = newPolicy((*internalast.Policy)(v)) // NewPolicyFromAST((*ast.Policy)(v))
 	}
 	return nil
 }
 
 // All returns an iterator over the (PolicyID, *Policy) tuples in the PolicySet
-func (p *PolicySet) All() iter.Seq2[cedar.PolicyID, *cedar.Policy] {
-	return func(yield func(cedar.PolicyID, *cedar.Policy) bool) {
+func (p *PolicySet) All() iter.Seq2[cedar.PolicyID, *Policy] {
+	return func(yield func(cedar.PolicyID, *Policy) bool) {
 		for k, v := range p.policies {
 			if !yield(k, v) {
 				break
@@ -163,7 +166,7 @@ func (p *PolicySet) All() iter.Seq2[cedar.PolicyID, *cedar.Policy] {
 	}
 }
 
-func (p *PolicySet) render(link LinkedPolicy) (*cedar.Policy, error) {
+func (p *PolicySet) render(link LinkedPolicy) (*Policy, error) {
 	template := p.GetTemplate(link.templateID)
 	if template == nil {
 		return nil, fmt.Errorf("no such template %q", link.templateID)
@@ -176,7 +179,96 @@ func (p *PolicySet) render(link LinkedPolicy) (*cedar.Policy, error) {
 		return nil, err
 	}
 
-	astPolicy := ast.Policy(policy)
+	astPolicy := internalast.Policy(policy)
 
-	return cedar.NewPolicyFromAST(&astPolicy), nil
+	return newPolicy(&astPolicy), nil
+}
+
+// Template represents a Cedar policy template that can be linked with slot values
+// to create concrete policies. It's a wrapper around the internal parser.Policy type.
+type Template parser.Policy
+
+// MarshalCedar serializes the Template into its Cedar language representation.
+// Returns the serialized template as a byte slice.
+func (p *Template) MarshalCedar() []byte {
+	cedarPolicy := (*parser.Policy)(p)
+
+	var buf bytes.Buffer
+	cedarPolicy.MarshalCedar(&buf)
+
+	return buf.Bytes()
+}
+
+// SetFilename sets the filename of this template.
+// This is useful for error reporting and debugging purposes.
+func (p *Template) SetFilename(fileName string) {
+	p.Position.Filename = fileName
+}
+
+func (p *Template) Slots() []types.SlotID {
+	x := (*internalast.Policy)(p)
+
+	return x.Slots()
+}
+
+// LinkedPolicy represents a template that has been linked with specific slot values.
+// It's a wrapper around the internal parser.LinkedPolicy type.
+//type LinkedPolicy parser.LinkedPolicy
+
+type LinkedPolicy struct {
+	templateID cedar.PolicyID
+	linkID     cedar.PolicyID
+	slotEnv    map[types.SlotID]types.EntityUID
+}
+
+// LinkTemplate creates a LinkedPolicy by binding slot values to a template.
+// Parameters:
+//   - template: The policy template to link
+//   - templateID: The identifier for the template
+//   - linkID: The identifier for the resulting linked policy
+//   - slotEnv: A map of slot IDs to entity UIDs that will be substituted into the template
+//
+// Returns a LinkedPolicy that can be rendered into a concrete Policy.
+func (p *PolicySet) LinkTemplate(templateID cedar.PolicyID, linkID cedar.PolicyID, slotEnv map[types.SlotID]types.EntityUID) error {
+	template := p.GetTemplate(templateID)
+	if template == nil {
+		return fmt.Errorf("template %s not found", templateID)
+	}
+
+	if len(slotEnv) < len(template.Slots()) {
+		return fmt.Errorf("template %s requires %d variables, slot env has %d", templateID, len(template.Slots()), len(slotEnv))
+	}
+
+	for _, slotID := range template.Slots() {
+		if _, ok := slotEnv[slotID]; !ok {
+			return fmt.Errorf("template %s requires variable %s, missing from slot env", templateID, slotID)
+		}
+	}
+
+	link := LinkedPolicy{templateID, linkID, slotEnv}
+	p.links[linkID] = &link
+
+	return nil
+}
+
+// GetTemplate returns the Template with the given ID.
+// If a template with the given ID does not exist, nil is returned.
+func (p PolicySet) GetTemplate(templateID cedar.PolicyID) *Template {
+	return p.templates[templateID]
+}
+
+// AddTemplate inserts or updates a template with the given ID.
+// Returns true if a template with the given ID did not already exist in the set.
+func (p *PolicySet) AddTemplate(templateID cedar.PolicyID, template *Template) bool {
+	_, exists := p.templates[templateID]
+	p.templates[templateID] = template
+	return !exists
+}
+
+// RemoveTemplate removes a template from the PolicySet.
+// Returns true if a template with the given ID already existed in the set.
+func (p *PolicySet) RemoveTemplate(templateID cedar.PolicyID) bool {
+	_, exists := p.templates[templateID]
+	delete(p.templates, templateID)
+	return exists
 }

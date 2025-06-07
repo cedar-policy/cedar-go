@@ -227,7 +227,7 @@ func TestIsAuthorizedFromLinkedPolicies(t *testing.T) {
 			err = ps.LinkTemplate(tt.TemplateID, "link0", tt.LinkEnv)
 			testutil.Equals(t, err != nil, tt.LinkErr)
 
-			ok, diag := cedar.Authorize(ps, tt.Entities, cedar.Request{
+			ok, diag := templates.Authorize(ps, tt.Entities, cedar.Request{
 				Principal: tt.Principal,
 				Action:    tt.Action,
 				Resource:  tt.Resource,
