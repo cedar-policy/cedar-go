@@ -49,7 +49,7 @@ func scopeEntityReference(s *scopeJSON) (types.EntityReference, error) {
 			return nil, err
 		}
 
-		ref = types.VariableSlot{ID: id}
+		ref = id
 	case s.Entity != nil:
 		ref = types.EntityUID(*s.Entity)
 	default:
@@ -77,7 +77,7 @@ func scopeInEntityReference(s *scopeInJSON) (types.EntityReference, error) {
 			return nil, err
 		}
 
-		ref = types.VariableSlot{ID: id}
+		ref = id
 	case s.Entity != nil:
 		ref = types.EntityUID(*s.Entity)
 	default:

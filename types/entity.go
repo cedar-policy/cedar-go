@@ -48,10 +48,3 @@ func (e Entity) MarshalJSON() ([]byte, error) {
 type EntityReference interface {
 	isEntityReference()
 }
-
-type VariableSlot struct {
-	ID   SlotID `json:"slot"`
-	Name String `json:"name"`
-}
-
-func (v VariableSlot) isEntityReference() {}

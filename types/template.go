@@ -10,3 +10,5 @@ const (
 func (s SlotID) String() string {
 	return string(s)
 }
+
+func (s SlotID) isEntityReference() {}

@@ -19,8 +19,8 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		case types.EntityUID:
 			e := types.ImplicitlyMarshaledEntityUID(ent)
 			s.Entity = &e
-		case types.VariableSlot:
-			varName := ent.ID.String()
+		case types.SlotID:
+			varName := ent.String()
 			s.Slot = &varName
 		}
 
@@ -31,8 +31,8 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		case types.EntityUID:
 			e := types.ImplicitlyMarshaledEntityUID(ent)
 			s.Entity = &e
-		case types.VariableSlot:
-			varName := ent.ID.String()
+		case types.SlotID:
+			varName := ent.String()
 			s.Slot = &varName
 		}
 
@@ -58,8 +58,8 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		case types.EntityUID:
 			uid := types.ImplicitlyMarshaledEntityUID(et)
 			in.Entity = &uid
-		case types.VariableSlot:
-			varName := et.ID.String()
+		case types.SlotID:
+			varName := et.String()
 			in.Slot = &varName
 		}
 

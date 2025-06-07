@@ -103,8 +103,8 @@ func resolveSlot(ef types.EntityReference, slotEnv map[types.SlotID]types.Entity
 	switch e := ef.(type) {
 	case types.EntityUID:
 		return e
-	case types.VariableSlot:
-		return slotEnv[e.ID]
+	case types.SlotID:
+		return slotEnv[e]
 	default:
 		panic(fmt.Sprintf("unknown entity reference type %T", e))
 	}

@@ -73,8 +73,8 @@ func entityReferenceToNode(ef types.EntityReference) (ast.Node, error) {
 	switch e := ef.(type) {
 	case types.EntityUID:
 		return ast.Value(e), nil
-	case types.VariableSlot:
-		return ast.NewNode(ast.NodeTypeVariable{Name: types.String(e.ID)}), nil
+	case types.SlotID:
+		return ast.NewNode(ast.NodeTypeVariable{Name: types.String(e.String())}), nil
 	default:
 		return ast.Node{}, errors.New("unknown entity reference type")
 	}

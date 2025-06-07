@@ -196,8 +196,8 @@ func (p *parser) effect(a *ast.Annotations) (*ast.Policy, error) {
 
 func addSlotToPolicy(entRef types.EntityReference, p *ast.Policy) {
 	switch varSlot := entRef.(type) {
-	case types.VariableSlot:
-		p.AddSlot(varSlot.ID)
+	case types.SlotID:
+		p.AddSlot(varSlot)
 	}
 }
 
@@ -272,9 +272,9 @@ func (p *parser) entityReference() (types.EntityReference, error) {
 		varName := "?" + t.Text
 		switch varName {
 		case string(types.PrincipalSlot):
-			return types.VariableSlot{ID: types.PrincipalSlot}, nil
+			return types.PrincipalSlot, nil
 		case string(types.ResourceSlot):
-			return types.VariableSlot{ID: types.ResourceSlot}, nil
+			return types.ResourceSlot, nil
 		}
 
 		return nil, p.errorf("unknown variable name %v", varName)

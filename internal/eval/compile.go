@@ -89,7 +89,7 @@ func entityReferenceToUID(ef types.EntityReference) types.EntityUID {
 	switch e := ef.(type) {
 	case types.EntityUID:
 		return e
-	case types.VariableSlot:
+	case types.SlotID:
 		panic("variable slot cannot be evaluated, you should instantiate a template-linked policy first")
 	default:
 		panic(fmt.Sprintf("unknown entity reference type %T", e))

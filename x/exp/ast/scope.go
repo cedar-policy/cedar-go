@@ -141,8 +141,8 @@ type ScopeTypeEq struct {
 
 func (t ScopeTypeEq) Slot() (slotID types.SlotID, found bool) {
 	switch et := t.Entity.(type) {
-	case types.VariableSlot:
-		slotID = et.ID
+	case types.SlotID:
+		slotID = et
 		found = true
 	}
 
@@ -159,8 +159,8 @@ type ScopeTypeIn struct {
 
 func (t ScopeTypeIn) Slot() (slotID types.SlotID, found bool) {
 	switch et := t.Entity.(type) {
-	case types.VariableSlot:
-		slotID = et.ID
+	case types.SlotID:
+		slotID = et
 		found = true
 	}
 
@@ -194,8 +194,8 @@ type ScopeTypeIsIn struct {
 
 func (t ScopeTypeIsIn) Slot() (slotID types.SlotID, found bool) {
 	switch et := t.Entity.(type) {
-	case types.VariableSlot:
-		slotID = et.ID
+	case types.SlotID:
+		slotID = et
 		found = true
 	}
 
