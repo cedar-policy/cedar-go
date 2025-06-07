@@ -372,7 +372,7 @@ func (s *scanner) scanComment(ch rune) rune {
 
 func (s *scanner) scanOperator(ch0, ch rune) (TokenType, rune) {
 	switch ch0 {
-	case '@', '.', ',', ';', '(', ')', '{', '}', '[', ']', '+', '-', '*':
+	case '@', '.', ',', ';', '(', ')', '{', '}', '[', ']', '+', '-', '*', '?':
 	case ':':
 		if ch == ':' {
 			ch = s.next()

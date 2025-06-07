@@ -2,7 +2,9 @@ package parser
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"github.com/cedar-policy/cedar-go/types"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
@@ -33,9 +35,19 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 	case ast.ScopeTypeAll:
 		return ast.True()
 	case ast.ScopeTypeEq:
-		return ast.NewNode(varNode).Equal(ast.Value(t.Entity))
+		rhs, err := entityReferenceToNode(t.Entity)
+		if err != nil {
+			panic(err)
+		}
+
+		return ast.NewNode(varNode).Equal(rhs)
 	case ast.ScopeTypeIn:
-		return ast.NewNode(varNode).In(ast.Value(t.Entity))
+		rhs, err := entityReferenceToNode(t.Entity)
+		if err != nil {
+			panic(err)
+		}
+
+		return ast.NewNode(varNode).In(rhs)
 	case ast.ScopeTypeInSet:
 		set := make([]ast.Node, len(t.Entities))
 		for i, e := range t.Entities {
@@ -46,9 +58,25 @@ func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
 		return ast.NewNode(varNode).Is(t.Type)
 
 	case ast.ScopeTypeIsIn:
-		return ast.NewNode(varNode).IsIn(t.Type, ast.Value(t.Entity))
+		rhs, err := entityReferenceToNode(t.Entity)
+		if err != nil {
+			panic(err)
+		}
+
+		return ast.NewNode(varNode).IsIn(t.Type, rhs)
 	default:
 		panic(fmt.Sprintf("unknown scope type %T", t))
+	}
+}
+
+func entityReferenceToNode(ef types.EntityReference) (ast.Node, error) {
+	switch e := ef.(type) {
+	case types.EntityUID:
+		return ast.Value(e), nil
+	case types.SlotID:
+		return ast.NewNode(ast.NodeTypeVariable{Name: types.String(e.String())}), nil
+	default:
+		return ast.Node{}, errors.New("unknown entity reference type")
 	}
 }
 

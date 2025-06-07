@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+const CedarVariable = EntityType("__cedar::variable")
+
 // An Entity defines the parents and attributes for an EntityUID.
 type Entity struct {
 	UID        EntityUID    `json:"uid"`
@@ -41,4 +43,8 @@ func (e Entity) MarshalJSON() ([]byte, error) {
 		e.Tags,
 	}
 	return json.Marshal(m)
+}
+
+type EntityReference interface {
+	isEntityReference()
 }

@@ -32,8 +32,8 @@ func (p *PolicyList) UnmarshalCedar(b []byte) error {
 	if err := res.UnmarshalCedar(b); err != nil {
 		return fmt.Errorf("parser error: %w", err)
 	}
-	policySlice := make([]*Policy, 0, len(res))
-	for _, p := range res {
+	policySlice := make([]*Policy, 0, len(res.StaticPolicies))
+	for _, p := range res.StaticPolicies {
 		newPolicy := newPolicy((*internalast.Policy)(p))
 		policySlice = append(policySlice, newPolicy)
 	}

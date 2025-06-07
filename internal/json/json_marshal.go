@@ -15,13 +15,27 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		return
 	case ast.ScopeTypeEq:
 		s.Op = "=="
-		e := types.ImplicitlyMarshaledEntityUID(t.Entity)
-		s.Entity = &e
+		switch ent := t.Entity.(type) {
+		case types.EntityUID:
+			e := types.ImplicitlyMarshaledEntityUID(ent)
+			s.Entity = &e
+		case types.SlotID:
+			varName := ent.String()
+			s.Slot = &varName
+		}
+
 		return
 	case ast.ScopeTypeIn:
 		s.Op = "in"
-		e := types.ImplicitlyMarshaledEntityUID(t.Entity)
-		s.Entity = &e
+		switch ent := t.Entity.(type) {
+		case types.EntityUID:
+			e := types.ImplicitlyMarshaledEntityUID(ent)
+			s.Entity = &e
+		case types.SlotID:
+			varName := ent.String()
+			s.Slot = &varName
+		}
+
 		return
 	case ast.ScopeTypeInSet:
 		s.Op = "in"
@@ -38,9 +52,19 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 	case ast.ScopeTypeIsIn:
 		s.Op = "is"
 		s.EntityType = string(t.Type)
-		s.In = &scopeInJSON{
-			Entity: types.ImplicitlyMarshaledEntityUID(t.Entity),
+		in := &scopeInJSON{}
+
+		switch et := t.Entity.(type) {
+		case types.EntityUID:
+			uid := types.ImplicitlyMarshaledEntityUID(et)
+			in.Entity = &uid
+		case types.SlotID:
+			varName := et.String()
+			in.Slot = &varName
 		}
+
+		s.In = in
+
 		return
 	default:
 		panic(fmt.Sprintf("unknown scope type %T", t))
@@ -317,6 +341,8 @@ func (p *Policy) MarshalJSON() ([]byte, error) {
 	j.Principal.FromNode(p.Principal)
 	j.Action.FromNode(p.Action)
 	j.Resource.FromNode(p.Resource)
+
+	j.Conditions = make([]conditionJSON, 0, len(p.Conditions)) // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html#policy-set-format
 	for _, c := range p.Conditions {
 		var cond conditionJSON
 		cond.Kind = "when"

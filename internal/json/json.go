@@ -12,12 +12,13 @@ type policyJSON struct {
 	Principal   scopeJSON         `json:"principal"`
 	Action      scopeJSON         `json:"action"`
 	Resource    scopeJSON         `json:"resource"`
-	Conditions  []conditionJSON   `json:"conditions,omitempty"`
+	Conditions  []conditionJSON   `json:"conditions"` // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html#policy-set-format
 }
 
 // scopeInJSON uses the implicit form of EntityUID JSON serialization to match the Rust SDK
 type scopeInJSON struct {
-	Entity types.ImplicitlyMarshaledEntityUID `json:"entity"`
+	Entity *types.ImplicitlyMarshaledEntityUID `json:"entity,omitempty"`
+	Slot   *string                             `json:"slot,omitempty"`
 }
 
 // scopeJSON uses the implicit form of EntityUID JSON serialization to match the Rust SDK
@@ -27,6 +28,7 @@ type scopeJSON struct {
 	Entities   []types.ImplicitlyMarshaledEntityUID `json:"entities,omitempty"`
 	EntityType string                               `json:"entity_type,omitempty"`
 	In         *scopeInJSON                         `json:"in,omitempty"`
+	Slot       *string                              `json:"slot,omitempty"`
 }
 
 type conditionJSON struct {
