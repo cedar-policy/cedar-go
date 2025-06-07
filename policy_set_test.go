@@ -126,7 +126,7 @@ forbid (
 	testutil.OK(t, err)
 
 	ps := cedar.NewPolicySet()
-	for i, p := range policies.StaticPolicies {
+	for i, p := range policies {
 		p.SetFilename("example.cedar")
 		ps.Add(cedar.PolicyID(fmt.Sprintf("policy%d", i)), p)
 	}
@@ -142,8 +142,8 @@ func TestPolicySetMap(t *testing.T) {
 	t.Parallel()
 	ps, err := cedar.NewPolicySetFromBytes("", []byte(`permit (principal, action, resource);`))
 	testutil.OK(t, err)
-	m := ps.Map()
-	testutil.Equals(t, len(m.StaticPolicies), 1)
+	m := maps.Collect(ps.All())
+	testutil.Equals(t, len(m), 1)
 }
 
 func TestPolicySetJSON(t *testing.T) {
@@ -159,7 +159,7 @@ func TestPolicySetJSON(t *testing.T) {
 		var ps cedar.PolicySet
 		err := ps.UnmarshalJSON([]byte(`{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}}}`))
 		testutil.OK(t, err)
-		testutil.Equals(t, len(ps.Map().StaticPolicies), 1)
+		testutil.Equals(t, len(maps.Collect(ps.All())), 1)
 	})
 
 	t.Run("MarshalOK", func(t *testing.T) {
