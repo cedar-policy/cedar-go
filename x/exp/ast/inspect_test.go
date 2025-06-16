@@ -56,9 +56,9 @@ func TestInspectCounts(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			c := 0
-			Inspect(tt.node, func(IsNode) bool { c++; return true })
-			testutil.Equals(t, c, tt.want)
+			count := 0
+			Inspect(tt.node, func(IsNode) bool { count++; return true })
+			testutil.Equals(t, count, tt.want)
 		})
 	}
 }
@@ -80,10 +80,7 @@ func TestInspectSkipChildren(t *testing.T) {
 
 func TestInspectNil(t *testing.T) {
 	t.Parallel()
-	var count int
-	Inspect(Node{}, func(n IsNode) bool {
-		count++
-		return true
-	})
-	testutil.Equals(t, count, 0)
+	var c int
+	Inspect(Node{}, func(IsNode) bool { c++; return true })
+	testutil.Equals(t, c, 0)
 }
