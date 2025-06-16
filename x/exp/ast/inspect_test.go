@@ -81,3 +81,14 @@ func TestInspectSkipChildren(t *testing.T) {
 	})
 	testutil.Equals(t, count, 1)
 }
+
+func TestInspectNil(t *testing.T) {
+	t.Parallel()
+	var count int
+	// Test that Inspect handles nil Node gracefully without panicking
+	Inspect(Node{}, func(n IsNode) bool {
+		count++
+		return true
+	})
+	testutil.Equals(t, count, 0)
+}
