@@ -7,12 +7,6 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func countNodes(n Node) int {
-	c := 0
-	Inspect(n, func(IsNode) bool { c++; return true })
-	return c
-}
-
 func TestInspectCounts(t *testing.T) {
 	t.Parallel()
 	leaf1 := NodeValue{Value: types.Long(1)}
@@ -62,7 +56,9 @@ func TestInspectCounts(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testutil.Equals(t, countNodes(tt.node), tt.want)
+			c := 0
+			Inspect(tt.node, func(IsNode) bool { c++; return true })
+			testutil.Equals(t, c, tt.want)
 		})
 	}
 }
@@ -85,7 +81,6 @@ func TestInspectSkipChildren(t *testing.T) {
 func TestInspectNil(t *testing.T) {
 	t.Parallel()
 	var count int
-	// Test that Inspect handles nil Node gracefully without panicking
 	Inspect(Node{}, func(n IsNode) bool {
 		count++
 		return true
