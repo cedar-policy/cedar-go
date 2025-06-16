@@ -22,18 +22,30 @@ type StrOpNode struct {
 }
 
 func (n StrOpNode) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n StrOpNode) inspect(fn func(IsNode) bool) {
+	inspectNode(n.Arg, fn)
+}
 
 type BinaryNode struct {
 	Left, Right IsNode
 }
 
 func (n BinaryNode) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n BinaryNode) inspect(fn func(IsNode) bool) {
+	inspectNode(n.Left, fn)
+	inspectNode(n.Right, fn)
+}
 
 type NodeTypeIfThenElse struct {
 	If, Then, Else IsNode
 }
 
 func (n NodeTypeIfThenElse) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
+func (n NodeTypeIfThenElse) inspect(fn func(IsNode) bool) {
+	inspectNode(n.If, fn)
+	inspectNode(n.Then, fn)
+	inspectNode(n.Else, fn)
+}
 
 type NodeTypeOr struct{ BinaryNode }
 
@@ -75,6 +87,9 @@ type NodeTypeLike struct {
 }
 
 func (n NodeTypeLike) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n NodeTypeLike) inspect(fn func(IsNode) bool) {
+	inspectNode(n.Arg, fn)
+}
 
 type NodeTypeIs struct {
 	Left       IsNode
@@ -82,10 +97,18 @@ type NodeTypeIs struct {
 }
 
 func (n NodeTypeIs) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n NodeTypeIs) inspect(fn func(IsNode) bool) {
+	inspectNode(n.Left, fn)
+}
 
 type NodeTypeIsIn struct {
 	NodeTypeIs
 	Entity IsNode
+}
+
+func (n NodeTypeIsIn) inspect(fn func(IsNode) bool) {
+	n.NodeTypeIs.inspect(fn)
+	inspectNode(n.Entity, fn)
 }
 
 type AddNode struct{}
@@ -107,6 +130,9 @@ type UnaryNode struct {
 }
 
 func (n UnaryNode) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n UnaryNode) inspect(fn func(IsNode) bool) {
+	inspectNode(n.Arg, fn)
+}
 
 type NodeTypeNegate struct{ UnaryNode }
 type NodeTypeNot struct{ UnaryNode }
@@ -121,6 +147,11 @@ type NodeTypeExtensionCall struct {
 }
 
 func (n NodeTypeExtensionCall) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n NodeTypeExtensionCall) inspect(fn func(IsNode) bool) {
+	for _, a := range n.Args {
+		inspectNode(a, fn)
+	}
+}
 
 func stripNodes(args []Node) []IsNode {
 	if args == nil {
@@ -170,7 +201,8 @@ type NodeValue struct {
 	Value types.Value
 }
 
-func (n NodeValue) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n NodeValue) isNode()                   { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n NodeValue) inspect(func(IsNode) bool) {}
 
 type RecordElementNode struct {
 	Key   types.String
@@ -182,19 +214,31 @@ type NodeTypeRecord struct {
 }
 
 func (n NodeTypeRecord) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n NodeTypeRecord) inspect(fn func(IsNode) bool) {
+	for _, e := range n.Elements {
+		inspectNode(e.Value, fn)
+	}
+}
 
 type NodeTypeSet struct {
 	Elements []IsNode
 }
 
 func (n NodeTypeSet) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n NodeTypeSet) inspect(fn func(IsNode) bool) {
+	for _, e := range n.Elements {
+		inspectNode(e, fn)
+	}
+}
 
 type NodeTypeVariable struct {
 	Name types.String
 }
 
-func (n NodeTypeVariable) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n NodeTypeVariable) isNode()                   { _ = 0 } // No-op statement injected for code coverage instrumentation{}
+func (n NodeTypeVariable) inspect(func(IsNode) bool) {}
 
 type IsNode interface {
 	isNode()
+	inspect(func(IsNode) bool)
 }
