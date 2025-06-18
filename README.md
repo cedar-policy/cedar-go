@@ -142,6 +142,14 @@ If you're looking to integrate Cedar into a production system, please be sure th
 
 ## Change log
 
+### 1.2.3
+#### New Features
+- Adds Entity.Equal()
+
+### 1.2.2
+#### New Features
+- Adds experimental support for inspecting Cedar policy AST
+
 ### 1.2.1
 #### New Features
 - Fixes the name of `AuthorizationPolicySet` and receiver types for `PolicySet.Get()` and `PolicySet.IsAuthorized()`

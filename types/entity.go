@@ -42,3 +42,10 @@ func (e Entity) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(m)
 }
+
+func (e Entity) Equal(other Entity) bool {
+	return e.UID.Equal(other.UID) &&
+		e.Parents.Equal(other.Parents) &&
+		e.Attributes.Equal(other.Attributes) &&
+		e.Tags.Equal(other.Tags)
+}
