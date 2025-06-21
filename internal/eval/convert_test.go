@@ -367,7 +367,7 @@ func TestToEval(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			e := toEval(tt.in.AsIsNode())
+			e := ToEval(tt.in.AsIsNode())
 			out, err := e.Eval(Env{
 				Principal: types.NewEntityUID("Actor", "principal"),
 				Action:    types.NewEntityUID("Action", "test"),
@@ -389,13 +389,13 @@ func TestToEval(t *testing.T) {
 func TestToEvalPanic(t *testing.T) {
 	t.Parallel()
 	testutil.Panic(t, func() {
-		_ = toEval(ast.Node{}.AsIsNode())
+		_ = ToEval(ast.Node{}.AsIsNode())
 	})
 }
 
 func TestToEvalVariablePanic(t *testing.T) {
 	t.Parallel()
 	testutil.Panic(t, func() {
-		_ = toEval(ast.NodeTypeVariable{Name: "bananas"})
+		_ = ToEval(ast.NodeTypeVariable{Name: "bananas"})
 	})
 }

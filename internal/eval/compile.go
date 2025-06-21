@@ -26,7 +26,7 @@ func (e *BoolEvaler) Eval(env Env) (types.Boolean, error) {
 func Compile(p *ast.Policy) BoolEvaler {
 	p = foldPolicy(p)
 	node := policyToNode(p).AsIsNode()
-	return BoolEvaler{eval: toEval(node)}
+	return BoolEvaler{eval: ToEval(node)}
 }
 
 func policyToNode(p *ast.Policy) ast.Node {
