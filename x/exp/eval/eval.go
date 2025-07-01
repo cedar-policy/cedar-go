@@ -1,3 +1,4 @@
+// Package eval provides a simple interface for evaluating a policy node in a given environment.
 package eval
 
 import (
@@ -6,7 +7,11 @@ import (
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
-func Eval(n ast.IsNode, env eval.Env) (types.Value, error) {
+// Env is the environment for evaluating a policy.
+type Env = eval.Env
+
+// Eval evaluates a policy node in the given environment.
+func Eval(n ast.IsNode, env Env) (types.Value, error) {
 	evaler := eval.ToEval(n)
 	return evaler.Eval(env)
 }
