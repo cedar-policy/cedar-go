@@ -33,8 +33,11 @@ linters:
           - revive
         text: exported
 
-      # The types package seems reasonably named to me
-      - path: types/
-        linters:
-          - revive
-        text: var-naming
+  settings:
+    revive:
+      rules:
+        - name: var-naming
+          arguments:
+            - []
+            - []
+            - - skip-package-name-checks: true
