@@ -8,28 +8,28 @@ import (
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
-func toEval(n ast.IsNode) Evaler {
+func ToEval(n ast.IsNode) Evaler {
 	switch v := n.(type) {
 	case ast.NodeTypeAccess:
-		return newAttributeAccessEval(toEval(v.Arg), v.Value)
+		return newAttributeAccessEval(ToEval(v.Arg), v.Value)
 	case ast.NodeTypeHas:
-		return newHasEval(toEval(v.Arg), v.Value)
+		return newHasEval(ToEval(v.Arg), v.Value)
 	case ast.NodeTypeGetTag:
-		return newGetTagEval(toEval(v.Left), toEval(v.Right))
+		return newGetTagEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeHasTag:
-		return newHasTagEval(toEval(v.Left), toEval(v.Right))
+		return newHasTagEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeLike:
-		return newLikeEval(toEval(v.Arg), v.Value)
+		return newLikeEval(ToEval(v.Arg), v.Value)
 	case ast.NodeTypeIfThenElse:
-		return newIfThenElseEval(toEval(v.If), toEval(v.Then), toEval(v.Else))
+		return newIfThenElseEval(ToEval(v.If), ToEval(v.Then), ToEval(v.Else))
 	case ast.NodeTypeIs:
-		return newIsEval(toEval(v.Left), v.EntityType)
+		return newIsEval(ToEval(v.Left), v.EntityType)
 	case ast.NodeTypeIsIn:
-		return newIsInEval(toEval(v.Left), v.EntityType, toEval(v.Entity))
+		return newIsInEval(ToEval(v.Left), v.EntityType, ToEval(v.Entity))
 	case ast.NodeTypeExtensionCall:
 		args := make([]Evaler, len(v.Args))
 		for i, a := range v.Args {
-			args[i] = toEval(a)
+			args[i] = ToEval(a)
 		}
 		return newExtensionEval(v.Name, args)
 	case ast.NodeValue:
@@ -37,19 +37,19 @@ func toEval(n ast.IsNode) Evaler {
 	case ast.NodeTypeRecord:
 		m := make(map[types.String]Evaler, len(v.Elements))
 		for _, e := range v.Elements {
-			m[e.Key] = toEval(e.Value)
+			m[e.Key] = ToEval(e.Value)
 		}
 		return newRecordLiteralEval(m)
 	case ast.NodeTypeSet:
 		s := make([]Evaler, len(v.Elements))
 		for i, e := range v.Elements {
-			s[i] = toEval(e)
+			s[i] = ToEval(e)
 		}
 		return newSetLiteralEval(s)
 	case ast.NodeTypeNegate:
-		return newNegateEval(toEval(v.Arg))
+		return newNegateEval(ToEval(v.Arg))
 	case ast.NodeTypeNot:
-		return newNotEval(toEval(v.Arg))
+		return newNotEval(ToEval(v.Arg))
 	case ast.NodeTypeVariable:
 		switch v.Name {
 		case consts.Principal, consts.Action, consts.Resource, consts.Context:
@@ -58,37 +58,37 @@ func toEval(n ast.IsNode) Evaler {
 			panic(fmt.Errorf("unknown variable: %v", v.Name))
 		}
 	case ast.NodeTypeIn:
-		return newInEval(toEval(v.Left), toEval(v.Right))
+		return newInEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeAnd:
-		return newAndEval(toEval(v.Left), toEval(v.Right))
+		return newAndEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeOr:
-		return newOrEval(toEval(v.Left), toEval(v.Right))
+		return newOrEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeEquals:
-		return newEqualEval(toEval(v.Left), toEval(v.Right))
+		return newEqualEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeNotEquals:
-		return newNotEqualEval(toEval(v.Left), toEval(v.Right))
+		return newNotEqualEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeGreaterThan:
-		return newComparableValueGreaterThanEval(toEval(v.Left), toEval(v.Right))
+		return newComparableValueGreaterThanEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeGreaterThanOrEqual:
-		return newComparableValueGreaterThanOrEqualEval(toEval(v.Left), toEval(v.Right))
+		return newComparableValueGreaterThanOrEqualEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeLessThan:
-		return newComparableValueLessThanEval(toEval(v.Left), toEval(v.Right))
+		return newComparableValueLessThanEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeLessThanOrEqual:
-		return newComparableValueLessThanOrEqualEval(toEval(v.Left), toEval(v.Right))
+		return newComparableValueLessThanOrEqualEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeSub:
-		return newSubtractEval(toEval(v.Left), toEval(v.Right))
+		return newSubtractEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeAdd:
-		return newAddEval(toEval(v.Left), toEval(v.Right))
+		return newAddEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeMult:
-		return newMultiplyEval(toEval(v.Left), toEval(v.Right))
+		return newMultiplyEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeContains:
-		return newContainsEval(toEval(v.Left), toEval(v.Right))
+		return newContainsEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeContainsAll:
-		return newContainsAllEval(toEval(v.Left), toEval(v.Right))
+		return newContainsAllEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeContainsAny:
-		return newContainsAnyEval(toEval(v.Left), toEval(v.Right))
+		return newContainsAnyEval(ToEval(v.Left), ToEval(v.Right))
 	case ast.NodeTypeIsEmpty:
-		return newIsEmptyEval(toEval(v.Arg))
+		return newIsEmptyEval(ToEval(v.Arg))
 	default:
 		panic(fmt.Sprintf("unknown node type %T", v))
 	}
