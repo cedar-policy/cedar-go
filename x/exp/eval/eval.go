@@ -15,3 +15,29 @@ func Eval(n ast.IsNode, env Env) (types.Value, error) {
 	evaler := eval.ToEval(n)
 	return evaler.Eval(env)
 }
+
+// PartialPolicyToNode returns node compiled from a partially evaluated version of the policy
+// and a boolean indicating if the policy should be kept.
+// (Policies that are determined to evaluate to false are not kept.)
+var PartialPolicyToNode = eval.PartialPolicyToNode
+
+// Variable is a variable in the policy.
+var Variable = eval.Variable
+
+// Ignore is a special value that is used to ignore a value.
+var Ignore = eval.Ignore
+
+// IsVariable checks if a value is a variable.
+var IsVariable = eval.IsVariable
+
+// IsIgnore checks if a value is an ignore value.
+var IsIgnore = eval.IsIgnore
+
+// ToVariable converts a value to a variable.
+var ToVariable = eval.ToVariable
+
+// TypeName returns the type name of a value.
+var TypeName = eval.TypeName
+
+// ErrType is the error type for type errors.
+var ErrType = eval.ErrType
