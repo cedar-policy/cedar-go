@@ -29,6 +29,8 @@ func Compile(p *ast.Policy) BoolEvaler {
 	return BoolEvaler{eval: ToEval(node)}
 }
 
+var PolicyToNode = policyToNode
+
 func policyToNode(p *ast.Policy) ast.Node {
 	var nodes []ast.Node
 	_, principalAll := p.Principal.(ast.ScopeTypeAll)

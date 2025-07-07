@@ -16,6 +16,9 @@ func Eval(n ast.IsNode, env Env) (types.Value, error) {
 	return evaler.Eval(env)
 }
 
+// PolicyToNode converts a policy to a node.
+var PolicyToNode = eval.PolicyToNode
+
 // Variable is a variable in the policy.
 var Variable = eval.Variable
 
