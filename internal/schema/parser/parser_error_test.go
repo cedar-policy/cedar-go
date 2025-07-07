@@ -29,6 +29,13 @@ func TestParserErrors(t *testing.T) {
 			wantErrs: []string{"expected ;, got Bar"},
 		},
 		{
+			name: "missing comma in entity enum list",
+			input: `
+				entity Foo enum ["Bar" "Baz"];
+			`,
+			wantErrs: []string{"expected , or ]"},
+		},
+		{
 			name: "reserved type name",
 			input: `
 				type String = {

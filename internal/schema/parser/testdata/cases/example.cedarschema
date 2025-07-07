@@ -25,6 +25,8 @@ namespace PhotoFlash { // inline namespace comment
     "account": Account,
     "private": Bool,
   };
+  entity PhotoFormat enum ["jpg", "gif", "png"];
+  entity AccountType enum ["user"];
   // type header comment
   type LongAlias = Long; // type footer comment
   // action header comment

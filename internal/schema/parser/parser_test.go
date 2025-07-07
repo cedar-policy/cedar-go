@@ -3,8 +3,8 @@ package parser_test
 
 import (
 	"bytes"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"io/fs"
-	"os"
 	"strings"
 	"testing"
 
@@ -113,16 +113,10 @@ func TestRealFiles(t *testing.T) {
 
 			var gotBytes bytes.Buffer
 			err = ast.Format(schema, &gotBytes)
-			if err != nil {
-				t.Fatalf("Error parsing schema: %v", err)
-			}
+			testutil.OK(t, err)
+
 			got := strings.TrimSpace(gotBytes.String())
-			if got != strings.TrimSpace(string(input)) {
-				t.Errorf("Parsed schema does not match original:\n%s\n=========================================\n%s\n=========================================", string(input), got)
-				if err := os.WriteFile("testdata/cases/"+file.Name()+".got", gotBytes.Bytes(), 0644); err != nil {
-					t.Logf("Error writing testdata/cases/%s.got: %v", file.Name(), err)
-				}
-			}
+			testutil.Equals(t, got, strings.TrimSpace(string(input)))
 		})
 	}
 }

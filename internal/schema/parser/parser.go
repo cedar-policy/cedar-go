@@ -335,19 +335,24 @@ func (p *Parser) parseEntityDecl() (entity *ast.Entity) {
 		entity.Names = append(entity.Names, p.parseIdent())
 	}
 
-	if p.matches(token.IN) {
+	if p.matches(token.ENUM) {
 		p.eat()
-		entity.In = p.parseEntOrTypes()
-	}
-	if p.matches(token.EQUALS) {
-		entity.EqTok = p.eat().Pos
-	}
-	if p.matches(token.LEFTBRACE) {
-		entity.Shape = p.parseRecType()
-	}
-	if p.matches(token.TAGS) {
-		p.eat()
-		entity.Tags = p.parseType()
+		entity.Enum = p.parseEntEnumValues()
+	} else {
+		if p.matches(token.IN) {
+			p.eat()
+			entity.In = p.parseEntOrTypes()
+		}
+		if p.matches(token.EQUALS) {
+			entity.EqTok = p.eat().Pos
+		}
+		if p.matches(token.LEFTBRACE) {
+			entity.Shape = p.parseRecType()
+		}
+		if p.matches(token.TAGS) {
+			p.eat()
+			entity.Tags = p.parseType()
+		}
 	}
 	semi, _ := p.eatOnly(token.SEMICOLON, "expected ;")
 	entity.Semicolon = semi.Pos
@@ -355,6 +360,25 @@ func (p *Parser) parseEntityDecl() (entity *ast.Entity) {
 		entity.NodeComments.Footer = p.parseComment()
 	}
 	return entity
+}
+
+func (p *Parser) parseEntEnumValues() (values []*ast.String) {
+	p.eatOnly(token.LEFTBRACKET, "expected [")
+	str := p.eat()
+	values = append(values, &ast.String{QuotedVal: str.Lit, Tok: str.Pos})
+	for !p.matches(token.RIGHTBRACKET, token.EOF) {
+		if p.matches(token.COMMA) {
+			p.eat()
+			str = p.eat()
+			values = append(values, &ast.String{QuotedVal: str.Lit, Tok: str.Pos})
+		} else if !p.matches(token.RIGHTBRACKET) {
+			p.errorf(p.peek().Pos, "expected , or ]")
+			p.advance(map[token.Type]bool{token.RIGHTBRACKET: true})
+			break
+		}
+	}
+	p.eatOnly(token.RIGHTBRACKET, "expected ]")
+	return values
 }
 
 func (p *Parser) parseEntOrTypes() (types []*ast.Path) {

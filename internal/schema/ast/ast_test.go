@@ -161,7 +161,7 @@ func Test_printBracketList_panic(t *testing.T) {
 	}()
 
 	var emptyList []Node
-	printBracketList(p, emptyList)
+	printBracketList(p, emptyList, false)
 }
 
 type unknownType struct {

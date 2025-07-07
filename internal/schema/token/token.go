@@ -58,6 +58,7 @@ const (
 	PRINCIPAL
 	RESOURCE
 	CONTEXT
+	ENUM
 
 	// Punctuation
 	LEFTBRACE    // {
@@ -96,6 +97,7 @@ var types = [...]string{
 	PRINCIPAL:  "PRINCIPAL",
 	RESOURCE:   "RESOURCE",
 	CONTEXT:    "CONTEXT",
+	ENUM:       "ENUM",
 
 	LEFTBRACE:    "LEFTBRACE",
 	RIGHTBRACE:   "RIGHTBRACE",

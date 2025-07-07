@@ -89,6 +89,11 @@ func convertJsonEntityTypes(types map[string]*JsonEntity) []Declaration {
 			entity.Tags = convertJsonType(et.Tags)
 		}
 
+		// Convert enum
+		for _, value := range et.Enum {
+			entity.Enum = append(entity.Enum, &String{QuotedVal: fmt.Sprintf("%q", value)})
+		}
+
 		decls = append(decls, entity)
 	}
 	return decls

@@ -260,11 +260,17 @@ func (i *Ident) End() token.Position {
 type Entity struct {
 	NodeComments
 	EntityTok token.Position
-	Names     []*Ident       // define multiple entities with the same shape
-	In        []*Path        // optional, if nil none given
-	EqTok     token.Position // valid if = is present before shape
-	Shape     *RecordType    // nil if none given
-	Tags      Type
+	Names     []*Ident // define multiple entities with the same shape
+
+	// Traditional entity definition
+	In    []*Path        // optional, if nil none given
+	EqTok token.Position // valid if = is present before shape
+	Shape *RecordType    // nil if none given
+	Tags  Type
+
+	// Enumerated entity definition
+	Enum []*String
+
 	Semicolon token.Position
 }
 

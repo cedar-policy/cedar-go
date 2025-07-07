@@ -77,6 +77,9 @@ func convertNamespace(n *Namespace) *JsonNamespace {
 				if astDecl.Tags != nil {
 					entity.Tags = convertType(astDecl.Tags)
 				}
+				for _, value := range astDecl.Enum {
+					entity.Enum = append(entity.Enum, value.String())
+				}
 				jsNamespace.EntityTypes[name.String()] = entity
 			}
 		case *CommonTypeDecl:
