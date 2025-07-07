@@ -1,0 +1,17 @@
+namespace PhotoFlash {
+  // Comment explaining entities User and User2
+  // it's a two line comment
+  entity User, User2 in UserGroup = {
+    "department": String,
+    "jobLevel": Long,
+  } tags String;
+  entity UserGroup;
+  type LongAlias = Long;
+  action "viewPhoto", viewPhoto2 in ["read", PhotoFlash::Action::all] appliesTo {
+    principal: User,
+    resource: Photo,
+    context: {
+      "authenticated": Bool
+    }
+  };
+}

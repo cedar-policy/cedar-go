@@ -1,0 +1,66 @@
+// Test case to make sure that all types of Cedar elements are parseable
+// and that the formatter doesn't mess anything up.
+namespace PhotoFlash { // inline namespace comment
+  // Comment explaining entities User and User2
+  // it's a two line comment
+  entity User, User2 in UserGroup = {
+    "department": String,
+    "jobLevel": Long,
+  } tags String;
+  entity UserGroup; // inline comment entity
+  entity Album in Album = { // inline comment rec type
+    "account": Account,
+    // record attribute comment
+    "private": Bool, // record inline comment
+    // footer comment rec type
+    // multiple lines
+  }; // footer comment entity
+  entity Account {
+    "admins"?: Set<User>, // attribute comment
+    "owner": User,
+  };
+  entity Photo in [Album, PhotoFlassh::Other::Album] = {
+    "account": Account,
+    "private": Bool,
+  };
+  // type header comment
+  type LongAlias = Long; // type footer comment
+  // action header comment
+  action "uploadPhoto" appliesTo { // inline action comment
+    // principal comment before
+    principal: User, // principal comment inline
+    // resource comment before
+    // multi line
+    resource: [Album, Photo], // resource comment inline
+    // context comment before
+    context: { // context comment inline
+      "authenticated": Bool,
+      "photo": {
+        "file_size": LongAlias,
+        "file_type": String,
+      },
+    }, // context comment after
+    // remaining comments
+  }; // action footer comment
+  action "read"; // action footer comment 1-line
+  action "all";
+  action "viewPhoto", viewPhoto2 in ["read", PhotoFlash::Action::all] appliesTo {
+    principal: User,
+    resource: Photo,
+    context: { // opener comment
+      // Attribute comment (line 1)
+      // Attribute comment (line 2)
+      "authenticated": Bool, // attribute comment inline
+    }, // context comment
+  };
+  action "listAlbums" in "read" appliesTo {
+    principal: User,
+    resource: Account,
+    context: {
+      "authenticated": Bool,
+    },
+  };
+  // Remainder comment block
+  // should also be kept around
+} // Footer comment on namespace
+// Tailing comments after namespace
