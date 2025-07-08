@@ -6,6 +6,8 @@ import (
 	"io/fs"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
 	"github.com/cedar-policy/cedar-go/internal/schema/parser"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -42,5 +44,6 @@ func TestConvertHumanToJson(t *testing.T) {
 	var gotJ, wantJ interface{}
 	testutil.OK(t, json.Unmarshal(want, &wantJ))
 	testutil.OK(t, json.Unmarshal(got.Bytes(), &gotJ))
-	testutil.Equals(t, wantJ, gotJ)
+	diff := cmp.Diff(gotJ, wantJ)
+	testutil.FatalIf(t, diff != "", "mismatch -want +got:\n%v", diff)
 }

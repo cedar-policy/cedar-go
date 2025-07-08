@@ -8,20 +8,22 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestConvertJsonToHumanRoundtrip(t *testing.T) {
 	// Read the example JSON schema from embedded filesystem
-	exampleJson, err := fs.ReadFile(ast.Testdata, "testdata/convert/test_want.json")
+	exampleJSON, err := fs.ReadFile(ast.Testdata, "testdata/convert/test_want.json")
 	if err != nil {
 		t.Fatalf("Error reading example JSON schema: %v", err)
 	}
 
 	// Parse the JSON schema
-	var jsonSchema ast.JsonSchema
-	if err := json.Unmarshal(exampleJson, &jsonSchema); err != nil {
+	var jsonSchema ast.JSONSchema
+	if err := json.Unmarshal(exampleJSON, &jsonSchema); err != nil {
 		t.Fatalf("Error parsing JSON schema: %v", err)
 	}
 
@@ -36,12 +38,13 @@ func TestConvertJsonToHumanRoundtrip(t *testing.T) {
 	json2, err := json.MarshalIndent(jsonSchema2, "", "    ")
 	testutil.OK(t, err)
 
-	testutil.Equals(t, string(json1), string(json2))
+	diff := cmp.Diff(string(json1), string(json2))
+	testutil.FatalIf(t, diff != "", "mismatch -want +got:\n%v", diff)
 }
 
 func TestConvertJsonToHumanEmpty(t *testing.T) {
 	// Test with an empty JSON schema
-	emptySchema := ast.JsonSchema{}
+	emptySchema := ast.JSONSchema{}
 	humanSchema := ast.ConvertJSON2Human(emptySchema)
 
 	// Format the human-readable schema
@@ -52,17 +55,17 @@ func TestConvertJsonToHumanEmpty(t *testing.T) {
 
 	// Should be empty
 	if len(got.Bytes()) != 0 {
-		t.Errorf("Expected empty output, got: %q", string(got.Bytes()))
+		t.Errorf("Expected empty output, got: %q", got.String())
 	}
 }
 
 func TestConvertJsonToHumanInvalidType(t *testing.T) {
 	// Test with an invalid JSON type
-	invalidSchema := ast.JsonSchema{
+	invalidSchema := ast.JSONSchema{
 		"": {
-			EntityTypes: map[string]*ast.JsonEntity{
+			EntityTypes: map[string]*ast.JSONEntity{
 				"Test": {
-					Shape: &ast.JsonType{
+					Shape: &ast.JSONType{
 						Type: "InvalidType",
 					},
 				},
