@@ -69,7 +69,7 @@ func (s *Schema) MarshalJSON() (out []byte, err error) {
 	if s.humanSchema != nil {
 		// Error should not be possible since s.humanSchema comes from our parser.
 		// If it happens, we return empty JSON.
-		s.jsonSchema = ast.ConvertHuman2Json(s.humanSchema)
+		s.jsonSchema = ast.ConvertHuman2JSON(s.humanSchema)
 	}
 	if s.jsonSchema == nil {
 		return nil, nil

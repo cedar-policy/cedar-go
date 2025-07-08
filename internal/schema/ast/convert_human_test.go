@@ -28,7 +28,7 @@ func TestConvertHumanToJson(t *testing.T) {
 		t.Fatalf("Error parsing example schema: %v", err)
 	}
 
-	jsonSchema := ast.ConvertHuman2Json(schema)
+	jsonSchema := ast.ConvertHuman2JSON(schema)
 	var got bytes.Buffer
 	enc := json.NewEncoder(&got)
 	enc.SetIndent("", "    ")

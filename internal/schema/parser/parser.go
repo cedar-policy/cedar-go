@@ -37,9 +37,7 @@ func ParseFile(filename string, src []byte) (schema *ast.Schema, err error) {
 		errs := lex.Errors
 		errs = append(errs, p.Errors...)
 		if r := recover(); r != nil {
-			if r != ErrBailout {
-				panic(r)
-			}
+			must(r == ErrBailout, r)
 		}
 		if len(errs) > 0 {
 			errs.Sort()
@@ -663,4 +661,10 @@ func (p *Parser) parseIdent() *ast.Ident {
 func (p *Parser) parseComment() *ast.Comment {
 	tok, _ := p.eatOnly(token.COMMENT, "expected comment")
 	return &ast.Comment{SlashTok: tok.Pos, Value: tok.Lit}
+}
+
+func must(b bool, arg any) {
+	if !b {
+		panic(arg)
+	}
 }

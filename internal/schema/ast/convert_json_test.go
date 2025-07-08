@@ -29,7 +29,7 @@ func TestConvertJsonToHumanRoundtrip(t *testing.T) {
 
 	// Convert to human-readable format and back to JSON
 	humanSchema := ast.ConvertJSON2Human(jsonSchema)
-	jsonSchema2 := ast.ConvertHuman2Json(humanSchema)
+	jsonSchema2 := ast.ConvertHuman2JSON(humanSchema)
 
 	// Compare the JSON schemas
 	json1, err := json.MarshalIndent(jsonSchema, "", "    ")

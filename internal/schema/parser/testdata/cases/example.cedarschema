@@ -46,7 +46,9 @@ namespace PhotoFlash { // inline namespace comment
     resource: [Album, Photo], // resource comment inline
     // context comment before
     context: { // context comment inline
+      // comment before annotation
       @annotation("attrDecl1")
+      // comment after annotation
       "authenticated": Bool,
       @annotation("attrDecl2")
       "photo": {

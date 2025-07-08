@@ -202,7 +202,7 @@ type NodeValue struct {
 }
 
 func (n NodeValue) isNode()                   { _ = 0 } // No-op statement injected for code coverage instrumentation
-func (n NodeValue) inspect(func(IsNode) bool) { _ = 0 } // No-op statements injected for code coverage instrumentation
+func (n NodeValue) inspect(func(IsNode) bool) { _ = 0 } // No-op statement injected for code coverage instrumentation
 
 type RecordElementNode struct {
 	Key   types.String

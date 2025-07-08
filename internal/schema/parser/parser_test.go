@@ -7,10 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/internal/testutil"
-
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
 	"github.com/cedar-policy/cedar-go/internal/schema/parser"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestParseSimple(t *testing.T) {

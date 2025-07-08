@@ -50,22 +50,23 @@ type Node interface {
 	End() token.Position
 }
 
-func (*Schema) isNode()         {}
-func (*Namespace) isNode()      {}
-func (*CommonTypeDecl) isNode() {}
-func (*RecordType) isNode()     {}
-func (*SetType) isNode()        {}
-func (*Path) isNode()           {}
-func (*Ident) isNode()          {}
-func (*Entity) isNode()         {}
-func (*Action) isNode()         {}
-func (*AppliesTo) isNode()      {}
-func (*Ref) isNode()            {}
-func (*Attribute) isNode()      {}
-func (*String) isNode()         {}
-func (CommentBlock) isNode()    {}
-func (*Comment) isNode()        {}
-func (*Annotation) isNode()     {}
+// no-op statements are included for code coverage instrumentation
+func (*Schema) isNode()         { _ = 0 }
+func (*Namespace) isNode()      { _ = 0 }
+func (*CommonTypeDecl) isNode() { _ = 0 }
+func (*RecordType) isNode()     { _ = 0 }
+func (*SetType) isNode()        { _ = 0 }
+func (*Path) isNode()           { _ = 0 }
+func (*Ident) isNode()          { _ = 0 }
+func (*Entity) isNode()         { _ = 0 }
+func (*Action) isNode()         { _ = 0 }
+func (*AppliesTo) isNode()      { _ = 0 }
+func (*Ref) isNode()            { _ = 0 }
+func (*Attribute) isNode()      { _ = 0 }
+func (*String) isNode()         { _ = 0 }
+func (CommentBlock) isNode()    { _ = 0 }
+func (*Comment) isNode()        { _ = 0 }
+func (*Annotation) isNode()     { _ = 0 }
 
 type NodeComments struct {
 	Before CommentBlock // comments that precede the node on a separate line
@@ -101,11 +102,12 @@ type Declaration interface {
 	isDecl()
 }
 
-func (*Entity) isDecl()         {}
-func (*Action) isDecl()         {}
-func (*Namespace) isDecl()      {}
-func (*CommonTypeDecl) isDecl() {}
-func (*CommentBlock) isDecl()   {}
+// no-op statements are included for code coverage instrumentation
+func (*Entity) isDecl()         { _ = 0 }
+func (*Action) isDecl()         { _ = 0 }
+func (*Namespace) isDecl()      { _ = 0 }
+func (*CommonTypeDecl) isDecl() { _ = 0 }
+func (*CommentBlock) isDecl()   { _ = 0 }
 
 type Namespace struct {
 	Annotations []*Annotation
@@ -168,9 +170,10 @@ type Type interface {
 	isType()
 }
 
-func (*RecordType) isType() {}
-func (*SetType) isType()    {}
-func (*Path) isType()       {}
+// no-op statements are included for code coverage instrumentation
+func (*RecordType) isType() { _ = 0 }
+func (*SetType) isType()    { _ = 0 }
+func (*Path) isType()       { _ = 0 }
 
 type RecordType struct {
 	Inner      *Comment // after initial '{'
@@ -198,6 +201,9 @@ type Attribute struct {
 }
 
 func (a *Attribute) Pos() token.Position {
+	if a.Annotations != nil {
+		return a.Annotations[0].Pos()
+	}
 	if a.Before != nil {
 		return a.NodeComments.Before[0].SlashTok
 	}
@@ -393,8 +399,9 @@ func (s *String) Value() string {
 	return s.QuotedVal[1 : len(s.QuotedVal)-1]
 }
 
-func (*String) isName() {}
-func (*Ident) isName()  {}
+// no-op statements are included for code coverage instrumentation
+func (*String) isName() { _ = 0 }
+func (*Ident) isName()  { _ = 0 }
 
 func (s *String) Pos() token.Position {
 	return s.Tok
@@ -460,8 +467,8 @@ func (a *Annotation) Pos() token.Position {
 }
 
 func (a *Annotation) End() token.Position {
-	if a.Footer != nil {
-		return a.Footer.End()
+	if a.Value == nil {
+		return a.Key.End()
 	}
 	return a.RightParen
 }

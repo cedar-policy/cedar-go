@@ -43,6 +43,9 @@
           }
         }
       },
+      "AccountType": {
+        "enum": ["user"]
+      },
       "Album": {
         "memberOfTypes": [
           "Album"
@@ -80,6 +83,9 @@
             }
           }
         }
+      },
+      "PhotoFormat": {
+        "enum": ["jpg", "gif", "png"]
       },
       "User": {
         "memberOfTypes": [

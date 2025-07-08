@@ -5,11 +5,11 @@ import (
 	"strings"
 )
 
-// ConvertHuman2Json converts an AST schema to a JSON schema. The conversion process is lossy.
+// ConvertHuman2JSON converts an AST schema to a JSON schema. The conversion process is lossy.
 // Any information related to ordering, formatting, comments, etc... are lost completely.
 //
 // TODO: Add errors if the schema is invalid (references names that don't exist)
-func ConvertHuman2Json(n *Schema) JSONSchema {
+func ConvertHuman2JSON(n *Schema) JSONSchema {
 	out := make(JSONSchema)
 	// In Cedar, all anonymous types (not under a namespace) are put into the "root" namespace,
 	// which just has a name of "".

@@ -27,6 +27,8 @@ namespace PhotoFlash {
     "account": Account,
     "private": Bool,
   };
+  entity PhotoFormat enum ["jpg", "gif", "png"];
+  entity AccountType enum ["user"];
   action "uploadPhoto" in groupAction1 appliesTo {
     principal: User,
     resource: Album,

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/schema/token"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestParserErrors(t *testing.T) {
@@ -237,4 +238,23 @@ func TestParserErrors(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_must(t *testing.T) {
+	t.Parallel()
+	t.Run("true", func(t *testing.T) {
+		t.Parallel()
+		must(true, "nothing should happen")
+	})
+	t.Run("false", func(t *testing.T) {
+		t.Parallel()
+		defer func() {
+			if r := recover(); r != nil {
+				testutil.Equals(t, r, "nothing should happen")
+			} else {
+				t.Errorf("expected panic but no panic recovered")
+			}
+		}()
+		must(false, "nothing should happen")
+	})
 }

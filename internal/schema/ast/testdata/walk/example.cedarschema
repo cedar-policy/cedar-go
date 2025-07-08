@@ -1,3 +1,4 @@
+// Comment
 namespace PhotoFlash {
   // Comment explaining entities User and User2
   // it's a two line comment
@@ -6,7 +7,9 @@ namespace PhotoFlash {
     "jobLevel": Long,
   } tags String;
   entity UserGroup;
+  // Type comment
   type LongAlias = Long;
+  // Action comment
   action "viewPhoto", viewPhoto2 in ["read", PhotoFlash::Action::all] appliesTo {
     principal: User,
     resource: Photo,
