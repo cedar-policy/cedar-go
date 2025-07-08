@@ -1,0 +1,6 @@
+entity A;
+action "action" appliesTo {
+    principal: [A],
+    resource: [A],
+    context: {"M": {"\0\0\u{13}\0?": A, "\0\0\u{13}\0?\u{1a}": A, "\0\0m": A, "\u{4}e": A, "\u{1b}\u{7f}___": A, "\'\u{1c}`": A, "8888": A, "U_": A, "c": A, "e": A, "m\u{1c}`ax": __cedar::Bool, "mWW": A, "mm\u{1c}`": A, "\u{7f}\u{1}\u{7}": A}}
+};
