@@ -886,7 +886,7 @@ yy98:
 		}
 	}
 yy99:
-	{ tok = token.APPLIES_TO; lit = "appliesTo"; return }
+	{ tok = token.APPLIESTO; lit = "appliesTo"; return }
 yy100:
 	l.cursor += 1
 	yych = l.input[l.cursor]

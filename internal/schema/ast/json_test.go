@@ -13,7 +13,7 @@ func TestParsesExampleSchema(t *testing.T) {
 		t.Fatalf("Error reading example schema: %v", err)
 	}
 
-	var schema JsonSchema
+	var schema JSONSchema
 	err = json.Unmarshal([]byte(exampleSchema), &schema)
 	if err != nil {
 		t.Fatalf("Error parsing schema: %v", err)

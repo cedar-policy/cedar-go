@@ -16,7 +16,7 @@ import (
 // Marshalling and unmarshalling between the formats is allowed.
 type Schema struct {
 	filename    string
-	jsonSchema  ast.JsonSchema
+	jsonSchema  ast.JSONSchema
 	humanSchema *ast.Schema
 }
 

@@ -127,7 +127,7 @@ func (p *Parser) parseSchema() *ast.Schema {
 				annotations = nil
 			}
 			if len(comments) > 0 {
-				namespace.NodeComments.Before = comments
+				namespace.Before = comments
 				comments = nil
 			}
 			schema.Decls = append(schema.Decls, namespace)
@@ -138,7 +138,7 @@ func (p *Parser) parseSchema() *ast.Schema {
 				annotations = nil
 			}
 			if len(comments) > 0 {
-				typ.NodeComments.Before = comments
+				typ.Before = comments
 				comments = nil
 			}
 			schema.Decls = append(schema.Decls, typ)
@@ -149,7 +149,7 @@ func (p *Parser) parseSchema() *ast.Schema {
 				annotations = nil
 			}
 			if len(comments) > 0 {
-				action.NodeComments.Before = comments
+				action.Before = comments
 				comments = nil
 			}
 			schema.Decls = append(schema.Decls, action)
@@ -160,7 +160,7 @@ func (p *Parser) parseSchema() *ast.Schema {
 				annotations = nil
 			}
 			if len(comments) > 0 {
-				entity.NodeComments.Before = comments
+				entity.Before = comments
 				comments = nil
 			}
 			schema.Decls = append(schema.Decls, entity)
@@ -169,7 +169,7 @@ func (p *Parser) parseSchema() *ast.Schema {
 		case token.AT:
 			annotation := p.parseAnnotation()
 			if len(comments) > 0 {
-				annotation.NodeComments.Before = comments
+				annotation.Before = comments
 				comments = nil
 			}
 			annotations = append(annotations, annotation)
@@ -203,7 +203,7 @@ func (p *Parser) parseAnnotation() *ast.Annotation {
 		lastLine = rp.Pos.Line
 	}
 	if p.matches(token.COMMENT) && p.peek().Pos.Line == lastLine {
-		annotation.NodeComments.Inline = p.parseComment()
+		annotation.Inline = p.parseComment()
 	}
 
 	return annotation
@@ -216,7 +216,7 @@ func (p *Parser) parseNamespace() (namespace *ast.Namespace) {
 	namespace.Name = p.parsePath()
 	p.eatOnly(token.LEFTBRACE, "expected { after namespace path")
 	if p.peek().Type == token.COMMENT && p.peek().Pos.Line == nptok.Pos.Line {
-		namespace.NodeComments.Inline = p.parseComment()
+		namespace.Inline = p.parseComment()
 	}
 	var annotations []*ast.Annotation
 	var comments []*ast.Comment
@@ -228,7 +228,7 @@ func (p *Parser) parseNamespace() (namespace *ast.Namespace) {
 				annotations = nil
 			}
 			if len(comments) > 0 {
-				entity.NodeComments.Before = comments
+				entity.Before = comments
 				comments = nil
 			}
 			namespace.Decls = append(namespace.Decls, entity)
@@ -239,7 +239,7 @@ func (p *Parser) parseNamespace() (namespace *ast.Namespace) {
 				annotations = nil
 			}
 			if len(comments) > 0 {
-				action.NodeComments.Before = comments
+				action.Before = comments
 				comments = nil
 			}
 			namespace.Decls = append(namespace.Decls, action)
@@ -250,7 +250,7 @@ func (p *Parser) parseNamespace() (namespace *ast.Namespace) {
 				annotations = nil
 			}
 			if len(comments) > 0 {
-				typ.NodeComments.Before = comments
+				typ.Before = comments
 				comments = nil
 			}
 			namespace.Decls = append(namespace.Decls, typ)
@@ -259,7 +259,7 @@ func (p *Parser) parseNamespace() (namespace *ast.Namespace) {
 		} else if p.matches(token.AT) {
 			annotation := p.parseAnnotation()
 			if len(comments) > 0 {
-				annotation.NodeComments.Before = comments
+				annotation.Before = comments
 				comments = nil
 			}
 			annotations = append(annotations, annotation)
@@ -307,7 +307,7 @@ func (p *Parser) parseAction() (action *ast.Action) {
 		p.eat()
 		action.In = p.parseRefOrTypes()
 	}
-	if p.matches(token.APPLIES_TO) {
+	if p.matches(token.APPLIESTO) {
 		appliesToTok := p.eat()
 		action.AppliesTo = p.parseAppliesTo()
 		action.AppliesTo.AppliesToTok = appliesToTok.Pos
@@ -429,7 +429,7 @@ func (p *Parser) parseEntityDecl() (entity *ast.Entity) {
 	semi, _ := p.eatOnly(token.SEMICOLON, "expected ;")
 	entity.Semicolon = semi.Pos
 	if p.matches(token.COMMENT) && p.peek().Pos.Line == semi.Pos.Line {
-		entity.NodeComments.Footer = p.parseComment()
+		entity.Footer = p.parseComment()
 	}
 	return entity
 }
@@ -507,7 +507,7 @@ func (p *Parser) parseTypeDecl() (typ *ast.CommonTypeDecl) {
 	typ.Value = p.parseType()
 	semi, _ := p.eatOnly(token.SEMICOLON, "expected ;")
 	if p.matches(token.COMMENT) && p.peek().Pos.Line == semi.Pos.Line {
-		typ.NodeComments.Footer = p.parseComment()
+		typ.Footer = p.parseComment()
 	}
 	return typ
 }
@@ -549,7 +549,7 @@ func (p *Parser) parseRecType() (typ *ast.RecordType) {
 		if p.matches(token.AT) {
 			annotation := p.parseAnnotation()
 			if len(comments) > 0 {
-				annotation.NodeComments.Before = comments
+				annotation.Before = comments
 				comments = nil
 			}
 			annotations = append(annotations, annotation)
@@ -561,7 +561,7 @@ func (p *Parser) parseRecType() (typ *ast.RecordType) {
 			annotations = nil
 		}
 		if len(comments) > 0 {
-			attr.NodeComments.Before = comments
+			attr.Before = comments
 			comments = nil
 		}
 		typ.Attributes = append(typ.Attributes, attr)

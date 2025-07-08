@@ -3,10 +3,11 @@ package parser_test
 
 import (
 	"bytes"
-	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"io/fs"
 	"strings"
 	"testing"
+
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
 	"github.com/cedar-policy/cedar-go/internal/schema/parser"

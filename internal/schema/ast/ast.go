@@ -121,15 +121,15 @@ func (n *Namespace) Pos() token.Position {
 	if len(n.Annotations) > 0 {
 		return n.Annotations[0].Pos()
 	}
-	if len(n.NodeComments.Before) > 0 {
-		return n.NodeComments.Before.Pos()
+	if len(n.Before) > 0 {
+		return n.Before.Pos()
 	}
 	return n.NamespaceTok
 }
 
 func (n *Namespace) End() token.Position {
-	if n.NodeComments.Footer != nil {
-		return n.NodeComments.Footer.End()
+	if n.Footer != nil {
+		return n.Footer.End()
 	}
 	return n.CloseBrace
 }
@@ -146,8 +146,8 @@ func (t *CommonTypeDecl) Pos() token.Position {
 	if len(t.Annotations) > 0 {
 		return t.Annotations[0].Pos()
 	}
-	if len(t.NodeComments.Before) > 0 {
-		return t.NodeComments.Before.Pos()
+	if len(t.Before) > 0 {
+		return t.Before.Pos()
 	}
 	return t.TypeTok
 }
@@ -198,7 +198,7 @@ type Attribute struct {
 }
 
 func (a *Attribute) Pos() token.Position {
-	if a.NodeComments.Before != nil {
+	if a.Before != nil {
 		return a.NodeComments.Before[0].SlashTok
 	}
 	return a.Key.Pos()
@@ -289,8 +289,8 @@ func (e *Entity) Pos() token.Position {
 	if len(e.Annotations) > 0 {
 		return e.Annotations[0].Pos()
 	}
-	if len(e.NodeComments.Before) > 0 {
-		return e.NodeComments.Before.Pos()
+	if len(e.Before) > 0 {
+		return e.Before.Pos()
 	}
 	return e.EntityTok
 }
@@ -316,8 +316,8 @@ func (a *Action) Pos() token.Position {
 	if len(a.Annotations) > 0 {
 		return a.Annotations[0].Pos()
 	}
-	if len(a.NodeComments.Before) > 0 {
-		return a.NodeComments.Before.Pos()
+	if len(a.Before) > 0 {
+		return a.Before.Pos()
 	}
 	return a.ActionTok
 }
@@ -453,15 +453,15 @@ type Annotation struct {
 }
 
 func (a *Annotation) Pos() token.Position {
-	if len(a.NodeComments.Before) > 0 {
-		return a.NodeComments.Before.Pos()
+	if len(a.Before) > 0 {
+		return a.Before.Pos()
 	}
 	return a.At
 }
 
 func (a *Annotation) End() token.Position {
-	if a.NodeComments.Footer != nil {
-		return a.NodeComments.Footer.End()
+	if a.Footer != nil {
+		return a.Footer.End()
 	}
 	return a.RightParen
 }
