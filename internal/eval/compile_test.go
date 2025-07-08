@@ -59,6 +59,11 @@ func TestPolicyToNode(t *testing.T) {
 			ast.True(),
 		},
 		{
+			"forbid",
+			ast.Forbid(),
+			ast.True(),
+		},
+		{
 			"eqs",
 
 			ast.Permit().

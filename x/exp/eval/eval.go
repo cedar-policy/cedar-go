@@ -21,6 +21,12 @@ func Eval(n ast.IsNode, env Env) (types.Value, error) {
 // (Policies that are determined to evaluate to false are not kept.)
 var PartialPolicyToNode = eval.PartialPolicyToNode
 
+// PartialError returns a node that represents a partial error.
+var PartialError = eval.PartialError
+
+// IsPartialError returns true if the node is a partial error.
+var IsPartialError = eval.IsPartialError
+
 // Variable is a variable in the policy.
 var Variable = eval.Variable
 
