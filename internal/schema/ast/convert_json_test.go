@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestConvertJsonToHumanRoundtrip(t *testing.T) {
@@ -31,21 +31,12 @@ func TestConvertJsonToHumanRoundtrip(t *testing.T) {
 
 	// Compare the JSON schemas
 	json1, err := json.MarshalIndent(jsonSchema, "", "    ")
-	if err != nil {
-		t.Fatalf("Error marshalling first JSON schema: %v", err)
-	}
+	testutil.OK(t, err)
 
 	json2, err := json.MarshalIndent(jsonSchema2, "", "    ")
-	if err != nil {
-		t.Fatalf("Error marshalling second JSON schema: %v", err)
-	}
+	testutil.OK(t, err)
 
-	if string(json1) != string(json2) {
-		if err := os.WriteFile("testdata/convert/test_got_roundtrip.json", json2, 0644); err != nil {
-			t.Logf("Error writing testdata/convert/test_got_roundtrip.json: %v", err)
-		}
-		t.Errorf("Roundtrip conversion failed, compare testdata/convert/test_want.json and testdata/convert/test_got_roundtrip.json")
-	}
+	testutil.Equals(t, string(json1), string(json2))
 }
 
 func TestConvertJsonToHumanEmpty(t *testing.T) {

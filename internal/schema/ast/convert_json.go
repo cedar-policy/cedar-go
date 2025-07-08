@@ -33,6 +33,9 @@ func convertJsonNamespace(name string, js *JsonNamespace) *Namespace {
 		ns.Name = convertJsonNamespaceName(name)
 	}
 
+	// Convert annotations
+	ns.Annotations = convertJsonAnnotations(js.Annotations)
+
 	// Convert common types
 	ns.Decls = append(ns.Decls, convertJsonCommonTypes(js.CommonTypes)...)
 
@@ -43,6 +46,14 @@ func convertJsonNamespace(name string, js *JsonNamespace) *Namespace {
 	ns.Decls = append(ns.Decls, convertJsonActions(js.Actions)...)
 
 	return ns
+}
+
+func convertJsonAnnotations(annotations map[string]string) []*Annotation {
+	var ans []*Annotation
+	for k, v := range annotations {
+		ans = append(ans, &Annotation{Key: &Ident{Value: k}, Value: &String{QuotedVal: fmt.Sprintf("%q", v)}})
+	}
+	return ans
 }
 
 func convertJsonNamespaceName(name string) *Path {
@@ -57,9 +68,12 @@ func convertJsonNamespaceName(name string) *Path {
 func convertJsonCommonTypes(types map[string]*JsonCommonType) []Declaration {
 	decls := make([]Declaration, 0, len(types))
 	for name, ct := range types {
+		annotations := convertJsonAnnotations(ct.Annotations)
+
 		decls = append(decls, &CommonTypeDecl{
-			Name:  &Ident{Value: name},
-			Value: convertJsonType(ct.JsonType),
+			Annotations: annotations,
+			Name:        &Ident{Value: name},
+			Value:       convertJsonType(ct.JsonType),
 		})
 	}
 	return decls
@@ -71,6 +85,9 @@ func convertJsonEntityTypes(types map[string]*JsonEntity) []Declaration {
 		entity := &Entity{
 			Names: []*Ident{{Value: name}},
 		}
+
+		// Convert annotations
+		entity.Annotations = convertJsonAnnotations(et.Annotations)
 
 		// Convert memberOfTypes
 		if len(et.MemberOfTypes) > 0 {
@@ -118,6 +135,9 @@ func convertJsonActions(actions map[string]*JsonAction) []Declaration {
 		action := &Action{
 			Names: []Name{&String{QuotedVal: fmt.Sprintf("%q", name)}},
 		}
+
+		// Convert annotations
+		action.Annotations = convertJsonAnnotations(act.Annotations)
 
 		// Convert memberOf
 		if len(act.MemberOf) > 0 {
@@ -178,7 +198,7 @@ func convertJsonAppliesTo(appliesTo *JsonAppliesTo) *AppliesTo {
 func convertJsonType(js *JsonType) Type {
 	switch js.Type {
 	case "Boolean":
-		return &Path{Parts: []*Ident{{Value: "Bool"}}}
+		return &Path{Parts: []*Ident{{Value: "Boolean"}}}
 	case "Long":
 		return &Path{Parts: []*Ident{{Value: "Long"}}}
 	case "String":
@@ -207,9 +227,12 @@ func convertJsonRecordType(js *JsonType) *RecordType {
 	}
 
 	for name, attr := range js.Attributes {
+		annotations := convertJsonAnnotations(attr.Annotations)
+
 		rt.Attributes = append(rt.Attributes, &Attribute{
-			Key:        &String{QuotedVal: fmt.Sprintf("%q", name)},
-			IsRequired: attr.Required,
+			Annotations: annotations,
+			Key:         &String{QuotedVal: fmt.Sprintf("%q", name)},
+			IsRequired:  attr.Required,
 			Type: convertJsonType(&JsonType{
 				Type:       attr.Type,
 				Element:    attr.Element,

@@ -3,19 +3,20 @@ package ast_test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/fs"
-	"os"
-	"reflect"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
 	"github.com/cedar-policy/cedar-go/internal/schema/parser"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestConvertHumanToJson(t *testing.T) {
 	// Generate testdata/test_want.json by running:
-	// 	cedar translate-schema --direction human-to-json -s testdata/test.cedarschema
+	//  cedar translate-schema --direction cedar-to-json -s test.cedarschema | jq . > test_want.json
+	// Note that as of cedar-policy-cli 4.4.1, the "required: true" attribute is omitted from the JSON output while
+	// our JSON serialization always includes it. You'll have to add the expected "required: true" fields to
+	// the emitted output.
 	exampleHuman, err := fs.ReadFile(ast.Testdata, "testdata/convert/test.cedarschema")
 	if err != nil {
 		t.Fatalf("Error reading example schema: %v", err)
@@ -38,25 +39,8 @@ func TestConvertHumanToJson(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error reading example JSON schema: %v", err)
 	}
-	ok, err := jsonEq(want, got.Bytes())
-	if err != nil {
-		t.Fatalf("Error comparing JSON: %v", err)
-	}
-	if !ok {
-		if err := os.WriteFile("testdata/convert/test_got.json", got.Bytes(), 0644); err != nil {
-			t.Logf("Error writing testdata/convert/test_got.json: %v", err)
-		}
-		t.Errorf("Schema does not match original, compare testdata/convert/test_want.json and testdata/convert/test_got.json")
-	}
-}
-
-func jsonEq(a, b []byte) (bool, error) {
-	var j, j2 interface{}
-	if err := json.Unmarshal(a, &j); err != nil {
-		return false, fmt.Errorf("left: %w", err)
-	}
-	if err := json.Unmarshal(b, &j2); err != nil {
-		return false, fmt.Errorf("right: %w", err)
-	}
-	return reflect.DeepEqual(j2, j), nil
+	var gotJ, wantJ interface{}
+	testutil.OK(t, json.Unmarshal(want, &wantJ))
+	testutil.OK(t, json.Unmarshal(got.Bytes(), &gotJ))
+	testutil.Equals(t, wantJ, gotJ)
 }

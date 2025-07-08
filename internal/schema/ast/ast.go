@@ -65,11 +65,12 @@ func (*Attribute) isNode()      {}
 func (*String) isNode()         {}
 func (CommentBlock) isNode()    {}
 func (*Comment) isNode()        {}
+func (*Annotation) isNode()     {}
 
 type NodeComments struct {
 	Before CommentBlock // comments that precede the node on a separate line
 	Inline *Comment     // inline, e.g. namespace name { <After>
-	Footer *Comment     // all trailing comments after closing brace;
+	Footer *Comment     // all trailing comments after closing brace
 }
 
 type Schema struct {
@@ -107,6 +108,7 @@ func (*CommonTypeDecl) isDecl() {}
 func (*CommentBlock) isDecl()   {}
 
 type Namespace struct {
+	Annotations []*Annotation
 	NodeComments
 	NamespaceTok token.Position
 	Name         *Path
@@ -116,6 +118,9 @@ type Namespace struct {
 }
 
 func (n *Namespace) Pos() token.Position {
+	if len(n.Annotations) > 0 {
+		return n.Annotations[0].Pos()
+	}
 	if len(n.NodeComments.Before) > 0 {
 		return n.NodeComments.Before.Pos()
 	}
@@ -130,6 +135,7 @@ func (n *Namespace) End() token.Position {
 }
 
 type CommonTypeDecl struct {
+	Annotations []*Annotation
 	NodeComments
 	TypeTok token.Position
 	Name    *Ident
@@ -137,6 +143,9 @@ type CommonTypeDecl struct {
 }
 
 func (t *CommonTypeDecl) Pos() token.Position {
+	if len(t.Annotations) > 0 {
+		return t.Annotations[0].Pos()
+	}
 	if len(t.NodeComments.Before) > 0 {
 		return t.NodeComments.Before.Pos()
 	}
@@ -180,6 +189,7 @@ func (r *RecordType) End() token.Position {
 }
 
 type Attribute struct {
+	Annotations []*Annotation
 	NodeComments
 	Key        Name
 	IsRequired bool // if true, has ? after name
@@ -258,6 +268,7 @@ func (i *Ident) End() token.Position {
 }
 
 type Entity struct {
+	Annotations []*Annotation
 	NodeComments
 	EntityTok token.Position
 	Names     []*Ident // define multiple entities with the same shape
@@ -275,6 +286,9 @@ type Entity struct {
 }
 
 func (e *Entity) Pos() token.Position {
+	if len(e.Annotations) > 0 {
+		return e.Annotations[0].Pos()
+	}
 	if len(e.NodeComments.Before) > 0 {
 		return e.NodeComments.Before.Pos()
 	}
@@ -289,6 +303,7 @@ func (e *Entity) End() token.Position {
 }
 
 type Action struct {
+	Annotations []*Annotation
 	NodeComments
 	ActionTok token.Position
 	Names     []Name
@@ -298,6 +313,9 @@ type Action struct {
 }
 
 func (a *Action) Pos() token.Position {
+	if len(a.Annotations) > 0 {
+		return a.Annotations[0].Pos()
+	}
 	if len(a.NodeComments.Before) > 0 {
 		return a.NodeComments.Before.Pos()
 	}
@@ -423,4 +441,27 @@ func (c *Comment) End() token.Position {
 
 func (c *Comment) Trim() string {
 	return strings.TrimLeft(c.Value, " \t\n/")
+}
+
+type Annotation struct {
+	NodeComments
+	At         token.Position
+	Key        *Ident
+	LeftParen  token.Position
+	Value      *String
+	RightParen token.Position
+}
+
+func (a *Annotation) Pos() token.Position {
+	if len(a.NodeComments.Before) > 0 {
+		return a.NodeComments.Before.Pos()
+	}
+	return a.At
+}
+
+func (a *Annotation) End() token.Position {
+	if a.NodeComments.Footer != nil {
+		return a.NodeComments.Footer.End()
+	}
+	return a.RightParen
 }

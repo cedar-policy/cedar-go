@@ -13,20 +13,23 @@ type JsonNamespace struct {
 	EntityTypes map[string]*JsonEntity     `json:"entityTypes"`
 	Actions     map[string]*JsonAction     `json:"actions"`
 	CommonTypes map[string]*JsonCommonType `json:"commonTypes,omitempty"`
+	Annotations map[string]string          `json:"annotations,omitempty"`
 }
 
 // JsonEntity defines the structure and relationships of an entity
 type JsonEntity struct {
-	MemberOfTypes []string  `json:"memberOfTypes,omitempty"`
-	Shape         *JsonType `json:"shape,omitempty"`
-	Tags          *JsonType `json:"tags,omitempty"`
-	Enum          []string  `json:"enum,omitempty"`
+	MemberOfTypes []string          `json:"memberOfTypes,omitempty"`
+	Shape         *JsonType         `json:"shape,omitempty"`
+	Tags          *JsonType         `json:"tags,omitempty"`
+	Enum          []string          `json:"enum,omitempty"`
+	Annotations   map[string]string `json:"annotations,omitempty"`
 }
 
 // JsonAction defines what can perform an action and what it applies to
 type JsonAction struct {
-	MemberOf  []*JsonMember  `json:"memberOf,omitempty"`
-	AppliesTo *JsonAppliesTo `json:"appliesTo"`
+	MemberOf    []*JsonMember     `json:"memberOf,omitempty"`
+	AppliesTo   *JsonAppliesTo    `json:"appliesTo"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 type JsonMember struct {
@@ -43,19 +46,21 @@ type JsonAppliesTo struct {
 
 // JsonType represents the various type definitions possible in Cedar
 type JsonType struct {
-	Type       string                    `json:"type"`
-	Element    *JsonType                 `json:"element,omitempty"`    // For Set types
-	Name       string                    `json:"name,omitempty"`       // For Entity types
-	Attributes map[string]*JsonAttribute `json:"attributes,omitempty"` // For Record types
+	Type        string                    `json:"type"`
+	Element     *JsonType                 `json:"element,omitempty"`    // For Set types
+	Name        string                    `json:"name,omitempty"`       // For Entity types
+	Attributes  map[string]*JsonAttribute `json:"attributes,omitempty"` // For Record types
+	Annotations map[string]string         `json:"annotations,omitempty"`
 }
 
 // JsonAttribute represents a field in a Record type
 type JsonAttribute struct {
-	Type       string                    `json:"type"`
-	Required   bool                      `json:"required"`
-	Element    *JsonType                 `json:"element,omitempty"`    // For Set types
-	Name       string                    `json:"name,omitempty"`       // For Entity types
-	Attributes map[string]*JsonAttribute `json:"attributes,omitempty"` // For nested Record types
+	Type        string                    `json:"type"`
+	Required    bool                      `json:"required"`
+	Element     *JsonType                 `json:"element,omitempty"`    // For Set types
+	Name        string                    `json:"name,omitempty"`       // For Entity types
+	Attributes  map[string]*JsonAttribute `json:"attributes,omitempty"` // For nested Record types
+	Annotations map[string]string         `json:"annotations,omitempty"`
 }
 
 // JsonCommonType represents a reusable type definition

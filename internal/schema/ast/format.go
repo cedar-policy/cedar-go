@@ -97,6 +97,8 @@ func (p *formatter) print(n Node) {
 		p.printCommentBlock(n)
 	case *Comment:
 		p.printComment(n)
+	case *Annotation:
+		p.printAnnotation(n)
 	default:
 		panic(fmt.Sprintf("unhandled node type %T", n))
 	}
@@ -110,6 +112,9 @@ func (p *formatter) printSchema(n *Schema) {
 }
 
 func (p *formatter) printNamespace(n *Namespace) {
+	for _, a := range n.Annotations {
+		p.print(a)
+	}
 	p.print(n.Before)
 	p.printInd("namespace ")
 	p.print(n.Name)
@@ -136,6 +141,9 @@ func (p *formatter) printNamespace(n *Namespace) {
 }
 
 func (p *formatter) printCommonTypeDecl(n *CommonTypeDecl) {
+	for _, a := range n.Annotations {
+		p.print(a)
+	}
 	p.print(n.Before)
 	p.printIndf("type %s = ", n.Name.Value)
 	p.print(n.Value)
@@ -181,6 +189,9 @@ func (p *formatter) printPath(n *Path) {
 }
 
 func (p *formatter) printAttribute(n *Attribute) {
+	for _, a := range n.Annotations {
+		p.print(a)
+	}
 	p.print(n.Before)
 	p.printInd("") // print indent
 	p.print(n.Key)
@@ -197,6 +208,9 @@ func (p *formatter) printAttribute(n *Attribute) {
 }
 
 func (p *formatter) printEntity(n *Entity) {
+	for _, a := range n.Annotations {
+		p.print(a)
+	}
 	p.print(n.Before)
 	p.printInd("entity ")
 	for i, name := range n.Names {
@@ -234,6 +248,9 @@ func (p *formatter) printEntity(n *Entity) {
 }
 
 func (p *formatter) printAction(n *Action) {
+	for _, a := range n.Annotations {
+		p.print(a)
+	}
 	p.print(n.Before)
 	p.printInd("action ")
 	for i, name := range n.Names {
@@ -328,6 +345,22 @@ func (p *formatter) printComment(n *Comment) {
 		p.write(" ")
 	}
 	p.writef("// %s", n.Trim())
+}
+
+func (p *formatter) printAnnotation(n *Annotation) {
+	p.print(n.Before)
+	p.printInd("")
+	p.write("@")
+	p.print(n.Key)
+	if n.Value != nil {
+		p.write("(")
+		p.print(n.Value)
+		p.write(")")
+	}
+	if n.Inline != nil {
+		p.print(n.Inline)
+	}
+	p.write("\n")
 }
 
 func printBracketList[T Node](p *formatter, list []T, alwaysEmitBrackets bool) {

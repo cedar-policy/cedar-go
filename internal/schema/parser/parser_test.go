@@ -27,10 +27,13 @@ func TestParseSimple(t *testing.T) {
 }
 `,
 		// Anonymous namespace references
-		`// Entity example
+		`@annotation("entity")
+// Entity example
 entity User;
+@annotation("type")
 // Type example
 type Id = String;
+@annotation("action")
 // Action example
 action run;
 namespace NS {

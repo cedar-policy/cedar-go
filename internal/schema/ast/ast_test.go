@@ -28,6 +28,7 @@ func TestIsNode(*testing.T) {
 	(&String{}).isNode()
 	(CommentBlock{}).isNode()
 	(&Comment{}).isNode()
+	(&Annotation{}).isNode()
 
 	// No assertions needed since we just want coverage for these marker methods
 }

@@ -150,7 +150,7 @@ func TestParserErrors(t *testing.T) {
 			input: `
 				entity User in [User::123::Entity];
 			`,
-			wantErrs: []string{"expected identifier after ::"},
+			wantErrs: []string{"expected identifier, got INVALID"},
 		},
 		{
 			name: "invalid token where name expected",
@@ -158,6 +158,22 @@ func TestParserErrors(t *testing.T) {
 				action 123;
 			`,
 			wantErrs: []string{"expected name (identifier or string)"},
+		},
+		{
+			name: "bare annotation",
+			input: `
+				@key("value")
+			`,
+			wantErrs: []string{"bare annotation(s); expected namespace, action, entity, or type"},
+		},
+		{
+			name: "bare annotation in namespace",
+			input: `
+				namespace Foo {
+					@key("value")
+				};
+			`,
+			wantErrs: []string{"bare annotation(s); expected action, entity, or type"},
 		},
 		{
 			name: "too many errors causing bailout",

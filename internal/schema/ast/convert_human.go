@@ -33,12 +33,20 @@ func convertNamespace(n *Namespace) *JsonNamespace {
 	jsNamespace.Actions = make(map[string]*JsonAction)
 	jsNamespace.EntityTypes = make(map[string]*JsonEntity)
 	jsNamespace.CommonTypes = make(map[string]*JsonCommonType)
+	jsNamespace.Annotations = make(map[string]string)
+	for _, a := range n.Annotations {
+		jsNamespace.Annotations[a.Key.String()] = a.Value.String()
+	}
 
 	for _, astDecl := range n.Decls {
 		switch astDecl := astDecl.(type) {
 		case *Action:
 			for _, astActionName := range astDecl.Names {
 				jsAction := new(JsonAction)
+				jsAction.Annotations = make(map[string]string)
+				for _, a := range astDecl.Annotations {
+					jsAction.Annotations[a.Key.String()] = a.Value.String()
+				}
 				jsNamespace.Actions[astActionName.String()] = jsAction
 				for _, astMember := range astDecl.In {
 					jsMember := &JsonMember{
@@ -67,6 +75,10 @@ func convertNamespace(n *Namespace) *JsonNamespace {
 		case *Entity:
 			for _, name := range astDecl.Names {
 				entity := new(JsonEntity)
+				entity.Annotations = make(map[string]string)
+				for _, a := range astDecl.Annotations {
+					entity.Annotations[a.Key.String()] = a.Value.String()
+				}
 				jsNamespace.EntityTypes[name.String()] = entity
 				for _, member := range astDecl.In {
 					entity.MemberOfTypes = append(entity.MemberOfTypes, member.String())
@@ -83,7 +95,13 @@ func convertNamespace(n *Namespace) *JsonNamespace {
 				jsNamespace.EntityTypes[name.String()] = entity
 			}
 		case *CommonTypeDecl:
-			jsNamespace.CommonTypes[astDecl.Name.String()] = &JsonCommonType{JsonType: convertType(astDecl.Value)}
+			commonType := new(JsonCommonType)
+			commonType.JsonType = convertType(astDecl.Value)
+			commonType.Annotations = make(map[string]string)
+			for _, a := range astDecl.Annotations {
+				commonType.Annotations[a.Key.String()] = a.Value.String()
+			}
+			jsNamespace.CommonTypes[astDecl.Name.String()] = commonType
 		}
 	}
 	return jsNamespace
@@ -127,6 +145,10 @@ func convertRecordType(t *RecordType) *JsonType {
 		jsAttr.Name = inner.Name
 		jsAttr.Attributes = inner.Attributes
 		jt.Attributes[attr.Key.String()] = jsAttr
+		jsAttr.Annotations = make(map[string]string)
+		for _, a := range attr.Annotations {
+			jsAttr.Annotations[a.Key.String()] = a.Value.String()
+		}
 	}
 	return jt
 }

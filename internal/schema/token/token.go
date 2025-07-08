@@ -47,7 +47,7 @@ type Type int
 const (
 	INVALID Type = iota
 
-	// Keywords
+	// Keywords - keep up to date with AllKeywords below
 	NAMESPACE
 	ENTITY
 	ACTION
@@ -73,6 +73,9 @@ const (
 	EQUALS       // =
 	QUESTION     // ?
 	DOUBLECOLON  // ::
+	AT           // @
+	LEFTPAREN    // (
+	RIGHTPAREN   // )
 
 	// Identifiers and literals
 	IDENT  // Regular identifier
@@ -111,6 +114,8 @@ var types = [...]string{
 	EQUALS:       "EQUALS",
 	QUESTION:     "QUESTION",
 	DOUBLECOLON:  "DOUBLECOLON",
+	LEFTPAREN:    "LEFTPAREN",
+	RIGHTPAREN:   "RIGHTPAREN",
 
 	IDENT:  "IDENT",
 	STRING: "STRING",
@@ -129,4 +134,18 @@ func (tok Type) String() string {
 		s = "Token(" + strconv.Itoa(int(tok)) + ")"
 	}
 	return s
+}
+
+var AllKeywords = []Type{
+	NAMESPACE,
+	ENTITY,
+	ACTION,
+	TYPE,
+	IN,
+	TAGS,
+	APPLIES_TO,
+	PRINCIPAL,
+	RESOURCE,
+	CONTEXT,
+	ENUM,
 }
