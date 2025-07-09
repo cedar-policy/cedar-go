@@ -143,6 +143,14 @@ If you're looking to integrate Cedar into a production system, please be sure th
 
 ## Change log
 
+### 1.2.5
+#### New Features
+- Adds experimental support for parsing Cedar schema in both Cedar and JSON formats
+
+### 1.2.4
+#### New Features
+- Adds experimental access to evaluation of AST nodes
+
 ### 1.2.3
 #### New Features
 - Adds Entity.Equal()
