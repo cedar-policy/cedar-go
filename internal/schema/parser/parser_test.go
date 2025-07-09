@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
 	"github.com/cedar-policy/cedar-go/internal/schema/parser"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -49,14 +51,9 @@ namespace NS {
 		}
 		var got bytes.Buffer
 		err = ast.Format(schema, &got) // tab format to match Go
-		if err != nil {
-			t.Fatalf("Error parsing schema: %v", err)
-		}
-		if got.String() != test {
-			t.Errorf("Parsed and formatted schema does not match:\nBefore\n%q\n=========================================\nAfter\n%q\n=========================================",
-				test,
-				got.String())
-		}
+		testutil.OK(t, err)
+		diff := cmp.Diff(got.String(), test)
+		testutil.FatalIf(t, diff != "", "mismatch -want +got:\n%v", diff)
 	}
 }
 
@@ -119,7 +116,9 @@ func TestRealFiles(t *testing.T) {
 			testutil.OK(t, err)
 
 			got := strings.TrimSpace(gotBytes.String())
-			testutil.Equals(t, got, strings.TrimSpace(string(input)))
+			testutil.OK(t, err)
+			diff := cmp.Diff(got, strings.TrimSpace(string(input)))
+			testutil.FatalIf(t, diff != "", "mismatch -want +got:\n%v", diff)
 		})
 	}
 }
