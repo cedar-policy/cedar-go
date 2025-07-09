@@ -9,8 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cedar-policy/cedar-go/internal"
 	"golang.org/x/exp/constraints"
+
+	"github.com/cedar-policy/cedar-go/internal"
 )
 
 var errDecimal = internal.ErrDecimal

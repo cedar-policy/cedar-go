@@ -37,9 +37,7 @@ func ParseFile(filename string, src []byte) (schema *ast.Schema, err error) {
 		errs := lex.Errors
 		errs = append(errs, p.Errors...)
 		if r := recover(); r != nil {
-			if r != ErrBailout {
-				panic(r)
-			}
+			must(r == ErrBailout, r)
 		}
 		if len(errs) > 0 {
 			errs.Sort()
@@ -115,49 +113,98 @@ func (p *Parser) matches(want ...token.Type) bool {
 
 func (p *Parser) parseSchema() *ast.Schema {
 	schema := new(ast.Schema)
+	var annotations []*ast.Annotation
 	var comments []*ast.Comment
 	for p.peek().Type != token.EOF {
 		t := p.peek()
 		switch t.Type {
 		case token.NAMESPACE:
 			namespace := p.parseNamespace()
+			if len(annotations) > 0 {
+				namespace.Annotations = annotations
+				annotations = nil
+			}
 			if len(comments) > 0 {
-				namespace.NodeComments.Before = comments
+				namespace.Before = comments
 				comments = nil
 			}
 			schema.Decls = append(schema.Decls, namespace)
 		case token.TYPE:
 			typ := p.parseTypeDecl()
+			if len(annotations) > 0 {
+				typ.Annotations = annotations
+				annotations = nil
+			}
 			if len(comments) > 0 {
-				typ.NodeComments.Before = comments
+				typ.Before = comments
 				comments = nil
 			}
 			schema.Decls = append(schema.Decls, typ)
 		case token.ACTION:
 			action := p.parseAction()
+			if len(annotations) > 0 {
+				action.Annotations = annotations
+				annotations = nil
+			}
 			if len(comments) > 0 {
-				action.NodeComments.Before = comments
+				action.Before = comments
 				comments = nil
 			}
 			schema.Decls = append(schema.Decls, action)
 		case token.ENTITY:
 			entity := p.parseEntityDecl()
+			if len(annotations) > 0 {
+				entity.Annotations = annotations
+				annotations = nil
+			}
 			if len(comments) > 0 {
-				entity.NodeComments.Before = comments
+				entity.Before = comments
 				comments = nil
 			}
 			schema.Decls = append(schema.Decls, entity)
 		case token.COMMENT:
 			comments = append(comments, p.parseComment())
+		case token.AT:
+			annotation := p.parseAnnotation()
+			if len(comments) > 0 {
+				annotation.Before = comments
+				comments = nil
+			}
+			annotations = append(annotations, annotation)
 		default:
 			p.error(t.Pos, fmt.Errorf("unexpected token %s", t.String()))
 			p.advance(map[token.Type]bool{token.SEMICOLON: true})
 		}
 	}
+	if len(annotations) > 0 {
+		p.error(p.peek().Pos, errors.New("bare annotation(s); expected namespace, action, entity, or type"))
+	}
 	if len(comments) > 0 {
 		schema.Remaining = comments
 	}
 	return schema
+}
+
+func (p *Parser) parseAnnotation() *ast.Annotation {
+	annotation := new(ast.Annotation)
+	at, _ := p.eatOnly(token.AT, "expected @")
+	annotation.At = at.Pos
+	annotation.Key = p.parseIdent()
+
+	lastLine := at.Pos.Line
+	if p.matches(token.LEFTPAREN) {
+		annotation.LeftParen = p.eat().Pos
+		value, _ := p.eatOnly(token.STRING, "expected STR")
+		annotation.Value = &ast.String{QuotedVal: value.Lit, Tok: value.Pos}
+		rp, _ := p.eatOnly(token.RIGHTPAREN, "expected ')'")
+		annotation.RightParen = rp.Pos
+		lastLine = rp.Pos.Line
+	}
+	if p.matches(token.COMMENT) && p.peek().Pos.Line == lastLine {
+		annotation.Inline = p.parseComment()
+	}
+
+	return annotation
 }
 
 func (p *Parser) parseNamespace() (namespace *ast.Namespace) {
@@ -167,37 +214,60 @@ func (p *Parser) parseNamespace() (namespace *ast.Namespace) {
 	namespace.Name = p.parsePath()
 	p.eatOnly(token.LEFTBRACE, "expected { after namespace path")
 	if p.peek().Type == token.COMMENT && p.peek().Pos.Line == nptok.Pos.Line {
-		namespace.NodeComments.Inline = p.parseComment()
+		namespace.Inline = p.parseComment()
 	}
+	var annotations []*ast.Annotation
 	var comments []*ast.Comment
 	for !p.matches(token.RIGHTBRACE, token.EOF) {
 		if p.matches(token.ENTITY) {
 			entity := p.parseEntityDecl()
+			if len(annotations) > 0 {
+				entity.Annotations = annotations
+				annotations = nil
+			}
 			if len(comments) > 0 {
-				entity.NodeComments.Before = comments
+				entity.Before = comments
 				comments = nil
 			}
 			namespace.Decls = append(namespace.Decls, entity)
 		} else if p.matches(token.ACTION) {
 			action := p.parseAction()
+			if len(annotations) > 0 {
+				action.Annotations = annotations
+				annotations = nil
+			}
 			if len(comments) > 0 {
-				action.NodeComments.Before = comments
+				action.Before = comments
 				comments = nil
 			}
 			namespace.Decls = append(namespace.Decls, action)
 		} else if p.matches(token.TYPE) {
 			typ := p.parseTypeDecl()
+			if len(annotations) > 0 {
+				typ.Annotations = annotations
+				annotations = nil
+			}
 			if len(comments) > 0 {
-				typ.NodeComments.Before = comments
+				typ.Before = comments
 				comments = nil
 			}
 			namespace.Decls = append(namespace.Decls, typ)
 		} else if p.matches(token.COMMENT) {
 			comments = append(comments, p.parseComment())
+		} else if p.matches(token.AT) {
+			annotation := p.parseAnnotation()
+			if len(comments) > 0 {
+				annotation.Before = comments
+				comments = nil
+			}
+			annotations = append(annotations, annotation)
 		} else {
 			p.errorf(p.peek().Pos, "unexpected token %s, expected action, entity, or type", p.peek().Type)
 			p.advance(map[token.Type]bool{token.SEMICOLON: true})
 		}
+	}
+	if len(annotations) > 0 {
+		p.error(p.peek().Pos, errors.New("bare annotation(s); expected action, entity, or type"))
 	}
 	if len(comments) > 0 {
 		namespace.Remaining = comments
@@ -235,7 +305,7 @@ func (p *Parser) parseAction() (action *ast.Action) {
 		p.eat()
 		action.In = p.parseRefOrTypes()
 	}
-	if p.matches(token.APPLIES_TO) {
+	if p.matches(token.APPLIESTO) {
 		appliesToTok := p.eat()
 		action.AppliesTo = p.parseAppliesTo()
 		action.AppliesTo.AppliesToTok = appliesToTok.Pos
@@ -335,26 +405,50 @@ func (p *Parser) parseEntityDecl() (entity *ast.Entity) {
 		entity.Names = append(entity.Names, p.parseIdent())
 	}
 
-	if p.matches(token.IN) {
+	if p.matches(token.ENUM) {
 		p.eat()
-		entity.In = p.parseEntOrTypes()
-	}
-	if p.matches(token.EQUALS) {
-		entity.EqTok = p.eat().Pos
-	}
-	if p.matches(token.LEFTBRACE) {
-		entity.Shape = p.parseRecType()
-	}
-	if p.matches(token.TAGS) {
-		p.eat()
-		entity.Tags = p.parseType()
+		entity.Enum = p.parseEntEnumValues()
+	} else {
+		if p.matches(token.IN) {
+			p.eat()
+			entity.In = p.parseEntOrTypes()
+		}
+		if p.matches(token.EQUALS) {
+			entity.EqTok = p.eat().Pos
+		}
+		if p.matches(token.LEFTBRACE) {
+			entity.Shape = p.parseRecType()
+		}
+		if p.matches(token.TAGS) {
+			p.eat()
+			entity.Tags = p.parseType()
+		}
 	}
 	semi, _ := p.eatOnly(token.SEMICOLON, "expected ;")
 	entity.Semicolon = semi.Pos
 	if p.matches(token.COMMENT) && p.peek().Pos.Line == semi.Pos.Line {
-		entity.NodeComments.Footer = p.parseComment()
+		entity.Footer = p.parseComment()
 	}
 	return entity
+}
+
+func (p *Parser) parseEntEnumValues() (values []*ast.String) {
+	p.eatOnly(token.LEFTBRACKET, "expected [")
+	str := p.eat()
+	values = append(values, &ast.String{QuotedVal: str.Lit, Tok: str.Pos})
+	for !p.matches(token.RIGHTBRACKET, token.EOF) {
+		if p.matches(token.COMMA) {
+			p.eat()
+			str = p.eat()
+			values = append(values, &ast.String{QuotedVal: str.Lit, Tok: str.Pos})
+		} else if !p.matches(token.RIGHTBRACKET) {
+			p.errorf(p.peek().Pos, "expected , or ]")
+			p.advance(map[token.Type]bool{token.RIGHTBRACKET: true})
+			break
+		}
+	}
+	p.eatOnly(token.RIGHTBRACKET, "expected ]")
+	return values
 }
 
 func (p *Parser) parseEntOrTypes() (types []*ast.Path) {
@@ -411,7 +505,7 @@ func (p *Parser) parseTypeDecl() (typ *ast.CommonTypeDecl) {
 	typ.Value = p.parseType()
 	semi, _ := p.eatOnly(token.SEMICOLON, "expected ;")
 	if p.matches(token.COMMENT) && p.peek().Pos.Line == semi.Pos.Line {
-		typ.NodeComments.Footer = p.parseComment()
+		typ.Footer = p.parseComment()
 	}
 	return typ
 }
@@ -419,7 +513,7 @@ func (p *Parser) parseTypeDecl() (typ *ast.CommonTypeDecl) {
 func (p *Parser) parseType() (typ ast.Type) {
 	if p.matches(token.LEFTBRACE) {
 		typ = p.parseRecType()
-	} else if p.matches(token.IDENT) {
+	} else if p.matches(validIdents...) {
 		if p.peek().Lit != "Set" {
 			typ = p.parsePath()
 		} else {
@@ -443,15 +537,29 @@ func (p *Parser) parseRecType() (typ *ast.RecordType) {
 	if p.matches(token.COMMENT) && p.peek().Pos.Line == lbrace.Pos.Line {
 		typ.Inner = p.parseComment()
 	}
+	var annotations []*ast.Annotation
 	var comments []*ast.Comment
 	for !p.matches(token.RIGHTBRACE, token.EOF) {
 		if p.matches(token.COMMENT) {
 			comments = append(comments, p.parseComment())
 			continue
 		}
+		if p.matches(token.AT) {
+			annotation := p.parseAnnotation()
+			if len(comments) > 0 {
+				annotation.Before = comments
+				comments = nil
+			}
+			annotations = append(annotations, annotation)
+			continue
+		}
 		attr := p.parseAttrDecl()
+		if len(annotations) > 0 {
+			attr.Annotations = annotations
+			annotations = nil
+		}
 		if len(comments) > 0 {
-			attr.NodeComments.Before = comments
+			attr.Before = comments
 			comments = nil
 		}
 		typ.Attributes = append(typ.Attributes, attr)
@@ -490,18 +598,12 @@ func (p *Parser) parseAttrDecl() (attr *ast.Attribute) {
 
 func (p *Parser) parsePath() *ast.Path {
 	result := new(ast.Path)
-	ident, ok := p.eatOnly(token.IDENT, "expected identifier for start of path")
-	if !ok {
-		return result
-	}
-	result.Parts = append(result.Parts, &ast.Ident{Value: ident.Lit, IdentTok: ident.Pos})
+	ident := p.parseIdent()
+	result.Parts = append(result.Parts, ident)
 	for p.matches(token.DOUBLECOLON) {
 		p.eat()
-		ident, ok := p.eatOnly(token.IDENT, "expected identifier after ::")
-		if !ok {
-			continue
-		}
-		result.Parts = append(result.Parts, &ast.Ident{Value: ident.Lit, IdentTok: ident.Pos})
+		ident = p.parseIdent()
+		result.Parts = append(result.Parts, ident)
 	}
 	return result
 }
@@ -535,7 +637,7 @@ func (p *Parser) parseName() ast.Name {
 	if p.matches(token.STRING) {
 		str := p.eat()
 		return &ast.String{QuotedVal: str.Lit, Tok: str.Pos}
-	} else if p.matches(token.IDENT) {
+	} else if p.matches(validIdents...) {
 		ident := p.eat()
 		return &ast.Ident{Value: ident.Lit, IdentTok: ident.Pos}
 	} else {
@@ -545,12 +647,24 @@ func (p *Parser) parseName() ast.Name {
 	}
 }
 
+// Keywords are valid identifiers
+var validIdents = append(token.AllKeywords, token.IDENT)
+
 func (p *Parser) parseIdent() *ast.Ident {
-	ident, _ := p.eatOnly(token.IDENT, "expected identifier")
-	return &ast.Ident{Value: ident.Lit, IdentTok: ident.Pos}
+	tok := p.eat()
+	if !slices.Contains(validIdents, tok.Type) {
+		p.error(tok.Pos, fmt.Errorf("expected identifier, got %s", tok.String()))
+	}
+	return &ast.Ident{Value: tok.Lit, IdentTok: tok.Pos}
 }
 
 func (p *Parser) parseComment() *ast.Comment {
 	tok, _ := p.eatOnly(token.COMMENT, "expected comment")
 	return &ast.Comment{SlashTok: tok.Pos, Value: tok.Lit}
+}
+
+func must(b bool, arg any) {
+	if !b {
+		panic(arg)
+	}
 }

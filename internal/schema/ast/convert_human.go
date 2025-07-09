@@ -5,12 +5,12 @@ import (
 	"strings"
 )
 
-// ConvertHuman2Json converts an AST schema to a JSON schema. The conversion process is lossy.
+// ConvertHuman2JSON converts an AST schema to a JSON schema. The conversion process is lossy.
 // Any information related to ordering, formatting, comments, etc... are lost completely.
 //
 // TODO: Add errors if the schema is invalid (references names that don't exist)
-func ConvertHuman2Json(n *Schema) JsonSchema {
-	out := make(JsonSchema)
+func ConvertHuman2JSON(n *Schema) JSONSchema {
+	out := make(JSONSchema)
 	// In Cedar, all anonymous types (not under a namespace) are put into the "root" namespace,
 	// which just has a name of "".
 	anonymousNamespace := &Namespace{}
@@ -28,20 +28,28 @@ func ConvertHuman2Json(n *Schema) JsonSchema {
 	return out
 }
 
-func convertNamespace(n *Namespace) *JsonNamespace {
-	jsNamespace := new(JsonNamespace)
-	jsNamespace.Actions = make(map[string]*JsonAction)
-	jsNamespace.EntityTypes = make(map[string]*JsonEntity)
-	jsNamespace.CommonTypes = make(map[string]*JsonCommonType)
+func convertNamespace(n *Namespace) *JSONNamespace {
+	jsNamespace := new(JSONNamespace)
+	jsNamespace.Actions = make(map[string]*JSONAction)
+	jsNamespace.EntityTypes = make(map[string]*JSONEntity)
+	jsNamespace.CommonTypes = make(map[string]*JSONCommonType)
+	jsNamespace.Annotations = make(map[string]string)
+	for _, a := range n.Annotations {
+		jsNamespace.Annotations[a.Key.String()] = a.Value.String()
+	}
 
 	for _, astDecl := range n.Decls {
 		switch astDecl := astDecl.(type) {
 		case *Action:
 			for _, astActionName := range astDecl.Names {
-				jsAction := new(JsonAction)
+				jsAction := new(JSONAction)
+				jsAction.Annotations = make(map[string]string)
+				for _, a := range astDecl.Annotations {
+					jsAction.Annotations[a.Key.String()] = a.Value.String()
+				}
 				jsNamespace.Actions[astActionName.String()] = jsAction
 				for _, astMember := range astDecl.In {
-					jsMember := &JsonMember{
+					jsMember := &JSONMember{
 						ID: astMember.Name.String(),
 					}
 					if len(astMember.Namespace) > 0 {
@@ -51,7 +59,7 @@ func convertNamespace(n *Namespace) *JsonNamespace {
 				}
 
 				if astDecl.AppliesTo != nil {
-					jsAction.AppliesTo = &JsonAppliesTo{}
+					jsAction.AppliesTo = &JSONAppliesTo{}
 					for _, princ := range astDecl.AppliesTo.Principal {
 						jsAction.AppliesTo.PrincipalTypes = append(jsAction.AppliesTo.PrincipalTypes, princ.String())
 					}
@@ -66,7 +74,11 @@ func convertNamespace(n *Namespace) *JsonNamespace {
 			}
 		case *Entity:
 			for _, name := range astDecl.Names {
-				entity := new(JsonEntity)
+				entity := new(JSONEntity)
+				entity.Annotations = make(map[string]string)
+				for _, a := range astDecl.Annotations {
+					entity.Annotations[a.Key.String()] = a.Value.String()
+				}
 				jsNamespace.EntityTypes[name.String()] = entity
 				for _, member := range astDecl.In {
 					entity.MemberOfTypes = append(entity.MemberOfTypes, member.String())
@@ -77,45 +89,54 @@ func convertNamespace(n *Namespace) *JsonNamespace {
 				if astDecl.Tags != nil {
 					entity.Tags = convertType(astDecl.Tags)
 				}
+				for _, value := range astDecl.Enum {
+					entity.Enum = append(entity.Enum, value.String())
+				}
 				jsNamespace.EntityTypes[name.String()] = entity
 			}
 		case *CommonTypeDecl:
-			jsNamespace.CommonTypes[astDecl.Name.String()] = &JsonCommonType{JsonType: convertType(astDecl.Value)}
+			commonType := new(JSONCommonType)
+			commonType.JSONType = convertType(astDecl.Value)
+			commonType.Annotations = make(map[string]string)
+			for _, a := range astDecl.Annotations {
+				commonType.Annotations[a.Key.String()] = a.Value.String()
+			}
+			jsNamespace.CommonTypes[astDecl.Name.String()] = commonType
 		}
 	}
 	return jsNamespace
 }
 
-func convertType(t Type) *JsonType {
+func convertType(t Type) *JSONType {
 	switch t := t.(type) {
 	case *RecordType:
 		return convertRecordType(t)
 	case *SetType:
-		return &JsonType{Type: "Set", Element: convertType(t.Element)}
+		return &JSONType{Type: "Set", Element: convertType(t.Element)}
 	case *Path:
 		if len(t.Parts) == 1 {
-			if t.Parts[0].Value == "Bool" {
-				return &JsonType{Type: "Boolean"}
+			if t.Parts[0].Value == "Bool" || t.Parts[0].Value == "Boolean" {
+				return &JSONType{Type: "Boolean"}
 			}
 			if t.Parts[0].Value == "Long" {
-				return &JsonType{Type: "Long"}
+				return &JSONType{Type: "Long"}
 			}
 			if t.Parts[0].Value == "String" {
-				return &JsonType{Type: "String"}
+				return &JSONType{Type: "String"}
 			}
 		}
-		return &JsonType{Type: "EntityOrCommon", Name: t.String()}
+		return &JSONType{Type: "EntityOrCommon", Name: t.String()}
 	default:
 		panic(fmt.Sprintf("%T is not an AST type", t))
 	}
 }
 
-func convertRecordType(t *RecordType) *JsonType {
-	jt := new(JsonType)
+func convertRecordType(t *RecordType) *JSONType {
+	jt := new(JSONType)
 	jt.Type = "Record"
-	jt.Attributes = make(map[string]*JsonAttribute)
+	jt.Attributes = make(map[string]*JSONAttribute)
 	for _, attr := range t.Attributes {
-		jsAttr := &JsonAttribute{
+		jsAttr := &JSONAttribute{
 			Required: attr.IsRequired,
 		}
 		inner := convertType(attr.Type)
@@ -124,6 +145,10 @@ func convertRecordType(t *RecordType) *JsonType {
 		jsAttr.Name = inner.Name
 		jsAttr.Attributes = inner.Attributes
 		jt.Attributes[attr.Key.String()] = jsAttr
+		jsAttr.Annotations = make(map[string]string)
+		for _, a := range attr.Annotations {
+			jsAttr.Annotations[a.Key.String()] = a.Value.String()
+		}
 	}
 	return jt
 }

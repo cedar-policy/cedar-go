@@ -7,8 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
 	"github.com/cedar-policy/cedar-go/internal/schema/parser"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 // Source will pretty-print src in the returned byte slice. If src is malformed Cedar schema, an error will be returned.
@@ -47,9 +50,8 @@ func TestFormatExamples(t *testing.T) {
 			if err != nil {
 				t.Fatalf("formatting error: %v", err)
 			}
-			if string(got) != string(example) {
-				t.Errorf("Parsed schema does not match original:\n%s\n=========================================\n%s\n=========================================", example, string(got))
-			}
+			diff := cmp.Diff(string(got), string(example))
+			testutil.FatalIf(t, diff != "", "mismatch -want +got:\n%v", diff)
 		})
 	}
 }

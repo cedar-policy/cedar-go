@@ -88,6 +88,9 @@
                     }
                 }
             },
+            "PhotoFormat": {
+                "enum": ["jpg", "gif", "png"]
+            },
             "User": {
                 "memberOfTypes": [
                     "UserGroup"

@@ -36,7 +36,7 @@ func (l *Lexer) lex() (pos token.Position, tok token.Type, lit string, err error
             continue
         }
 
-            // Skip whitespace
+        // Skip whitespace
         [ \t]+ {
             continue
         }
@@ -54,6 +54,7 @@ func (l *Lexer) lex() (pos token.Position, tok token.Type, lit string, err error
         "principal" { tok = token.PRINCIPAL; lit = "principal"; return }
         "resource" { tok = token.RESOURCE; lit = "resource"; return }
         "context" { tok = token.CONTEXT; lit = "context"; return }
+        "enum" { tok = token.ENUM; lit = "enum"; return }
 
         // Operators and punctuation
         "{" { tok = token.LEFTBRACE; lit = "{"; return }
@@ -68,6 +69,9 @@ func (l *Lexer) lex() (pos token.Position, tok token.Type, lit string, err error
         "=" { tok = token.EQUALS; lit = "="; return }
         "?" { tok = token.QUESTION; lit = "?"; return }
         "::" { tok = token.DOUBLECOLON; lit = "::"; return }
+        "@" { tok = token.AT; lit = "@"; return }
+        "(" { tok = token.LEFTPAREN; lit = "("; return }
+        ")" { tok = token.RIGHTPAREN; lit = ")"; return }
 
         // Strings
         ["] { return l.lexString('"') }

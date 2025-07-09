@@ -1,10 +1,16 @@
 type Anon = String;
 action AnonAct;
+@annotation("namespace")
 namespace PhotoFlash {
+  @annotation1("type")
+  @annotation2("type")
   type LongAlias = Long;
+  @annotation("action")
   action groupAction1;
   action groupAction2;
+  @annotation("entity")
   entity User, User2 in UserGroup = {
+    @annotation("attrDecl")
     "department": String,
     "jobLevel": Long,
   } tags String;
@@ -21,6 +27,8 @@ namespace PhotoFlash {
     "account": Account,
     "private": Bool,
   };
+  entity PhotoFormat enum ["jpg", "gif", "png"];
+  entity AccountType enum ["user"];
   action "uploadPhoto" in groupAction1 appliesTo {
     principal: User,
     resource: Album,
