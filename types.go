@@ -3,9 +3,10 @@ package cedar
 import (
 	"time"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/types"
-	"golang.org/x/exp/constraints"
 )
 
 //revive:disable:exported

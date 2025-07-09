@@ -1,221 +1,249 @@
 {
-    "": {
-        "entityTypes": {},
-        "actions": {
-            "AnonAct": {
-                "appliesTo": null
-            }
-        },
-        "commonTypes": {
-            "Anon": {
-                "type": "String"
-            }
-        }
+  "": {
+    "commonTypes": {
+      "Anon": {
+        "type": "String"
+      }
     },
-    "PhotoFlash": {
-        "entityTypes": {
-            "Account": {
-                "shape": {
-                    "type": "Record",
-                    "attributes": {
-                        "admins": {
-                            "type": "Set",
-                            "required": false,
-                            "element": {
-                                "type": "EntityOrCommon",
-                                "name": "User"
-                            }
-                        },
-                        "owner": {
-                            "type": "EntityOrCommon",
-                            "required": true,
-                            "name": "User"
-                        }
-                    }
-                }
-            },
-            "Album": {
-                "memberOfTypes": [
-                    "Album"
-                ],
-                "shape": {
-                    "type": "Record",
-                    "attributes": {
-                        "account": {
-                            "type": "EntityOrCommon",
-                            "required": true,
-                            "name": "Account"
-                        },
-                        "private": {
-                            "type": "Boolean",
-                            "required": true
-                        }
-                    }
-                }
-            },
-            "Photo": {
-                "memberOfTypes": [
-                    "Album"
-                ],
-                "shape": {
-                    "type": "Record",
-                    "attributes": {
-                        "account": {
-                            "type": "EntityOrCommon",
-                            "required": true,
-                            "name": "Account"
-                        },
-                        "private": {
-                            "type": "Boolean",
-                            "required": true
-                        }
-                    }
-                }
-            },
-            "User": {
-                "memberOfTypes": [
-                    "UserGroup"
-                ],
-                "shape": {
-                    "type": "Record",
-                    "attributes": {
-                        "department": {
-                            "type": "String",
-                            "required": true
-                        },
-                        "jobLevel": {
-                            "type": "Long",
-                            "required": true
-                        }
-                    }
-                },
-                "tags": {
-                    "type": "String"
-                }
-            },
-            "User2": {
-                "memberOfTypes": [
-                    "UserGroup"
-                ],
-                "shape": {
-                    "type": "Record",
-                    "attributes": {
-                        "department": {
-                            "type": "String",
-                            "required": true
-                        },
-                        "jobLevel": {
-                            "type": "Long",
-                            "required": true
-                        }
-                    }
-                },
-                "tags": {
-                    "type": "String"
-                }
-            },
-            "UserGroup": {}
-        },
-        "actions": {
-            "groupAction1": {
-                "appliesTo": null
-            },
-            "groupAction2": {
-                "appliesTo": null
-            },
-            "listAlbums": {
-                "appliesTo": {
-                    "principalTypes": [
-                        "User"
-                    ],
-                    "resourceTypes": [
-                        "Account"
-                    ],
-                    "context": {
-                        "type": "Record",
-                        "attributes": {
-                            "authenticated": {
-                                "type": "Boolean",
-                                "required": true
-                            }
-                        }
-                    }
-                }
-            },
-            "uploadPhoto": {
-                "memberOf": [
-                    {
-                        "id": "groupAction1"
-                    }
-                ],
-                "appliesTo": {
-                    "principalTypes": [
-                        "User"
-                    ],
-                    "resourceTypes": [
-                        "Album"
-                    ],
-                    "context": {
-                        "type": "Record",
-                        "attributes": {
-                            "authenticated": {
-                                "type": "Boolean",
-                                "required": true
-                            },
-                            "photo": {
-                                "type": "Record",
-                                "required": true,
-                                "attributes": {
-                                    "file_size": {
-                                        "type": "Long",
-                                        "required": true
-                                    },
-                                    "file_type": {
-                                        "type": "String",
-                                        "required": true
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "viewPhoto": {
-                "memberOf": [
-                    {
-                        "id": "groupAction1"
-                    },
-                    {
-                        "id": "groupAction2"
-                    },
-                    {
-                        "id": "actionGroup",
-                        "type": "random::nested::name"
-                    }
-                ],
-                "appliesTo": {
-                    "principalTypes": [
-                        "User"
-                    ],
-                    "resourceTypes": [
-                        "Photo"
-                    ],
-                    "context": {
-                        "type": "Record",
-                        "attributes": {
-                            "authenticated": {
-                                "type": "Boolean",
-                                "required": true
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "commonTypes": {
-            "LongAlias": {
-                "type": "Long"
-            }
-        }
+    "entityTypes": {},
+    "actions": {
+      "AnonAct": {
+        "appliesTo": null
+      }
     }
+  },
+  "PhotoFlash": {
+    "commonTypes": {
+      "LongAlias": {
+        "type": "Long",
+        "annotations": {
+          "annotation1": "type",
+          "annotation2": "type"
+        }
+      }
+    },
+    "entityTypes": {
+      "Account": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "admins": {
+              "type": "Set",
+              "element": {
+                "type": "EntityOrCommon",
+                "name": "User"
+              },
+              "required": false
+            },
+            "owner": {
+              "required": true,
+              "type": "EntityOrCommon",
+              "name": "User"
+            }
+          }
+        }
+      },
+      "AccountType": {
+        "enum": ["user"]
+      },
+      "Album": {
+        "memberOfTypes": [
+          "Album"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "account": {
+              "required": true,
+              "type": "EntityOrCommon",
+              "name": "Account"
+            },
+            "private": {
+              "required": true,
+              "type": "Boolean"
+            }
+          }
+        }
+      },
+      "Photo": {
+        "memberOfTypes": [
+          "Album"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "account": {
+              "required": true,
+              "type": "EntityOrCommon",
+              "name": "Account"
+            },
+            "private": {
+              "required": true,
+              "type": "Boolean"
+            }
+          }
+        }
+      },
+      "PhotoFormat": {
+        "enum": ["jpg", "gif", "png"]
+      },
+      "User": {
+        "memberOfTypes": [
+          "UserGroup"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "department": {
+              "required": true,
+              "type": "String",
+              "annotations": {
+                "annotation": "attrDecl"
+              }
+            },
+            "jobLevel": {
+              "required": true,
+              "type": "Long"
+            }
+          }
+        },
+        "tags": {
+          "type": "String"
+        },
+        "annotations": {
+          "annotation": "entity"
+        }
+      },
+      "User2": {
+        "memberOfTypes": [
+          "UserGroup"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "department": {
+              "required": true,
+              "type": "String",
+              "annotations": {
+                "annotation": "attrDecl"
+              }
+            },
+            "jobLevel": {
+              "required": true,
+              "type": "Long"
+            }
+          }
+        },
+        "tags": {
+          "type": "String"
+        },
+        "annotations": {
+          "annotation": "entity"
+        }
+      },
+      "UserGroup": {}
+    },
+    "actions": {
+      "groupAction1": {
+        "appliesTo": null,
+        "annotations": {
+          "annotation": "action"
+        }
+      },
+      "groupAction2": {
+        "appliesTo": null
+      },
+      "listAlbums": {
+        "appliesTo": {
+          "resourceTypes": [
+            "Account"
+          ],
+          "principalTypes": [
+            "User"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "authenticated": {
+                "required": true,
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "uploadPhoto": {
+        "appliesTo": {
+          "resourceTypes": [
+            "Album"
+          ],
+          "principalTypes": [
+            "User"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "authenticated": {
+                "required": true,
+                "type": "Boolean"
+              },
+              "photo": {
+                "required": true,
+                "type": "Record",
+                "attributes": {
+                  "file_size": {
+                    "required": true,
+                    "type": "Long"
+                  },
+                  "file_type": {
+                    "required": true,
+                    "type": "String"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "memberOf": [
+          {
+            "id": "groupAction1"
+          }
+        ]
+      },
+      "viewPhoto": {
+        "appliesTo": {
+          "resourceTypes": [
+            "Photo"
+          ],
+          "principalTypes": [
+            "User"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "authenticated": {
+                "required": true,
+                "type": "Boolean"
+              }
+            }
+          }
+        },
+        "memberOf": [
+          {
+            "id": "groupAction1"
+          },
+          {
+            "id": "groupAction2"
+          },
+          {
+            "id": "actionGroup",
+            "type": "random::nested::name"
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "annotation": "namespace"
+    }
+  }
 }

@@ -50,26 +50,28 @@ type Node interface {
 	End() token.Position
 }
 
-func (*Schema) isNode()         {}
-func (*Namespace) isNode()      {}
-func (*CommonTypeDecl) isNode() {}
-func (*RecordType) isNode()     {}
-func (*SetType) isNode()        {}
-func (*Path) isNode()           {}
-func (*Ident) isNode()          {}
-func (*Entity) isNode()         {}
-func (*Action) isNode()         {}
-func (*AppliesTo) isNode()      {}
-func (*Ref) isNode()            {}
-func (*Attribute) isNode()      {}
-func (*String) isNode()         {}
-func (CommentBlock) isNode()    {}
-func (*Comment) isNode()        {}
+// no-op statements are included for code coverage instrumentation
+func (*Schema) isNode()         { _ = 0 }
+func (*Namespace) isNode()      { _ = 0 }
+func (*CommonTypeDecl) isNode() { _ = 0 }
+func (*RecordType) isNode()     { _ = 0 }
+func (*SetType) isNode()        { _ = 0 }
+func (*Path) isNode()           { _ = 0 }
+func (*Ident) isNode()          { _ = 0 }
+func (*Entity) isNode()         { _ = 0 }
+func (*Action) isNode()         { _ = 0 }
+func (*AppliesTo) isNode()      { _ = 0 }
+func (*Ref) isNode()            { _ = 0 }
+func (*Attribute) isNode()      { _ = 0 }
+func (*String) isNode()         { _ = 0 }
+func (CommentBlock) isNode()    { _ = 0 }
+func (*Comment) isNode()        { _ = 0 }
+func (*Annotation) isNode()     { _ = 0 }
 
 type NodeComments struct {
 	Before CommentBlock // comments that precede the node on a separate line
 	Inline *Comment     // inline, e.g. namespace name { <After>
-	Footer *Comment     // all trailing comments after closing brace;
+	Footer *Comment     // all trailing comments after closing brace
 }
 
 type Schema struct {
@@ -100,13 +102,15 @@ type Declaration interface {
 	isDecl()
 }
 
-func (*Entity) isDecl()         {}
-func (*Action) isDecl()         {}
-func (*Namespace) isDecl()      {}
-func (*CommonTypeDecl) isDecl() {}
-func (*CommentBlock) isDecl()   {}
+// no-op statements are included for code coverage instrumentation
+func (*Entity) isDecl()         { _ = 0 }
+func (*Action) isDecl()         { _ = 0 }
+func (*Namespace) isDecl()      { _ = 0 }
+func (*CommonTypeDecl) isDecl() { _ = 0 }
+func (*CommentBlock) isDecl()   { _ = 0 }
 
 type Namespace struct {
+	Annotations []*Annotation
 	NodeComments
 	NamespaceTok token.Position
 	Name         *Path
@@ -116,20 +120,24 @@ type Namespace struct {
 }
 
 func (n *Namespace) Pos() token.Position {
-	if len(n.NodeComments.Before) > 0 {
-		return n.NodeComments.Before.Pos()
+	if len(n.Annotations) > 0 {
+		return n.Annotations[0].Pos()
+	}
+	if len(n.Before) > 0 {
+		return n.Before.Pos()
 	}
 	return n.NamespaceTok
 }
 
 func (n *Namespace) End() token.Position {
-	if n.NodeComments.Footer != nil {
-		return n.NodeComments.Footer.End()
+	if n.Footer != nil {
+		return n.Footer.End()
 	}
 	return n.CloseBrace
 }
 
 type CommonTypeDecl struct {
+	Annotations []*Annotation
 	NodeComments
 	TypeTok token.Position
 	Name    *Ident
@@ -137,8 +145,11 @@ type CommonTypeDecl struct {
 }
 
 func (t *CommonTypeDecl) Pos() token.Position {
-	if len(t.NodeComments.Before) > 0 {
-		return t.NodeComments.Before.Pos()
+	if len(t.Annotations) > 0 {
+		return t.Annotations[0].Pos()
+	}
+	if len(t.Before) > 0 {
+		return t.Before.Pos()
 	}
 	return t.TypeTok
 }
@@ -159,9 +170,10 @@ type Type interface {
 	isType()
 }
 
-func (*RecordType) isType() {}
-func (*SetType) isType()    {}
-func (*Path) isType()       {}
+// no-op statements are included for code coverage instrumentation
+func (*RecordType) isType() { _ = 0 }
+func (*SetType) isType()    { _ = 0 }
+func (*Path) isType()       { _ = 0 }
 
 type RecordType struct {
 	Inner      *Comment // after initial '{'
@@ -180,6 +192,7 @@ func (r *RecordType) End() token.Position {
 }
 
 type Attribute struct {
+	Annotations []*Annotation
 	NodeComments
 	Key        Name
 	IsRequired bool // if true, has ? after name
@@ -188,7 +201,10 @@ type Attribute struct {
 }
 
 func (a *Attribute) Pos() token.Position {
-	if a.NodeComments.Before != nil {
+	if a.Annotations != nil {
+		return a.Annotations[0].Pos()
+	}
+	if a.Before != nil {
 		return a.NodeComments.Before[0].SlashTok
 	}
 	return a.Key.Pos()
@@ -258,19 +274,29 @@ func (i *Ident) End() token.Position {
 }
 
 type Entity struct {
+	Annotations []*Annotation
 	NodeComments
 	EntityTok token.Position
-	Names     []*Ident       // define multiple entities with the same shape
-	In        []*Path        // optional, if nil none given
-	EqTok     token.Position // valid if = is present before shape
-	Shape     *RecordType    // nil if none given
-	Tags      Type
+	Names     []*Ident // define multiple entities with the same shape
+
+	// Traditional entity definition
+	In    []*Path        // optional, if nil none given
+	EqTok token.Position // valid if = is present before shape
+	Shape *RecordType    // nil if none given
+	Tags  Type
+
+	// Enumerated entity definition
+	Enum []*String
+
 	Semicolon token.Position
 }
 
 func (e *Entity) Pos() token.Position {
-	if len(e.NodeComments.Before) > 0 {
-		return e.NodeComments.Before.Pos()
+	if len(e.Annotations) > 0 {
+		return e.Annotations[0].Pos()
+	}
+	if len(e.Before) > 0 {
+		return e.Before.Pos()
 	}
 	return e.EntityTok
 }
@@ -283,6 +309,7 @@ func (e *Entity) End() token.Position {
 }
 
 type Action struct {
+	Annotations []*Annotation
 	NodeComments
 	ActionTok token.Position
 	Names     []Name
@@ -292,8 +319,11 @@ type Action struct {
 }
 
 func (a *Action) Pos() token.Position {
-	if len(a.NodeComments.Before) > 0 {
-		return a.NodeComments.Before.Pos()
+	if len(a.Annotations) > 0 {
+		return a.Annotations[0].Pos()
+	}
+	if len(a.Before) > 0 {
+		return a.Before.Pos()
 	}
 	return a.ActionTok
 }
@@ -369,8 +399,9 @@ func (s *String) Value() string {
 	return s.QuotedVal[1 : len(s.QuotedVal)-1]
 }
 
-func (*String) isName() {}
-func (*Ident) isName()  {}
+// no-op statements are included for code coverage instrumentation
+func (*String) isName() { _ = 0 }
+func (*Ident) isName()  { _ = 0 }
 
 func (s *String) Pos() token.Position {
 	return s.Tok
@@ -417,4 +448,27 @@ func (c *Comment) End() token.Position {
 
 func (c *Comment) Trim() string {
 	return strings.TrimLeft(c.Value, " \t\n/")
+}
+
+type Annotation struct {
+	NodeComments
+	At         token.Position
+	Key        *Ident
+	LeftParen  token.Position
+	Value      *String
+	RightParen token.Position
+}
+
+func (a *Annotation) Pos() token.Position {
+	if len(a.Before) > 0 {
+		return a.Before.Pos()
+	}
+	return a.At
+}
+
+func (a *Annotation) End() token.Position {
+	if a.Value == nil {
+		return a.Key.End()
+	}
+	return a.RightParen
 }

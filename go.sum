@@ -1,2 +1,4 @@
+github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
+github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 golang.org/x/exp v0.0.0-20220921023135-46d9e7742f1e h1:Ctm9yurWsg7aWwIpH9Bnap/IdSVxixymIb3MhiMEQQA=
 golang.org/x/exp v0.0.0-20220921023135-46d9e7742f1e/go.mod h1:cyybsKvd6eL0RnXn6p/Grxp8F5bW7iYuBgsNCOHpMYE=
