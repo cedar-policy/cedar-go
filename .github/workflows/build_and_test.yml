@@ -27,5 +27,9 @@ jobs:
       - name: Fuzz
         run: mkdir -p testdata && go test -fuzz=FuzzParse -fuzztime 60s && go test -fuzz=FuzzTokenize -fuzztime 60s
 
+      # Remove generated files from required coverage
+      - name: Sanitize coverage report
+        run: sed -i "/^github.com\/cedar-policy\/cedar-go\/internal\/schema\/parser\/cedarschema.go/d" coverage.out
+
       - name: Coverage check
         run: go tool cover -func=coverage.out | sed 's/%$//' | awk '{ if ($3 < 100.0) { printf "Insufficient code coverage for %s\n", $0; failed=1 } } END { exit failed }'

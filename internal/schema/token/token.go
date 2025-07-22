@@ -47,17 +47,18 @@ type Type int
 const (
 	INVALID Type = iota
 
-	// Keywords
+	// Keywords - keep up to date with AllKeywords below
 	NAMESPACE
 	ENTITY
 	ACTION
 	TYPE
 	IN
 	TAGS
-	APPLIES_TO
+	APPLIESTO
 	PRINCIPAL
 	RESOURCE
 	CONTEXT
+	ENUM
 
 	// Punctuation
 	LEFTBRACE    // {
@@ -72,6 +73,9 @@ const (
 	EQUALS       // =
 	QUESTION     // ?
 	DOUBLECOLON  // ::
+	AT           // @
+	LEFTPAREN    // (
+	RIGHTPAREN   // )
 
 	// Identifiers and literals
 	IDENT  // Regular identifier
@@ -85,17 +89,18 @@ const (
 )
 
 var types = [...]string{
-	INVALID:    "INVALID",
-	NAMESPACE:  "NAMESPACE",
-	ENTITY:     "ENTITY",
-	ACTION:     "ACTION",
-	TYPE:       "TYPE",
-	IN:         "IN",
-	TAGS:       "TAGS",
-	APPLIES_TO: "APPLIES_TO",
-	PRINCIPAL:  "PRINCIPAL",
-	RESOURCE:   "RESOURCE",
-	CONTEXT:    "CONTEXT",
+	INVALID:   "INVALID",
+	NAMESPACE: "NAMESPACE",
+	ENTITY:    "ENTITY",
+	ACTION:    "ACTION",
+	TYPE:      "TYPE",
+	IN:        "IN",
+	TAGS:      "TAGS",
+	APPLIESTO: "APPLIESTO",
+	PRINCIPAL: "PRINCIPAL",
+	RESOURCE:  "RESOURCE",
+	CONTEXT:   "CONTEXT",
+	ENUM:      "ENUM",
 
 	LEFTBRACE:    "LEFTBRACE",
 	RIGHTBRACE:   "RIGHTBRACE",
@@ -109,6 +114,8 @@ var types = [...]string{
 	EQUALS:       "EQUALS",
 	QUESTION:     "QUESTION",
 	DOUBLECOLON:  "DOUBLECOLON",
+	LEFTPAREN:    "LEFTPAREN",
+	RIGHTPAREN:   "RIGHTPAREN",
 
 	IDENT:  "IDENT",
 	STRING: "STRING",
@@ -127,4 +134,18 @@ func (tok Type) String() string {
 		s = "Token(" + strconv.Itoa(int(tok)) + ")"
 	}
 	return s
+}
+
+var AllKeywords = []Type{
+	NAMESPACE,
+	ENTITY,
+	ACTION,
+	TYPE,
+	IN,
+	TAGS,
+	APPLIESTO,
+	PRINCIPAL,
+	RESOURCE,
+	CONTEXT,
+	ENUM,
 }

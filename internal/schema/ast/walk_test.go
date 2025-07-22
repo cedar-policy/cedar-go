@@ -120,6 +120,9 @@ func (vis *visitor) walk(n ast.Node, open, exit func(ast.Node) bool) {
 		}
 		vis.walk(v.Remaining, open, exit)
 	case *ast.Namespace:
+		for _, a := range v.Annotations {
+			vis.walk(a, open, exit)
+		}
 		vis.walk(v.Before, open, exit)
 		vis.walk(v.Name, open, exit)
 		if v.Inline != nil {
@@ -140,6 +143,9 @@ func (vis *visitor) walk(n ast.Node, open, exit func(ast.Node) bool) {
 		vis.walk(v.Name, open, exit)
 		vis.walk(v.Value, open, exit)
 	case *ast.Entity:
+		for _, a := range v.Annotations {
+			vis.walk(a, open, exit)
+		}
 		for _, name := range v.Names {
 			vis.walk(name, open, exit)
 		}
@@ -153,6 +159,9 @@ func (vis *visitor) walk(n ast.Node, open, exit func(ast.Node) bool) {
 			vis.walk(v.Tags, open, exit)
 		}
 	case *ast.Action:
+		for _, a := range v.Annotations {
+			vis.walk(a, open, exit)
+		}
 		for _, name := range v.Names {
 			vis.walk(name, open, exit)
 		}
@@ -183,6 +192,9 @@ func (vis *visitor) walk(n ast.Node, open, exit func(ast.Node) bool) {
 			vis.walk(part, open, exit)
 		}
 	case *ast.Attribute:
+		for _, a := range v.Annotations {
+			vis.walk(a, open, exit)
+		}
 		vis.walk(v.Key, open, exit)
 		vis.walk(v.Type, open, exit)
 	case *ast.Ref:

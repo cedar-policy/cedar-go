@@ -4,12 +4,14 @@ package parser_test
 import (
 	"bytes"
 	"io/fs"
-	"os"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
 	"github.com/cedar-policy/cedar-go/internal/schema/parser"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestParseSimple(t *testing.T) {
@@ -27,10 +29,13 @@ func TestParseSimple(t *testing.T) {
 }
 `,
 		// Anonymous namespace references
-		`// Entity example
+		`@annotation("entity")
+// Entity example
 entity User;
+@annotation("type")
 // Type example
 type Id = String;
+@annotation("action")
 // Action example
 action run;
 namespace NS {
@@ -46,14 +51,9 @@ namespace NS {
 		}
 		var got bytes.Buffer
 		err = ast.Format(schema, &got) // tab format to match Go
-		if err != nil {
-			t.Fatalf("Error parsing schema: %v", err)
-		}
-		if got.String() != test {
-			t.Errorf("Parsed and formatted schema does not match:\nBefore\n%q\n=========================================\nAfter\n%q\n=========================================",
-				test,
-				got.String())
-		}
+		testutil.OK(t, err)
+		diff := cmp.Diff(got.String(), test)
+		testutil.FatalIf(t, diff != "", "mismatch -want +got:\n%v", diff)
 	}
 }
 
@@ -113,16 +113,12 @@ func TestRealFiles(t *testing.T) {
 
 			var gotBytes bytes.Buffer
 			err = ast.Format(schema, &gotBytes)
-			if err != nil {
-				t.Fatalf("Error parsing schema: %v", err)
-			}
+			testutil.OK(t, err)
+
 			got := strings.TrimSpace(gotBytes.String())
-			if got != strings.TrimSpace(string(input)) {
-				t.Errorf("Parsed schema does not match original:\n%s\n=========================================\n%s\n=========================================", string(input), got)
-				if err := os.WriteFile("testdata/cases/"+file.Name()+".got", gotBytes.Bytes(), 0644); err != nil {
-					t.Logf("Error writing testdata/cases/%s.got: %v", file.Name(), err)
-				}
-			}
+			testutil.OK(t, err)
+			diff := cmp.Diff(got, strings.TrimSpace(string(input)))
+			testutil.FatalIf(t, diff != "", "mismatch -want +got:\n%v", diff)
 		})
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/schema/token"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestParserErrors(t *testing.T) {
@@ -27,6 +28,13 @@ func TestParserErrors(t *testing.T) {
 				entity Foo Bar Baz;
 			`,
 			wantErrs: []string{"expected ;, got Bar"},
+		},
+		{
+			name: "missing comma in entity enum list",
+			input: `
+				entity Foo enum ["Bar" "Baz"];
+			`,
+			wantErrs: []string{"expected , or ]"},
 		},
 		{
 			name: "reserved type name",
@@ -143,7 +151,7 @@ func TestParserErrors(t *testing.T) {
 			input: `
 				entity User in [User::123::Entity];
 			`,
-			wantErrs: []string{"expected identifier after ::"},
+			wantErrs: []string{"expected identifier, got INVALID"},
 		},
 		{
 			name: "invalid token where name expected",
@@ -151,6 +159,22 @@ func TestParserErrors(t *testing.T) {
 				action 123;
 			`,
 			wantErrs: []string{"expected name (identifier or string)"},
+		},
+		{
+			name: "bare annotation",
+			input: `
+				@key("value")
+			`,
+			wantErrs: []string{"bare annotation(s); expected namespace, action, entity, or type"},
+		},
+		{
+			name: "bare annotation in namespace",
+			input: `
+				namespace Foo {
+					@key("value")
+				};
+			`,
+			wantErrs: []string{"bare annotation(s); expected action, entity, or type"},
 		},
 		{
 			name: "too many errors causing bailout",
@@ -214,4 +238,23 @@ func TestParserErrors(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_must(t *testing.T) {
+	t.Parallel()
+	t.Run("true", func(t *testing.T) {
+		t.Parallel()
+		must(true, "nothing should happen")
+	})
+	t.Run("false", func(t *testing.T) {
+		t.Parallel()
+		defer func() {
+			if r := recover(); r != nil {
+				testutil.Equals(t, r, "nothing should happen")
+			} else {
+				t.Errorf("expected panic but no panic recovered")
+			}
+		}()
+		must(false, "nothing should happen")
+	})
 }

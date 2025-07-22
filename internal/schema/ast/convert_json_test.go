@@ -5,52 +5,46 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"os"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/cedar-policy/cedar-go/internal/schema/ast"
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestConvertJsonToHumanRoundtrip(t *testing.T) {
 	// Read the example JSON schema from embedded filesystem
-	exampleJson, err := fs.ReadFile(ast.Testdata, "testdata/convert/test_want.json")
+	exampleJSON, err := fs.ReadFile(ast.Testdata, "testdata/convert/test_want.json")
 	if err != nil {
 		t.Fatalf("Error reading example JSON schema: %v", err)
 	}
 
 	// Parse the JSON schema
-	var jsonSchema ast.JsonSchema
-	if err := json.Unmarshal(exampleJson, &jsonSchema); err != nil {
+	var jsonSchema ast.JSONSchema
+	if err := json.Unmarshal(exampleJSON, &jsonSchema); err != nil {
 		t.Fatalf("Error parsing JSON schema: %v", err)
 	}
 
 	// Convert to human-readable format and back to JSON
 	humanSchema := ast.ConvertJSON2Human(jsonSchema)
-	jsonSchema2 := ast.ConvertHuman2Json(humanSchema)
+	jsonSchema2 := ast.ConvertHuman2JSON(humanSchema)
 
 	// Compare the JSON schemas
 	json1, err := json.MarshalIndent(jsonSchema, "", "    ")
-	if err != nil {
-		t.Fatalf("Error marshalling first JSON schema: %v", err)
-	}
+	testutil.OK(t, err)
 
 	json2, err := json.MarshalIndent(jsonSchema2, "", "    ")
-	if err != nil {
-		t.Fatalf("Error marshalling second JSON schema: %v", err)
-	}
+	testutil.OK(t, err)
 
-	if string(json1) != string(json2) {
-		if err := os.WriteFile("testdata/convert/test_got_roundtrip.json", json2, 0644); err != nil {
-			t.Logf("Error writing testdata/convert/test_got_roundtrip.json: %v", err)
-		}
-		t.Errorf("Roundtrip conversion failed, compare testdata/convert/test_want.json and testdata/convert/test_got_roundtrip.json")
-	}
+	diff := cmp.Diff(string(json1), string(json2))
+	testutil.FatalIf(t, diff != "", "mismatch -want +got:\n%v", diff)
 }
 
 func TestConvertJsonToHumanEmpty(t *testing.T) {
 	// Test with an empty JSON schema
-	emptySchema := ast.JsonSchema{}
+	emptySchema := ast.JSONSchema{}
 	humanSchema := ast.ConvertJSON2Human(emptySchema)
 
 	// Format the human-readable schema
@@ -61,17 +55,17 @@ func TestConvertJsonToHumanEmpty(t *testing.T) {
 
 	// Should be empty
 	if len(got.Bytes()) != 0 {
-		t.Errorf("Expected empty output, got: %q", string(got.Bytes()))
+		t.Errorf("Expected empty output, got: %q", got.String())
 	}
 }
 
 func TestConvertJsonToHumanInvalidType(t *testing.T) {
 	// Test with an invalid JSON type
-	invalidSchema := ast.JsonSchema{
+	invalidSchema := ast.JSONSchema{
 		"": {
-			EntityTypes: map[string]*ast.JsonEntity{
+			EntityTypes: map[string]*ast.JSONEntity{
 				"Test": {
-					Shape: &ast.JsonType{
+					Shape: &ast.JSONType{
 						Type: "InvalidType",
 					},
 				},
