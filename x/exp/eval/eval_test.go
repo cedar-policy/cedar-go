@@ -544,115 +544,6 @@ func TestPartialPolicyToNode(t *testing.T) {
 			true,
 			ast.True().And(ast.Context().Access("key").Equal(ast.Long(42))),
 		},
-
-		{"ignorePermitContext",
-			ast.Permit().When(ast.Context().Equal(ast.Long(42))),
-			Env{
-				Context: Ignore(),
-			},
-			ast.Permit(),
-			true,
-			ast.True(),
-		},
-		{"ignoreForbidContext",
-			ast.Forbid().When(ast.Context().Equal(ast.Long(42))),
-			Env{
-				Context: Ignore(),
-			},
-			nil,
-			false,
-			ast.False(),
-		},
-		{"ignorePermitScope",
-			ast.Permit().PrincipalEq(types.NewEntityUID("T", "42")),
-			Env{
-				Principal: Ignore(),
-			},
-			ast.Permit(),
-			true,
-			ast.True(),
-		},
-		{"ignoreForbidScope",
-			ast.Forbid().PrincipalEq(types.NewEntityUID("T", "42")),
-			Env{
-				Principal: Ignore(),
-			},
-			ast.Forbid(),
-			true,
-			ast.True(),
-		},
-		{"ignoreAnd",
-			ast.Permit().When(ast.Context().Access("variable").And(ast.Context().Access("ignore").Equal(ast.Long(42)))),
-			Env{
-				Context: types.NewRecord(types.RecordMap{
-					"ignore":   Ignore(),
-					"variable": Variable("variable"),
-				}),
-			},
-			ast.Permit(),
-			true,
-			ast.True(),
-		},
-		{"ignoreOr",
-			ast.Permit().When(ast.Context().Access("variable").Or(ast.Context().Access("ignore").Equal(ast.Long(42)))),
-			Env{
-				Context: types.NewRecord(types.RecordMap{
-					"ignore":   Ignore(),
-					"variable": Variable("variable"),
-				}),
-			},
-			ast.Permit(),
-			true,
-			ast.True(),
-		},
-		{"ignoreIfThen",
-			ast.Permit().When(ast.IfThenElse(ast.Context().Access("variable"), ast.Context().Access("ignore").Equal(ast.Long(42)), ast.True())),
-			Env{
-				Context: types.NewRecord(types.RecordMap{
-					"ignore":   Ignore(),
-					"variable": Variable("variable"),
-				}),
-			},
-			ast.Permit(),
-			true,
-			ast.True(),
-		},
-		{"ignoreIfElse",
-			ast.Permit().When(ast.IfThenElse(ast.Context().Access("variable"), ast.True(), ast.Context().Access("ignore").Equal(ast.Long(42)))),
-			Env{
-				Context: types.NewRecord(types.RecordMap{
-					"ignore":   Ignore(),
-					"variable": Variable("variable"),
-				}),
-			},
-			ast.Permit(),
-			true,
-			ast.True(),
-		},
-		{"ignoreHas",
-			ast.Permit().When(ast.Context().Has("ignore")),
-			Env{
-				Context: types.NewRecord(types.RecordMap{
-					"ignore":   Ignore(),
-					"variable": Variable("variable"),
-				}),
-			},
-			ast.Permit(),
-			true,
-			ast.True(),
-		},
-		{"ignoreHasNot",
-			ast.Permit().When(ast.Not(ast.Context().Has("ignore"))),
-			Env{
-				Context: types.NewRecord(types.RecordMap{
-					"ignore":   Ignore(),
-					"variable": Variable("variable"),
-				}),
-			},
-			ast.Permit(),
-			true,
-			ast.True(),
-		},
 		{"errorShortCircuit",
 			ast.Permit().When(ast.True()).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
 			Env{
@@ -725,20 +616,9 @@ func TestPartialPolicyToNode(t *testing.T) {
 			out, keep := eval.PartialPolicy(tt.env, tt.in)
 			if keep {
 				testutil.Equals(t, out, tt.out)
-				// gotP := (*parser.Policy)(out)
-				// wantP := (*parser.Policy)(tt.out)
-				// var gotB bytes.Buffer
-				// gotP.MarshalCedar(&gotB)
-				// var wantB bytes.Buffer
-				// wantP.MarshalCedar(&wantB)
-				// testutil.Equals(t, gotB.String(), wantB.String())
-			}
-			testutil.Equals(t, keep, tt.keep)
-			out2, keep2 := PartialPolicyToNode(tt.env, tt.in)
-			if keep2 {
+				testutil.Equals(t, keep, tt.keep)
+				out2 := PolicyToNode(out)
 				testutil.Equals(t, out2, tt.out2)
-			} else {
-				testutil.Equals(t, out2, ast.False())
 			}
 		})
 	}

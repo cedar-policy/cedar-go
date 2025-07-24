@@ -92,7 +92,7 @@ func TestPolicyToNode(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out := policyToNode(tt.in)
+			out := PolicyToNode(tt.in)
 			testutil.Equals(t, out, tt.out)
 		})
 	}

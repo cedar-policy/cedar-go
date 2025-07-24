@@ -43,17 +43,6 @@ func IsIgnore(v types.Value) bool {
 	return false
 }
 
-// PartialPolicyToNode returns node compiled from a partially evaluated version of the policy
-// and a boolean indicating if the policy should be kept.
-// (Policies that are determined to evaluate to false are not kept.)
-func PartialPolicyToNode(env Env, p *ast.Policy) (node ast.Node, keep bool) {
-	pp, keep := PartialPolicy(env, p)
-	if !keep {
-		return ast.False(), keep
-	}
-	return policyToNode(pp), keep
-}
-
 // PartialPolicy returns a partially evaluated version of the policy and a boolean indicating if the policy should be kept.
 // (Policies that are determined to evaluate to false are not kept.)
 func PartialPolicy(env Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
