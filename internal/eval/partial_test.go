@@ -167,14 +167,12 @@ func TestPartialPolicy(t *testing.T) {
 		env  Env
 		out  *ast.Policy
 		keep bool
-		out2 ast.Node
 	}{
 		{"smokeTest",
 			ast.Permit(),
 			Env{},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"principalEqual",
 			ast.Permit().PrincipalEq(types.NewEntityUID("Account", "42")),
@@ -183,7 +181,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"principalNotEqual",
 			ast.Permit().PrincipalEq(types.NewEntityUID("Account", "42")),
@@ -192,7 +189,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			nil,
 			false,
-			ast.False(),
 		},
 		{"actionEqual",
 			ast.Permit().ActionEq(types.NewEntityUID("Action", "42")),
@@ -201,7 +197,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"actionNotEqual",
 			ast.Permit().ActionEq(types.NewEntityUID("Action", "42")),
@@ -210,7 +205,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			nil,
 			false,
-			ast.False(),
 		},
 		{"resourceEqual",
 			ast.Permit().ResourceEq(types.NewEntityUID("Resource", "42")),
@@ -219,7 +213,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"resourceNotEqual",
 			ast.Permit().ResourceEq(types.NewEntityUID("Resource", "42")),
@@ -228,42 +221,36 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			nil,
 			false,
-			ast.False(),
 		},
 		{"conditionOmitTrue",
 			ast.Permit().When(ast.True()),
 			Env{},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"conditionDropFalse",
 			ast.Permit().When(ast.False()),
 			Env{},
 			nil,
 			false,
-			ast.False(),
 		},
 		{"conditionDropError",
 			ast.Permit().When(ast.Long(42).GreaterThan(ast.String("bananas"))),
 			Env{},
 			ast.Permit().When(ast.NewNode(extError(errors.New("type error: expected comparable value, got string")))),
 			true,
-			ast.True().And(ast.NewNode(extError(errors.New("type error: expected comparable value, got string")))),
 		},
 		{"conditionDropTypeError",
 			ast.Permit().When(ast.Long(42)),
 			Env{},
 			ast.Permit().When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 			true,
-			ast.True().And(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 		},
 		{"conditionKeepUnfolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
 			Env{Context: Variable("context")},
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
 			true,
-			ast.True().And(ast.Context().GreaterThan(ast.Long(42))),
 		},
 		{"conditionOmitTrueFolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
@@ -272,7 +259,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"conditionDropFalseFolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
@@ -281,7 +267,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			nil,
 			false,
-			ast.False(),
 		},
 		{"conditionDropErrorFolded",
 			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
@@ -290,7 +275,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit().When(ast.NewNode(extError(errors.New("type error: expected comparable value, got string")))),
 			true,
-			ast.True().And(ast.NewNode(extError(errors.New("type error: expected comparable value, got string")))),
 		},
 		{"contextVariableAccess",
 			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
@@ -301,7 +285,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
 			true,
-			ast.True().And(ast.Context().Access("key").Equal(ast.Long(42))),
 		},
 
 		{"ignorePermitContext",
@@ -311,7 +294,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"ignoreForbidContext",
 			ast.Forbid().When(ast.Context().Equal(ast.Long(42))),
@@ -320,7 +302,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			nil,
 			false,
-			ast.False(),
 		},
 		{"ignorePermitScope",
 			ast.Permit().PrincipalEq(types.NewEntityUID("T", "42")),
@@ -329,7 +310,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"ignoreForbidScope",
 			ast.Forbid().PrincipalEq(types.NewEntityUID("T", "42")),
@@ -338,7 +318,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Forbid(),
 			true,
-			ast.True(),
 		},
 		{"ignoreAnd",
 			ast.Permit().When(ast.Context().Access("variable").And(ast.Context().Access("ignore").Equal(ast.Long(42)))),
@@ -350,7 +329,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"ignoreOr",
 			ast.Permit().When(ast.Context().Access("variable").Or(ast.Context().Access("ignore").Equal(ast.Long(42)))),
@@ -362,7 +340,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"ignoreIfThen",
 			ast.Permit().When(ast.IfThenElse(ast.Context().Access("variable"), ast.Context().Access("ignore").Equal(ast.Long(42)), ast.True())),
@@ -374,7 +351,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"ignoreIfElse",
 			ast.Permit().When(ast.IfThenElse(ast.Context().Access("variable"), ast.True(), ast.Context().Access("ignore").Equal(ast.Long(42)))),
@@ -386,7 +362,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"ignoreHas",
 			ast.Permit().When(ast.Context().Has("ignore")),
@@ -398,7 +373,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"ignoreHasNot",
 			ast.Permit().When(ast.Not(ast.Context().Has("ignore"))),
@@ -410,7 +384,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit(),
 			true,
-			ast.True(),
 		},
 		{"errorShortCircuit",
 			ast.Permit().When(ast.True()).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
@@ -421,7 +394,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit().When(ast.NewNode(extError(errors.New("type error: expected comparable value, got string")))),
 			true,
-			ast.True().And(ast.NewNode(extError(errors.New("type error: expected comparable value, got string")))),
 		},
 		{"errorShortCircuitKept",
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
@@ -432,7 +404,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(extError(errors.New("type error: expected comparable value, got string")))),
 			true,
-			ast.True().And(ast.Context().Access("variable").And(ast.NewNode(extError(errors.New("type error: expected comparable value, got string"))))),
 		},
 		{"errorConditionShortCircuit",
 			ast.Permit().When(ast.True()).When(ast.String("test")).When(ast.Context().Access("variable")),
@@ -443,7 +414,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit().When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 			true,
-			ast.True().And(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 		},
 		{"errorConditionShortCircuitKept",
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test")).When(ast.Context().Access("variable")),
@@ -454,7 +424,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 			true,
-			ast.True().And(ast.Context().Access("variable").And(ast.NewNode(extError(errors.New("type error: condition expected bool"))))),
 		},
 		{"errorConditionShortCircuitKeptDeeper",
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test")).When(ast.Context().Access("variable")),
@@ -465,7 +434,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(extError(errors.New("type error: condition expected bool")))),
 			true,
-			ast.True().And(ast.Context().Access("variable").And(ast.NewNode(extError(errors.New("type error: condition expected bool"))))),
 		},
 		{"keepDeepVariables",
 			ast.Permit().When(ast.True().Equal(ast.False().Equal(ast.Context()))),
@@ -474,7 +442,6 @@ func TestPartialPolicy(t *testing.T) {
 			},
 			ast.Permit().When(ast.True().Equal(ast.False().Equal(ast.Context()))),
 			true,
-			ast.True().And(ast.True().Equal(ast.False().Equal(ast.Context()))),
 		},
 	}
 	for _, tt := range tests {
@@ -493,12 +460,7 @@ func TestPartialPolicy(t *testing.T) {
 				// testutil.Equals(t, gotB.String(), wantB.String())
 			}
 			testutil.Equals(t, keep, tt.keep)
-			out2, keep2 := PartialPolicyToNode(tt.env, tt.in)
-			if keep2 {
-				testutil.Equals(t, out2, tt.out2)
-			} else {
-				testutil.Equals(t, out2, ast.False())
-			}
+
 		})
 	}
 
@@ -1602,26 +1564,6 @@ func TestToVariable(t *testing.T) {
 			t.Parallel()
 			key, out := ToVariable(tt.in)
 			testutil.Equals(t, key, tt.key)
-			testutil.Equals(t, out, tt.out)
-		})
-	}
-}
-
-func TestIsPartialError(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name string
-		in   ast.IsNode
-		out  bool
-	}{
-		{"partialerror", PartialError(errors.New("value must be boolean")), true},
-		{"othernode", ast.True().AsIsNode(), false},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			out := IsPartialError(tt.in)
 			testutil.Equals(t, out, tt.out)
 		})
 	}

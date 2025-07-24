@@ -25,11 +25,11 @@ func (e *BoolEvaler) Eval(env Env) (types.Boolean, error) {
 
 func Compile(p *ast.Policy) BoolEvaler {
 	p = foldPolicy(p)
-	node := policyToNode(p).AsIsNode()
+	node := PolicyToNode(p).AsIsNode()
 	return BoolEvaler{eval: ToEval(node)}
 }
 
-func policyToNode(p *ast.Policy) ast.Node {
+func PolicyToNode(p *ast.Policy) ast.Node {
 	var nodes []ast.Node
 	_, principalAll := p.Principal.(ast.ScopeTypeAll)
 	_, actionAll := p.Action.(ast.ScopeTypeAll)
