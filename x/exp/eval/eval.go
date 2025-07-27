@@ -24,11 +24,13 @@ func Eval(n ast.IsNode, env Env) (types.Value, error) {
 //
 // All the env parts (PARC) must be specified, but you can
 // specify `Variable` as `Variable("principal")` or `Variable("action")` or `Variable("resource")` or `Variable("context")`.
-// also you can specify part of Context to be a `Variable`, such as `var` in `Context` could be
+// also you can specify part of Context to be a `Variable`, such as `key` in `Context` could be
 // `
-// context := types.NewRecord(types.RecordMap{
-// 		"var": Variable("var"),
-// })
+//
+//	context := types.NewRecord(types.RecordMap{
+//			"key": Variable("key"),
+//	})
+//
 // `
 //
 // when the node is kept, it can be one of three kinds:
@@ -39,7 +41,6 @@ func Eval(n ast.IsNode, env Env) (types.Value, error) {
 // you can use the partial evaluation result `ast.Node` to do any additional work you want
 // for example, you can convert it to an sql query.
 // in which case the variable should be a column name and binary node should be an sql expression.
-
 func PartialPolicy(env Env, p *ast.Policy) (policy *ast.Policy, keep bool) {
 	return eval.PartialPolicy(env, p)
 }
@@ -54,19 +55,14 @@ func PartialError(err error) ast.IsNode {
 	return eval.PartialError(err)
 }
 
-// IsPartialError returns true if the node is a partial error.
-func IsPartialError(n ast.IsNode) bool {
-	return eval.IsPartialError(n)
+// ToPartialError returns the error if the node is a partial error.
+func ToPartialError(n ast.IsNode) (err error, ok bool) {
+	return eval.ToPartialError(n)
 }
 
 // Variable is a variable in the policy.
 func Variable(v types.String) types.Value {
 	return eval.Variable(v)
-}
-
-// IsVariable checks if a value is a variable.
-func IsVariable(v types.Value) bool {
-	return eval.IsVariable(v)
 }
 
 // ToVariable converts a value to a variable.

@@ -400,7 +400,7 @@ func TestToEvalVariablePanic(t *testing.T) {
 		_, _ = Eval(ast.NodeTypeVariable{Name: "bananas"}, Env{})
 	})
 }
-func TestPartialPolicyToNode(t *testing.T) {
+func TestPartialPolicy(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name string
@@ -613,7 +613,7 @@ func TestPartialPolicyToNode(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out, keep := eval.PartialPolicy(tt.env, tt.in)
+			out, keep := PartialPolicy(tt.env, tt.in)
 			if keep {
 				testutil.Equals(t, out, tt.out)
 				testutil.Equals(t, keep, tt.keep)
@@ -623,4 +623,78 @@ func TestPartialPolicyToNode(t *testing.T) {
 		})
 	}
 
+}
+
+func TestToVariable(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   types.EntityUID
+		key  types.String
+		out  bool
+	}{
+		{"happy", eval.Variable("test").(types.EntityUID), "test", true},
+		{"sad", types.NewEntityUID("X", "1"), "", false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			key, out := ToVariable(tt.in)
+			testutil.Equals(t, key, tt.key)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
+
+func TestToPartialError(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   ast.IsNode
+		out  error
+		ok   bool
+	}{
+		{"ok", PartialError(errors.New("err")), errors.New("err"), true},
+		{"otherExternalCall", ast.NodeTypeExtensionCall{Name: "X", Args: []ast.IsNode{ast.NodeValue{Value: types.String("err")}}}, nil, false},
+		{"otherNode", ast.NodeValue{Value: types.String("err")}, nil, false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out, ok := ToPartialError(tt.in)
+			testutil.Equals(t, out, tt.out)
+			testutil.Equals(t, ok, tt.ok)
+		})
+	}
+}
+
+func TestTypeName(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   types.Value
+		out  string
+	}{
+
+		{"boolean", types.Boolean(true), "bool"},
+		{"datetime", types.NewDatetime(time.UnixMilli(42)), "datetime"},
+		{"decimal", testutil.Must(types.NewDecimalFromInt(42)), "decimal"},
+		{"entityUID", types.NewEntityUID("T", "42"), "(entity of type `T`)"},
+		{"ip", types.IPAddr{}, "IP"},
+		{"long", types.Long(42), "long"},
+		{"record", types.Record{}, "record"},
+		{"set", types.Set{}, "set"},
+		{"string", types.String("test"), "string"},
+		{"nil", nil, "unknown type"},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := TypeName(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
 }
