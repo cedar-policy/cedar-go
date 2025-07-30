@@ -66,8 +66,11 @@ func Variable(v types.String) types.Value {
 }
 
 // ToVariable converts a value to a variable.
-func ToVariable(ent types.EntityUID) (types.String, bool) {
-	return eval.ToVariable(ent)
+func ToVariable(v types.Value) (types.String, bool) {
+	if ent, ok := v.(types.EntityUID); ok {
+		return eval.ToVariable(ent)
+	}
+	return "", false
 }
 
 // TypeName returns the type name of a value.
