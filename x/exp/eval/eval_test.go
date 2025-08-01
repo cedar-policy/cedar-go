@@ -629,12 +629,14 @@ func TestToVariable(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name string
-		in   types.EntityUID
+		in   types.Value
 		key  types.String
 		out  bool
 	}{
 		{"happy", eval.Variable("test").(types.EntityUID), "test", true},
 		{"sad", types.NewEntityUID("X", "1"), "", false},
+		{"notEntityUID", types.True, "", false},
+		{"nil", nil, "", false},
 	}
 	for _, tt := range tests {
 		tt := tt
