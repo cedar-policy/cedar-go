@@ -508,6 +508,35 @@ func extError(err error) ast.NodeTypeExtensionCall {
 	return ast.NodeTypeExtensionCall{Name: partialErrorName, Args: []ast.IsNode{ast.NodeValue{Value: types.String(err.Error())}}}
 }
 
+// PartialError returns a node that represents a partial error.
+func PartialError(err error) ast.IsNode {
+	return ast.NodeTypeExtensionCall{Name: partialErrorName, Args: []ast.IsNode{ast.NodeValue{Value: types.String(err.Error())}}}
+}
+
+// ToPartialError returns the error if the node is a partial error.
+func ToPartialError(n ast.IsNode) (error, bool) {
+	ec, ok := n.(ast.NodeTypeExtensionCall)
+	if !ok {
+		return nil, false
+	}
+	if ec.Name != partialErrorName {
+		return nil, false
+	}
+	if len(ec.Args) != 1 {
+		return nil, false
+	}
+	evaler := ToEval(ec.Args[0])
+	v, err := evaler.Eval(Env{})
+	if err != nil {
+		return nil, false
+	}
+	strVal, err := ValueToString(v)
+	if err != nil {
+		return nil, false
+	}
+	return errors.New(string(strVal)), true
+}
+
 // partialHasEval
 type partialHasEval struct {
 	object    Evaler

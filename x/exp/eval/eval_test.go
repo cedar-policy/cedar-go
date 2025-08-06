@@ -1,10 +1,12 @@
 package eval
 
 import (
+	"errors"
 	"net/netip"
 	"testing"
 	"time"
 
+	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
@@ -397,4 +399,304 @@ func TestToEvalVariablePanic(t *testing.T) {
 	testutil.Panic(t, func() {
 		_, _ = Eval(ast.NodeTypeVariable{Name: "bananas"}, Env{})
 	})
+}
+func TestPartialPolicy(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   *ast.Policy
+		env  Env
+		out  *ast.Policy
+		keep bool
+		out2 ast.Node
+	}{
+		{"smokeTest",
+			ast.Permit(),
+			Env{},
+			ast.Permit(),
+			true,
+			ast.True(),
+		},
+		{"principalEqual",
+			ast.Permit().PrincipalEq(types.NewEntityUID("Account", "42")),
+			Env{
+				Principal: types.NewEntityUID("Account", "42"),
+			},
+			ast.Permit(),
+			true,
+			ast.True(),
+		},
+		{"principalNotEqual",
+			ast.Permit().PrincipalEq(types.NewEntityUID("Account", "42")),
+			Env{
+				Principal: types.NewEntityUID("Account", "Other"),
+			},
+			nil,
+			false,
+			ast.False(),
+		},
+		{"actionEqual",
+			ast.Permit().ActionEq(types.NewEntityUID("Action", "42")),
+			Env{
+				Action: types.NewEntityUID("Action", "42"),
+			},
+			ast.Permit(),
+			true,
+			ast.True(),
+		},
+		{"actionNotEqual",
+			ast.Permit().ActionEq(types.NewEntityUID("Action", "42")),
+			Env{
+				Action: types.NewEntityUID("Action", "Other"),
+			},
+			nil,
+			false,
+			ast.False(),
+		},
+		{"resourceEqual",
+			ast.Permit().ResourceEq(types.NewEntityUID("Resource", "42")),
+			Env{
+				Resource: types.NewEntityUID("Resource", "42"),
+			},
+			ast.Permit(),
+			true,
+			ast.True(),
+		},
+		{"resourceNotEqual",
+			ast.Permit().ResourceEq(types.NewEntityUID("Resource", "42")),
+			Env{
+				Resource: types.NewEntityUID("Resource", "Other"),
+			},
+			nil,
+			false,
+			ast.False(),
+		},
+		{"conditionOmitTrue",
+			ast.Permit().When(ast.True()),
+			Env{},
+			ast.Permit(),
+			true,
+			ast.True(),
+		},
+		{"conditionDropFalse",
+			ast.Permit().When(ast.False()),
+			Env{},
+			nil,
+			false,
+			ast.False(),
+		},
+		{"conditionDropError",
+			ast.Permit().When(ast.Long(42).GreaterThan(ast.String("bananas"))),
+			Env{},
+			ast.Permit().When(ast.NewNode(PartialError(errors.New("type error: expected comparable value, got string")))),
+			true,
+			ast.True().And(ast.NewNode(PartialError(errors.New("type error: expected comparable value, got string")))),
+		},
+		{"conditionDropTypeError",
+			ast.Permit().When(ast.Long(42)),
+			Env{},
+			ast.Permit().When(ast.NewNode(PartialError(errors.New("type error: condition expected bool")))),
+			true,
+			ast.True().And(ast.NewNode(PartialError(errors.New("type error: condition expected bool")))),
+		},
+		{"conditionKeepUnfolded",
+			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
+			Env{Context: Variable("context")},
+			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
+			true,
+			ast.True().And(ast.Context().GreaterThan(ast.Long(42))),
+		},
+		{"conditionOmitTrueFolded",
+			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
+			Env{
+				Context: types.Long(43),
+			},
+			ast.Permit(),
+			true,
+			ast.True(),
+		},
+		{"conditionDropFalseFolded",
+			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
+			Env{
+				Context: types.Long(41),
+			},
+			nil,
+			false,
+			ast.False(),
+		},
+		{"conditionDropErrorFolded",
+			ast.Permit().When(ast.Context().GreaterThan(ast.Long(42))),
+			Env{
+				Context: types.String("bananas"),
+			},
+			ast.Permit().When(ast.NewNode(PartialError(errors.New("type error: expected comparable value, got string")))),
+			true,
+			ast.True().And(ast.NewNode(PartialError(errors.New("type error: expected comparable value, got string")))),
+		},
+		{"contextVariableAccess",
+			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
+			Env{
+				Context: types.NewRecord(types.RecordMap{
+					"key": Variable("var"),
+				}),
+			},
+			ast.Permit().When(ast.Context().Access("key").Equal(ast.Long(42))),
+			true,
+			ast.True().And(ast.Context().Access("key").Equal(ast.Long(42))),
+		},
+		{"errorShortCircuit",
+			ast.Permit().When(ast.True()).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
+			Env{
+				Context: types.NewRecord(types.RecordMap{
+					"variable": Variable("variable"),
+				}),
+			},
+			ast.Permit().When(ast.NewNode(PartialError(errors.New("type error: expected comparable value, got string")))),
+			true,
+			ast.True().And(ast.NewNode(PartialError(errors.New("type error: expected comparable value, got string")))),
+		},
+		{"errorShortCircuitKept",
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test").LessThan(ast.Long(42))).When(ast.Context().Access("variable")),
+			Env{
+				Context: types.NewRecord(types.RecordMap{
+					"variable": Variable("variable"),
+				}),
+			},
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(PartialError(errors.New("type error: expected comparable value, got string")))),
+			true,
+			ast.True().And(ast.Context().Access("variable").And(ast.NewNode(PartialError(errors.New("type error: expected comparable value, got string"))))),
+		},
+		{"errorConditionShortCircuit",
+			ast.Permit().When(ast.True()).When(ast.String("test")).When(ast.Context().Access("variable")),
+			Env{
+				Context: types.NewRecord(types.RecordMap{
+					"variable": Variable("variable"),
+				}),
+			},
+			ast.Permit().When(ast.NewNode(PartialError(errors.New("type error: condition expected bool")))),
+			true,
+			ast.True().And(ast.NewNode(PartialError(errors.New("type error: condition expected bool")))),
+		},
+		{"errorConditionShortCircuitKept",
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test")).When(ast.Context().Access("variable")),
+			Env{
+				Context: types.NewRecord(types.RecordMap{
+					"variable": Variable("variable"),
+				}),
+			},
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(PartialError(errors.New("type error: condition expected bool")))),
+			true,
+			ast.True().And(ast.Context().Access("variable").And(ast.NewNode(PartialError(errors.New("type error: condition expected bool"))))),
+		},
+		{"errorConditionShortCircuitKeptDeeper",
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.String("test")).When(ast.Context().Access("variable")),
+			Env{
+				Context: types.NewRecord(types.RecordMap{
+					"variable": Variable("variable"),
+				}),
+			},
+			ast.Permit().When(ast.Context().Access("variable")).When(ast.NewNode(PartialError(errors.New("type error: condition expected bool")))),
+			true,
+			ast.True().And(ast.Context().Access("variable").And(ast.NewNode(PartialError(errors.New("type error: condition expected bool"))))),
+		},
+		{"keepDeepVariables",
+			ast.Permit().When(ast.True().Equal(ast.False().Equal(ast.Context()))),
+			Env{
+				Context: Variable("context"),
+			},
+			ast.Permit().When(ast.True().Equal(ast.False().Equal(ast.Context()))),
+			true,
+			ast.True().And(ast.True().Equal(ast.False().Equal(ast.Context()))),
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out, keep := PartialPolicy(tt.env, tt.in)
+			if keep {
+				testutil.Equals(t, out, tt.out)
+				testutil.Equals(t, keep, tt.keep)
+				out2 := PolicyToNode(out)
+				testutil.Equals(t, out2, tt.out2)
+			}
+		})
+	}
+
+}
+
+func TestToVariable(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   types.Value
+		key  types.String
+		out  bool
+	}{
+		{"happy", eval.Variable("test").(types.EntityUID), "test", true},
+		{"sad", types.NewEntityUID("X", "1"), "", false},
+		{"notEntityUID", types.True, "", false},
+		{"nil", nil, "", false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			key, out := ToVariable(tt.in)
+			testutil.Equals(t, key, tt.key)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
+
+func TestToPartialError(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   ast.IsNode
+		out  error
+		ok   bool
+	}{
+		{"ok", PartialError(errors.New("err")), errors.New("err"), true},
+		{"otherExternalCall", ast.NodeTypeExtensionCall{Name: "X", Args: []ast.IsNode{ast.NodeValue{Value: types.String("err")}}}, nil, false},
+		{"otherNode", ast.NodeValue{Value: types.String("err")}, nil, false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out, ok := ToPartialError(tt.in)
+			testutil.Equals(t, out, tt.out)
+			testutil.Equals(t, ok, tt.ok)
+		})
+	}
+}
+
+func TestTypeName(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   types.Value
+		out  string
+	}{
+
+		{"boolean", types.Boolean(true), "bool"},
+		{"datetime", types.NewDatetime(time.UnixMilli(42)), "datetime"},
+		{"decimal", testutil.Must(types.NewDecimalFromInt(42)), "decimal"},
+		{"entityUID", types.NewEntityUID("T", "42"), "(entity of type `T`)"},
+		{"ip", types.IPAddr{}, "IP"},
+		{"long", types.Long(42), "long"},
+		{"record", types.Record{}, "record"},
+		{"set", types.Set{}, "set"},
+		{"string", types.String("test"), "string"},
+		{"nil", nil, "unknown type"},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := TypeName(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
 }
