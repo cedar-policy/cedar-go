@@ -1581,6 +1581,7 @@ func TestToPartialError(t *testing.T) {
 		{"otherexternalcall", ast.NodeTypeExtensionCall{Name: "x", Args: []ast.IsNode{ast.NodeValue{Value: types.String("err")}}}, nil, false},
 		{"multipleargs", ast.NodeTypeExtensionCall{Name: partialErrorName, Args: []ast.IsNode{ast.NodeValue{Value: types.String("err")}, ast.NodeValue{Value: types.String("err2")}}}, nil, false},
 		{"notStringVal", ast.NodeTypeExtensionCall{Name: partialErrorName, Args: []ast.IsNode{ast.NodeValue{Value: types.Long(42)}}}, nil, false},
+		{"evalArgError", ast.NodeTypeExtensionCall{Name: partialErrorName, Args: []ast.IsNode{ast.Long(42).Add(ast.False()).AsIsNode()}}, nil, false},
 		{"othernode", ast.NodeValue{Value: types.String("err")}, nil, false},
 	}
 	for _, tt := range tests {

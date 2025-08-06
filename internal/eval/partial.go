@@ -526,7 +526,10 @@ func ToPartialError(n ast.IsNode) (error, bool) {
 		return nil, false
 	}
 	evaler := ToEval(ec.Args[0])
-	v, _ := evaler.Eval(Env{})
+	v, err := evaler.Eval(Env{})
+	if err != nil {
+		return nil, false
+	}
 	strVal, err := ValueToString(v)
 	if err != nil {
 		return nil, false
