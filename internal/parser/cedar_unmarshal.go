@@ -2,8 +2,10 @@ package parser
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
@@ -31,6 +33,42 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
 
 	*p = policySet
 	return nil
+}
+
+type Decoder struct {
+	r io.Reader
+
+	once sync.Once
+
+	parser *parser
+}
+
+func NewDecoder(r io.Reader) *Decoder {
+	return &Decoder{r: r}
+}
+
+func (d *Decoder) Decode(p *Policy) error {
+	var err error
+
+	d.once.Do(func() {
+		tokens, e := TokenizeReader(d.r)
+		if e != nil {
+			err = e
+			return
+		}
+
+		parser := newParser(tokens)
+		d.parser = &parser
+	})
+	if err != nil {
+		return err
+	}
+
+	if d.parser.peek().isEOF() {
+		return io.EOF
+	}
+
+	return p.fromCedar(d.parser)
 }
 
 func (p *Policy) UnmarshalCedar(b []byte) error {

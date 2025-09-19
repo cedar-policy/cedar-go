@@ -2,6 +2,7 @@ package parser_test
 
 import (
 	"bytes"
+	"io"
 	"strings"
 	"testing"
 
@@ -527,6 +528,49 @@ func TestParsePolicySetErrors(t *testing.T) {
 			testutil.Equals(t, err.Error(), tt.ExpectedError)
 		})
 	}
+}
+
+func TestDecoder(t *testing.T) {
+	policyStr := `permit (
+		principal,
+		action,
+		resource
+	);
+	forbid (
+		principal,
+		action,
+		resource
+	);
+
+`
+
+	decoder := parser.NewDecoder(strings.NewReader(policyStr))
+
+	var actualPolicy0 parser.Policy
+	testutil.OK(t, decoder.Decode(&actualPolicy0))
+
+	expectedPolicy0 := ast.Permit()
+	expectedPolicy0.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
+	testutil.Equals(t, &actualPolicy0, (*parser.Policy)(expectedPolicy0))
+
+	var actualPolicy1 parser.Policy
+	testutil.OK(t, decoder.Decode(&actualPolicy1))
+
+	expectedPolicy1 := ast.Forbid()
+	expectedPolicy1.Position = ast.Position{Offset: 48, Line: 6, Column: 2}
+	testutil.Equals(t, &actualPolicy1, (*parser.Policy)(expectedPolicy1))
+
+	testutil.ErrorIs(t, decoder.Decode(nil), io.EOF)
+}
+
+func TestDecoderError(t *testing.T) {
+	policyStr := `permit("everything");
+
+`
+
+	decoder := parser.NewDecoder(strings.NewReader(policyStr))
+
+	testutil.Error(t, decoder.Decode(nil))
 }
 
 func TestParsePolicySet(t *testing.T) {
