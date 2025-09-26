@@ -111,3 +111,25 @@ func TestDecoder(t *testing.T) {
 
 	testutil.ErrorIs(t, decoder.Decode(nil), io.EOF)
 }
+
+func TestEncoderDecoder(t *testing.T) {
+	policy0 := newPolicy()
+	policy1 := newPolicy()
+
+	var buf bytes.Buffer
+
+	encoder := cedar.NewEncoder(&buf)
+	decoder := cedar.NewDecoder(&buf)
+
+	err := encoder.Encode(policy0)
+	testutil.OK(t, err)
+
+	err = encoder.Encode(policy1)
+	testutil.OK(t, err)
+
+	var decodedPolicy0 cedar.Policy
+	testutil.OK(t, decoder.Decode(&decodedPolicy0))
+
+	var decodedPolicy1 cedar.Policy
+	testutil.OK(t, decoder.Decode(&decodedPolicy1))
+}
