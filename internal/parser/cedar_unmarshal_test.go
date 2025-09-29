@@ -579,6 +579,7 @@ func TestDecoderErrors(t *testing.T) {
 			decoder := parser.NewDecoder(strings.NewReader(tt))
 
 			testutil.Error(t, decoder.Decode(nil))
+			testutil.Error(t, decoder.Decode(nil))
 		})
 	}
 }

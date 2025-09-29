@@ -36,39 +36,35 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
 }
 
 type Decoder struct {
-	r io.Reader
-
-	once sync.Once
-
-	parser *parser
+	createParser func() (*parser, error)
 }
 
 func NewDecoder(r io.Reader) *Decoder {
-	return &Decoder{r: r}
+	return &Decoder{
+		createParser: sync.OnceValues(func() (*parser, error) {
+			tokens, err := TokenizeReader(r)
+			if err != nil {
+				return nil, err
+			}
+
+			p := newParser(tokens)
+
+			return &p, nil
+		}),
+	}
 }
 
 func (d *Decoder) Decode(p *Policy) error {
-	var err error
-
-	d.once.Do(func() {
-		tokens, e := TokenizeReader(d.r)
-		if e != nil {
-			err = e
-			return
-		}
-
-		parser := newParser(tokens)
-		d.parser = &parser
-	})
+	parser, err := d.createParser()
 	if err != nil {
 		return err
 	}
 
-	if d.parser.peek().isEOF() {
+	if parser.peek().isEOF() {
 		return io.EOF
 	}
 
-	return p.fromCedar(d.parser)
+	return p.fromCedar(parser)
 }
 
 func (p *Policy) UnmarshalCedar(b []byte) error {
