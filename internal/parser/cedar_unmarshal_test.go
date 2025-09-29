@@ -2,6 +2,7 @@ package parser_test
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -563,14 +564,23 @@ func TestDecoder(t *testing.T) {
 	testutil.ErrorIs(t, decoder.Decode(nil), io.EOF)
 }
 
-func TestDecoderError(t *testing.T) {
-	policyStr := `permit("everything");
+func TestDecoderErrors(t *testing.T) {
+	t.Parallel()
+	tests := []string{
+		`permit("everything");
 
-`
+`,
+		"okay\x00not okay",
+	}
 
-	decoder := parser.NewDecoder(strings.NewReader(policyStr))
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
+			t.Parallel()
+			decoder := parser.NewDecoder(strings.NewReader(tt))
 
-	testutil.Error(t, decoder.Decode(nil))
+			testutil.Error(t, decoder.Decode(nil))
+		})
+	}
 }
 
 func TestParsePolicySet(t *testing.T) {
