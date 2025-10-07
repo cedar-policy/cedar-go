@@ -11,6 +11,14 @@ type Request struct {
 	Context   Record    `json:"context"`
 }
 
+// Equal comapres two requests for sameness
+func (r Request) Equal(other Request) bool {
+	return (r.Principal == other.Principal &&
+		r.Action == other.Action &&
+		r.Resource == other.Resource &&
+		r.Context.Equal(other.Context))
+}
+
 // A Decision is the result of the authorization.
 type Decision bool
 
