@@ -5,7 +5,6 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
@@ -36,35 +35,40 @@ func (p *PolicySlice) UnmarshalCedar(b []byte) error {
 }
 
 type Decoder struct {
-	createParser func() (*parser, error)
+	r      io.Reader
+	parser *parser
+	err    error
 }
 
 func NewDecoder(r io.Reader) *Decoder {
 	return &Decoder{
-		createParser: sync.OnceValues(func() (*parser, error) {
-			tokens, err := TokenizeReader(r)
-			if err != nil {
-				return nil, err
-			}
-
-			p := newParser(tokens)
-
-			return &p, nil
-		}),
+		r: r,
 	}
 }
 
-func (d *Decoder) Decode(p *Policy) error {
-	parser, err := d.createParser()
-	if err != nil {
-		return err
+func (d *Decoder) decode(p *Policy) error {
+	if d.parser == nil {
+		tokens, err := TokenizeReader(d.r)
+		if err != nil {
+			return err
+		}
+		parser := newParser(tokens)
+		d.parser = &parser
 	}
 
-	if parser.peek().isEOF() {
+	if d.parser.peek().isEOF() {
 		return io.EOF
 	}
 
-	return p.fromCedar(parser)
+	return p.fromCedar(d.parser)
+}
+
+func (d *Decoder) Decode(p *Policy) error {
+	if d.err != nil {
+		return d.err
+	}
+	d.err = d.decode(p)
+	return d.err
 }
 
 func (p *Policy) UnmarshalCedar(b []byte) error {
