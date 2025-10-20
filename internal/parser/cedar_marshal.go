@@ -3,6 +3,7 @@ package parser
 import (
 	"bytes"
 	"fmt"
+	"io"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
@@ -24,6 +25,28 @@ func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
 	}
 
 	buf.WriteRune(';')
+}
+
+type Encoder struct {
+	w io.Writer
+}
+
+func NewEncoder(w io.Writer) *Encoder {
+	return &Encoder{w: w}
+}
+
+func (e *Encoder) Encode(p *Policy) error {
+	var buf bytes.Buffer
+	p.MarshalCedar(&buf)
+
+	buf.WriteByte('\n')
+
+	_, err := e.w.Write(buf.Bytes())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // scopeToNode is copied in from eval, with the expectation that

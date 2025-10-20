@@ -74,9 +74,13 @@ func (t Token) intValue() (int64, error) {
 }
 
 func Tokenize(src []byte) ([]Token, error) {
+	return TokenizeReader(bytes.NewBuffer(src))
+}
+
+func TokenizeReader(r io.Reader) ([]Token, error) {
 	var res []Token
 	var s scanner
-	s.Init(bytes.NewBuffer(src))
+	s.Init(r)
 	for tok := s.nextToken(); s.err == nil && tok.Type != TokenEOF; tok = s.nextToken() {
 		res = append(res, tok)
 	}

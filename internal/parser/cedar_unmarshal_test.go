@@ -2,6 +2,8 @@ package parser_test
 
 import (
 	"bytes"
+	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -525,6 +527,59 @@ func TestParsePolicySetErrors(t *testing.T) {
 			err := policy.UnmarshalCedar([]byte(tt.Text))
 			testutil.Error(t, err)
 			testutil.Equals(t, err.Error(), tt.ExpectedError)
+		})
+	}
+}
+
+func TestDecoder(t *testing.T) {
+	policyStr := `permit (
+		principal,
+		action,
+		resource
+	);
+	forbid (
+		principal,
+		action,
+		resource
+	);
+
+`
+
+	decoder := parser.NewDecoder(strings.NewReader(policyStr))
+
+	var actualPolicy0 parser.Policy
+	testutil.OK(t, decoder.Decode(&actualPolicy0))
+
+	expectedPolicy0 := ast.Permit()
+	expectedPolicy0.Position = ast.Position{Offset: 0, Line: 1, Column: 1}
+	testutil.Equals(t, &actualPolicy0, (*parser.Policy)(expectedPolicy0))
+
+	var actualPolicy1 parser.Policy
+	testutil.OK(t, decoder.Decode(&actualPolicy1))
+
+	expectedPolicy1 := ast.Forbid()
+	expectedPolicy1.Position = ast.Position{Offset: 48, Line: 6, Column: 2}
+	testutil.Equals(t, &actualPolicy1, (*parser.Policy)(expectedPolicy1))
+
+	testutil.ErrorIs(t, decoder.Decode(nil), io.EOF)
+}
+
+func TestDecoderErrors(t *testing.T) {
+	t.Parallel()
+	tests := []string{
+		`permit("everything");
+
+`,
+		"okay\x00not okay",
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%02d", i), func(t *testing.T) {
+			t.Parallel()
+			decoder := parser.NewDecoder(strings.NewReader(tt))
+
+			testutil.Error(t, decoder.Decode(nil))
+			testutil.Error(t, decoder.Decode(nil))
 		})
 	}
 }
