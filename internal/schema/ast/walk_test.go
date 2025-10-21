@@ -178,8 +178,11 @@ func (vis *visitor) walk(n ast.Node, open, exit func(ast.Node) bool) {
 		for _, r := range v.Resource {
 			vis.walk(r, open, exit)
 		}
-		if v.Context != nil {
-			vis.walk(v.Context, open, exit)
+		if v.ContextRecord != nil {
+			vis.walk(v.ContextRecord, open, exit)
+		}
+		if v.ContextPath != nil {
+			vis.walk(v.ContextPath, open, exit)
 		}
 	case *ast.RecordType:
 		for _, attr := range v.Attributes {
