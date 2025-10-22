@@ -77,6 +77,15 @@ namespace PhotoFlash { // inline namespace comment
       appliesTo: String, // keywords are valid identifiers
     },
   };
+  type commonContext = {
+    "authenticated": Bool,
+    appliesTo: String, // keywords are valid identifiers
+  };
+  action "commonContext" appliesTo {
+    principal: User,
+    resource: Account,
+    context: commonContext,
+  };
   // Remainder comment block
   // should also be kept around
 } // Footer comment on namespace

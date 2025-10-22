@@ -67,13 +67,14 @@ namespace PhotoFlash { // inline namespace comment
       "authenticated": Bool, // attribute comment inline
     }, // context comment
   };
+  type authenticatedContext = {
+    "authenticated": Bool,
+    appliesTo: String, // keywords are valid identifiers
+  };
   action "listAlbums" in "read" appliesTo {
     principal: User,
     resource: Account,
-    context: {
-      "authenticated": Bool,
-      appliesTo: String, // keywords are valid identifiers
-    },
+    context: authenticatedContext,
   };
   // Remainder comment block
   // should also be kept around

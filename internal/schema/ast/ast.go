@@ -22,7 +22,7 @@ import (
 // AttrDecls := Name ['?'] ':' Type [',' | ',' AttrDecls]
 // AppliesTo := 'appliesTo' '{' AppDecls '}'
 // AppDecls  := ('principal' | 'resource') ':' EntOrTyps [',' | ',' AppDecls]
-//            | 'context' ':' RecType [',' | ',' AppDecls]
+//            | 'context' ':' (Path | RecType) [',' | ',' AppDecls]
 // Path      := IDENT {'::' IDENT}
 // Ref       := Path '::' STR | Name
 // RefOrRefs := Ref | '[' [RefOrRefs] ']'
@@ -339,9 +339,10 @@ type AppliesTo struct {
 	AppliesToTok token.Position
 	CloseBrace   token.Position
 
-	Principal []*Path // one of required
-	Resource  []*Path
-	Context   *RecordType // nil if none
+	Principal     []*Path // one of required
+	Resource      []*Path
+	ContextPath   *Path       // nil if none
+	ContextRecord *RecordType // nil if none
 
 	Inline            *Comment // after {
 	PrincipalComments NodeComments

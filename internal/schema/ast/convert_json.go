@@ -187,8 +187,11 @@ func convertJSONAppliesTo(appliesTo *JSONAppliesTo) *AppliesTo {
 
 	// Convert context
 	if appliesTo.Context != nil {
-		if context, ok := convertJSONType(appliesTo.Context).(*RecordType); ok {
-			at.Context = context
+		switch t := convertJSONType(appliesTo.Context).(type) {
+		case *RecordType:
+			at.ContextRecord = t
+		case *Path:
+			at.ContextPath = t
 		}
 	}
 

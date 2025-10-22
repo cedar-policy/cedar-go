@@ -20,6 +20,15 @@
           "annotation1": "type",
           "annotation2": "type"
         }
+      },
+      "authenticatedContext": {
+        "type": "Record",
+        "attributes": {
+          "authenticated": {
+            "type": "Boolean",
+            "required": true
+          }
+        }
       }
     },
     "entityTypes": {
@@ -162,13 +171,8 @@
             "User"
           ],
           "context": {
-            "type": "Record",
-            "attributes": {
-              "authenticated": {
-                "required": true,
-                "type": "Boolean"
-              }
-            }
+            "type": "EntityOrCommon",
+            "name": "authenticatedContext"
           }
         }
       },
@@ -219,13 +223,8 @@
             "User"
           ],
           "context": {
-            "type": "Record",
-            "attributes": {
-              "authenticated": {
-                "required": true,
-                "type": "Boolean"
-              }
-            }
+            "type": "EntityOrCommon",
+            "name": "authenticatedContext"
           }
         },
         "memberOf": [

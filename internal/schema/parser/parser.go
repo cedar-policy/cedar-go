@@ -346,9 +346,14 @@ loop:
 		case token.CONTEXT:
 			p.eat()
 			p.eatOnly(token.COLON, "expected :")
-			appliesTo.Context = p.parseRecType()
+			if p.peek().Type == token.LEFTBRACE {
+				appliesTo.ContextRecord = p.parseRecType()
+				node = appliesTo.ContextRecord
+			} else {
+				appliesTo.ContextPath = p.parsePath()
+				node = appliesTo.ContextPath
+			}
 			nodeComments = &appliesTo.ContextComments
-			node = appliesTo.Context
 		case token.COMMENT:
 			comments = append(comments, p.parseComment())
 			continue

@@ -40,18 +40,17 @@ namespace PhotoFlash {
       },
     }
   };
+  type authenticatedContext = {
+    "authenticated": Bool,
+  };
   action "viewPhoto" in [groupAction1, groupAction2, random::nested::name::"actionGroup"] appliesTo {
     principal: User,
     resource: Photo,
-    context: {
-      "authenticated": Bool,
-    }
+    context: authenticatedContext,
   };
   action "listAlbums" appliesTo {
     principal: User,
     resource: Account,
-    context: {
-      "authenticated": Bool,
-    }
+    context: authenticatedContext,
   };
 }

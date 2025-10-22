@@ -66,8 +66,10 @@ func convertNamespace(n *Namespace) *JSONNamespace {
 					for _, res := range astDecl.AppliesTo.Resource {
 						jsAction.AppliesTo.ResourceTypes = append(jsAction.AppliesTo.ResourceTypes, res.String())
 					}
-					if astDecl.AppliesTo.Context != nil {
-						jsAction.AppliesTo.Context = convertType(astDecl.AppliesTo.Context)
+					if astDecl.AppliesTo.ContextRecord != nil {
+						jsAction.AppliesTo.Context = convertType(astDecl.AppliesTo.ContextRecord)
+					} else if astDecl.AppliesTo.ContextPath != nil {
+						jsAction.AppliesTo.Context = convertType(astDecl.AppliesTo.ContextPath)
 					}
 				}
 				jsNamespace.Actions[astActionName.String()] = jsAction

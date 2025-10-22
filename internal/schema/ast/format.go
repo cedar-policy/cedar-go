@@ -302,10 +302,14 @@ func (p *formatter) printAppliesTo(n *AppliesTo) {
 		}
 		p.write("\n")
 	}
-	if n.Context != nil {
+	if n.ContextRecord != nil || n.ContextPath != nil {
 		p.print(n.ContextComments.Before)
 		p.printInd("context: ")
-		p.print(n.Context)
+		if n.ContextRecord != nil {
+			p.print(n.ContextRecord)
+		} else {
+			p.print(n.ContextPath)
+		}
 		p.write(",")
 		if n.ContextComments.Inline != nil {
 			p.print(n.ContextComments.Inline)
