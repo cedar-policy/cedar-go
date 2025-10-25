@@ -43,7 +43,17 @@ import (
 // The human readable format is not 1-1 convertible with JSON. The JSON format
 // is lossy. It loses formatting, such as comments, ordering of fields, etc...
 //
-//symtype:decl
+// DO NOT ENABLE sumtype:decl YET.
+//
+// Enabling this causes the following error to be reported:
+//
+// internal/schema/ast/format.go:69:2: exhaustiveness check failed for sum type "Node" (from internal/schema/ast/ast.go:47:6): missing cases for unknownNode, unknownType (gochecksumtype)
+//
+//	switch n := n.(type) {
+//	^
+//
+// 1 issues:
+// * gochecksumtype: 1
 type Node interface {
 	isNode()
 	// Pos returns first token of the node
@@ -382,7 +392,7 @@ func (r *Ref) End() token.Position {
 
 // Name is an IDENT or STR
 //
-// sumtype:decl
+//sumtype:decl
 type Name interface {
 	Node
 	isName()
