@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func TestJSONDecision(t *testing.T) {
@@ -43,44 +44,45 @@ func TestJSONDecision(t *testing.T) {
 func TestRequestEqual(t *testing.T) {
 	t.Parallel()
 
-	testcases := []Request{
-		{},
-		{
-			Principal: EntityUID{
-				Type: "a",
-				ID:   "b",
-			},
-		},
-		{
-			Action: EntityUID{
-				Type: "a",
-				ID:   "b",
-			},
-		},
-		{
-			Resource: EntityUID{
-				Type: "a",
-				ID:   "b",
-			},
-		},
-		{
-			Context: NewRecord(RecordMap{
-				"a": Long(42),
-			}),
+	emptyRequest := Request{}
+	principalRequest := Request{
+		Principal: EntityUID{
+			Type: "a",
+			ID:   "b",
 		},
 	}
 
-	for i, r := range testcases {
-		for j, s := range testcases[:i] {
-			expected := i == j
-			actual := r.Equal(s)
-			if actual != s.Equal(r) {
-				t.Errorf("Request.Equal not symmetric for examples #%d and #%d, actual=%v, expected=%v", i, j, actual, expected)
-			}
-			if actual != expected {
-				t.Errorf("Request.Equal returned unexpected result for #%d and #%d, actual=%v, expected=%v", i, j, actual, expected)
-			}
-		}
+	contextRequest := Request{
+		Context: NewRecord(RecordMap{
+			"a": Long(42),
+		}),
+	}
+
+	testcases := []struct {
+		lhs      Request
+		rhs      Request
+		expected bool
+	}{
+		{
+			emptyRequest,
+			emptyRequest,
+			true,
+		},
+		{
+			principalRequest,
+			contextRequest,
+			false,
+		},
+		{
+			contextRequest,
+			contextRequest,
+			true,
+		},
+	}
+
+	for _, tt := range testcases {
+		testutil.Equals(t, tt.lhs.Equal(tt.rhs), tt.expected)
+		testutil.Equals(t, tt.rhs.Equal(tt.lhs), tt.expected)
 	}
 }
 
