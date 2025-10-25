@@ -45,6 +45,7 @@ func TestRequestEqual(t *testing.T) {
 	t.Parallel()
 
 	emptyRequest := Request{}
+
 	principalRequest := Request{
 		Principal: EntityUID{
 			Type: "a",
