@@ -104,6 +104,10 @@ func convertNamespace(n *Namespace) *JSONNamespace {
 				commonType.Annotations[a.Key.String()] = a.Value.String()
 			}
 			jsNamespace.CommonTypes[astDecl.Name.String()] = commonType
+		case *CommentBlock:
+			// comment blocks intentionally dropped.
+		case *Namespace:
+			// namespaces intentionally not handled.
 		}
 	}
 	return jsNamespace
