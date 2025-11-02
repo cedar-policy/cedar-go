@@ -112,6 +112,7 @@ func (p *Policy) fromCedar(parser *parser) error {
 	if err = parser.resource(newPolicy); err != nil {
 		return err
 	}
+	parser.skipAtMostOnce(",")
 	if err = parser.exact(")"); err != nil {
 		return err
 	}
@@ -153,6 +154,13 @@ func (p *parser) exact(tok string) error {
 		return p.errorf("exact got %v want %v", t.Text, tok)
 	}
 	return nil
+}
+
+func (p *parser) skipAtMostOnce(tok string) {
+	t := p.peek()
+	if t.Text == tok {
+		p.advance()
+	}
 }
 
 func (p *parser) errorf(s string, args ...interface{}) error {
