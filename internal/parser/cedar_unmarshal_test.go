@@ -491,6 +491,31 @@ when { (if true then 2 else 3) * 4 == 8 };`,
 	}
 }
 
+func TestParseTrailingCommas(t *testing.T) {
+	t.Parallel()
+	parseTests := []struct {
+		Name           string
+		Text           string
+		ExpectedPolicy *ast.Policy
+	}{
+		{
+			"after resource",
+			"permit (principal, action, resource,);",
+			ast.Permit(),
+		},
+	}
+
+	for _, tt := range parseTests {
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
+			var policy parser.Policy
+			testutil.OK(t, policy.UnmarshalCedar([]byte(tt.Text)))
+			tt.ExpectedPolicy.Position = ast.Position{Line: 1, Column: 1}
+			testutil.Equals(t, &policy, (*parser.Policy)(tt.ExpectedPolicy))
+		})
+	}
+}
+
 func TestParsePolicySetErrors(t *testing.T) {
 	t.Parallel()
 	parseTests := []struct {
@@ -590,7 +615,7 @@ func TestParsePolicySet(t *testing.T) {
 		policyStr := []byte(`permit (
 			principal,
 			action,
-			resource,
+			resource
 		);`)
 
 		var policies parser.PolicySlice
