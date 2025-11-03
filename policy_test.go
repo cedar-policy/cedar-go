@@ -71,7 +71,7 @@ func TestPolicyCedar(t *testing.T) {
 	t.Parallel()
 
 	// Taken from https://docs.cedarpolicy.com/policies/syntax-policy.html
-	policyStr := `permit (
+	const policyStr = `permit (
     principal,
     action == Action::"editPhoto",
     resource
@@ -80,6 +80,29 @@ when { resource.owner == principal };`
 
 	var policy cedar.Policy
 	testutil.OK(t, policy.UnmarshalCedar([]byte(policyStr)))
+
+	testutil.Equals(t, string(policy.MarshalCedar()), policyStr)
+}
+
+func TestPolicyCedar_TrailingComma(t *testing.T) {
+	t.Parallel()
+
+	const policyStr = `permit (
+    principal,
+    action == Action::"editPhoto",
+    resource
+)
+when { resource.owner == principal };`
+
+	const policyStrTrailingComma = `permit (
+    principal,
+    action == Action::"editPhoto",
+    resource,
+)
+when { resource.owner == principal };`
+
+	var policy cedar.Policy
+	testutil.OK(t, policy.UnmarshalCedar([]byte(policyStrTrailingComma)))
 
 	testutil.Equals(t, string(policy.MarshalCedar()), policyStr)
 }
