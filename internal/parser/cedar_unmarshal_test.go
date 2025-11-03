@@ -590,7 +590,7 @@ func TestParsePolicySet(t *testing.T) {
 		policyStr := []byte(`permit (
 			principal,
 			action,
-			resource
+			resource,
 		);`)
 
 		var policies parser.PolicySlice
