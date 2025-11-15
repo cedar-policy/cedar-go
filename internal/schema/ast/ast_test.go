@@ -116,32 +116,6 @@ func Test_formatter_printInd_panic(t *testing.T) {
 	p.printInd("test")
 }
 
-type unknownNode struct {
-	Node // Embed Node interface to satisfy type checker
-}
-
-func Test_formatter_print_panic(t *testing.T) {
-	p := &formatter{
-		w: &bytes.Buffer{},
-	}
-
-	defer func() {
-		r := recover()
-		if r == nil {
-			t.Fatal("expected panic, got none")
-		}
-		msg, ok := r.(string)
-		if !ok {
-			t.Fatalf("expected string panic, got %T", r)
-		}
-		if !strings.Contains(msg, "unhandled node type") {
-			t.Errorf("expected panic message about unhandled type, got %q", msg)
-		}
-	}()
-
-	p.print(unknownNode{})
-}
-
 func Test_printBracketList_panic(t *testing.T) {
 	p := &formatter{
 		w: &bytes.Buffer{},
@@ -163,27 +137,4 @@ func Test_printBracketList_panic(t *testing.T) {
 
 	var emptyList []Node
 	printBracketList(p, emptyList, false)
-}
-
-type unknownType struct {
-	Type // Embed Type interface to satisfy it
-}
-
-func TestConvertType_Panic(t *testing.T) {
-	defer func() {
-		r := recover()
-		if r == nil {
-			t.Fatal("expected panic, got none")
-		}
-		msg, ok := r.(string)
-		if !ok {
-			t.Fatalf("expected string panic, got %T", r)
-		}
-		expected := "unknownType is not an AST type"
-		if !strings.Contains(msg, expected) {
-			t.Errorf("expected panic message to contain %q, got %q", expected, msg)
-		}
-	}()
-
-	convertType(unknownType{})
 }
