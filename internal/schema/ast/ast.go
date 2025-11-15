@@ -168,7 +168,7 @@ func (t *CommonTypeDecl) End() token.Position {
 // 2. A set type (Set<String>)
 // 3. A path (Namespace::EntityType or String)
 //
-// sumtype:decl
+//sumtype:decl
 type Type interface {
 	Node
 	isType()
