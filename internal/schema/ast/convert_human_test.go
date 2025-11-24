@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/fs"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -28,7 +29,10 @@ func TestConvertHumanToJson(t *testing.T) {
 		t.Fatalf("Error parsing example schema: %v", err)
 	}
 
-	jsonSchema := ast.ConvertHuman2JSON(schema)
+	jsonSchema, err := ast.ConvertHuman2JSON(schema)
+	if err != nil {
+		t.Fatalf("Error in schema: %v", err)
+	}
 	var got bytes.Buffer
 	enc := json.NewEncoder(&got)
 	enc.SetIndent("", "    ")
@@ -46,4 +50,26 @@ func TestConvertHumanToJson(t *testing.T) {
 	testutil.OK(t, json.Unmarshal(got.Bytes(), &gotJ))
 	diff := cmp.Diff(gotJ, wantJ)
 	testutil.FatalIf(t, diff != "", "mismatch -want +got:\n%v", diff)
+}
+
+func TestConvertHumanToJson_NestedNamespace(t *testing.T) {
+	namespace := &ast.Schema{
+		Decls: []ast.Declaration{
+			&ast.Namespace{
+				Name: &ast.Path{Parts: []*ast.Ident{{Value: "hi"}}},
+				Decls: []ast.Declaration{
+					&ast.Namespace{
+						Name: &ast.Path{Parts: []*ast.Ident{{Value: "hi"}}},
+					},
+				},
+			},
+		},
+	}
+	_, err := ast.ConvertHuman2JSON(namespace)
+	if err == nil {
+		t.Error("error should not be nil")
+	}
+	if !strings.Contains(err.Error(), "namespace") {
+		t.Errorf("bad error %v", err)
+	}
 }
