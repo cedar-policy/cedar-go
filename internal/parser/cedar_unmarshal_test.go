@@ -518,6 +518,11 @@ func TestParseTrailingCommas(t *testing.T) {
 			`permit (principal, action, resource) when {User::"alice" in [User::"bob",] };`,
 			ast.Permit().When(ast.EntityUID(types.Ident("User"), types.String("alice")).In(ast.Set(ast.EntityUID(types.Ident("User"), types.String("bob"))))),
 		},
+		{
+			"extension call with trailing comma",
+			`permit (principal, action, resource) when { ip("1.2.3.4",) };`,
+			ast.Permit().When(ast.ExtensionCall("ip", ast.String("1.2.3.4"))),
+		},
 	}
 
 	for _, tt := range parseTests {
