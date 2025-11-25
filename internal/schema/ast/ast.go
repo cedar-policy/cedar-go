@@ -377,6 +377,8 @@ func (r *Ref) End() token.Position {
 }
 
 // Name is an IDENT or STR
+//
+//sumtype:decl
 type Name interface {
 	Node
 	isName()
