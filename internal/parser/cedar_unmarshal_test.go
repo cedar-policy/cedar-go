@@ -811,16 +811,19 @@ func TestReservedNamesInEntityPath(t *testing.T) {
 	}
 }
 
-func TestChainedHas(t *testing.T) {
+func TestExtendedHas(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name           string
-		in             string
-		ExpectedPolicy *ast.Policy
+		name                  string
+		in                    string
+		ExpectedPolicy        *ast.Policy
+		ExpectedMashlledCedar string
 	}{
 		{"principal has chained attributes", `permit ( principal, action, resource )
 when { principal has a.b.c};`,
 			ast.Permit().When(ast.Principal().Has("a").And(ast.Principal().Access("a").Has("b")).And(ast.Principal().Access("a").Access("b").Has("c"))),
+			`permit ( principal, action, resource )
+when { principal has a && principal.a has b && principal.a.b has c };`,
 		},
 	}
 	for _, tt := range tests {
@@ -828,9 +831,12 @@ when { principal has a.b.c};`,
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var out parser.Policy
-			out.UnmarshalCedar([]byte(tt.in))
+			testutil.OK(t, out.UnmarshalCedar([]byte(tt.in)))
 			out.Position = ast.Position{}
 			testutil.Equals(t, &out, (*parser.Policy)(tt.ExpectedPolicy))
+			var buf bytes.Buffer
+			out.MarshalCedar(&buf)
+			testutil.Equals(t, buf.String(), tt.ExpectedMashlledCedar)
 		})
 	}
 }

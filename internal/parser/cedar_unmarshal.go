@@ -592,7 +592,7 @@ func (p *parser) has(lhs ast.Node) (ast.Node, error) {
 	if t.isIdent() {
 		firstAttr := types.String(t.Text)
 		result := lhs.Has(firstAttr)
-		currentLhs := lhs.Access(firstAttr)
+		currentLHS := lhs.Access(firstAttr)
 
 		// Parse chained attributes: .b.c etc.
 		for p.peek().Text == "." {
@@ -603,9 +603,9 @@ func (p *parser) has(lhs ast.Node) (ast.Node, error) {
 			}
 			attr := types.String(t.Text)
 
-			hasExpr := currentLhs.Has(attr)
+			hasExpr := currentLHS.Has(attr)
 			result = result.And(hasExpr)
-			currentLhs = currentLhs.Access(attr)
+			currentLHS = currentLHS.Access(attr)
 		}
 
 		return result, nil
