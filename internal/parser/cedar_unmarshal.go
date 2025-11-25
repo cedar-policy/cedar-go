@@ -373,16 +373,19 @@ func (p *parser) action(policy *ast.Policy) error {
 func (p *parser) entlist() ([]types.EntityUID, error) {
 	var res []types.EntityUID
 	for p.peek().Text != "]" {
-		if len(res) > 0 {
-			if err := p.exact(","); err != nil {
-				return nil, err
-			}
-		}
 		e, err := p.entity()
 		if err != nil {
 			return nil, err
 		}
 		res = append(res, e)
+		switch p.peek().Text {
+		case ",":
+			p.advance()
+		case "]":
+			// do nothing, exit switch
+		default:
+			return nil, p.errorf("got %v want ,", p.peek().Text)
+		}
 	}
 	return res, nil
 }
@@ -851,16 +854,19 @@ func (p *parser) entityOrExtFun(prefix string) (ast.Node, error) {
 func (p *parser) expressions(endOfListMarker string) ([]ast.Node, error) {
 	var res []ast.Node
 	for p.peek().Text != endOfListMarker {
-		if len(res) > 0 {
-			if err := p.exact(","); err != nil {
-				return res, err
-			}
-		}
 		e, err := p.expression()
 		if err != nil {
 			return res, err
 		}
 		res = append(res, e)
+		switch p.peek().Text {
+		case ",":
+			p.advance()
+		case endOfListMarker:
+			// do nothing, exit switch
+		default:
+			return nil, p.errorf("got %v want ,", p.peek().Text)
+		}
 	}
 	return res, nil
 }
@@ -875,11 +881,6 @@ func (p *parser) record() (ast.Node, error) {
 			p.advance()
 			return ast.Record(elements), nil
 		}
-		if len(elements) > 0 {
-			if err := p.exact(","); err != nil {
-				return res, err
-			}
-		}
 		k, v, err := p.recordEntry()
 		if err != nil {
 			return res, err
@@ -890,6 +891,14 @@ func (p *parser) record() (ast.Node, error) {
 		}
 		known.Add(k)
 		elements = append(elements, ast.Pair{Key: types.String(k), Value: v})
+		switch p.peek().Text {
+		case ",":
+			p.advance()
+		case "}":
+			// do nothing, exit switch
+		default:
+			return res, p.errorf("got %v want ,", p.peek().Text)
+		}
 	}
 }
 
