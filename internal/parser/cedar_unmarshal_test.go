@@ -683,6 +683,7 @@ func TestParseApproximateErrors(t *testing.T) {
 		{"unexpectedTokenInEntityOrExtFun", `permit (principal, action, resource) when { A::B 42 }`, "unexpected token"},
 		{"unexpectedZeroArgMethodArity", `permit (principal, action, resource) when { context.set.isEmpty("foo") }`, "isEmpty expects no arguments"},
 		{"unexpectedOneArgMethodArity", `permit (principal, action, resource) when { context.set.contains() }`, "contains expects one argument"},
+		{"chainedHas", `permit (principal, action, resource) when { principal has a.b. };`, "expected ident after dot"},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -806,6 +807,30 @@ func TestReservedNamesInEntityPath(t *testing.T) {
 			if err == nil {
 				testutil.Equals(t, &out, (*parser.Policy)(tt.out))
 			}
+		})
+	}
+}
+
+func TestChainedHas(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name           string
+		in             string
+		ExpectedPolicy *ast.Policy
+	}{
+		{"principal has chained attributes", `permit ( principal, action, resource )
+when { principal has a.b.c};`,
+			ast.Permit().When(ast.Principal().Has("a").And(ast.Principal().Access("a").Has("b")).And(ast.Principal().Access("a").Access("b").Has("c"))),
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var out parser.Policy
+			out.UnmarshalCedar([]byte(tt.in))
+			out.Position = ast.Position{}
+			testutil.Equals(t, &out, (*parser.Policy)(tt.ExpectedPolicy))
 		})
 	}
 }
