@@ -97,6 +97,7 @@ func (s *Schema) End() token.Position {
 	return token.Position{}
 }
 
+//sumtype:decl
 type Declaration interface {
 	Node
 	isDecl()

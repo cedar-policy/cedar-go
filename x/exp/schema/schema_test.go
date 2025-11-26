@@ -3,7 +3,10 @@ package schema
 import (
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
+
+	"github.com/cedar-policy/cedar-go/internal/schema/ast"
 )
 
 func TestSchemaCedarMarshalUnmarshal(t *testing.T) {
@@ -103,6 +106,29 @@ func TestSchemaJSONMarshalEmpty(t *testing.T) {
 	}
 	if len(out) != 0 {
 		t.Errorf("MarshalJSON() produced non-empty output for empty schema")
+	}
+}
+
+func TestSchemaJSONMarshalNestedNamespace(t *testing.T) {
+	var s Schema
+	s.humanSchema = &ast.Schema{
+		Decls: []ast.Declaration{
+			&ast.Namespace{
+				Name: &ast.Path{Parts: []*ast.Ident{{Value: "hi"}}},
+				Decls: []ast.Declaration{
+					&ast.Namespace{
+						Name: &ast.Path{Parts: []*ast.Ident{{Value: "hi"}}},
+					},
+				},
+			},
+		},
+	}
+	_, err := s.MarshalJSON()
+	if err == nil {
+		t.Error("error should not be nil")
+	}
+	if !strings.Contains(err.Error(), "namespace") {
+		t.Errorf("bad non-namespace-related error: %v", err)
 	}
 }
 
