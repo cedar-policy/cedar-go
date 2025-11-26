@@ -593,7 +593,25 @@ func (p *parser) relation() (ast.Node, error) {
 func (p *parser) has(lhs ast.Node) (ast.Node, error) {
 	t := p.advance()
 	if t.isIdent() {
-		return lhs.Has(types.String(t.Text)), nil
+		firstAttr := types.String(t.Text)
+		result := lhs.Has(firstAttr)
+		currentLHS := lhs.Access(firstAttr)
+
+		// Parse chained attributes: .b.c etc.
+		for p.peek().Text == "." {
+			p.advance() // consume "."
+			t := p.advance()
+			if !t.isIdent() {
+				return ast.Node{}, p.errorf("expected ident after dot")
+			}
+			attr := types.String(t.Text)
+
+			hasExpr := currentLHS.Has(attr)
+			result = result.And(hasExpr)
+			currentLHS = currentLHS.Access(attr)
+		}
+
+		return result, nil
 	} else if t.isString() {
 		str, err := t.stringValue()
 		if err != nil {
