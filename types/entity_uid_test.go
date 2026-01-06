@@ -27,17 +27,47 @@ func TestEntity(t *testing.T) {
 		testutil.Equals(t, types.EntityUID{Type: "namespace::type", ID: "id"}.String(), `namespace::type::"id"`)
 	})
 
-	t.Run("MarshalCedar round trip", func(t *testing.T) {
+	t.Run("Marshal EntityUID round trip", func(t *testing.T) {
 		t.Parallel()
-		gotBin := types.NewEntityUID("type", "id").MarshalCedar()
-		wantBin := []byte(`type::"id"`)
-		testutil.Equals(t, gotBin, wantBin)
+		testCases := []struct {
+			typ, id, bin string
+		}{
+			{"namespace::type", "id", `namespace::type::"id"`},
+			{"namespace::type", "", `namespace::type::""`},
+			{"X::Y", "abc::", `X::Y::"abc::"`},
+			{"Search::Algorithm", "A*", `Search::Algorithm::"A*"`},
+			{"Super", "*", `Super::"*"`},
+		}
+		marshalFuncs := []struct {
+			name string
+			fn   func(types.EntityUID) []byte
+		}{
+			{"MarshalBinary", func(uid types.EntityUID) []byte { return uid.MarshalBinary() }},
+			{"MarshalCedar", func(uid types.EntityUID) []byte { return uid.MarshalCedar() }},
+		}
 
-		want := types.NewEntityUID("type", "id")
-		got := types.EntityUID{}
-		err := got.UnmarshalCedar(gotBin)
-		testutil.OK(t, err)
-		testutil.Equals(t, got, want)
+		for _, marshalFunc := range marshalFuncs {
+			t.Run(marshalFunc.name, func(t *testing.T) {
+				t.Parallel()
+				for _, testCase := range testCases {
+					t.Run(testCase.bin, func(t *testing.T) {
+						t.Parallel()
+						uid := types.NewEntityUID(cedar.EntityType(testCase.typ), cedar.String(testCase.id))
+						gotBin := marshalFunc.fn(uid)
+
+						wantBin := []byte(testCase.bin)
+						testutil.Equals(t, gotBin, wantBin)
+
+						want := types.NewEntityUID(cedar.EntityType(testCase.typ), cedar.String(testCase.id))
+						got := types.EntityUID{}
+						err := got.UnmarshalBinary(gotBin)
+						testutil.OK(t, err)
+						testutil.Equals(t, got.String(), want.String())
+						testutil.FatalIf(t, !uid.Equal(got), "expected %v to not equal %v", got, want)
+					})
+				}
+			})
+		}
 	})
 
 	t.Run("UnmarshalCedar invalid", func(t *testing.T) {
@@ -54,6 +84,7 @@ func TestEntity(t *testing.T) {
 			{"empty input", ``},
 			{"just quoted string", `"id"`},
 			{"no type", `::"id"`},
+			{"unescaped unicode", `Type::"\u00ab"`},
 		}
 
 		for _, tt := range tests {
@@ -65,51 +96,6 @@ func TestEntity(t *testing.T) {
 			})
 		}
 	})
-
-	t.Run("UnmarshalCedar with ::\" in ID", func(t *testing.T) {
-		t.Parallel()
-		// ID ending in :: should be parsed correctly
-		want := types.NewEntityUID("X::Y", "asdf::")
-		gotBin := want.MarshalCedar()
-		testutil.Equals(t, gotBin, []byte(`X::Y::"asdf::"`))
-
-		got := types.EntityUID{}
-		err := got.UnmarshalCedar(gotBin)
-		testutil.OK(t, err)
-		testutil.Equals(t, got, want)
-	})
-
-	t.Run("MarshalBinary round trip", func(t *testing.T) {
-		t.Parallel()
-
-		testCases := []struct {
-			typ, id, bin string
-		}{
-			{"namespace::type", "id", `namespace::type::"id"`},
-			{"namespace::type", "", `namespace::type::""`},
-			{"X::Y", "abc::", `X::Y::"abc::"`},
-			{"Search::Algorithm", "A*", `Search::Algorithm::"A*"`},
-			{"Super", "*", `Super::"*"`},
-		}
-		for _, testCase := range testCases {
-			t.Run(testCase.typ+"::"+testCase.id, func(t *testing.T) {
-				t.Parallel()
-				uid := types.NewEntityUID(cedar.EntityType(testCase.typ), cedar.String(testCase.id))
-				gotBin := uid.MarshalBinary()
-
-				wantBin := []byte(testCase.bin)
-				testutil.Equals(t, gotBin, wantBin)
-
-				want := types.NewEntityUID(cedar.EntityType(testCase.typ), cedar.String(testCase.id))
-				got := types.EntityUID{}
-				err := got.UnmarshalBinary(gotBin)
-				testutil.OK(t, err)
-				testutil.Equals(t, got.String(), want.String())
-				testutil.FatalIf(t, !uid.Equal(got), "expected %v to not equal %v", got, want)
-			})
-		}
-	})
-
 }
 
 func TestEntityUIDSet(t *testing.T) {
