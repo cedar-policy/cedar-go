@@ -143,6 +143,11 @@ If you're looking to integrate Cedar into a production system, please be sure th
 
 ## Change log
 
+### 1.4.0
+#### New Features
+- Add an `UnmarshalCedar` method on `types.EntityUID`s
+- Implement the `encoding.BinaryMarshaler` and `encoding.BinaryUnmarshaler` interfaces for `types.EntityUID`s
+
 ### 1.2.5
 #### New Features
 - Adds experimental support for parsing Cedar schema in both Cedar and JSON formats
