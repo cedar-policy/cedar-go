@@ -74,6 +74,18 @@ func (e EntityUID) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (e EntityUID) MarshalBinary() ([]byte, error) {
+	jsonBytes, err := e.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return jsonBytes, nil
+}
+
+func (e *EntityUID) UnmarshalBinary(data []byte) error {
+	return e.UnmarshalJSON(data)
+}
+
 func (e EntityUID) hash() uint64 {
 	h := fnv.New64()
 	_, _ = h.Write([]byte(e.Type))

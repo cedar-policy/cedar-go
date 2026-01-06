@@ -30,6 +30,24 @@ func TestEntity(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(t, string(types.EntityUID{"type", "id"}.MarshalCedar()), `type::"id"`)
 	})
+
+	t.Run("MarshalBinary round trip", func(t *testing.T) {
+		t.Parallel()
+
+		uid := types.NewEntityUID("namespace::type", "id")
+		gotBin, err := uid.MarshalBinary()
+		testutil.OK(t, err)
+
+		wantBin := []byte(`{"__entity":{"type":"namespace::type","id":"id"}}`)
+		testutil.Equals(t, gotBin, wantBin)
+
+		want := types.EntityUID{Type: "namespace::type", ID: "id"}
+		got := types.EntityUID{}
+		err = got.UnmarshalBinary(gotBin)
+		testutil.OK(t, err)
+		testutil.Equals(t, got, want)
+		testutil.FatalIf(t, !uid.Equal(got), "expected %v to not equal %v", got, want)
+	})
 }
 
 func TestEntityUIDSet(t *testing.T) {
