@@ -75,11 +75,7 @@ func (e EntityUID) MarshalJSON() ([]byte, error) {
 }
 
 func (e EntityUID) MarshalBinary() ([]byte, error) {
-	jsonBytes, err := e.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	return jsonBytes, nil
+	return e.MarshalJSON()
 }
 
 func (e *EntityUID) UnmarshalBinary(data []byte) error {
