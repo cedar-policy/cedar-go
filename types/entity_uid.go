@@ -2,8 +2,10 @@ package types
 
 import (
 	"encoding/json"
+	"errors"
 	"hash/fnv"
 	"strconv"
+	"strings"
 
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 )
@@ -46,6 +48,22 @@ func (e EntityUID) MarshalCedar() []byte {
 	return []byte(e.String())
 }
 
+var errInvalidUID = errors.New("invalid EntityUID")
+
+// UnmarshalCedar parses a Cedar language representation of an EntityUID.
+func (e *EntityUID) UnmarshalCedar(data []byte) error {
+	s := string(data)
+	idx := strings.LastIndex(s, "::\"")
+
+	if idx <= 0 || !strings.HasSuffix(s, "\"") {
+		return errInvalidUID
+	}
+	typ := EntityType(s[:idx])
+	id := String(s[idx+3 : len(s)-1])
+	*e = NewEntityUID(typ, id)
+	return nil
+}
+
 func (e *EntityUID) UnmarshalJSON(b []byte) error {
 	// TODO: review after adding support for schemas
 	var res entityValueJSON
@@ -74,12 +92,12 @@ func (e EntityUID) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (e EntityUID) MarshalBinary() ([]byte, error) {
-	return e.MarshalJSON()
+func (e EntityUID) MarshalBinary() []byte {
+	return e.MarshalCedar()
 }
 
 func (e *EntityUID) UnmarshalBinary(data []byte) error {
-	return e.UnmarshalJSON(data)
+	return e.UnmarshalCedar(data)
 }
 
 func (e EntityUID) hash() uint64 {

@@ -26,27 +26,60 @@ func TestEntity(t *testing.T) {
 		testutil.Equals(t, types.EntityUID{Type: "namespace::type", ID: "id"}.String(), `namespace::type::"id"`)
 	})
 
-	t.Run("MarshalCedar", func(t *testing.T) {
+	t.Run("MarshalCedar round trip", func(t *testing.T) {
 		t.Parallel()
-		testutil.Equals(t, string(types.EntityUID{"type", "id"}.MarshalCedar()), `type::"id"`)
+		gotBin := types.NewEntityUID("type", "id").MarshalCedar()
+		wantBin := []byte(`type::"id"`)
+		testutil.Equals(t, gotBin, wantBin)
+
+		want := types.NewEntityUID("type", "id")
+		got := types.EntityUID{}
+		err := got.UnmarshalCedar(gotBin)
+		testutil.OK(t, err)
+		testutil.Equals(t, got, want)
 	})
 
 	t.Run("MarshalBinary round trip", func(t *testing.T) {
 		t.Parallel()
 
 		uid := types.NewEntityUID("namespace::type", "id")
-		gotBin, err := uid.MarshalBinary()
-		testutil.OK(t, err)
+		gotBin := uid.MarshalBinary()
 
-		wantBin := []byte(`{"__entity":{"type":"namespace::type","id":"id"}}`)
+		wantBin := []byte(`namespace::type::"id"`)
 		testutil.Equals(t, gotBin, wantBin)
 
 		want := types.EntityUID{Type: "namespace::type", ID: "id"}
 		got := types.EntityUID{}
-		err = got.UnmarshalBinary(gotBin)
+		err := got.UnmarshalBinary(gotBin)
 		testutil.OK(t, err)
 		testutil.Equals(t, got, want)
 		testutil.FatalIf(t, !uid.Equal(got), "expected %v to not equal %v", got, want)
+	})
+
+	t.Run("UnmarshalCedar invalid", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{"unquoted string", `Type::id`},
+			{"missing double colon", `Type"id"`},
+			{"missing a quote at beginning", `Type::id"`},
+			{"missing a quote at end", `Type::"id`},
+			{"empty input", ``},
+			{"just quoted string", `"id"`},
+			{"missing namespace", `::"id"`},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				var got types.EntityUID
+				err := got.UnmarshalCedar([]byte(tt.input))
+				testutil.FatalIf(t, err == nil, "expected error for input %q, got nil", tt.input)
+			})
+		}
 	})
 }
 
