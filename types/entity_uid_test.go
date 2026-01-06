@@ -98,6 +98,7 @@ func TestEntity(t *testing.T) {
 			{"empty input", ``},
 			{"just quoted string", `"id"`},
 			{"no type", `::"id"`},
+			{"partial", `Type::"`},
 			{"unescaped unicode", `Type::"\u00ab"`},
 		}
 
