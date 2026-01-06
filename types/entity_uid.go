@@ -108,8 +108,8 @@ func (e EntityUID) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (e EntityUID) MarshalBinary() []byte {
-	return e.MarshalCedar()
+func (e EntityUID) MarshalBinary() ([]byte, error) {
+	return e.MarshalCedar(), nil
 }
 
 func (e *EntityUID) UnmarshalBinary(data []byte) error {
