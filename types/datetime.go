@@ -12,13 +12,23 @@ import (
 
 var errDatetime = internal.ErrDatetime
 
+// maxDatetime is the highest possible timestamp that will fit in 64 bits of millisecond-precision space.
+var maxDatetime = time.Date(292278994, 8, 17, 7, 12, 55, 807*1e6, time.UTC)
+
+// minDatetime is the lowest possible timestamp that will fit in 64 bits of millisecond-precision space.
+var minDatetime = time.Date(-292275055, 5, 17, 16, 47, 04, 192*1e6, time.UTC)
+
 // Datetime represents a Cedar datetime value
 type Datetime struct {
 	// value is a timestamp in milliseconds
 	value int64
 }
 
-// NewDatetime returns a Cedar Datetime from a Go time.Time value
+// NewDatetime returns a Cedar Datetime from a Go time.Time value.
+//
+// The provided time.Time is truncated to millisecond precision. The result is
+// undefined if the Unix time in milliseconds cannot be represented by an int64
+// (a date more than 292 million years before or after 1970).
 func NewDatetime(t time.Time) Datetime {
 	return Datetime{value: t.UnixMilli()}
 }
@@ -27,6 +37,41 @@ func NewDatetime(t time.Time) Datetime {
 // January 1, 1970 @ 00:00:00 UTC.
 func NewDatetimeFromMillis(ms int64) Datetime {
 	return Datetime{value: ms}
+}
+
+func expectChar(s string, c uint8) (string, error) {
+	if len(s) == 0 {
+		return "", fmt.Errorf("%w: unexpected EOF", errDatetime)
+	} else if s[0] != c {
+		return "", fmt.Errorf("%w: unexpected character %c", errDatetime, s[0])
+	}
+	return s[1:], nil
+}
+
+func parseUint(s string, chars int, maxValue uint, label string) (uint, string, error) {
+	if len(s) < chars {
+		return 0, "", fmt.Errorf("%w: unexpected EOF", errDatetime)
+	}
+	v, err := strconv.ParseUint(s[0:chars], 10, 0)
+	if err != nil {
+		return 0, "", fmt.Errorf("%w: invalid %v", errDatetime, label)
+	} else if v > uint64(maxValue) {
+		return 0, "", fmt.Errorf("%w: %v is greater than %v", errDatetime, label, maxValue)
+	}
+	return uint(v), s[chars:], nil
+}
+
+// checkValidDay ensures that the given day is valid for the given month in the given year.
+func checkValidDay(year int, month, day uint) error {
+	t := time.Date(year, time.Month(month), int(day), 0, 0, 0, 0, time.UTC)
+
+	// Don't allow wrapping: https://github.com/cedar-policy/rfcs/pull/94
+	_, tmonth, tday := t.Date()
+	if time.Month(month) != tmonth || int(day) != tday {
+		return fmt.Errorf("%w: invalid date", errDatetime)
+	}
+
+	return nil
 }
 
 // ParseDatetime returns a Cedar datetime when the argument provided
@@ -39,186 +84,149 @@ func NewDatetimeFromMillis(ms int64) Datetime {
 // - "YYYY-MM-DDThh:mm:ss.SSSZ" (date and time with millisecond, UTC)
 // - "YYYY-MM-DDThh:mm:ss(+/-)hhmm" (date and time, time zone offset)
 // - "YYYY-MM-DDThh:mm:ss.SSS(+/-)hhmm" (date and time with millisecond, time zone offset)
+//
+// Cedar RFC 110 extends this with ISO 8601 expanded year format:
+//
+// - "(+/-)YYYYYYYYY-MM-DD" (9-digit year, date only)
+// - "(+/-)YYYYYYYYY-MM-DDThh:mm:ssZ" (9-digit year, date and time, UTC)
+// - "(+/-)YYYYYYYYY-MM-DDThh:mm:ss.SSSZ" (9-digit year with millisecond, UTC)
+// - "(+/-)YYYYYYYYY-MM-DDThh:mm:ss(+/-)hhmm" (9-digit year with time zone offset)
+// - "(+/-)YYYYYYYYY-MM-DDThh:mm:ss.SSS(+/-)hhmm" (9-digit year with millisecond and offset)
 func ParseDatetime(s string) (Datetime, error) {
 	var (
-		year, month, day, hour, minute, second, milli int
-		offset                                        time.Duration
+		year                                    int
+		month, day, hour, minute, second, milli uint
+		offset                                  time.Duration
 	)
 
-	length := len(s)
-	if length < 10 {
-		return Datetime{}, fmt.Errorf("%w: string too short", errDatetime)
+	if len(s) == 0 {
+		return Datetime{}, fmt.Errorf("%w: unexpected EOF", errDatetime)
 	}
 
-	// Date: YYYY-MM-DD
-	// YYYY is at offset 0
-	// MM is at offset 5
-	// DD is at offset 8
-	// - is at 4 and 7
-	// YYYY
-	if !unicode.IsDigit(rune(s[0])) || !unicode.IsDigit(rune(s[1])) || !unicode.IsDigit(rune(s[2])) || !unicode.IsDigit(rune(s[3])) {
+	// Check if this is an expanded year format (starts with + or -)
+	yearSign := 1
+	yearLength := 4
+	yearMax := uint(9999)
+	if s[0] == '+' || s[0] == '-' {
+		yearLength = 9
+		yearMax = 999999999
+		if s[0] == '-' {
+			yearSign = -1
+		}
+		s = s[1:]
+	} else if !unicode.IsDigit(rune(s[0])) {
 		return Datetime{}, fmt.Errorf("%w: invalid year", errDatetime)
 	}
-	year = 1000*int(rune(s[0])-'0') +
-		100*int(rune(s[1])-'0') +
-		10*int(rune(s[2])-'0') +
-		int(rune(s[3])-'0')
 
-	if s[4] != '-' {
-		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[4])))
+	absYear, s, err := parseUint(s[0:], yearLength, yearMax, "year")
+	if err != nil {
+		return Datetime{}, err
 	}
+	year = int(absYear) * yearSign
 
-	// MM
-	if !unicode.IsDigit(rune(s[5])) || !unicode.IsDigit(rune(s[6])) {
-		return Datetime{}, fmt.Errorf("%w: invalid month", errDatetime)
-	}
-	month = 10*int(rune(s[5])-'0') + int(rune(s[6])-'0')
-	if month > 12 {
-		return Datetime{}, fmt.Errorf("%w: month is out of range", errDatetime)
+	if s, err = expectChar(s, '-'); err != nil {
+		return Datetime{}, err
 	}
 
-	if s[7] != '-' {
-		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[7])))
+	if month, s, err = parseUint(s, 2, 12, "month"); err != nil {
+		return Datetime{}, err
 	}
 
-	// DD
-	if !unicode.IsDigit(rune(s[8])) || !unicode.IsDigit(rune(s[9])) {
-		return Datetime{}, fmt.Errorf("%w: invalid day", errDatetime)
-	}
-	day = 10*int(rune(s[8])-'0') + int(rune(s[9])-'0')
-	if day > 31 {
-		return Datetime{}, fmt.Errorf("%w: day is out of range", errDatetime)
+	if s, err = expectChar(s, '-'); err != nil {
+		return Datetime{}, err
 	}
 
-	// If the length is 10, we only have a date and we're done.
-	if length == 10 {
-		t := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
-		return Datetime{value: t.UnixMilli()}, nil
+	if day, s, err = parseUint(s, 2, 31, "day"); err != nil {
+		return Datetime{}, err
 	}
 
-	// If the length is less than 20, we can't have a valid time.
-	if length < 20 {
-		return Datetime{}, fmt.Errorf("%w: invalid time", errDatetime)
+	if err = checkValidDay(year, month, day); err != nil {
+		return Datetime{}, err
 	}
 
-	// Time: Thh:mm:ss?
-	// T is at 10
-	// hh is at offset 11
-	// mm is at offset 14
-	// ss is at offset 17
-	// : is at 13 and 16
-	// ? is at 19, and... we'll skip to get back to that.
-
-	if s[10] != 'T' {
-		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[10])))
+	if len(s) == 0 {
+		return Datetime{time.Date(year, time.Month(month), int(day), 0, 0, 0, 0, time.UTC).UnixMilli()}, nil
 	}
 
-	if !unicode.IsDigit(rune(s[11])) || !unicode.IsDigit(rune(s[12])) {
-		return Datetime{}, fmt.Errorf("%w: invalid hour", errDatetime)
-	}
-	hour = 10*int(rune(s[11])-'0') + int(rune(s[12])-'0')
-	if hour > 23 {
-		return Datetime{}, fmt.Errorf("%w: hour is out of range", errDatetime)
+	if s, err = expectChar(s, 'T'); err != nil {
+		return Datetime{}, err
 	}
 
-	if s[13] != ':' {
-		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[13])))
+	if hour, s, err = parseUint(s, 2, 23, "hour"); err != nil {
+		return Datetime{}, err
 	}
 
-	if !unicode.IsDigit(rune(s[14])) || !unicode.IsDigit(rune(s[15])) {
-		return Datetime{}, fmt.Errorf("%w: invalid minute", errDatetime)
-	}
-	minute = 10*int(rune(s[14])-'0') + int(rune(s[15])-'0')
-	if minute > 59 {
-		return Datetime{}, fmt.Errorf("%w: minute is out of range", errDatetime)
+	if s, err = expectChar(s, ':'); err != nil {
+		return Datetime{}, err
 	}
 
-	if s[16] != ':' {
-		return Datetime{}, fmt.Errorf("%w: unexpected character %s", errDatetime, strconv.QuoteRune(rune(s[16])))
+	if minute, s, err = parseUint(s, 2, 59, "minute"); err != nil {
+		return Datetime{}, err
 	}
 
-	if !unicode.IsDigit(rune(s[17])) || !unicode.IsDigit(rune(s[18])) {
-		return Datetime{}, fmt.Errorf("%w: invalid second", errDatetime)
-	}
-	second = 10*int(rune(s[17])-'0') + int(rune(s[18])-'0')
-	if second > 59 {
-		return Datetime{}, fmt.Errorf("%w: second is out of range", errDatetime)
+	if s, err = expectChar(s, ':'); err != nil {
+		return Datetime{}, err
 	}
 
-	// At this point, things are variable.
-	// 19 can be ., in which case we have milliseconds. (SSS)
-	//   ... but we'll still need a Z, or offset. So, we'll introduce
-	//       trailerOffset to account for where this starts.
-	trailerOffset := 19
-	if s[19] == '.' {
-		if length < 23 {
-			return Datetime{}, fmt.Errorf("%w: invalid millisecond", errDatetime)
+	if second, s, err = parseUint(s, 2, 59, "second"); err != nil {
+		return Datetime{}, err
+	}
+
+	if len(s) == 0 {
+		return Datetime{}, fmt.Errorf("%w: unexpected EOF", errDatetime)
+	}
+
+	// Parse optional milliseconds
+	if s[0] == '.' {
+		milli, s, err = parseUint(s[1:], 3, 999, "millisecond")
+		if err != nil {
+			return Datetime{}, err
 		}
-
-		if !unicode.IsDigit(rune(s[20])) || !unicode.IsDigit(rune(s[21])) || !unicode.IsDigit(rune(s[22])) {
-			return Datetime{}, fmt.Errorf("%w: invalid millisecond", errDatetime)
-		}
-
-		milli = 100*int(rune(s[20])-'0') + 10*int(rune(s[21])-'0') + int(rune(s[22])-'0')
-		trailerOffset = 23
 	}
 
-	if length == trailerOffset {
-		return Datetime{}, fmt.Errorf("%w: expected time zone designator", errDatetime)
+	if len(s) == 0 {
+		return Datetime{}, fmt.Errorf("%w: unexpected EOF", errDatetime)
 	}
 
-	// At this point, we can only have 2 possible lengths. Anything else is an error.
-	switch s[trailerOffset] {
+	switch s[0] {
 	case 'Z':
-		if length > trailerOffset+1 {
-			// If something comes after the Z, it's an error
-			return Datetime{}, fmt.Errorf("%w: unexpected trailer after time zone designator", errDatetime)
-		}
+		s = s[1:]
 	case '+', '-':
 		sign := 1
-		if s[trailerOffset] == '-' {
+		if s[0] == '-' {
 			sign = -1
 		}
+		s = s[1:]
 
-		if length > trailerOffset+5 {
-			return Datetime{}, fmt.Errorf("%w: unexpected trailer after time zone designator", errDatetime)
-		} else if length != trailerOffset+5 {
-			return Datetime{}, fmt.Errorf("%w: invalid time zone offset", errDatetime)
+		var hh uint
+		if hh, s, err = parseUint(s, 2, 23, "offset hours"); err != nil {
+			return Datetime{}, err
 		}
 
-		// get the time zone offset hhmm.
-		if !unicode.IsDigit(rune(s[trailerOffset+1])) || !unicode.IsDigit(rune(s[trailerOffset+2])) || !unicode.IsDigit(rune(s[trailerOffset+3])) || !unicode.IsDigit(rune(s[trailerOffset+4])) {
-			return Datetime{}, fmt.Errorf("%w: invalid time zone offset", errDatetime)
+		var mm uint
+		if mm, s, err = parseUint(s, 2, 59, "offset minutes"); err != nil {
+			return Datetime{}, err
 		}
 
-		hh := time.Duration(10*int64(rune(s[trailerOffset+1])-'0') + int64(rune(s[trailerOffset+2])-'0'))
-		mm := time.Duration(10*int64(rune(s[trailerOffset+3])-'0') + int64(rune(s[trailerOffset+4])-'0'))
-
-		if hh > 23 {
-			return Datetime{}, fmt.Errorf("%w: time zone offset hours are out of range", errDatetime)
-		}
-		if mm > 59 {
-			return Datetime{}, fmt.Errorf("%w: time zone offset minutes are out of range", errDatetime)
-		}
-
-		offset = time.Duration(sign) * ((hh * time.Hour) + (mm * time.Minute))
-
+		offset = time.Duration(sign) * ((time.Duration(hh) * time.Hour) + (time.Duration(mm) * time.Minute))
 	default:
 		return Datetime{}, fmt.Errorf("%w: invalid time zone designator", errDatetime)
 	}
 
-	t := time.Date(year, time.Month(month), day,
-		hour, minute, second,
-		int(time.Duration(milli)*time.Millisecond), time.UTC)
-
-	// Don't allow wrapping: https://github.com/cedar-policy/rfcs/pull/94, which can occur
-	// because not all months have 31 days, which is our validation range
-	_, tmonth, tday := t.Date()
-	if time.Month(month) != tmonth || day != tday {
-		return Datetime{}, fmt.Errorf("%w: invalid date", errDatetime)
+	if len(s) > 0 {
+		return Datetime{}, fmt.Errorf("%w: unexpected additional characters", errDatetime)
 	}
 
-	t = t.Add(offset)
+	t := time.Date(year, time.Month(month), int(day),
+		int(hour), int(minute), int(second),
+		int(time.Duration(milli)*time.Millisecond), time.UTC).Add(-offset)
+
+	// Check for boundary conditions before calling UnixMilli(), which has undefined behavior outside of these
+	// boundaries
+	if t.Before(minDatetime) || t.After(maxDatetime) {
+		return Datetime{}, fmt.Errorf("%w: timestamp out of range", errDatetime)
+	}
+
 	return Datetime{value: t.UnixMilli()}, nil
 }
 
@@ -239,7 +247,7 @@ func (d Datetime) LessThan(bi Value) (bool, error) {
 	return d.value < b.value, nil
 }
 
-// LessThan returns true if value is less than or equal to the
+// LessThanOrEqual returns true if value is less than or equal to the
 // argument and they are both Datetime values, or an error indicating
 // they aren't comparable otherwise
 func (d Datetime) LessThanOrEqual(bi Value) (bool, error) {
@@ -256,9 +264,28 @@ func (d Datetime) MarshalCedar() []byte {
 	return []byte(`datetime("` + d.String() + `")`)
 }
 
-// String returns an ISO 8601 millisecond precision timestamp
+// String returns an ISO 8601 millisecond precision timestamp.
+// For years in [0000, 9999], returns RFC 3339 format: "YYYY-MM-DDThh:mm:ss.SSSZ"
+// For years outside that range, returns expanded year format: "(+/-)YYYYYYYYY-MM-DDThh:mm:ss.SSSZ"
 func (d Datetime) String() string {
-	return time.UnixMilli(d.value).UTC().Format("2006-01-02T15:04:05.000Z")
+	t := time.UnixMilli(d.value).UTC()
+	year := t.Year()
+
+	// Use RFC 3339 format for years in standard range
+	if year >= 0 && year <= 9999 {
+		return t.Format("2006-01-02T15:04:05.000Z")
+	}
+
+	// Use ISO 8601 expanded year format for years outside standard range
+	sign := '+'
+	if year < 0 {
+		sign = '-'
+		year = -year
+	}
+
+	return fmt.Sprintf("%c%09d-%02d-%02dT%02d:%02d:%02d.%03dZ",
+		sign, year, t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second(), t.Nanosecond()/1e6)
 }
 
 // UnmarshalJSON implements encoding/json.Unmarshaler for Datetime
