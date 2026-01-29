@@ -218,7 +218,7 @@ func ParseDatetime(s string) (Datetime, error) {
 		return Datetime{}, fmt.Errorf("%w: invalid date", errDatetime)
 	}
 
-	t = t.Add(offset)
+	t = t.Add(-offset)
 	return Datetime{value: t.UnixMilli()}, nil
 }
 
