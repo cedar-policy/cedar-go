@@ -9,7 +9,7 @@ import (
 // Any information related to ordering, formatting, comments, etc... are lost completely.
 //
 // TODO: Add errors if the schema is invalid (references names that don't exist)
-func ConvertHuman2JSON(n *Schema) JSONSchema {
+func ConvertHuman2JSON(n *Schema) (JSONSchema, error) {
 	out := make(JSONSchema)
 	// In Cedar, all anonymous types (not under a namespace) are put into the "root" namespace,
 	// which just has a name of "".
@@ -17,18 +17,24 @@ func ConvertHuman2JSON(n *Schema) JSONSchema {
 	for _, decl := range n.Decls {
 		switch decl := decl.(type) {
 		case *Namespace:
-			out[decl.Name.String()] = convertNamespace(decl)
+			namespace, err := convertNamespace(decl)
+			if err != nil {
+				return nil, err
+			}
+			out[decl.Name.String()] = namespace
 		default:
 			anonymousNamespace.Decls = append(anonymousNamespace.Decls, decl)
 		}
 	}
 	if len(anonymousNamespace.Decls) > 0 {
-		out[""] = convertNamespace(anonymousNamespace)
+		// Any error converting the anonymous namespace here would have been caught above.
+		namespace, _ := convertNamespace(anonymousNamespace)
+		out[""] = namespace
 	}
-	return out
+	return out, nil
 }
 
-func convertNamespace(n *Namespace) *JSONNamespace {
+func convertNamespace(n *Namespace) (*JSONNamespace, error) {
 	jsNamespace := new(JSONNamespace)
 	jsNamespace.Actions = make(map[string]*JSONAction)
 	jsNamespace.EntityTypes = make(map[string]*JSONEntity)
@@ -104,9 +110,13 @@ func convertNamespace(n *Namespace) *JSONNamespace {
 				commonType.Annotations[a.Key.String()] = a.Value.String()
 			}
 			jsNamespace.CommonTypes[astDecl.Name.String()] = commonType
+		case *CommentBlock:
+			// do nothing
+		case *Namespace:
+			return nil, fmt.Errorf("namespace %q contains subnamespace %q", n.Name.String(), astDecl.Name.String())
 		}
 	}
-	return jsNamespace
+	return jsNamespace, nil
 }
 
 func convertType(t Type) *JSONType {

@@ -29,7 +29,10 @@ func TestConvertJsonToHumanRoundtrip(t *testing.T) {
 
 	// Convert to human-readable format and back to JSON
 	humanSchema := ast.ConvertJSON2Human(jsonSchema)
-	jsonSchema2 := ast.ConvertHuman2JSON(humanSchema)
+	jsonSchema2, err := ast.ConvertHuman2JSON(humanSchema)
+	if err != nil {
+		t.Fatalf("Error dumping schema: %v", err)
+	}
 
 	// Compare the JSON schemas
 	json1, err := json.MarshalIndent(jsonSchema, "", "    ")
@@ -90,5 +93,28 @@ func TestConvertJsonToHumanInvalidType(t *testing.T) {
 	expected := "unknown JSON type: InvalidType"
 	if !strings.Contains(panicMsg, expected) {
 		t.Errorf("expected panic message to contain %q, got %q", expected, panicMsg)
+	}
+}
+
+func TestConvertHuman2JSON_NestedNamespace(t *testing.T) {
+	namePath := &ast.Path{Parts: []*ast.Ident{{Value: "hi"}}}
+	innerNamespace := &ast.Namespace{
+		Name: namePath,
+	}
+	outerNamespace := &ast.Namespace{
+		Name: namePath,
+		Decls: []ast.Declaration{
+			innerNamespace,
+		},
+	}
+	schema := &ast.Schema{
+		Decls: []ast.Declaration{
+			outerNamespace,
+		},
+	}
+
+	_, err := ast.ConvertHuman2JSON(schema)
+	if err == nil {
+		t.Errorf("should have failed")
 	}
 }
