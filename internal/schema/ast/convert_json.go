@@ -192,6 +192,8 @@ func convertJSONAppliesTo(appliesTo *JSONAppliesTo) *AppliesTo {
 			at.ContextRecord = t
 		case *Path:
 			at.ContextPath = t
+		case *SetType:
+			panic("SetType not yet handled in convertJSONAppliesTo")
 		}
 	}
 

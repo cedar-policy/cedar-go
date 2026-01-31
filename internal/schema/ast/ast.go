@@ -42,7 +42,8 @@ import (
 
 // The human readable format is not 1-1 convertible with JSON. The JSON format
 // is lossy. It loses formatting, such as comments, ordering of fields, etc...
-
+//
+//sumtype:decl
 type Node interface {
 	isNode()
 	// Pos returns first token of the node
@@ -97,6 +98,7 @@ func (s *Schema) End() token.Position {
 	return token.Position{}
 }
 
+//sumtype:decl
 type Declaration interface {
 	Node
 	isDecl()
@@ -165,6 +167,8 @@ func (t *CommonTypeDecl) End() token.Position {
 // 1. A record type
 // 2. A set type (Set<String>)
 // 3. A path (Namespace::EntityType or String)
+//
+//sumtype:decl
 type Type interface {
 	Node
 	isType()
