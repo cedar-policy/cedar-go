@@ -14,9 +14,9 @@ import (
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go/schema"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/batch"
-	"github.com/cedar-policy/cedar-go/x/exp/schema"
 )
 
 // jsonEntity is not part of entityValue as I can find
@@ -146,16 +146,6 @@ func TestCorpus(t *testing.T) {
 			var entities cedar.EntityMap
 			if err := json.Unmarshal(entitiesContent, &entities); err != nil {
 				t.Fatal("error unmarshalling test", err)
-			}
-
-			schemaContent, err := fdm.GetFileData(tt.Schema)
-			if err != nil {
-				t.Fatal("error reading schema content", err)
-			}
-			var s schema.Schema
-			s.SetFilename("test.schema")
-			if err := s.UnmarshalCedar(schemaContent); err != nil {
-				t.Fatal("error parsing schema", err, "\n===\n", string(schemaContent))
 			}
 
 			policyContent, err := fdm.GetFileData(tt.Policies)
@@ -419,6 +409,83 @@ func TestCorpusRelated(t *testing.T) {
 				errors = append(errors, n.PolicyID)
 			}
 			testutil.Equals(t, errors, tt.errors)
+		})
+	}
+}
+
+//nolint:revive // due to test cognitive complexity
+func TestCorpusSchemas(t *testing.T) {
+	t.Parallel()
+
+	gzipReader, err := gzip.NewReader(bytes.NewReader(corpusArchive))
+	if err != nil {
+		t.Fatal("error reading corpus compressed archive header", err)
+	}
+	defer gzipReader.Close() //nolint:errcheck
+
+	buf, err := io.ReadAll(gzipReader)
+	if err != nil {
+		t.Fatal("error reading corpus compressed archive", err)
+	}
+
+	bufReader := bytes.NewReader(buf)
+	archiveReader := tar.NewReader(bufReader)
+
+	fdm := NewTarFileMap(bufReader)
+	var schemaFiles []string
+	for file, err := archiveReader.Next(); err == nil; file, err = archiveReader.Next() {
+		if file.Typeflag != tar.TypeReg {
+			continue
+		}
+
+		cursor, _ := bufReader.Seek(0, io.SeekCurrent)
+		fdm.AddFileData(file.Name, cursor, file.Size)
+
+		if strings.HasSuffix(file.Name, ".cedarschema") {
+			schemaFiles = append(schemaFiles, file.Name)
+		}
+	}
+
+	for _, schemaFile := range schemaFiles {
+		schemaFile := schemaFile
+		t.Run(schemaFile, func(t *testing.T) {
+			t.Parallel()
+			content, err := fdm.GetFileData(schemaFile)
+			if err != nil {
+				t.Fatal("error reading schema content", err)
+			}
+
+			// Parse Cedar text
+			var s schema.Schema
+			s.SetFilename(schemaFile)
+			if err := s.UnmarshalCedar(content); err != nil {
+				t.Fatal("error parsing schema", err)
+			}
+
+			// Marshal back to Cedar and re-parse
+			cedarBytes, err := s.MarshalCedar()
+			if err != nil {
+				t.Fatal("error marshaling schema to cedar", err)
+			}
+			var s2 schema.Schema
+			if err := s2.UnmarshalCedar(cedarBytes); err != nil {
+				t.Fatalf("error re-parsing marshaled cedar:\n%s\nerror: %v", cedarBytes, err)
+			}
+
+			// Marshal to JSON and re-parse
+			jsonBytes, err := s.MarshalJSON()
+			if err != nil {
+				t.Fatal("error marshaling schema to JSON", err)
+			}
+			var s3 schema.Schema
+			if err := s3.UnmarshalJSON(jsonBytes); err != nil {
+				t.Fatalf("error re-parsing marshaled JSON:\n%s\nerror: %v", jsonBytes, err)
+			}
+
+			// Verify the schema resolves without error
+			if _, err := s.Resolve(); err != nil {
+				t.Fatal("error resolving schema", err)
+			}
 		})
 	}
 }

@@ -36,8 +36,8 @@ The Go implementation includes:
 - JSON marshalling and unmarshalling
 - all core and extended types (including [RFC 80](https://github.com/cedar-policy/rfcs/blob/main/text/0080-datetime-extension.md)'s datetime and duration)
 - integration test suite
-- human-readable schema parsing
-
+- schema parsing and programmatic construction
+ 
 The Go implementation does not yet include:
 
 - CLI applications

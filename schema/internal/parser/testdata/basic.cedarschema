@@ -1,0 +1,28 @@
+namespace PhotoApp {
+	entity User in [Group] {
+		name: String,
+		age?: Long
+	};
+
+	entity Group;
+
+	entity Photo {
+		owner: User,
+		tags: Set<String>
+	} tags String;
+
+	action viewPhoto appliesTo {
+		principal: User,
+		resource: Photo,
+		context: {}
+	};
+
+	action createPhoto in viewPhoto appliesTo {
+		principal: [User, Group],
+		resource: Photo
+	};
+
+	type Context = {
+		ip: ipaddr
+	};
+}
