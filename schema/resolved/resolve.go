@@ -30,7 +30,7 @@ type Entity struct {
 	Name        types.EntityType
 	Annotations Annotations
 	MemberOf    []types.EntityType
-	Shape       *RecordType
+	Shape       RecordType
 	Tags        IsType
 }
 
@@ -220,7 +220,7 @@ func (r *resolverState) resolveEntities(nsName types.Path, entities ast.Entities
 			if err != nil {
 				return fmt.Errorf("entity %q shape: %w", name, err)
 			}
-			resolved.Shape = &rec
+			resolved.Shape = rec
 		}
 		if entity.Tags != nil {
 			tags, err := r.resolveType(nsName, entity.Tags)
@@ -322,7 +322,7 @@ func (r *resolverState) resolveType(ns types.Path, t ast.IsType) (IsType, error)
 		}
 		return EntityType(et), nil
 	case ast.TypeRef:
-		return r.resolveTypeRef(ns, types.Path(t))
+		return r.resolveTypeRef(ns, t)
 	default:
 		return nil, fmt.Errorf("unknown AST type: %T", t)
 	}
@@ -375,26 +375,15 @@ func (r *resolverState) resolveEntityTypeRef(ns types.Path, ref ast.EntityTypeRe
 // 4. Check if N (empty namespace) is declared as an entity type
 // 5. Check if N is a built-in type
 // 6. Error
-func (r *resolverState) resolveTypeRef(ns types.Path, path types.Path) (IsType, error) {
-	name := string(path)
-
-	// Check for __cedar:: prefix first
-	if strings.HasPrefix(name, "__cedar::") {
-		builtinName := name[len("__cedar::"):]
-		if t := lookupBuiltin(builtinName); t != nil {
-			return t, nil
-		}
-		return nil, fmt.Errorf("undefined built-in type %q", name)
-	}
-
-	// Qualified path: resolve directly
-	if strings.Contains(name, "::") {
-		return r.resolveQualifiedTypeRef(path)
+func (r *resolverState) resolveTypeRef(ns types.Path, ref ast.TypeRef) (IsType, error) {
+	// Qualified: resolve directly
+	if strings.Contains(string(ref), "::") {
+		return r.resolveQualifiedTypeRef(ref)
 	}
 
 	// Unqualified: follow disambiguation rules
 	if ns != "" {
-		qualifiedPath := types.Path(string(ns) + "::" + name)
+		qualifiedPath := types.Path(string(ns) + "::" + string(ref))
 		// 1. Check NS::N as common type
 		if ct, ok := r.commonTypes[qualifiedPath]; ok {
 			return r.resolveType(ns, ct)
@@ -407,37 +396,47 @@ func (r *resolverState) resolveTypeRef(ns types.Path, path types.Path) (IsType, 
 	}
 
 	// 3. Check N as common type in empty namespace
+	path := types.Path(ref)
 	if ct, ok := r.commonTypes[path]; ok {
 		return r.resolveType("", ct)
 	}
 
 	// 4. Check N as entity type in empty namespace
-	bareET := types.EntityType(path)
+	bareET := types.EntityType(ref)
 	if r.entityTypes[bareET] || r.enumTypes[bareET] {
 		return EntityType(bareET), nil
 	}
 
 	// 5. Check built-in types
-	if t := lookupBuiltin(name); t != nil {
+	if t := lookupBuiltin(path); t != nil {
 		return t, nil
 	}
 
-	return nil, fmt.Errorf("undefined type %q", path)
+	return nil, fmt.Errorf("undefined type %q", ref)
 }
 
-func (r *resolverState) resolveQualifiedTypeRef(path types.Path) (IsType, error) {
-	name := string(path)
+func (r *resolverState) resolveQualifiedTypeRef(ref ast.TypeRef) (IsType, error) {
+	// Check for __cedar:: prefix first
+	if strings.HasPrefix(string(ref), "__cedar::") {
+		builtinName := ref[len("__cedar::"):]
+		if t := lookupBuiltin(types.Path(builtinName)); t != nil {
+			return t, nil
+		}
+		return nil, fmt.Errorf("undefined built-in type %q", ref)
+	}
+
 	// Try as common type first
+	path := types.Path(ref)
 	if ct, ok := r.commonTypes[path]; ok {
 		ns := extractNamespace(path)
 		return r.resolveType(ns, ct)
 	}
 	// Try as entity type
-	et := types.EntityType(name)
+	et := types.EntityType(ref)
 	if r.entityTypes[et] || r.enumTypes[et] {
 		return EntityType(et), nil
 	}
-	return nil, fmt.Errorf("undefined type %q", path)
+	return nil, fmt.Errorf("undefined type %q", ref)
 }
 
 func (r *resolverState) resolveTypePath(ns types.Path, path types.Path) types.Path {
@@ -512,8 +511,8 @@ func (r *resolverState) validateActionMembership(result *Schema) error {
 	return nil
 }
 
-func lookupBuiltin(name string) IsType {
-	switch name {
+func lookupBuiltin(path types.Path) IsType {
+	switch path {
 	case "String":
 		return StringType{}
 	case "Long":

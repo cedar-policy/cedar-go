@@ -31,9 +31,9 @@ func TestResolveBasicEntity(t *testing.T) {
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	user := result.Entities["User"]
-	testutil.Equals(t, (*user.Shape)["name"].Type, resolved.IsType(resolved.StringType{}))
-	testutil.Equals(t, (*user.Shape)["age"].Type, resolved.IsType(resolved.LongType{}))
-	testutil.Equals(t, (*user.Shape)["age"].Optional, true)
+	testutil.Equals(t, user.Shape["name"].Type, resolved.IsType(resolved.StringType{}))
+	testutil.Equals(t, user.Shape["age"].Type, resolved.IsType(resolved.LongType{}))
+	testutil.Equals(t, user.Shape["age"].Optional, true)
 }
 
 func TestResolveEntityMemberOf(t *testing.T) {
@@ -141,14 +141,14 @@ func TestResolveBuiltinTypes(t *testing.T) {
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	user := result.Entities["User"]
-	testutil.Equals(t, (*user.Shape)["s"].Type, resolved.IsType(resolved.StringType{}))
-	testutil.Equals(t, (*user.Shape)["l"].Type, resolved.IsType(resolved.LongType{}))
-	testutil.Equals(t, (*user.Shape)["b"].Type, resolved.IsType(resolved.BoolType{}))
-	testutil.Equals(t, (*user.Shape)["b2"].Type, resolved.IsType(resolved.BoolType{}))
-	testutil.Equals(t, (*user.Shape)["ip"].Type, resolved.IsType(resolved.ExtensionType("ipaddr")))
-	testutil.Equals(t, (*user.Shape)["dec"].Type, resolved.IsType(resolved.ExtensionType("decimal")))
-	testutil.Equals(t, (*user.Shape)["dt"].Type, resolved.IsType(resolved.ExtensionType("datetime")))
-	testutil.Equals(t, (*user.Shape)["dur"].Type, resolved.IsType(resolved.ExtensionType("duration")))
+	testutil.Equals(t, user.Shape["s"].Type, resolved.IsType(resolved.StringType{}))
+	testutil.Equals(t, user.Shape["l"].Type, resolved.IsType(resolved.LongType{}))
+	testutil.Equals(t, user.Shape["b"].Type, resolved.IsType(resolved.BoolType{}))
+	testutil.Equals(t, user.Shape["b2"].Type, resolved.IsType(resolved.BoolType{}))
+	testutil.Equals(t, user.Shape["ip"].Type, resolved.IsType(resolved.ExtensionType("ipaddr")))
+	testutil.Equals(t, user.Shape["dec"].Type, resolved.IsType(resolved.ExtensionType("decimal")))
+	testutil.Equals(t, user.Shape["dt"].Type, resolved.IsType(resolved.ExtensionType("datetime")))
+	testutil.Equals(t, user.Shape["dur"].Type, resolved.IsType(resolved.ExtensionType("duration")))
 }
 
 func TestResolveCedarNamespace(t *testing.T) {
@@ -163,7 +163,7 @@ func TestResolveCedarNamespace(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	testutil.Equals(t, (*result.Entities["User"].Shape)["name"].Type, resolved.IsType(resolved.StringType{}))
+	testutil.Equals(t, result.Entities["User"].Shape["name"].Type, resolved.IsType(resolved.StringType{}))
 }
 
 func TestResolveCedarNamespaceUndefined(t *testing.T) {
@@ -214,7 +214,7 @@ func TestResolveTypeDisambiguation(t *testing.T) {
 		testutil.OK(t, err)
 		user := result.Entities["NS::User"]
 		// "name" should resolve to the common type (a record), not the entity type
-		rec, ok := (*user.Shape)["n"].Type.(resolved.RecordType)
+		rec, ok := user.Shape["n"].Type.(resolved.RecordType)
 		testutil.Equals(t, ok, true)
 		testutil.Equals(t, len(rec), 2)
 	})
@@ -243,9 +243,9 @@ func TestResolveTypeDisambiguation(t *testing.T) {
 		testutil.OK(t, err)
 		user := result.Entities["NS::User"]
 		// "Long" resolves to entity type NS::Long, not the built-in
-		testutil.Equals(t, (*user.Shape)["x"].Type, resolved.IsType(resolved.EntityType("NS::Long")))
+		testutil.Equals(t, user.Shape["x"].Type, resolved.IsType(resolved.EntityType("NS::Long")))
 		// "__cedar::Long" still resolves to the built-in
-		testutil.Equals(t, (*user.Shape)["y"].Type, resolved.IsType(resolved.LongType{}))
+		testutil.Equals(t, user.Shape["y"].Type, resolved.IsType(resolved.LongType{}))
 	})
 
 	t.Run("common_over_builtin", func(t *testing.T) {
@@ -277,11 +277,11 @@ func TestResolveTypeDisambiguation(t *testing.T) {
 		testutil.OK(t, err)
 		user := result.Entities["NS::User"]
 		// "Long" resolves to the common type (a record), not the built-in
-		rec, ok := (*user.Shape)["x"].Type.(resolved.RecordType)
+		rec, ok := user.Shape["x"].Type.(resolved.RecordType)
 		testutil.Equals(t, ok, true)
 		testutil.Equals(t, len(rec), 1)
 		// "__cedar::Long" still resolves to the built-in
-		testutil.Equals(t, (*user.Shape)["y"].Type, resolved.IsType(resolved.LongType{}))
+		testutil.Equals(t, user.Shape["y"].Type, resolved.IsType(resolved.LongType{}))
 	})
 }
 
@@ -417,7 +417,7 @@ func TestResolveEnumAsEntityType(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	testutil.Equals(t, (*result.Entities["User"].Shape)["s"].Type, resolved.IsType(resolved.EntityType("Status")))
+	testutil.Equals(t, result.Entities["User"].Shape["s"].Type, resolved.IsType(resolved.EntityType("Status")))
 }
 
 func TestResolveSetType(t *testing.T) {
@@ -432,7 +432,7 @@ func TestResolveSetType(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	tags := (*result.Entities["User"].Shape)["tags"]
+	tags := result.Entities["User"].Shape["tags"]
 	set, ok := tags.Type.(resolved.SetType)
 	testutil.Equals(t, ok, true)
 	testutil.Equals(t, set.Element, resolved.IsType(resolved.StringType{}))
@@ -567,7 +567,7 @@ func TestResolveCommonTypeChain(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	a := (*result.Entities["User"].Shape)["a"]
+	a := result.Entities["User"].Shape["a"]
 	rec, ok := a.Type.(resolved.RecordType)
 	testutil.Equals(t, ok, true)
 	testutil.Equals(t, len(rec), 1)
@@ -594,7 +594,7 @@ func TestResolveQualifiedCommonType(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	c := (*result.Entities["NS::User"].Shape)["c"]
+	c := result.Entities["NS::User"].Shape["c"]
 	_, ok := c.Type.(resolved.RecordType)
 	testutil.Equals(t, ok, true)
 }
@@ -666,7 +666,7 @@ func TestResolveEntityTypeRef(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	friend := (*result.Entities["User"].Shape)["friend"]
+	friend := result.Entities["User"].Shape["friend"]
 	testutil.Equals(t, friend.Type, resolved.IsType(resolved.EntityType("User")))
 }
 
@@ -703,7 +703,7 @@ func TestResolveEntityTypeRefQualified(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	x := (*result.Entities["User"].Shape)["x"]
+	x := result.Entities["User"].Shape["x"]
 	testutil.Equals(t, x.Type, resolved.IsType(resolved.EntityType("A::Foo")))
 }
 
@@ -737,10 +737,10 @@ func TestResolveDirectPrimitiveTypes(t *testing.T) {
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	user := result.Entities["User"]
-	testutil.Equals(t, (*user.Shape)["s"].Type, resolved.IsType(resolved.StringType{}))
-	testutil.Equals(t, (*user.Shape)["l"].Type, resolved.IsType(resolved.LongType{}))
-	testutil.Equals(t, (*user.Shape)["b"].Type, resolved.IsType(resolved.BoolType{}))
-	testutil.Equals(t, (*user.Shape)["e"].Type, resolved.IsType(resolved.ExtensionType("ipaddr")))
+	testutil.Equals(t, user.Shape["s"].Type, resolved.IsType(resolved.StringType{}))
+	testutil.Equals(t, user.Shape["l"].Type, resolved.IsType(resolved.LongType{}))
+	testutil.Equals(t, user.Shape["b"].Type, resolved.IsType(resolved.BoolType{}))
+	testutil.Equals(t, user.Shape["e"].Type, resolved.IsType(resolved.ExtensionType("ipaddr")))
 }
 
 func TestResolveEnumEntityUIDBrokenIterator(t *testing.T) {
@@ -865,7 +865,7 @@ func TestResolveQualifiedEntityTypeRefAsType(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	ref := (*result.Entities["NS::User"].Shape)["ref"]
+	ref := result.Entities["NS::User"].Shape["ref"]
 	testutil.Equals(t, ref.Type, resolved.IsType(resolved.EntityType("NS::Admin")))
 }
 
@@ -889,7 +889,7 @@ func TestResolveEmptyNamespaceCommonType(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	c := (*result.Entities["NS::User"].Shape)["c"]
+	c := result.Entities["NS::User"].Shape["c"]
 	_, ok := c.Type.(resolved.RecordType)
 	testutil.Equals(t, ok, true)
 }
@@ -914,7 +914,7 @@ func TestResolveEmptyNamespaceEntityType(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	g := (*result.Entities["NS::User"].Shape)["g"]
+	g := result.Entities["NS::User"].Shape["g"]
 	testutil.Equals(t, g.Type, resolved.IsType(resolved.EntityType("Global")))
 }
 
@@ -936,7 +936,7 @@ func TestResolveAnnotationsOnAttributes(t *testing.T) {
 	testutil.OK(t, err)
 	user := result.Entities["User"]
 	testutil.Equals(t, types.String(user.Annotations["doc"]), types.String("user"))
-	testutil.Equals(t, types.String((*user.Shape)["name"].Annotations["doc"]), types.String("the name"))
+	testutil.Equals(t, types.String(user.Shape["name"].Annotations["doc"]), types.String("the name"))
 }
 
 func TestResolveEnumAnnotations(t *testing.T) {
@@ -1038,7 +1038,7 @@ func TestResolveNamespacedEntityTypeRef(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	members := (*result.Entities["NS::Group"].Shape)["members"]
+	members := result.Entities["NS::Group"].Shape["members"]
 	setType, ok := members.Type.(resolved.SetType)
 	testutil.Equals(t, ok, true)
 	testutil.Equals(t, setType.Element, resolved.IsType(resolved.EntityType("NS::User")))
@@ -1065,7 +1065,7 @@ func TestResolveNamespacedEnumTypeRef(t *testing.T) {
 	}
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	color := (*result.Entities["NS::Item"].Shape)["color"]
+	color := result.Entities["NS::Item"].Shape["color"]
 	testutil.Equals(t, color.Type, resolved.IsType(resolved.EntityType("NS::Color")))
 }
 

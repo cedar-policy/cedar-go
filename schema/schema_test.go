@@ -487,13 +487,13 @@ var wantResolved = &resolved.Schema{
 		"System": {
 			Name:     "System",
 			MemberOf: []types.EntityType{"Admin"},
-			Shape: &resolved.RecordType{
+			Shape: resolved.RecordType{
 				"version": resolved.Attribute{Type: resolved.StringType{}},
 			},
 		},
 		"MyApp::Department": {
 			Name: "MyApp::Department",
-			Shape: &resolved.RecordType{
+			Shape: resolved.RecordType{
 				"budget": resolved.Attribute{
 					Type: resolved.RecordType{
 						"decimal": resolved.Attribute{Type: resolved.LongType{}},
@@ -504,7 +504,7 @@ var wantResolved = &resolved.Schema{
 		},
 		"MyApp::Document": {
 			Name: "MyApp::Document",
-			Shape: &resolved.RecordType{
+			Shape: resolved.RecordType{
 				"public": resolved.Attribute{Type: resolved.BoolType{}},
 				"title":  resolved.Attribute{Type: resolved.StringType{}},
 			},
@@ -512,7 +512,7 @@ var wantResolved = &resolved.Schema{
 		"MyApp::Group": {
 			Name:     "MyApp::Group",
 			MemberOf: []types.EntityType{"MyApp::Department"},
-			Shape: &resolved.RecordType{
+			Shape: resolved.RecordType{
 				"metadata": resolved.Attribute{
 					Type: resolved.RecordType{
 						"created": resolved.Attribute{Type: resolved.ExtensionType("datetime")},
@@ -526,7 +526,7 @@ var wantResolved = &resolved.Schema{
 			Name:        "MyApp::User",
 			Annotations: resolved.Annotations{"doc": "User entity"},
 			MemberOf:    []types.EntityType{"MyApp::Group"},
-			Shape: &resolved.RecordType{
+			Shape: resolved.RecordType{
 				"active": resolved.Attribute{Type: resolved.BoolType{}},
 				"address": resolved.Attribute{
 					Type: resolved.RecordType{
