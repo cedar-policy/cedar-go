@@ -152,7 +152,7 @@ func (r *resolverState) detectCommonTypeCycles() error {
 		ns := extractNamespace(name)
 		refs := collectTypeRefs(typ)
 		for _, ref := range refs {
-			resolved := r.resolveTypePath(ns, ref)
+			resolved := r.resolveTypeRefPath(ns, ref)
 			if _, ok := r.commonTypes[resolved]; ok {
 				deps[name] = append(deps[name], resolved)
 			}
@@ -441,21 +441,17 @@ func (r *resolverState) resolveQualifiedTypeRef(ref ast.TypeRef) (IsType, error)
 	return nil, fmt.Errorf("undefined type %q", ref)
 }
 
-func (r *resolverState) resolveTypePath(ns types.Path, path types.Path) types.Path {
-	name := string(path)
-	if strings.HasPrefix(name, "__cedar::") {
-		return path
-	}
-	if strings.Contains(name, "::") {
-		return path
+func (r *resolverState) resolveTypeRefPath(ns types.Path, ref ast.TypeRef) types.Path {
+	if strings.Contains(string(ref), "::") {
+		return types.Path(ref)
 	}
 	if ns != "" {
-		qualifiedPath := types.Path(string(ns) + "::" + name)
+		qualifiedPath := types.Path(string(ns) + "::" + string(ref))
 		if _, ok := r.commonTypes[qualifiedPath]; ok {
 			return qualifiedPath
 		}
 	}
-	return path
+	return types.Path(ref)
 }
 
 func resolveActionParentRef(ns types.Path, ref ast.ParentRef) types.EntityUID {
@@ -534,14 +530,14 @@ func lookupBuiltin(path types.Path) IsType {
 	}
 }
 
-func collectTypeRefs(t ast.IsType) []types.Path {
+func collectTypeRefs(t ast.IsType) []ast.TypeRef {
 	switch t := t.(type) {
 	case ast.TypeRef:
-		return []types.Path{types.Path(t)}
+		return []ast.TypeRef{t}
 	case ast.SetType:
 		return collectTypeRefs(t.Element)
 	case ast.RecordType:
-		var refs []types.Path
+		var refs []ast.TypeRef
 		for _, attr := range t {
 			refs = append(refs, collectTypeRefs(attr.Type)...)
 		}

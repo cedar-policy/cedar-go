@@ -836,8 +836,8 @@ func TestResolveQualifiedEntityType(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"User":  ast2.Entity{},
-					"Admin": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NS::User"}},
+					"NS::User": ast2.Entity{},
+					"Admin":    ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NS::User"}},
 				},
 			},
 		},
@@ -1081,7 +1081,7 @@ func TestResolveUndefinedMemberOf(t *testing.T) {
 }
 
 func TestResolveCedarBuiltinInTypePath(t *testing.T) {
-	// Exercise resolveTypePath line 462-464: __cedar:: prefix in cycle detection.
+	// Exercise resolveTypeRefPath line 462-464: __cedar:: prefix in cycle detection.
 	s := &ast2.Schema{
 		CommonTypes: ast2.CommonTypes{
 			"A": ast2.CommonType{Type: ast2.TypeRef("__cedar::String")},
@@ -1093,7 +1093,7 @@ func TestResolveCedarBuiltinInTypePath(t *testing.T) {
 }
 
 func TestResolveQualifiedTypePath(t *testing.T) {
-	// Exercise resolveTypePath line 465-467: qualified path with :: in cycle detection.
+	// Exercise resolveTypeRefPath line 465-467: qualified path with :: in cycle detection.
 	s := &ast2.Schema{
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
@@ -1110,7 +1110,7 @@ func TestResolveQualifiedTypePath(t *testing.T) {
 }
 
 func TestResolveNamespacedCommonTypePath(t *testing.T) {
-	// Exercise resolveTypePath line 470-472: namespaced common type ref in cycle detection.
+	// Exercise resolveTypeRefPath line 470-472: namespaced common type ref in cycle detection.
 	s := &ast2.Schema{
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{

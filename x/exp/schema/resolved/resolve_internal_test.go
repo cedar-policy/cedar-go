@@ -30,15 +30,15 @@ func TestResolveTypePath(t *testing.T) {
 	}
 
 	// __cedar:: prefix returns path unchanged
-	p := r.resolveTypePath("NS", "__cedar::String")
+	p := r.resolveTypeRefPath("NS", "__cedar::String")
 	testutil.Equals(t, p, types.Path("__cedar::String"))
 
 	// Already qualified (contains ::) returns path unchanged
-	p = r.resolveTypePath("NS", "Other::Foo")
+	p = r.resolveTypeRefPath("NS", "Other::Foo")
 	testutil.Equals(t, p, types.Path("Other::Foo"))
 
 	// Unqualified in namespace resolves to NS::A
-	p = r.resolveTypePath("NS", "A")
+	p = r.resolveTypeRefPath("NS", "A")
 	testutil.Equals(t, p, types.Path("NS::A"))
 }
 
