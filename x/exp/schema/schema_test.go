@@ -8,8 +8,8 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/schema"
-	ast2 "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
-	resolved2 "github.com/cedar-policy/cedar-go/x/exp/schema/resolved"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/resolved"
 )
 
 var wantCedar = `
@@ -329,135 +329,135 @@ var wantJSON = `{
 // wantAST is the expected AST structure for the test schema.
 // The Cedar parser produces ast.TypeRef for all type names (including
 // builtins like String, Long, Bool). Resolution happens later.
-var wantAST = &ast2.Schema{
-	CommonTypes: ast2.CommonTypes{
-		"Address": ast2.CommonType{
-			Annotations: ast2.Annotations{
+var wantAST = &ast.Schema{
+	CommonTypes: ast.CommonTypes{
+		"Address": ast.CommonType{
+			Annotations: ast.Annotations{
 				"doc":                  "Address information",
 				"personal_information": "",
 			},
-			Type: ast2.RecordType{
-				"city": ast2.Attribute{
-					Type: ast2.TypeRef("String"),
-					Annotations: ast2.Annotations{
+			Type: ast.RecordType{
+				"city": ast.Attribute{
+					Type: ast.TypeRef("String"),
+					Annotations: ast.Annotations{
 						"also": "town",
 					},
 				},
-				"country": ast2.Attribute{Type: ast2.TypeRef("Country")},
-				"street":  ast2.Attribute{Type: ast2.TypeRef("String")},
-				"zipcode": ast2.Attribute{Type: ast2.TypeRef("String"), Optional: true},
+				"country": ast.Attribute{Type: ast.TypeRef("Country")},
+				"street":  ast.Attribute{Type: ast.TypeRef("String")},
+				"zipcode": ast.Attribute{Type: ast.TypeRef("String"), Optional: true},
 			},
 		},
-		"decimal": ast2.CommonType{
-			Type: ast2.RecordType{
-				"decimal": ast2.Attribute{Type: ast2.TypeRef("Long")},
-				"whole":   ast2.Attribute{Type: ast2.TypeRef("Long")},
-			},
-		},
-	},
-	Entities: ast2.Entities{
-		"Admin":   ast2.Entity{},
-		"Country": ast2.Entity{},
-		"System": ast2.Entity{
-			ParentTypes: []ast2.EntityTypeRef{"Admin"},
-			Shape: &ast2.RecordType{
-				"version": ast2.Attribute{Type: ast2.TypeRef("String")},
+		"decimal": ast.CommonType{
+			Type: ast.RecordType{
+				"decimal": ast.Attribute{Type: ast.TypeRef("Long")},
+				"whole":   ast.Attribute{Type: ast.TypeRef("Long")},
 			},
 		},
 	},
-	Enums: ast2.Enums{
-		"Role": ast2.Enum{
+	Entities: ast.Entities{
+		"Admin":   ast.Entity{},
+		"Country": ast.Entity{},
+		"System": ast.Entity{
+			ParentTypes: []ast.EntityTypeRef{"Admin"},
+			Shape: ast.RecordType{
+				"version": ast.Attribute{Type: ast.TypeRef("String")},
+			},
+		},
+	},
+	Enums: ast.Enums{
+		"Role": ast.Enum{
 			Values: []types.String{"superuser", "operator"},
 		},
 	},
-	Actions: ast2.Actions{
-		"audit": ast2.Action{
-			AppliesTo: &ast2.AppliesTo{
-				Principals: []ast2.EntityTypeRef{"Admin"},
-				Resources:  []ast2.EntityTypeRef{"MyApp::Document", "System"},
+	Actions: ast.Actions{
+		"audit": ast.Action{
+			AppliesTo: &ast.AppliesTo{
+				Principals: []ast.EntityTypeRef{"Admin"},
+				Resources:  []ast.EntityTypeRef{"MyApp::Document", "System"},
 			},
 		},
 	},
-	Namespaces: ast2.Namespaces{
-		"MyApp": ast2.Namespace{
-			Annotations: ast2.Annotations{
+	Namespaces: ast.Namespaces{
+		"MyApp": ast.Namespace{
+			Annotations: ast.Annotations{
 				"doc": "Doc manager",
 			},
-			CommonTypes: ast2.CommonTypes{
-				"Metadata": ast2.CommonType{
-					Type: ast2.RecordType{
-						"created": ast2.Attribute{Type: ast2.TypeRef("datetime")},
-						"tags":    ast2.Attribute{Type: ast2.SetType{Element: ast2.TypeRef("String")}},
+			CommonTypes: ast.CommonTypes{
+				"Metadata": ast.CommonType{
+					Type: ast.RecordType{
+						"created": ast.Attribute{Type: ast.TypeRef("datetime")},
+						"tags":    ast.Attribute{Type: ast.SetType{Element: ast.TypeRef("String")}},
 					},
 				},
 			},
-			Entities: ast2.Entities{
-				"Department": ast2.Entity{
-					Shape: &ast2.RecordType{
-						"budget": ast2.Attribute{Type: ast2.TypeRef("decimal")},
+			Entities: ast.Entities{
+				"Department": ast.Entity{
+					Shape: ast.RecordType{
+						"budget": ast.Attribute{Type: ast.TypeRef("decimal")},
 					},
 				},
-				"Document": ast2.Entity{
-					Shape: &ast2.RecordType{
-						"public": ast2.Attribute{Type: ast2.TypeRef("Bool")},
-						"title":  ast2.Attribute{Type: ast2.TypeRef("String")},
+				"Document": ast.Entity{
+					Shape: ast.RecordType{
+						"public": ast.Attribute{Type: ast.TypeRef("Bool")},
+						"title":  ast.Attribute{Type: ast.TypeRef("String")},
 					},
 				},
-				"Group": ast2.Entity{
-					ParentTypes: []ast2.EntityTypeRef{"Department"},
-					Shape: &ast2.RecordType{
-						"metadata": ast2.Attribute{Type: ast2.TypeRef("Metadata")},
-						"name":     ast2.Attribute{Type: ast2.TypeRef("String")},
+				"Group": ast.Entity{
+					ParentTypes: []ast.EntityTypeRef{"Department"},
+					Shape: ast.RecordType{
+						"metadata": ast.Attribute{Type: ast.TypeRef("Metadata")},
+						"name":     ast.Attribute{Type: ast.TypeRef("String")},
 					},
 				},
-				"User": ast2.Entity{
-					ParentTypes: []ast2.EntityTypeRef{"Group"},
-					Annotations: ast2.Annotations{
+				"User": ast.Entity{
+					ParentTypes: []ast.EntityTypeRef{"Group"},
+					Annotations: ast.Annotations{
 						"doc": "User entity",
 					},
-					Shape: &ast2.RecordType{
-						"active":  ast2.Attribute{Type: ast2.TypeRef("Bool")},
-						"address": ast2.Attribute{Type: ast2.TypeRef("Address")},
-						"email":   ast2.Attribute{Type: ast2.TypeRef("String")},
-						"level":   ast2.Attribute{Type: ast2.TypeRef("Long")},
+					Shape: ast.RecordType{
+						"active":  ast.Attribute{Type: ast.TypeRef("Bool")},
+						"address": ast.Attribute{Type: ast.TypeRef("Address")},
+						"email":   ast.Attribute{Type: ast.TypeRef("String")},
+						"level":   ast.Attribute{Type: ast.TypeRef("Long")},
 					},
 				},
 			},
-			Enums: ast2.Enums{
-				"Status": ast2.Enum{
+			Enums: ast.Enums{
+				"Status": ast.Enum{
 					Values: []types.String{"draft", "published", "archived"},
 				},
 			},
-			Actions: ast2.Actions{
-				"edit": ast2.Action{
-					Annotations: ast2.Annotations{
+			Actions: ast.Actions{
+				"edit": ast.Action{
+					Annotations: ast.Annotations{
 						"doc": "View or edit document",
 					},
-					AppliesTo: &ast2.AppliesTo{
-						Principals: []ast2.EntityTypeRef{"User"},
-						Resources:  []ast2.EntityTypeRef{"Document"},
-						Context: ast2.RecordType{
-							"ip":        ast2.Attribute{Type: ast2.TypeRef("ipaddr")},
-							"timestamp": ast2.Attribute{Type: ast2.TypeRef("datetime")},
+					AppliesTo: &ast.AppliesTo{
+						Principals: []ast.EntityTypeRef{"User"},
+						Resources:  []ast.EntityTypeRef{"Document"},
+						Context: ast.RecordType{
+							"ip":        ast.Attribute{Type: ast.TypeRef("ipaddr")},
+							"timestamp": ast.Attribute{Type: ast.TypeRef("datetime")},
 						},
 					},
 				},
-				"manage": ast2.Action{
-					AppliesTo: &ast2.AppliesTo{
-						Principals: []ast2.EntityTypeRef{"User"},
-						Resources:  []ast2.EntityTypeRef{"Document", "Group"},
+				"manage": ast.Action{
+					AppliesTo: &ast.AppliesTo{
+						Principals: []ast.EntityTypeRef{"User"},
+						Resources:  []ast.EntityTypeRef{"Document", "Group"},
 					},
 				},
-				"view": ast2.Action{
-					Annotations: ast2.Annotations{
+				"view": ast.Action{
+					Annotations: ast.Annotations{
 						"doc": "View or edit document",
 					},
-					AppliesTo: &ast2.AppliesTo{
-						Principals: []ast2.EntityTypeRef{"User"},
-						Resources:  []ast2.EntityTypeRef{"Document"},
-						Context: ast2.RecordType{
-							"ip":        ast2.Attribute{Type: ast2.TypeRef("ipaddr")},
-							"timestamp": ast2.Attribute{Type: ast2.TypeRef("datetime")},
+					AppliesTo: &ast.AppliesTo{
+						Principals: []ast.EntityTypeRef{"User"},
+						Resources:  []ast.EntityTypeRef{"Document"},
+						Context: ast.RecordType{
+							"ip":        ast.Attribute{Type: ast.TypeRef("ipaddr")},
+							"timestamp": ast.Attribute{Type: ast.TypeRef("datetime")},
 						},
 					},
 				},
@@ -468,16 +468,16 @@ var wantAST = &ast2.Schema{
 
 // wantResolved is the expected resolved schema structure.
 // All type references have been fully qualified and common types inlined.
-var wantResolved = &resolved2.Schema{
-	Namespaces: map[types.Path]resolved2.Namespace{
+var wantResolved = &resolved.Schema{
+	Namespaces: map[types.Path]resolved.Namespace{
 		"MyApp": {
 			Name: "MyApp",
-			Annotations: resolved2.Annotations{
+			Annotations: resolved.Annotations{
 				"doc": "Doc manager",
 			},
 		},
 	},
-	Entities: map[types.EntityType]resolved2.Entity{
+	Entities: map[types.EntityType]resolved.Entity{
 		"Admin": {
 			Name: "Admin",
 		},
@@ -487,111 +487,111 @@ var wantResolved = &resolved2.Schema{
 		"System": {
 			Name:        "System",
 			ParentTypes: []types.EntityType{"Admin"},
-			Shape: resolved2.RecordType{
-				"version": resolved2.Attribute{Type: resolved2.StringType{}},
+			Shape: resolved.RecordType{
+				"version": resolved.Attribute{Type: resolved.StringType{}},
 			},
 		},
 		"MyApp::Department": {
 			Name: "MyApp::Department",
-			Shape: resolved2.RecordType{
-				"budget": resolved2.Attribute{
-					Type: resolved2.RecordType{
-						"decimal": resolved2.Attribute{Type: resolved2.LongType{}},
-						"whole":   resolved2.Attribute{Type: resolved2.LongType{}},
+			Shape: resolved.RecordType{
+				"budget": resolved.Attribute{
+					Type: resolved.RecordType{
+						"decimal": resolved.Attribute{Type: resolved.LongType{}},
+						"whole":   resolved.Attribute{Type: resolved.LongType{}},
 					},
 				},
 			},
 		},
 		"MyApp::Document": {
 			Name: "MyApp::Document",
-			Shape: resolved2.RecordType{
-				"public": resolved2.Attribute{Type: resolved2.BoolType{}},
-				"title":  resolved2.Attribute{Type: resolved2.StringType{}},
+			Shape: resolved.RecordType{
+				"public": resolved.Attribute{Type: resolved.BoolType{}},
+				"title":  resolved.Attribute{Type: resolved.StringType{}},
 			},
 		},
 		"MyApp::Group": {
 			Name:        "MyApp::Group",
 			ParentTypes: []types.EntityType{"MyApp::Department"},
-			Shape: resolved2.RecordType{
-				"metadata": resolved2.Attribute{
-					Type: resolved2.RecordType{
-						"created": resolved2.Attribute{Type: resolved2.ExtensionType("datetime")},
-						"tags":    resolved2.Attribute{Type: resolved2.SetType{Element: resolved2.StringType{}}},
+			Shape: resolved.RecordType{
+				"metadata": resolved.Attribute{
+					Type: resolved.RecordType{
+						"created": resolved.Attribute{Type: resolved.ExtensionType("datetime")},
+						"tags":    resolved.Attribute{Type: resolved.SetType{Element: resolved.StringType{}}},
 					},
 				},
-				"name": resolved2.Attribute{Type: resolved2.StringType{}},
+				"name": resolved.Attribute{Type: resolved.StringType{}},
 			},
 		},
 		"MyApp::User": {
 			Name:        "MyApp::User",
-			Annotations: resolved2.Annotations{"doc": "User entity"},
+			Annotations: resolved.Annotations{"doc": "User entity"},
 			ParentTypes: []types.EntityType{"MyApp::Group"},
-			Shape: resolved2.RecordType{
-				"active": resolved2.Attribute{Type: resolved2.BoolType{}},
-				"address": resolved2.Attribute{
-					Type: resolved2.RecordType{
-						"city": resolved2.Attribute{
-							Type:        resolved2.StringType{},
-							Annotations: resolved2.Annotations{"also": "town"},
+			Shape: resolved.RecordType{
+				"active": resolved.Attribute{Type: resolved.BoolType{}},
+				"address": resolved.Attribute{
+					Type: resolved.RecordType{
+						"city": resolved.Attribute{
+							Type:        resolved.StringType{},
+							Annotations: resolved.Annotations{"also": "town"},
 						},
-						"country": resolved2.Attribute{Type: resolved2.EntityType("Country")},
-						"street":  resolved2.Attribute{Type: resolved2.StringType{}},
-						"zipcode": resolved2.Attribute{Type: resolved2.StringType{}, Optional: true},
+						"country": resolved.Attribute{Type: resolved.EntityType("Country")},
+						"street":  resolved.Attribute{Type: resolved.StringType{}},
+						"zipcode": resolved.Attribute{Type: resolved.StringType{}, Optional: true},
 					},
 				},
-				"email": resolved2.Attribute{Type: resolved2.StringType{}},
-				"level": resolved2.Attribute{Type: resolved2.LongType{}},
+				"email": resolved.Attribute{Type: resolved.StringType{}},
+				"level": resolved.Attribute{Type: resolved.LongType{}},
 			},
 		},
 	},
-	Enums: map[types.EntityType]resolved2.Enum{
+	Enums: map[types.EntityType]resolved.Enum{
 		"Role": {
 			Name:   "Role",
-			Values: []types.String{"superuser", "operator"},
+			Values: []types.EntityUID{types.NewEntityUID("Role", "superuser"), types.NewEntityUID("Role", "operator")},
 		},
 		"MyApp::Status": {
 			Name:   "MyApp::Status",
-			Values: []types.String{"draft", "published", "archived"},
+			Values: []types.EntityUID{types.NewEntityUID("MyApp::Status", "draft"), types.NewEntityUID("MyApp::Status", "published"), types.NewEntityUID("MyApp::Status", "archived")},
 		},
 	},
-	Actions: map[types.EntityUID]resolved2.Action{
+	Actions: map[types.EntityUID]resolved.Action{
 		types.NewEntityUID("Action", "audit"): {
 			Name: "audit",
-			AppliesTo: &resolved2.AppliesTo{
+			AppliesTo: &resolved.AppliesTo{
 				Principals: []types.EntityType{"Admin"},
 				Resources:  []types.EntityType{"MyApp::Document", "System"},
-				Context:    resolved2.RecordType{},
+				Context:    resolved.RecordType{},
 			},
 		},
 		types.NewEntityUID("MyApp::Action", "edit"): {
 			Name:        "edit",
-			Annotations: resolved2.Annotations{"doc": "View or edit document"},
-			AppliesTo: &resolved2.AppliesTo{
+			Annotations: resolved.Annotations{"doc": "View or edit document"},
+			AppliesTo: &resolved.AppliesTo{
 				Principals: []types.EntityType{"MyApp::User"},
 				Resources:  []types.EntityType{"MyApp::Document"},
-				Context: resolved2.RecordType{
-					"ip":        resolved2.Attribute{Type: resolved2.ExtensionType("ipaddr")},
-					"timestamp": resolved2.Attribute{Type: resolved2.ExtensionType("datetime")},
+				Context: resolved.RecordType{
+					"ip":        resolved.Attribute{Type: resolved.ExtensionType("ipaddr")},
+					"timestamp": resolved.Attribute{Type: resolved.ExtensionType("datetime")},
 				},
 			},
 		},
 		types.NewEntityUID("MyApp::Action", "manage"): {
 			Name: "manage",
-			AppliesTo: &resolved2.AppliesTo{
+			AppliesTo: &resolved.AppliesTo{
 				Principals: []types.EntityType{"MyApp::User"},
 				Resources:  []types.EntityType{"MyApp::Document", "MyApp::Group"},
-				Context:    resolved2.RecordType{},
+				Context:    resolved.RecordType{},
 			},
 		},
 		types.NewEntityUID("MyApp::Action", "view"): {
 			Name:        "view",
-			Annotations: resolved2.Annotations{"doc": "View or edit document"},
-			AppliesTo: &resolved2.AppliesTo{
+			Annotations: resolved.Annotations{"doc": "View or edit document"},
+			AppliesTo: &resolved.AppliesTo{
 				Principals: []types.EntityType{"MyApp::User"},
 				Resources:  []types.EntityType{"MyApp::Document"},
-				Context: resolved2.RecordType{
-					"ip":        resolved2.Attribute{Type: resolved2.ExtensionType("ipaddr")},
-					"timestamp": resolved2.Attribute{Type: resolved2.ExtensionType("datetime")},
+				Context: resolved.RecordType{
+					"ip":        resolved.Attribute{Type: resolved.ExtensionType("ipaddr")},
+					"timestamp": resolved.Attribute{Type: resolved.ExtensionType("datetime")},
 				},
 			},
 		},
@@ -722,7 +722,7 @@ func TestSchema(t *testing.T) {
 
 	t.Run("EmptySchema", func(t *testing.T) {
 		t.Parallel()
-		s := schema.NewSchemaFromAST(&ast2.Schema{})
+		s := schema.NewSchemaFromAST(&ast.Schema{})
 		b, err := s.MarshalCedar()
 		testutil.OK(t, err)
 		testutil.Equals(t, string(b), "")

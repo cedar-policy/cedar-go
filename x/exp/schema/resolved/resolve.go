@@ -4,7 +4,6 @@ package resolved
 
 import (
 	"fmt"
-	"iter"
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/types"
@@ -38,18 +37,7 @@ type Entity struct {
 type Enum struct {
 	Name        types.EntityType
 	Annotations Annotations
-	Values      []types.String
-}
-
-// EntityUIDs iterates over valid EntityUIDs for this enum.
-func (e Enum) EntityUIDs() iter.Seq[types.EntityUID] {
-	return func(yield func(types.EntityUID) bool) {
-		for _, v := range e.Values {
-			if !yield(types.NewEntityUID(e.Name, v)) {
-				return
-			}
-		}
-	}
+	Values      []types.EntityUID
 }
 
 // AppliesTo defines the resolved principal, resource, and context types for an action.
@@ -282,7 +270,7 @@ func (r *resolverState) resolveEntities(nsName types.Path, entities ast.Entities
 			resolved.ParentTypes = append(resolved.ParentTypes, et)
 		}
 		if entity.Shape != nil {
-			rec, err := r.resolveRecordType(nsName, *entity.Shape)
+			rec, err := r.resolveRecordType(nsName, entity.Shape)
 			if err != nil {
 				return fmt.Errorf("entity %q shape: %w", qualName, err)
 			}
@@ -303,10 +291,14 @@ func (r *resolverState) resolveEntities(nsName types.Path, entities ast.Entities
 func (r *resolverState) resolveEnums(nsName types.Path, enums ast.Enums, result *Schema) {
 	for name, enum := range enums {
 		qualName := qualifyEntityType(nsName, name)
+		values := make([]types.EntityUID, len(enum.Values))
+		for i, v := range enum.Values {
+			values[i] = types.NewEntityUID(qualName, v)
+		}
 		result.Enums[qualName] = Enum{
 			Name:        qualName,
 			Annotations: Annotations(enum.Annotations),
-			Values:      enum.Values,
+			Values:      values,
 		}
 	}
 }
@@ -331,18 +323,12 @@ func (r *resolverState) resolveActions(nsName types.Path, actions ast.Actions, r
 				}
 				at.Principals = append(at.Principals, et)
 			}
-			if at.Principals == nil {
-				at.Principals = []types.EntityType{}
-			}
 			for _, res := range action.AppliesTo.Resources {
 				et, err := r.resolveEntityTypeRef(nsName, res)
 				if err != nil {
 					return fmt.Errorf("action %q resource: %w", name, err)
 				}
 				at.Resources = append(at.Resources, et)
-			}
-			if at.Resources == nil {
-				at.Resources = []types.EntityType{}
 			}
 			if action.AppliesTo.Context != nil {
 				ctx, err := r.resolveType(nsName, action.AppliesTo.Context)

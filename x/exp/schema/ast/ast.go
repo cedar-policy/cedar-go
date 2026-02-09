@@ -24,6 +24,7 @@ type CommonTypes map[types.Ident]CommonType
 type Namespaces map[types.Path]Namespace
 
 // Schema is the top-level Cedar schema AST.
+// The Entities, Enums, Actions, and CommonTypes are for the top-level namespace.
 type Schema struct {
 	Entities    Entities
 	Enums       Enums
@@ -51,7 +52,7 @@ type CommonType struct {
 type Entity struct {
 	Annotations Annotations
 	ParentTypes []EntityTypeRef
-	Shape       *RecordType
+	Shape       RecordType
 	Tags        IsType
 }
 
@@ -83,7 +84,7 @@ type ParentRef struct {
 }
 
 // ParentRefFromID creates a ParentRef with only an ID.
-// Type is inferred as Action during resolution.
+// Type is inferred as Action and namespaced during resolution.
 func ParentRefFromID(id types.String) ParentRef {
 	return ParentRef{
 		ID: id,
@@ -91,9 +92,10 @@ func ParentRefFromID(id types.String) ParentRef {
 }
 
 // NewParentRef creates a ParentRef with type and ID.
-func NewParentRef(typ types.EntityType, id types.String) ParentRef {
+// Type will be namespaced during resolution.
+func NewParentRef(typ EntityTypeRef, id types.String) ParentRef {
 	return ParentRef{
-		Type: EntityTypeRef(typ),
+		Type: typ,
 		ID:   id,
 	}
 }

@@ -5,77 +5,77 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
-	ast2 "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
-	resolved2 "github.com/cedar-policy/cedar-go/x/exp/schema/resolved"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/resolved"
 )
 
 func TestResolveEmpty(t *testing.T) {
-	s := &ast2.Schema{}
-	result, err := resolved2.Resolve(s)
+	s := &ast.Schema{}
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	testutil.Equals(t, len(result.Entities), 0)
 	testutil.Equals(t, len(result.Actions), 0)
 }
 
 func TestResolveBasicEntity(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"name": ast2.Attribute{Type: ast2.TypeRef("String")},
-					"age":  ast2.Attribute{Type: ast2.TypeRef("Long"), Optional: true},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"name": ast.Attribute{Type: ast.TypeRef("String")},
+					"age":  ast.Attribute{Type: ast.TypeRef("Long"), Optional: true},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	user := result.Entities["User"]
-	testutil.Equals(t, user.Shape["name"].Type, resolved2.IsType(resolved2.StringType{}))
-	testutil.Equals(t, user.Shape["age"].Type, resolved2.IsType(resolved2.LongType{}))
+	testutil.Equals(t, user.Shape["name"].Type, resolved.IsType(resolved.StringType{}))
+	testutil.Equals(t, user.Shape["age"].Type, resolved.IsType(resolved.LongType{}))
 	testutil.Equals(t, user.Shape["age"].Optional, true)
 }
 
-func TestResolveEntityMemberOf(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User":  ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"Group"}},
-			"Group": ast2.Entity{},
+func TestResolveEntityParents(t *testing.T) {
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User":  ast.Entity{ParentTypes: []ast.EntityTypeRef{"Group"}},
+			"Group": ast.Entity{},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	testutil.Equals(t, result.Entities["User"].ParentTypes, []types.EntityType{"Group"})
 }
 
-func TestResolveEntityMemberOfUndefined(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NonExistent"}},
+func TestResolveEntityParentsUndefined(t *testing.T) {
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{ParentTypes: []ast.EntityTypeRef{"NonExistent"}},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveCommonType(t *testing.T) {
-	s := &ast2.Schema{
-		CommonTypes: ast2.CommonTypes{
-			"Context": ast2.CommonType{
-				Type: ast2.RecordType{
-					"ip": ast2.Attribute{Type: ast2.TypeRef("ipaddr")},
+	s := &ast.Schema{
+		CommonTypes: ast.CommonTypes{
+			"Context": ast.CommonType{
+				Type: ast.RecordType{
+					"ip": ast.Attribute{Type: ast.TypeRef("ipaddr")},
 				},
 			},
 		},
-		Actions: ast2.Actions{
-			"view": ast2.Action{
-				AppliesTo: &ast2.AppliesTo{
-					Context: ast2.TypeRef("Context"),
+		Actions: ast.Actions{
+			"view": ast.Action{
+				AppliesTo: &ast.AppliesTo{
+					Context: ast.TypeRef("Context"),
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("Action", "view")
 	view := result.Actions[uid]
@@ -85,98 +85,98 @@ func TestResolveCommonType(t *testing.T) {
 }
 
 func TestResolveCommonTypeCycle(t *testing.T) {
-	s := &ast2.Schema{
-		CommonTypes: ast2.CommonTypes{
-			"A": ast2.CommonType{Type: ast2.TypeRef("B")},
-			"B": ast2.CommonType{Type: ast2.TypeRef("A")},
+	s := &ast.Schema{
+		CommonTypes: ast.CommonTypes{
+			"A": ast.CommonType{Type: ast.TypeRef("B")},
+			"B": ast.CommonType{Type: ast.TypeRef("A")},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveCommonTypeIndirectCycle(t *testing.T) {
-	s := &ast2.Schema{
-		CommonTypes: ast2.CommonTypes{
-			"A": ast2.CommonType{Type: ast2.TypeRef("B")},
-			"B": ast2.CommonType{Type: ast2.TypeRef("C")},
-			"C": ast2.CommonType{Type: ast2.TypeRef("A")},
+	s := &ast.Schema{
+		CommonTypes: ast.CommonTypes{
+			"A": ast.CommonType{Type: ast.TypeRef("B")},
+			"B": ast.CommonType{Type: ast.TypeRef("C")},
+			"C": ast.CommonType{Type: ast.TypeRef("A")},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveUndefinedType(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"x": ast2.Attribute{Type: ast2.TypeRef("NonExistent")},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"x": ast.Attribute{Type: ast.TypeRef("NonExistent")},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveBuiltinTypes(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"s":   ast2.Attribute{Type: ast2.TypeRef("String")},
-					"l":   ast2.Attribute{Type: ast2.TypeRef("Long")},
-					"b":   ast2.Attribute{Type: ast2.TypeRef("Bool")},
-					"b2":  ast2.Attribute{Type: ast2.TypeRef("Boolean")},
-					"ip":  ast2.Attribute{Type: ast2.TypeRef("ipaddr")},
-					"dec": ast2.Attribute{Type: ast2.TypeRef("decimal")},
-					"dt":  ast2.Attribute{Type: ast2.TypeRef("datetime")},
-					"dur": ast2.Attribute{Type: ast2.TypeRef("duration")},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"s":   ast.Attribute{Type: ast.TypeRef("String")},
+					"l":   ast.Attribute{Type: ast.TypeRef("Long")},
+					"b":   ast.Attribute{Type: ast.TypeRef("Bool")},
+					"b2":  ast.Attribute{Type: ast.TypeRef("Boolean")},
+					"ip":  ast.Attribute{Type: ast.TypeRef("ipaddr")},
+					"dec": ast.Attribute{Type: ast.TypeRef("decimal")},
+					"dt":  ast.Attribute{Type: ast.TypeRef("datetime")},
+					"dur": ast.Attribute{Type: ast.TypeRef("duration")},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	user := result.Entities["User"]
-	testutil.Equals(t, user.Shape["s"].Type, resolved2.IsType(resolved2.StringType{}))
-	testutil.Equals(t, user.Shape["l"].Type, resolved2.IsType(resolved2.LongType{}))
-	testutil.Equals(t, user.Shape["b"].Type, resolved2.IsType(resolved2.BoolType{}))
-	testutil.Equals(t, user.Shape["b2"].Type, resolved2.IsType(resolved2.BoolType{}))
-	testutil.Equals(t, user.Shape["ip"].Type, resolved2.IsType(resolved2.ExtensionType("ipaddr")))
-	testutil.Equals(t, user.Shape["dec"].Type, resolved2.IsType(resolved2.ExtensionType("decimal")))
-	testutil.Equals(t, user.Shape["dt"].Type, resolved2.IsType(resolved2.ExtensionType("datetime")))
-	testutil.Equals(t, user.Shape["dur"].Type, resolved2.IsType(resolved2.ExtensionType("duration")))
+	testutil.Equals(t, user.Shape["s"].Type, resolved.IsType(resolved.StringType{}))
+	testutil.Equals(t, user.Shape["l"].Type, resolved.IsType(resolved.LongType{}))
+	testutil.Equals(t, user.Shape["b"].Type, resolved.IsType(resolved.BoolType{}))
+	testutil.Equals(t, user.Shape["b2"].Type, resolved.IsType(resolved.BoolType{}))
+	testutil.Equals(t, user.Shape["ip"].Type, resolved.IsType(resolved.ExtensionType("ipaddr")))
+	testutil.Equals(t, user.Shape["dec"].Type, resolved.IsType(resolved.ExtensionType("decimal")))
+	testutil.Equals(t, user.Shape["dt"].Type, resolved.IsType(resolved.ExtensionType("datetime")))
+	testutil.Equals(t, user.Shape["dur"].Type, resolved.IsType(resolved.ExtensionType("duration")))
 }
 
 func TestResolveCedarNamespace(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"name": ast2.Attribute{Type: ast2.TypeRef("__cedar::String")},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"name": ast.Attribute{Type: ast.TypeRef("__cedar::String")},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	testutil.Equals(t, result.Entities["User"].Shape["name"].Type, resolved2.IsType(resolved2.StringType{}))
+	testutil.Equals(t, result.Entities["User"].Shape["name"].Type, resolved.IsType(resolved.StringType{}))
 }
 
 func TestResolveCedarNamespaceUndefined(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"x": ast2.Attribute{Type: ast2.TypeRef("__cedar::Bogus")},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"x": ast.Attribute{Type: ast.TypeRef("__cedar::Bogus")},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
@@ -188,33 +188,33 @@ func TestResolveTypeDisambiguation(t *testing.T) {
 		// Example from the Cedar spec: https://docs.cedarpolicy.com/schema/human-readable-schema.html#schema-typeDisambiguation
 		// When "name" is declared as both a common type and an entity type in the same namespace,
 		// the common type wins.
-		s := &ast2.Schema{
-			Namespaces: ast2.Namespaces{
-				"NS": ast2.Namespace{
-					CommonTypes: ast2.CommonTypes{
-						"name": ast2.CommonType{
-							Type: ast2.RecordType{
-								"first": ast2.Attribute{Type: ast2.TypeRef("String")},
-								"last":  ast2.Attribute{Type: ast2.TypeRef("String")},
+		s := &ast.Schema{
+			Namespaces: ast.Namespaces{
+				"NS": ast.Namespace{
+					CommonTypes: ast.CommonTypes{
+						"name": ast.CommonType{
+							Type: ast.RecordType{
+								"first": ast.Attribute{Type: ast.TypeRef("String")},
+								"last":  ast.Attribute{Type: ast.TypeRef("String")},
 							},
 						},
 					},
-					Entities: ast2.Entities{
-						"name": ast2.Entity{},
-						"User": ast2.Entity{
-							Shape: &ast2.RecordType{
-								"n": ast2.Attribute{Type: ast2.TypeRef("name")},
+					Entities: ast.Entities{
+						"name": ast.Entity{},
+						"User": ast.Entity{
+							Shape: ast.RecordType{
+								"n": ast.Attribute{Type: ast.TypeRef("name")},
 							},
 						},
 					},
 				},
 			},
 		}
-		result, err := resolved2.Resolve(s)
+		result, err := resolved.Resolve(s)
 		testutil.OK(t, err)
 		user := result.Entities["NS::User"]
 		// "name" should resolve to the common type (a record), not the entity type
-		rec, ok := user.Shape["n"].Type.(resolved2.RecordType)
+		rec, ok := user.Shape["n"].Type.(resolved.RecordType)
 		testutil.Equals(t, ok, true)
 		testutil.Equals(t, len(rec), 2)
 	})
@@ -224,120 +224,120 @@ func TestResolveTypeDisambiguation(t *testing.T) {
 		// An entity type named "Long" shadows the built-in Long primitive.
 		// A reference to "Long" should resolve to the entity type, not LongType.
 		// The built-in is still accessible via __cedar::Long.
-		s := &ast2.Schema{
-			Namespaces: ast2.Namespaces{
-				"NS": ast2.Namespace{
-					Entities: ast2.Entities{
-						"Long": ast2.Entity{},
-						"User": ast2.Entity{
-							Shape: &ast2.RecordType{
-								"x": ast2.Attribute{Type: ast2.TypeRef("Long")},
-								"y": ast2.Attribute{Type: ast2.TypeRef("__cedar::Long")},
+		s := &ast.Schema{
+			Namespaces: ast.Namespaces{
+				"NS": ast.Namespace{
+					Entities: ast.Entities{
+						"Long": ast.Entity{},
+						"User": ast.Entity{
+							Shape: ast.RecordType{
+								"x": ast.Attribute{Type: ast.TypeRef("Long")},
+								"y": ast.Attribute{Type: ast.TypeRef("__cedar::Long")},
 							},
 						},
 					},
 				},
 			},
 		}
-		result, err := resolved2.Resolve(s)
+		result, err := resolved.Resolve(s)
 		testutil.OK(t, err)
 		user := result.Entities["NS::User"]
 		// "Long" resolves to entity type NS::Long, not the built-in
-		testutil.Equals(t, user.Shape["x"].Type, resolved2.IsType(resolved2.EntityType("NS::Long")))
+		testutil.Equals(t, user.Shape["x"].Type, resolved.IsType(resolved.EntityType("NS::Long")))
 		// "__cedar::Long" still resolves to the built-in
-		testutil.Equals(t, user.Shape["y"].Type, resolved2.IsType(resolved2.LongType{}))
+		testutil.Equals(t, user.Shape["y"].Type, resolved.IsType(resolved.LongType{}))
 	})
 
 	t.Run("common_over_builtin", func(t *testing.T) {
 		t.Parallel()
 		// A common type named "Long" shadows the built-in Long primitive.
 		// A reference to "Long" should resolve to the common type, not LongType.
-		s := &ast2.Schema{
-			Namespaces: ast2.Namespaces{
-				"NS": ast2.Namespace{
-					CommonTypes: ast2.CommonTypes{
-						"Long": ast2.CommonType{
-							Type: ast2.RecordType{
-								"value": ast2.Attribute{Type: ast2.TypeRef("__cedar::Long")},
+		s := &ast.Schema{
+			Namespaces: ast.Namespaces{
+				"NS": ast.Namespace{
+					CommonTypes: ast.CommonTypes{
+						"Long": ast.CommonType{
+							Type: ast.RecordType{
+								"value": ast.Attribute{Type: ast.TypeRef("__cedar::Long")},
 							},
 						},
 					},
-					Entities: ast2.Entities{
-						"User": ast2.Entity{
-							Shape: &ast2.RecordType{
-								"x": ast2.Attribute{Type: ast2.TypeRef("Long")},
-								"y": ast2.Attribute{Type: ast2.TypeRef("__cedar::Long")},
+					Entities: ast.Entities{
+						"User": ast.Entity{
+							Shape: ast.RecordType{
+								"x": ast.Attribute{Type: ast.TypeRef("Long")},
+								"y": ast.Attribute{Type: ast.TypeRef("__cedar::Long")},
 							},
 						},
 					},
 				},
 			},
 		}
-		result, err := resolved2.Resolve(s)
+		result, err := resolved.Resolve(s)
 		testutil.OK(t, err)
 		user := result.Entities["NS::User"]
 		// "Long" resolves to the common type (a record), not the built-in
-		rec, ok := user.Shape["x"].Type.(resolved2.RecordType)
+		rec, ok := user.Shape["x"].Type.(resolved.RecordType)
 		testutil.Equals(t, ok, true)
 		testutil.Equals(t, len(rec), 1)
 		// "__cedar::Long" still resolves to the built-in
-		testutil.Equals(t, user.Shape["y"].Type, resolved2.IsType(resolved2.LongType{}))
+		testutil.Equals(t, user.Shape["y"].Type, resolved.IsType(resolved.LongType{}))
 	})
 }
 
 func TestResolveNamespaceEntityRef(t *testing.T) {
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Entities: ast2.Entities{
-					"User":  ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"Group"}},
-					"Group": ast2.Entity{},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"User":  ast.Entity{ParentTypes: []ast.EntityTypeRef{"Group"}},
+					"Group": ast.Entity{},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	testutil.Equals(t, result.Entities["NS::User"].ParentTypes, []types.EntityType{"NS::Group"})
 }
 
 func TestResolveCrossNamespaceEntityRef(t *testing.T) {
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"A": ast2.Namespace{
-				Entities: ast2.Entities{
-					"User": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"B::Group"}},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"A": ast.Namespace{
+				Entities: ast.Entities{
+					"User": ast.Entity{ParentTypes: []ast.EntityTypeRef{"B::Group"}},
 				},
 			},
-			"B": ast2.Namespace{
-				Entities: ast2.Entities{
-					"Group": ast2.Entity{},
+			"B": ast.Namespace{
+				Entities: ast.Entities{
+					"Group": ast.Entity{},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	testutil.Equals(t, result.Entities["A::User"].ParentTypes, []types.EntityType{"B::Group"})
 }
 
 func TestResolveAction(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User":  ast2.Entity{},
-			"Photo": ast2.Entity{},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User":  ast.Entity{},
+			"Photo": ast.Entity{},
 		},
-		Actions: ast2.Actions{
-			"view": ast2.Action{
-				AppliesTo: &ast2.AppliesTo{
-					Principals: []ast2.EntityTypeRef{"User"},
-					Resources:  []ast2.EntityTypeRef{"Photo"},
-					Context:    ast2.RecordType{},
+		Actions: ast.Actions{
+			"view": ast.Action{
+				AppliesTo: &ast.AppliesTo{
+					Principals: []ast.EntityTypeRef{"User"},
+					Resources:  []ast.EntityTypeRef{"Photo"},
+					Context:    ast.RecordType{},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("Action", "view")
 	view := result.Actions[uid]
@@ -345,14 +345,14 @@ func TestResolveAction(t *testing.T) {
 	testutil.Equals(t, view.AppliesTo.Resources, []types.EntityType{"Photo"})
 }
 
-func TestResolveActionMemberOf(t *testing.T) {
-	s := &ast2.Schema{
-		Actions: ast2.Actions{
-			"view":     ast2.Action{Parents: []ast2.ParentRef{ast2.ParentRefFromID("readOnly")}},
-			"readOnly": ast2.Action{},
+func TestResolveActionParents(t *testing.T) {
+	s := &ast.Schema{
+		Actions: ast.Actions{
+			"view":     ast.Action{Parents: []ast.ParentRef{ast.ParentRefFromID("readOnly")}},
+			"readOnly": ast.Action{},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("Action", "view")
 	view := result.Actions[uid]
@@ -360,108 +360,103 @@ func TestResolveActionMemberOf(t *testing.T) {
 }
 
 func TestResolveActionCycle(t *testing.T) {
-	s := &ast2.Schema{
-		Actions: ast2.Actions{
-			"a": ast2.Action{Parents: []ast2.ParentRef{ast2.ParentRefFromID("b")}},
-			"b": ast2.Action{Parents: []ast2.ParentRef{ast2.ParentRefFromID("a")}},
+	s := &ast.Schema{
+		Actions: ast.Actions{
+			"a": ast.Action{Parents: []ast.ParentRef{ast.ParentRefFromID("b")}},
+			"b": ast.Action{Parents: []ast.ParentRef{ast.ParentRefFromID("a")}},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveActionUndefinedParent(t *testing.T) {
-	s := &ast2.Schema{
-		Actions: ast2.Actions{
-			"view": ast2.Action{Parents: []ast2.ParentRef{ast2.ParentRefFromID("nonExistent")}},
+	s := &ast.Schema{
+		Actions: ast.Actions{
+			"view": ast.Action{Parents: []ast.ParentRef{ast.ParentRefFromID("nonExistent")}},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveEnum(t *testing.T) {
-	s := &ast2.Schema{
-		Enums: ast2.Enums{
-			"Status": ast2.Enum{
+	s := &ast.Schema{
+		Enums: ast.Enums{
+			"Status": ast.Enum{
 				Values: []types.String{"active", "inactive"},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	status := result.Enums["Status"]
-	testutil.Equals(t, status.Values, []types.String{"active", "inactive"})
-
-	// Test EntityUIDs iterator
-	count := 0
-	for uid := range status.EntityUIDs() {
-		testutil.Equals(t, uid.Type, types.EntityType("Status"))
-		count++
-	}
-	testutil.Equals(t, count, 2)
+	testutil.Equals(t, status.Values, []types.EntityUID{
+		types.NewEntityUID("Status", "active"),
+		types.NewEntityUID("Status", "inactive"),
+	})
 }
 
 func TestResolveEnumAsEntityType(t *testing.T) {
-	s := &ast2.Schema{
-		Enums: ast2.Enums{
-			"Status": ast2.Enum{Values: []types.String{"active"}},
+	s := &ast.Schema{
+		Enums: ast.Enums{
+			"Status": ast.Enum{Values: []types.String{"active"}},
 		},
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"s": ast2.Attribute{Type: ast2.TypeRef("Status")},
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"s": ast.Attribute{Type: ast.TypeRef("Status")},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	testutil.Equals(t, result.Entities["User"].Shape["s"].Type, resolved2.IsType(resolved2.EntityType("Status")))
+	testutil.Equals(t, result.Entities["User"].Shape["s"].Type, resolved.IsType(resolved.EntityType("Status")))
 }
 
 func TestResolveSetType(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"tags": ast2.Attribute{Type: ast2.Set(ast2.TypeRef("String"))},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"tags": ast.Attribute{Type: ast.Set(ast.TypeRef("String"))},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	tags := result.Entities["User"].Shape["tags"]
-	set, ok := tags.Type.(resolved2.SetType)
+	set, ok := tags.Type.(resolved.SetType)
 	testutil.Equals(t, ok, true)
-	testutil.Equals(t, set.Element, resolved2.IsType(resolved2.StringType{}))
+	testutil.Equals(t, set.Element, resolved.IsType(resolved.StringType{}))
 }
 
 func TestResolveEntityWithTags(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Tags: ast2.TypeRef("String"),
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Tags: ast.TypeRef("String"),
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
-	testutil.Equals(t, result.Entities["User"].Tags, resolved2.IsType(resolved2.StringType{}))
+	testutil.Equals(t, result.Entities["User"].Tags, resolved.IsType(resolved.StringType{}))
 }
 
 func TestResolveNamespacedAction(t *testing.T) {
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Actions: ast2.Actions{
-					"view": ast2.Action{},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Actions: ast.Actions{
+					"view": ast.Action{},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("NS::Action", "view")
 	_, ok := result.Actions[uid]
@@ -469,21 +464,21 @@ func TestResolveNamespacedAction(t *testing.T) {
 }
 
 func TestResolveActionQualifiedParent(t *testing.T) {
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Actions: ast2.Actions{
-					"view": ast2.Action{
-						Parents: []ast2.ParentRef{
-							ast2.NewParentRef("NS::Action", "readOnly"),
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Actions: ast.Actions{
+					"view": ast.Action{
+						Parents: []ast.ParentRef{
+							ast.NewParentRef("NS::Action", "readOnly"),
 						},
 					},
-					"readOnly": ast2.Action{},
+					"readOnly": ast.Action{},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("NS::Action", "view")
 	view := result.Actions[uid]
@@ -491,14 +486,14 @@ func TestResolveActionQualifiedParent(t *testing.T) {
 }
 
 func TestResolveActionContextNull(t *testing.T) {
-	s := &ast2.Schema{
-		Actions: ast2.Actions{
-			"view": ast2.Action{
-				AppliesTo: &ast2.AppliesTo{},
+	s := &ast.Schema{
+		Actions: ast.Actions{
+			"view": ast.Action{
+				AppliesTo: &ast.AppliesTo{},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("Action", "view")
 	view := result.Actions[uid]
@@ -506,148 +501,148 @@ func TestResolveActionContextNull(t *testing.T) {
 }
 
 func TestResolveActionContextNonRecord(t *testing.T) {
-	s := &ast2.Schema{
-		Actions: ast2.Actions{
-			"view": ast2.Action{
-				AppliesTo: &ast2.AppliesTo{
-					Context: ast2.TypeRef("String"),
+	s := &ast.Schema{
+		Actions: ast.Actions{
+			"view": ast.Action{
+				AppliesTo: &ast.AppliesTo{
+					Context: ast.TypeRef("String"),
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveActionPrincipalUndefined(t *testing.T) {
-	s := &ast2.Schema{
-		Actions: ast2.Actions{
-			"view": ast2.Action{
-				AppliesTo: &ast2.AppliesTo{
-					Principals: []ast2.EntityTypeRef{"NonExistent"},
+	s := &ast.Schema{
+		Actions: ast.Actions{
+			"view": ast.Action{
+				AppliesTo: &ast.AppliesTo{
+					Principals: []ast.EntityTypeRef{"NonExistent"},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveActionResourceUndefined(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{"User": ast2.Entity{}},
-		Actions: ast2.Actions{
-			"view": ast2.Action{
-				AppliesTo: &ast2.AppliesTo{
-					Principals: []ast2.EntityTypeRef{"User"},
-					Resources:  []ast2.EntityTypeRef{"NonExistent"},
+	s := &ast.Schema{
+		Entities: ast.Entities{"User": ast.Entity{}},
+		Actions: ast.Actions{
+			"view": ast.Action{
+				AppliesTo: &ast.AppliesTo{
+					Principals: []ast.EntityTypeRef{"User"},
+					Resources:  []ast.EntityTypeRef{"NonExistent"},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveCommonTypeChain(t *testing.T) {
-	s := &ast2.Schema{
-		CommonTypes: ast2.CommonTypes{
-			"A": ast2.CommonType{Type: ast2.TypeRef("B")},
-			"B": ast2.CommonType{Type: ast2.RecordType{
-				"x": ast2.Attribute{Type: ast2.TypeRef("Long")},
+	s := &ast.Schema{
+		CommonTypes: ast.CommonTypes{
+			"A": ast.CommonType{Type: ast.TypeRef("B")},
+			"B": ast.CommonType{Type: ast.RecordType{
+				"x": ast.Attribute{Type: ast.TypeRef("Long")},
 			}},
 		},
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"a": ast2.Attribute{Type: ast2.TypeRef("A")},
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"a": ast.Attribute{Type: ast.TypeRef("A")},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	a := result.Entities["User"].Shape["a"]
-	rec, ok := a.Type.(resolved2.RecordType)
+	rec, ok := a.Type.(resolved.RecordType)
 	testutil.Equals(t, ok, true)
 	testutil.Equals(t, len(rec), 1)
 }
 
 func TestResolveQualifiedCommonType(t *testing.T) {
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				CommonTypes: ast2.CommonTypes{
-					"Ctx": ast2.CommonType{
-						Type: ast2.RecordType{},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				CommonTypes: ast.CommonTypes{
+					"Ctx": ast.CommonType{
+						Type: ast.RecordType{},
 					},
 				},
-				Entities: ast2.Entities{
-					"User": ast2.Entity{
-						Shape: &ast2.RecordType{
-							"c": ast2.Attribute{Type: ast2.TypeRef("NS::Ctx")},
+				Entities: ast.Entities{
+					"User": ast.Entity{
+						Shape: ast.RecordType{
+							"c": ast.Attribute{Type: ast.TypeRef("NS::Ctx")},
 						},
 					},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	c := result.Entities["NS::User"].Shape["c"]
-	_, ok := c.Type.(resolved2.RecordType)
+	_, ok := c.Type.(resolved.RecordType)
 	testutil.Equals(t, ok, true)
 }
 
 func TestResolveQualifiedUndefined(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"x": ast2.Attribute{Type: ast2.TypeRef("NS::NonExistent")},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"x": ast.Attribute{Type: ast.TypeRef("NS::NonExistent")},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveEntityTagsUndefined(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Tags: ast2.TypeRef("NonExistent"),
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Tags: ast.TypeRef("NonExistent"),
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveEntityShapeAttrUndefined(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"x": ast2.Attribute{Type: ast2.Set(ast2.TypeRef("NonExistent"))},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"x": ast.Attribute{Type: ast.Set(ast.TypeRef("NonExistent"))},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveNamespaceOutput(t *testing.T) {
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Annotations: ast2.Annotations{"doc": "test"},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Annotations: ast.Annotations{"doc": "test"},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	ns := result.Namespaces["NS"]
 	testutil.Equals(t, ns.Name, types.Path("NS"))
@@ -655,194 +650,174 @@ func TestResolveNamespaceOutput(t *testing.T) {
 }
 
 func TestResolveEntityTypeRef(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"friend": ast2.Attribute{Type: ast2.EntityTypeRef("User")},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"friend": ast.Attribute{Type: ast.EntityTypeRef("User")},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	friend := result.Entities["User"].Shape["friend"]
-	testutil.Equals(t, friend.Type, resolved2.IsType(resolved2.EntityType("User")))
+	testutil.Equals(t, friend.Type, resolved.IsType(resolved.EntityType("User")))
 }
 
 func TestResolveEntityTypeRefUndefined(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"x": ast2.Attribute{Type: ast2.EntityTypeRef("NonExistent")},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"x": ast.Attribute{Type: ast.EntityTypeRef("NonExistent")},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveEntityTypeRefQualified(t *testing.T) {
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"A": ast2.Namespace{
-				Entities: ast2.Entities{
-					"Foo": ast2.Entity{},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"A": ast.Namespace{
+				Entities: ast.Entities{
+					"Foo": ast.Entity{},
 				},
 			},
 		},
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"x": ast2.Attribute{Type: ast2.EntityTypeRef("A::Foo")},
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"x": ast.Attribute{Type: ast.EntityTypeRef("A::Foo")},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	x := result.Entities["User"].Shape["x"]
-	testutil.Equals(t, x.Type, resolved2.IsType(resolved2.EntityType("A::Foo")))
+	testutil.Equals(t, x.Type, resolved.IsType(resolved.EntityType("A::Foo")))
 }
 
 func TestResolveEntityTypeRefQualifiedUndefined(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"x": ast2.Attribute{Type: ast2.EntityTypeRef("A::NonExistent")},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"x": ast.Attribute{Type: ast.EntityTypeRef("A::NonExistent")},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveDirectPrimitiveTypes(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Shape: &ast2.RecordType{
-					"s": ast2.Attribute{Type: ast2.StringType{}},
-					"l": ast2.Attribute{Type: ast2.LongType{}},
-					"b": ast2.Attribute{Type: ast2.BoolType{}},
-					"e": ast2.Attribute{Type: ast2.ExtensionType("ipaddr")},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"s": ast.Attribute{Type: ast.StringType{}},
+					"l": ast.Attribute{Type: ast.LongType{}},
+					"b": ast.Attribute{Type: ast.BoolType{}},
+					"e": ast.Attribute{Type: ast.ExtensionType("ipaddr")},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	user := result.Entities["User"]
-	testutil.Equals(t, user.Shape["s"].Type, resolved2.IsType(resolved2.StringType{}))
-	testutil.Equals(t, user.Shape["l"].Type, resolved2.IsType(resolved2.LongType{}))
-	testutil.Equals(t, user.Shape["b"].Type, resolved2.IsType(resolved2.BoolType{}))
-	testutil.Equals(t, user.Shape["e"].Type, resolved2.IsType(resolved2.ExtensionType("ipaddr")))
-}
-
-func TestResolveEnumEntityUIDBrokenIterator(t *testing.T) {
-	s := &ast2.Schema{
-		Enums: ast2.Enums{
-			"Status": ast2.Enum{
-				Values: []types.String{"a", "b", "c"},
-			},
-		},
-	}
-	result, err := resolved2.Resolve(s)
-	testutil.OK(t, err)
-	status := result.Enums["Status"]
-	// Break after first iteration to cover early return
-	count := 0
-	for range status.EntityUIDs() {
-		count++
-		break
-	}
-	testutil.Equals(t, count, 1)
+	testutil.Equals(t, user.Shape["s"].Type, resolved.IsType(resolved.StringType{}))
+	testutil.Equals(t, user.Shape["l"].Type, resolved.IsType(resolved.LongType{}))
+	testutil.Equals(t, user.Shape["b"].Type, resolved.IsType(resolved.BoolType{}))
+	testutil.Equals(t, user.Shape["e"].Type, resolved.IsType(resolved.ExtensionType("ipaddr")))
 }
 
 func TestResolveNamespacedEntitiesError(t *testing.T) {
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Entities: ast2.Entities{
-					"User": ast2.Entity{
-						Shape: &ast2.RecordType{
-							"x": ast2.Attribute{Type: ast2.TypeRef("NonExistent")},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"User": ast.Entity{
+						Shape: ast.RecordType{
+							"x": ast.Attribute{Type: ast.TypeRef("NonExistent")},
 						},
 					},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveNamespacedEnumError(t *testing.T) {
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Enums: ast2.Enums{
-					"Status": ast2.Enum{Values: []types.String{"a"}},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Enums: ast.Enums{
+					"Status": ast.Enum{Values: []types.String{"a"}},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	testutil.Equals(t, len(result.Enums), 1)
 }
 
 func TestResolveNamespacedActionsError(t *testing.T) {
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Entities: ast2.Entities{
-					"User": ast2.Entity{},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"User": ast.Entity{},
 				},
-				Actions: ast2.Actions{
-					"view": ast2.Action{
-						AppliesTo: &ast2.AppliesTo{
-							Context: ast2.TypeRef("NonExistent"),
+				Actions: ast.Actions{
+					"view": ast.Action{
+						AppliesTo: &ast.AppliesTo{
+							Context: ast.TypeRef("NonExistent"),
 						},
 					},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
-func TestResolveEntityMemberOfValidationError(t *testing.T) {
+func TestResolveEntityParentsValidationError(t *testing.T) {
 	// Entity referencing an undefined parent type errors during resolution.
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				ParentTypes: []ast2.EntityTypeRef{"NonExistent"},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				ParentTypes: []ast.EntityTypeRef{"NonExistent"},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveQualifiedEntityType(t *testing.T) {
 	// Test resolving a qualified entity type ref
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Entities: ast2.Entities{
-					"User":  ast2.Entity{},
-					"Admin": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NS::User"}},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"User":  ast.Entity{},
+					"Admin": ast.Entity{ParentTypes: []ast.EntityTypeRef{"NS::User"}},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	testutil.Equals(t, result.Entities["NS::Admin"].ParentTypes, []types.EntityType{"NS::User"})
 }
@@ -851,129 +826,129 @@ func TestResolveNamespaceQualifiedKeyError(t *testing.T) {
 	// Using a namespace-qualified key in the Entities map is invalid;
 	// keys must be bare Idents. A qualified key gets double-qualified
 	// during resolution, causing references to it to fail.
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Entities: ast2.Entities{
-					"NS::User": ast2.Entity{},
-					"Admin":    ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NS::User"}},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"NS::User": ast.Entity{},
+					"Admin":    ast.Entity{ParentTypes: []ast.EntityTypeRef{"NS::User"}},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveNamespaceQualifiedEnumKeyError(t *testing.T) {
 	// Same as above but for Enums: a namespace-qualified key causes
 	// double-qualification, so references to it fail.
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Enums: ast2.Enums{
-					"NS::Color": ast2.Enum{Values: []types.String{"red"}},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Enums: ast.Enums{
+					"NS::Color": ast.Enum{Values: []types.String{"red"}},
 				},
-				Entities: ast2.Entities{
-					"Item": ast2.Entity{
-						Shape: &ast2.RecordType{
-							"color": ast2.Attribute{Type: ast2.TypeRef("Color")},
+				Entities: ast.Entities{
+					"Item": ast.Entity{
+						Shape: ast.RecordType{
+							"color": ast.Attribute{Type: ast.TypeRef("Color")},
 						},
 					},
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveQualifiedEntityTypeRefAsType(t *testing.T) {
 	// Test that a qualified entity type resolves when used through TypeRef
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Entities: ast2.Entities{
-					"User": ast2.Entity{
-						Shape: &ast2.RecordType{
-							"ref": ast2.Attribute{Type: ast2.TypeRef("NS::Admin")},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"User": ast.Entity{
+						Shape: ast.RecordType{
+							"ref": ast.Attribute{Type: ast.TypeRef("NS::Admin")},
 						},
 					},
-					"Admin": ast2.Entity{},
+					"Admin": ast.Entity{},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	ref := result.Entities["NS::User"].Shape["ref"]
-	testutil.Equals(t, ref.Type, resolved2.IsType(resolved2.EntityType("NS::Admin")))
+	testutil.Equals(t, ref.Type, resolved.IsType(resolved.EntityType("NS::Admin")))
 }
 
 func TestResolveEmptyNamespaceCommonType(t *testing.T) {
 	// Test that empty namespace common types are found from a different namespace
-	s := &ast2.Schema{
-		CommonTypes: ast2.CommonTypes{
-			"Ctx": ast2.CommonType{Type: ast2.RecordType{}},
+	s := &ast.Schema{
+		CommonTypes: ast.CommonTypes{
+			"Ctx": ast.CommonType{Type: ast.RecordType{}},
 		},
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Entities: ast2.Entities{
-					"User": ast2.Entity{
-						Shape: &ast2.RecordType{
-							"c": ast2.Attribute{Type: ast2.TypeRef("Ctx")},
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"User": ast.Entity{
+						Shape: ast.RecordType{
+							"c": ast.Attribute{Type: ast.TypeRef("Ctx")},
 						},
 					},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	c := result.Entities["NS::User"].Shape["c"]
-	_, ok := c.Type.(resolved2.RecordType)
+	_, ok := c.Type.(resolved.RecordType)
 	testutil.Equals(t, ok, true)
 }
 
 func TestResolveEmptyNamespaceEntityType(t *testing.T) {
 	// Test that empty namespace entity types are found from a different namespace
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"Global": ast2.Entity{},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"Global": ast.Entity{},
 		},
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Entities: ast2.Entities{
-					"User": ast2.Entity{
-						Shape: &ast2.RecordType{
-							"g": ast2.Attribute{Type: ast2.TypeRef("Global")},
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"User": ast.Entity{
+						Shape: ast.RecordType{
+							"g": ast.Attribute{Type: ast.TypeRef("Global")},
 						},
 					},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	g := result.Entities["NS::User"].Shape["g"]
-	testutil.Equals(t, g.Type, resolved2.IsType(resolved2.EntityType("Global")))
+	testutil.Equals(t, g.Type, resolved.IsType(resolved.EntityType("Global")))
 }
 
 func TestResolveAnnotationsOnAttributes(t *testing.T) {
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{
-				Annotations: ast2.Annotations{"doc": "user"},
-				Shape: &ast2.RecordType{
-					"name": ast2.Attribute{
-						Type:        ast2.TypeRef("String"),
-						Annotations: ast2.Annotations{"doc": "the name"},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Annotations: ast.Annotations{"doc": "user"},
+				Shape: ast.RecordType{
+					"name": ast.Attribute{
+						Type:        ast.TypeRef("String"),
+						Annotations: ast.Annotations{"doc": "the name"},
 					},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	user := result.Entities["User"]
 	testutil.Equals(t, types.String(user.Annotations["doc"]), types.String("user"))
@@ -981,28 +956,28 @@ func TestResolveAnnotationsOnAttributes(t *testing.T) {
 }
 
 func TestResolveEnumAnnotations(t *testing.T) {
-	s := &ast2.Schema{
-		Enums: ast2.Enums{
-			"Status": ast2.Enum{
-				Annotations: ast2.Annotations{"doc": "status"},
+	s := &ast.Schema{
+		Enums: ast.Enums{
+			"Status": ast.Enum{
+				Annotations: ast.Annotations{"doc": "status"},
 				Values:      []types.String{"a"},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	testutil.Equals(t, types.String(result.Enums["Status"].Annotations["doc"]), types.String("status"))
 }
 
 func TestResolveActionAnnotations(t *testing.T) {
-	s := &ast2.Schema{
-		Actions: ast2.Actions{
-			"view": ast2.Action{
-				Annotations: ast2.Annotations{"doc": "view action"},
+	s := &ast.Schema{
+		Actions: ast.Actions{
+			"view": ast.Action{
+				Annotations: ast.Annotations{"doc": "view action"},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("Action", "view")
 	testutil.Equals(t, types.String(result.Actions[uid].Annotations["doc"]), types.String("view action"))
@@ -1010,52 +985,52 @@ func TestResolveActionAnnotations(t *testing.T) {
 
 func TestResolveBareEnumsError(t *testing.T) {
 	// Test that bare enums with no errors pass through resolveEnums
-	s := &ast2.Schema{
-		Enums: ast2.Enums{
-			"A": ast2.Enum{Values: []types.String{"x"}},
+	s := &ast.Schema{
+		Enums: ast.Enums{
+			"A": ast.Enum{Values: []types.String{"x"}},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	testutil.Equals(t, result.Enums["A"].Name, types.EntityType("A"))
 }
 
 func TestResolveBareActionsError(t *testing.T) {
 	// Test bare actions with an error in context resolution
-	s := &ast2.Schema{
-		Actions: ast2.Actions{
-			"view": ast2.Action{
-				AppliesTo: &ast2.AppliesTo{
-					Context: ast2.TypeRef("NonExistent"),
+	s := &ast.Schema{
+		Actions: ast.Actions{
+			"view": ast.Action{
+				AppliesTo: &ast.AppliesTo{
+					Context: ast.TypeRef("NonExistent"),
 				},
 			},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveCommonTypeCycleInSet(t *testing.T) {
-	s := &ast2.Schema{
-		CommonTypes: ast2.CommonTypes{
-			"A": ast2.CommonType{Type: ast2.Set(ast2.TypeRef("B"))},
-			"B": ast2.CommonType{Type: ast2.TypeRef("A")},
+	s := &ast.Schema{
+		CommonTypes: ast.CommonTypes{
+			"A": ast.CommonType{Type: ast.Set(ast.TypeRef("B"))},
+			"B": ast.CommonType{Type: ast.TypeRef("A")},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveCommonTypeCycleInRecord(t *testing.T) {
-	s := &ast2.Schema{
-		CommonTypes: ast2.CommonTypes{
-			"A": ast2.CommonType{Type: ast2.RecordType{
-				"x": ast2.Attribute{Type: ast2.TypeRef("B")},
+	s := &ast.Schema{
+		CommonTypes: ast.CommonTypes{
+			"A": ast.CommonType{Type: ast.RecordType{
+				"x": ast.Attribute{Type: ast.TypeRef("B")},
 			}},
-			"B": ast2.CommonType{Type: ast2.TypeRef("A")},
+			"B": ast.CommonType{Type: ast.TypeRef("A")},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
@@ -1063,106 +1038,106 @@ func TestResolveNamespacedEntityTypeRef(t *testing.T) {
 	// Exercise resolveTypeRef line 421-423: unqualified name resolves to
 	// a namespaced entity type (not common type) via disambiguation rule 2.
 	// Use a Set<User> attribute where "User" should resolve to NS::User entity type.
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Entities: ast2.Entities{
-					"User": ast2.Entity{},
-					"Group": ast2.Entity{
-						Shape: &ast2.RecordType{
-							"members": ast2.Attribute{Type: ast2.SetType{Element: ast2.TypeRef("User")}},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"User": ast.Entity{},
+					"Group": ast.Entity{
+						Shape: ast.RecordType{
+							"members": ast.Attribute{Type: ast.SetType{Element: ast.TypeRef("User")}},
 						},
 					},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	members := result.Entities["NS::Group"].Shape["members"]
-	setType, ok := members.Type.(resolved2.SetType)
+	setType, ok := members.Type.(resolved.SetType)
 	testutil.Equals(t, ok, true)
-	testutil.Equals(t, setType.Element, resolved2.IsType(resolved2.EntityType("NS::User")))
+	testutil.Equals(t, setType.Element, resolved.IsType(resolved.EntityType("NS::User")))
 }
 
 func TestResolveNamespacedEnumTypeRef(t *testing.T) {
 	// Exercise resolveTypeRef line 421-423: unqualified name resolves to
 	// a namespaced enum type via disambiguation rule 2.
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				Enums: ast2.Enums{
-					"Color": ast2.Enum{Values: []types.String{"red", "blue"}},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Enums: ast.Enums{
+					"Color": ast.Enum{Values: []types.String{"red", "blue"}},
 				},
-				Entities: ast2.Entities{
-					"Item": ast2.Entity{
-						Shape: &ast2.RecordType{
-							"color": ast2.Attribute{Type: ast2.TypeRef("Color")},
+				Entities: ast.Entities{
+					"Item": ast.Entity{
+						Shape: ast.RecordType{
+							"color": ast.Attribute{Type: ast.TypeRef("Color")},
 						},
 					},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	color := result.Entities["NS::Item"].Shape["color"]
-	testutil.Equals(t, color.Type, resolved2.IsType(resolved2.EntityType("NS::Color")))
+	testutil.Equals(t, color.Type, resolved.IsType(resolved.EntityType("NS::Color")))
 }
 
-func TestResolveUndefinedMemberOf(t *testing.T) {
+func TestResolveUndefinedParents(t *testing.T) {
 	// Resolve returns an error when an entity references an undefined parent type.
-	s := &ast2.Schema{
-		Entities: ast2.Entities{
-			"User": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"Nonexistent"}},
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{ParentTypes: []ast.EntityTypeRef{"Nonexistent"}},
 		},
 	}
-	_, err := resolved2.Resolve(s)
+	_, err := resolved.Resolve(s)
 	testutil.Error(t, err)
 }
 
 func TestResolveCedarBuiltinInTypePath(t *testing.T) {
 	// Exercise resolveTypeRefPath line 462-464: __cedar:: prefix in cycle detection.
-	s := &ast2.Schema{
-		CommonTypes: ast2.CommonTypes{
-			"A": ast2.CommonType{Type: ast2.TypeRef("__cedar::String")},
+	s := &ast.Schema{
+		CommonTypes: ast.CommonTypes{
+			"A": ast.CommonType{Type: ast.TypeRef("__cedar::String")},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	_ = result
 }
 
 func TestResolveQualifiedTypePath(t *testing.T) {
 	// Exercise resolveTypeRefPath line 465-467: qualified path with :: in cycle detection.
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				CommonTypes: ast2.CommonTypes{
-					"A": ast2.CommonType{Type: ast2.TypeRef("NS::B")},
-					"B": ast2.CommonType{Type: ast2.StringType{}},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				CommonTypes: ast.CommonTypes{
+					"A": ast.CommonType{Type: ast.TypeRef("NS::B")},
+					"B": ast.CommonType{Type: ast.StringType{}},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	_ = result
 }
 
 func TestResolveNamespacedCommonTypePath(t *testing.T) {
 	// Exercise resolveTypeRefPath line 470-472: namespaced common type ref in cycle detection.
-	s := &ast2.Schema{
-		Namespaces: ast2.Namespaces{
-			"NS": ast2.Namespace{
-				CommonTypes: ast2.CommonTypes{
-					"A": ast2.CommonType{Type: ast2.TypeRef("B")},
-					"B": ast2.CommonType{Type: ast2.StringType{}},
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				CommonTypes: ast.CommonTypes{
+					"A": ast.CommonType{Type: ast.TypeRef("B")},
+					"B": ast.CommonType{Type: ast.StringType{}},
 				},
 			},
 		},
 	}
-	result, err := resolved2.Resolve(s)
+	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	_ = result
 }

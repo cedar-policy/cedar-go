@@ -11,7 +11,7 @@ import (
 
 	internaljson "github.com/cedar-policy/cedar-go/internal/json"
 	"github.com/cedar-policy/cedar-go/types"
-	internalast "github.com/cedar-policy/cedar-go/x/exp/ast"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 //revive:disable-next-line:exported
@@ -131,7 +131,7 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 		policies: make(PolicyMap, len(jsonPolicySet.StaticPolicies)),
 	}
 	for k, v := range jsonPolicySet.StaticPolicies {
-		p.policies[PolicyID(k)] = newPolicy((*internalast.Policy)(v))
+		p.policies[PolicyID(k)] = newPolicy((*ast.Policy)(v))
 	}
 	return nil
 }

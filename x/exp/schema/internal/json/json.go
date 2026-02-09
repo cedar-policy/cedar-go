@@ -169,7 +169,7 @@ func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) 
 			sort.Strings(jet.MemberOfTypes)
 		}
 		if entity.Shape != nil {
-			jt, err := marshalRecordType(*entity.Shape)
+			jt, err := marshalRecordType(entity.Shape)
 			if err != nil {
 				return jsonNamespace{}, err
 			}
@@ -215,14 +215,8 @@ func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) 
 			for _, p := range action.AppliesTo.Principals {
 				jat.PrincipalTypes = append(jat.PrincipalTypes, string(p))
 			}
-			if jat.PrincipalTypes == nil {
-				jat.PrincipalTypes = []string{}
-			}
 			for _, r := range action.AppliesTo.Resources {
 				jat.ResourceTypes = append(jat.ResourceTypes, string(r))
-			}
-			if jat.ResourceTypes == nil {
-				jat.ResourceTypes = []string{}
 			}
 			if action.AppliesTo.Context != nil {
 				jt, err := marshalIsType(action.AppliesTo.Context)
@@ -345,7 +339,7 @@ func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, erro
 				if err != nil {
 					return ast.Namespace{}, fmt.Errorf("entity %q shape: %w", etName, err)
 				}
-				entity.Shape = &rec
+				entity.Shape = rec
 			}
 			if jet.Tags != nil {
 				t, err := unmarshalType(jet.Tags)
@@ -370,7 +364,7 @@ func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, erro
 			if parent.Type == "" {
 				action.Parents = append(action.Parents, ast.ParentRefFromID(types.String(parent.ID)))
 			} else {
-				action.Parents = append(action.Parents, ast.NewParentRef(types.EntityType(parent.Type), types.String(parent.ID)))
+				action.Parents = append(action.Parents, ast.NewParentRef(ast.EntityTypeRef(parent.Type), types.String(parent.ID)))
 			}
 		}
 		if ja.AppliesTo != nil {
@@ -378,14 +372,8 @@ func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, erro
 			for _, p := range ja.AppliesTo.PrincipalTypes {
 				at.Principals = append(at.Principals, ast.EntityTypeRef(p))
 			}
-			if at.Principals == nil {
-				at.Principals = []ast.EntityTypeRef{}
-			}
 			for _, r := range ja.AppliesTo.ResourceTypes {
 				at.Resources = append(at.Resources, ast.EntityTypeRef(r))
-			}
-			if at.Resources == nil {
-				at.Resources = []ast.EntityTypeRef{}
 			}
 			if ja.AppliesTo.Context != nil {
 				t, err := unmarshalType(ja.AppliesTo.Context)

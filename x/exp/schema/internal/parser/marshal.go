@@ -89,7 +89,7 @@ func (m *marshaler) marshalDecls(first *bool, entities ast.Entities, enums ast.E
 		}
 		if entity.Shape != nil {
 			m.w.WriteByte(' ')
-			m.marshalRecordType(*entity.Shape)
+			m.marshalRecordType(entity.Shape)
 		}
 		if entity.Tags != nil {
 			m.w.WriteString(" tags ")

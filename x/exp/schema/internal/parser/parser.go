@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/cedar-policy/cedar-go/types"
-	ast2 "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 )
 
 // reservedTypeNames are identifiers that cannot be used as common type names.
@@ -15,7 +15,7 @@ var reservedTypeNames = []string{
 }
 
 // ParseSchema parses Cedar schema text into an AST.
-func ParseSchema(filename string, src []byte) (*ast2.Schema, error) {
+func ParseSchema(filename string, src []byte) (*ast.Schema, error) {
 	p := &parser{lex: newLexer(filename, src)}
 	if err := p.readToken(); err != nil {
 		return nil, err
@@ -104,8 +104,8 @@ func tokenDesc(tok token) string {
 	}
 }
 
-func (p *parser) parseSchema() (*ast2.Schema, error) {
-	schema := &ast2.Schema{}
+func (p *parser) parseSchema() (*ast.Schema, error) {
+	schema := &ast.Schema{}
 	for p.tok.Type != tokenEOF {
 		annotations, err := p.parseAnnotations()
 		if err != nil {
@@ -120,7 +120,7 @@ func (p *parser) parseSchema() (*ast2.Schema, error) {
 				return nil, err
 			}
 			if schema.Namespaces == nil {
-				schema.Namespaces = ast2.Namespaces{}
+				schema.Namespaces = ast.Namespaces{}
 			}
 			schema.Namespaces[ns.name] = ns.ns
 		} else {
@@ -134,10 +134,10 @@ func (p *parser) parseSchema() (*ast2.Schema, error) {
 
 type parsedNamespace struct {
 	name types.Path
-	ns   ast2.Namespace
+	ns   ast.Namespace
 }
 
-func (p *parser) parseNamespace(annotations ast2.Annotations) (parsedNamespace, error) {
+func (p *parser) parseNamespace(annotations ast.Annotations) (parsedNamespace, error) {
 	path, err := p.parsePath()
 	if err != nil {
 		return parsedNamespace{}, err
@@ -145,8 +145,8 @@ func (p *parser) parseNamespace(annotations ast2.Annotations) (parsedNamespace, 
 	if err := p.expect(tokenLBrace); err != nil {
 		return parsedNamespace{}, err
 	}
-	ns := ast2.Namespace{Annotations: annotations}
-	var innerSchema ast2.Schema
+	ns := ast.Namespace{Annotations: annotations}
+	var innerSchema ast.Schema
 	for p.tok.Type != tokenRBrace {
 		if p.tok.Type == tokenEOF {
 			return parsedNamespace{}, p.errorf("expected '}' to close namespace, got EOF")
@@ -170,7 +170,7 @@ func (p *parser) parseNamespace(annotations ast2.Annotations) (parsedNamespace, 
 	return parsedNamespace{name: path, ns: ns}, nil
 }
 
-func (p *parser) parseDecl(annotations ast2.Annotations, namespace *types.Path, schema *ast2.Schema) error {
+func (p *parser) parseDecl(annotations ast.Annotations, namespace *types.Path, schema *ast.Schema) error {
 	if p.tok.Type != tokenIdent {
 		return p.errorf("expected declaration (entity, action, or type), got %s", tokenDesc(p.tok))
 	}
@@ -195,7 +195,7 @@ func (p *parser) parseDecl(annotations ast2.Annotations, namespace *types.Path, 
 	}
 }
 
-func (p *parser) parseEntity(annotations ast2.Annotations, namespace *types.Path, schema *ast2.Schema) error {
+func (p *parser) parseEntity(annotations ast.Annotations, namespace *types.Path, schema *ast.Schema) error {
 	names, err := p.parseIdents()
 	if err != nil {
 		return err
@@ -210,7 +210,7 @@ func (p *parser) parseEntity(annotations ast2.Annotations, namespace *types.Path
 	}
 
 	// Parse optional 'in' clause
-	var memberOf []ast2.EntityTypeRef
+	var memberOf []ast.EntityTypeRef
 	if p.tok.Type == tokenIdent && p.tok.Text == "in" {
 		if err := p.readToken(); err != nil {
 			return err
@@ -222,7 +222,7 @@ func (p *parser) parseEntity(annotations ast2.Annotations, namespace *types.Path
 	}
 
 	// Parse optional shape (record type), with optional '='
-	var shape *ast2.RecordType
+	var shape ast.RecordType
 	switch p.tok.Type {
 	case tokenEquals:
 		if err := p.readToken(); err != nil {
@@ -232,17 +232,17 @@ func (p *parser) parseEntity(annotations ast2.Annotations, namespace *types.Path
 		if err != nil {
 			return err
 		}
-		shape = &rec
+		shape = rec
 	case tokenLBrace:
 		rec, err := p.parseRecordType()
 		if err != nil {
 			return err
 		}
-		shape = &rec
+		shape = rec
 	}
 
 	// Parse optional tags
-	var tags ast2.IsType
+	var tags ast.IsType
 	if p.tok.Type == tokenIdent && p.tok.Text == "tags" {
 		if err := p.readToken(); err != nil {
 			return err
@@ -258,10 +258,10 @@ func (p *parser) parseEntity(annotations ast2.Annotations, namespace *types.Path
 	}
 
 	if schema.Entities == nil {
-		schema.Entities = ast2.Entities{}
+		schema.Entities = ast.Entities{}
 	}
 	for _, name := range names {
-		schema.Entities[name] = ast2.Entity{
+		schema.Entities[name] = ast.Entity{
 			Annotations: annotations,
 			ParentTypes: memberOf,
 			Shape:       shape,
@@ -271,7 +271,7 @@ func (p *parser) parseEntity(annotations ast2.Annotations, namespace *types.Path
 	return nil
 }
 
-func (p *parser) parseEnumEntity(annotations ast2.Annotations, namespace *types.Path, names []types.Ident, schema *ast2.Schema) error {
+func (p *parser) parseEnumEntity(annotations ast.Annotations, namespace *types.Path, names []types.Ident, schema *ast.Schema) error {
 	if err := p.expect(tokenLBracket); err != nil {
 		return err
 	}
@@ -300,10 +300,10 @@ func (p *parser) parseEnumEntity(annotations ast2.Annotations, namespace *types.
 	}
 
 	if schema.Enums == nil {
-		schema.Enums = ast2.Enums{}
+		schema.Enums = ast.Enums{}
 	}
 	for _, name := range names {
-		schema.Enums[name] = ast2.Enum{
+		schema.Enums[name] = ast.Enum{
 			Annotations: annotations,
 			Values:      values,
 		}
@@ -311,14 +311,14 @@ func (p *parser) parseEnumEntity(annotations ast2.Annotations, namespace *types.
 	return nil
 }
 
-func (p *parser) parseAction(annotations ast2.Annotations, namespace *types.Path, schema *ast2.Schema) error {
+func (p *parser) parseAction(annotations ast.Annotations, namespace *types.Path, schema *ast.Schema) error {
 	names, err := p.parseNames()
 	if err != nil {
 		return err
 	}
 
 	// Parse optional 'in' clause
-	var memberOf []ast2.ParentRef
+	var memberOf []ast.ParentRef
 	if p.tok.Type == tokenIdent && p.tok.Text == "in" {
 		if err := p.readToken(); err != nil {
 			return err
@@ -330,7 +330,7 @@ func (p *parser) parseAction(annotations ast2.Annotations, namespace *types.Path
 	}
 
 	// Parse optional appliesTo clause
-	var appliesTo *ast2.AppliesTo
+	var appliesTo *ast.AppliesTo
 	if p.tok.Type == tokenIdent && p.tok.Text == "appliesTo" {
 		if err := p.readToken(); err != nil {
 			return err
@@ -360,10 +360,10 @@ func (p *parser) parseAction(annotations ast2.Annotations, namespace *types.Path
 	}
 
 	if schema.Actions == nil {
-		schema.Actions = ast2.Actions{}
+		schema.Actions = ast.Actions{}
 	}
 	for _, name := range names {
-		schema.Actions[name] = ast2.Action{
+		schema.Actions[name] = ast.Action{
 			Annotations: annotations,
 			Parents:     memberOf,
 			AppliesTo:   appliesTo,
@@ -372,7 +372,7 @@ func (p *parser) parseAction(annotations ast2.Annotations, namespace *types.Path
 	return nil
 }
 
-func (p *parser) parseTypeDecl(annotations ast2.Annotations, schema *ast2.Schema) error {
+func (p *parser) parseTypeDecl(annotations ast.Annotations, schema *ast.Schema) error {
 	if p.tok.Type != tokenIdent {
 		return p.errorf("expected type name, got %s", tokenDesc(p.tok))
 	}
@@ -395,17 +395,17 @@ func (p *parser) parseTypeDecl(annotations ast2.Annotations, schema *ast2.Schema
 	}
 
 	if schema.CommonTypes == nil {
-		schema.CommonTypes = ast2.CommonTypes{}
+		schema.CommonTypes = ast.CommonTypes{}
 	}
-	schema.CommonTypes[types.Ident(name)] = ast2.CommonType{
+	schema.CommonTypes[types.Ident(name)] = ast.CommonType{
 		Annotations: annotations,
 		Type:        typ,
 	}
 	return nil
 }
 
-func (p *parser) parseAnnotations() (ast2.Annotations, error) {
-	var annotations ast2.Annotations
+func (p *parser) parseAnnotations() (ast.Annotations, error) {
+	var annotations ast.Annotations
 	for p.tok.Type == tokenAt {
 		if err := p.readToken(); err != nil {
 			return nil, err
@@ -436,7 +436,7 @@ func (p *parser) parseAnnotations() (ast2.Annotations, error) {
 			}
 		}
 		if annotations == nil {
-			annotations = ast2.Annotations{}
+			annotations = ast.Annotations{}
 		}
 		if hasValue {
 			annotations[key] = value
@@ -568,18 +568,18 @@ func (p *parser) parseName() (types.String, error) {
 }
 
 // parseEntityTypes parses Path | '[' [ Path { ',' Path } ] ']'
-func (p *parser) parseEntityTypes() ([]ast2.EntityTypeRef, error) {
+func (p *parser) parseEntityTypes() ([]ast.EntityTypeRef, error) {
 	if p.tok.Type == tokenLBracket {
 		if err := p.readToken(); err != nil {
 			return nil, err
 		}
-		var result []ast2.EntityTypeRef
+		var result []ast.EntityTypeRef
 		for p.tok.Type != tokenRBracket {
 			path, err := p.parsePath()
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, ast2.EntityTypeRef(types.EntityType(path)))
+			result = append(result, ast.EntityTypeRef(types.EntityType(path)))
 			if p.tok.Type == tokenComma {
 				if err := p.readToken(); err != nil {
 					return nil, err
@@ -594,16 +594,16 @@ func (p *parser) parseEntityTypes() ([]ast2.EntityTypeRef, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []ast2.EntityTypeRef{ast2.EntityTypeRef(types.EntityType(path))}, nil
+	return []ast.EntityTypeRef{ast.EntityTypeRef(types.EntityType(path))}, nil
 }
 
 // parseActionParents parses QualName | '[' QualName { ',' QualName } ']'
-func (p *parser) parseActionParents(namespace *types.Path) ([]ast2.ParentRef, error) {
+func (p *parser) parseActionParents(namespace *types.Path) ([]ast.ParentRef, error) {
 	if p.tok.Type == tokenLBracket {
 		if err := p.readToken(); err != nil {
 			return nil, err
 		}
-		var result []ast2.ParentRef
+		var result []ast.ParentRef
 		for p.tok.Type != tokenRBracket {
 			ref, err := p.parseQualName(namespace)
 			if err != nil {
@@ -624,35 +624,35 @@ func (p *parser) parseActionParents(namespace *types.Path) ([]ast2.ParentRef, er
 	if err != nil {
 		return nil, err
 	}
-	return []ast2.ParentRef{ref}, nil
+	return []ast.ParentRef{ref}, nil
 }
 
 // parseQualName parses QualName = Name | Path '::' STR
-func (p *parser) parseQualName(namespace *types.Path) (ast2.ParentRef, error) {
+func (p *parser) parseQualName(namespace *types.Path) (ast.ParentRef, error) {
 	if p.tok.Type == tokenString {
 		name := types.String(p.tok.Text)
 		if err := p.readToken(); err != nil {
-			return ast2.ParentRef{}, err
+			return ast.ParentRef{}, err
 		}
-		return ast2.ParentRefFromID(name), nil
+		return ast.ParentRefFromID(name), nil
 	}
 	path, str, qualified, err := p.parsePathForRef()
 	if err != nil {
-		return ast2.ParentRef{}, err
+		return ast.ParentRef{}, err
 	}
 	if qualified {
-		return ast2.NewParentRef(types.EntityType(path), str), nil
+		return ast.NewParentRef(ast.EntityTypeRef(path), str), nil
 	}
 	// Bare identifier: treat as an action ID
-	return ast2.ParentRefFromID(types.String(path)), nil
+	return ast.ParentRefFromID(types.String(path)), nil
 }
 
 // parseAppliesTo parses '{' AppDecls '}'
-func (p *parser) parseAppliesTo() (*ast2.AppliesTo, error) {
+func (p *parser) parseAppliesTo() (*ast.AppliesTo, error) {
 	if err := p.expect(tokenLBrace); err != nil {
 		return nil, err
 	}
-	at := &ast2.AppliesTo{}
+	at := &ast.AppliesTo{}
 	for p.tok.Type != tokenRBrace {
 		if p.tok.Type == tokenEOF {
 			return nil, p.errorf("expected '}' to close appliesTo, got EOF")
@@ -710,7 +710,7 @@ func (p *parser) parseAppliesTo() (*ast2.AppliesTo, error) {
 }
 
 // parseType parses Path | 'Set' '<' Type '>' | '{' AttrDecls '}'
-func (p *parser) parseType() (ast2.IsType, error) {
+func (p *parser) parseType() (ast.IsType, error) {
 	if p.tok.Type == tokenLBrace {
 		rec, err := p.parseRecordType()
 		if err != nil {
@@ -733,22 +733,22 @@ func (p *parser) parseType() (ast2.IsType, error) {
 		if err := p.expect(tokenRAngle); err != nil {
 			return nil, err
 		}
-		return ast2.Set(elem), nil
+		return ast.Set(elem), nil
 	}
 
 	path, err := p.parsePath()
 	if err != nil {
 		return nil, err
 	}
-	return ast2.TypeRef(path), nil
+	return ast.TypeRef(path), nil
 }
 
 // parseRecordType parses '{' [ AttrDecls ] '}'
-func (p *parser) parseRecordType() (ast2.RecordType, error) {
+func (p *parser) parseRecordType() (ast.RecordType, error) {
 	if err := p.expect(tokenLBrace); err != nil {
 		return nil, err
 	}
-	rec := ast2.RecordType{}
+	rec := ast.RecordType{}
 	for p.tok.Type != tokenRBrace {
 		if p.tok.Type == tokenEOF {
 			return nil, p.errorf("expected '}' to close record type, got EOF")
@@ -775,7 +775,7 @@ func (p *parser) parseRecordType() (ast2.RecordType, error) {
 		if err != nil {
 			return nil, err
 		}
-		rec[name] = ast2.Attribute{
+		rec[name] = ast.Attribute{
 			Type:        typ,
 			Optional:    optional,
 			Annotations: attrAnnotations,

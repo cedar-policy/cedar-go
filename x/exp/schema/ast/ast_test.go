@@ -32,19 +32,3 @@ func TestNewParentRef(t *testing.T) {
 	testutil.Equals(t, ref.ID, types.String("view"))
 	testutil.Equals(t, ref.Type, ast.EntityTypeRef("NS::Action"))
 }
-
-func TestIsTypeInterface(t *testing.T) {
-	// Verify all types satisfy IsType by assigning to the interface.
-	// The isType() marker methods have { _ = 0 } bodies;
-	// calling through the interface exercises them at runtime.
-	var types []ast.IsType
-	types = append(types, ast.StringType{})
-	types = append(types, ast.LongType{})
-	types = append(types, ast.BoolType{})
-	types = append(types, ast.ExtensionType("ipaddr"))
-	types = append(types, ast.SetType{Element: ast.StringType{}})
-	types = append(types, ast.RecordType{})
-	types = append(types, ast.EntityTypeRef("User"))
-	types = append(types, ast.TypeRef("Foo"))
-	testutil.Equals(t, len(types), 8)
-}
