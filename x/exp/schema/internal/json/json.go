@@ -6,20 +6,20 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cedar-policy/cedar-go/schema/ast"
 	"github.com/cedar-policy/cedar-go/types"
+	ast2 "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 )
 
 // Schema is a type alias of ast.Schema that provides JSON marshaling.
-type Schema ast.Schema
+type Schema ast2.Schema
 
 // MarshalJSON encodes the schema as JSON.
 func (s *Schema) MarshalJSON() ([]byte, error) {
 	out := make(map[string]jsonNamespace)
 
 	// Bare declarations go under the empty string key.
-	if hasBareDecls((*ast.Schema)(s)) {
-		ns, err := marshalNamespace("", ast.Namespace{
+	if hasBareDecls((*ast2.Schema)(s)) {
+		ns, err := marshalNamespace("", ast2.Namespace{
 			Entities:    s.Entities,
 			Enums:       s.Enums,
 			Actions:     s.Actions,
@@ -48,7 +48,7 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	result := ast.Schema{}
+	result := ast2.Schema{}
 	for name, data := range raw {
 		var jns jsonNamespace
 		if err := json.Unmarshal(data, &jns); err != nil {
@@ -65,7 +65,7 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 			result.CommonTypes = ns.CommonTypes
 		} else {
 			if result.Namespaces == nil {
-				result.Namespaces = ast.Namespaces{}
+				result.Namespaces = ast2.Namespaces{}
 			}
 			result.Namespaces[types.Path(name)] = ns
 		}
@@ -74,7 +74,7 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func hasBareDecls(s *ast.Schema) bool {
+func hasBareDecls(s *ast2.Schema) bool {
 	return len(s.Entities) > 0 || len(s.Enums) > 0 || len(s.Actions) > 0 || len(s.CommonTypes) > 0
 }
 
@@ -132,7 +132,7 @@ type jsonAttr struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
-func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) {
+func marshalNamespace(name types.Path, ns ast2.Namespace) (jsonNamespace, error) {
 	jns := jsonNamespace{
 		EntityTypes: make(map[string]jsonEntityType),
 		Actions:     make(map[string]jsonAction),
@@ -241,34 +241,34 @@ func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) 
 	return jns, nil
 }
 
-func marshalIsType(t ast.IsType) (*jsonType, error) {
+func marshalIsType(t ast2.IsType) (*jsonType, error) {
 	switch t := t.(type) {
-	case ast.StringType:
+	case ast2.StringType:
 		return &jsonType{Type: "String"}, nil
-	case ast.LongType:
+	case ast2.LongType:
 		return &jsonType{Type: "Long"}, nil
-	case ast.BoolType:
+	case ast2.BoolType:
 		return &jsonType{Type: "Boolean"}, nil
-	case ast.ExtensionType:
+	case ast2.ExtensionType:
 		return &jsonType{Type: "Extension", Name: string(t)}, nil
-	case ast.SetType:
+	case ast2.SetType:
 		elem, err := marshalIsType(t.Element)
 		if err != nil {
 			return nil, err
 		}
 		return &jsonType{Type: "Set", Element: elem}, nil
-	case ast.RecordType:
+	case ast2.RecordType:
 		return marshalRecordType(t)
-	case ast.EntityTypeRef:
+	case ast2.EntityTypeRef:
 		return &jsonType{Type: "Entity", Name: string(t)}, nil
-	case ast.TypeRef:
+	case ast2.TypeRef:
 		return &jsonType{Type: "EntityOrCommon", Name: string(t)}, nil
 	default:
 		return nil, fmt.Errorf("unknown type: %T", t)
 	}
 }
 
-func marshalRecordType(rec ast.RecordType) (*jsonType, error) {
+func marshalRecordType(rec ast2.RecordType) (*jsonType, error) {
 	jt := &jsonType{
 		Type:       "Record",
 		Attributes: make(map[string]jsonAttr),
@@ -291,7 +291,7 @@ func marshalRecordType(rec ast.RecordType) (*jsonType, error) {
 	return jt, nil
 }
 
-func marshalAnnotations(annotations ast.Annotations) map[string]string {
+func marshalAnnotations(annotations ast2.Annotations) map[string]string {
 	m := make(map[string]string, len(annotations))
 	for k, v := range annotations {
 		m[string(k)] = string(v)
@@ -299,8 +299,8 @@ func marshalAnnotations(annotations ast.Annotations) map[string]string {
 	return m
 }
 
-func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, error) {
-	ns := ast.Namespace{}
+func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast2.Namespace, error) {
+	ns := ast2.Namespace{}
 
 	if len(jns.Annotations) > 0 {
 		ns.Annotations = unmarshalAnnotations(jns.Annotations)
@@ -309,12 +309,12 @@ func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, erro
 	for ctName, jct := range jns.CommonTypes {
 		t, err := unmarshalType(&jct.jsonType)
 		if err != nil {
-			return ast.Namespace{}, fmt.Errorf("common type %q: %w", ctName, err)
+			return ast2.Namespace{}, fmt.Errorf("common type %q: %w", ctName, err)
 		}
 		if ns.CommonTypes == nil {
-			ns.CommonTypes = ast.CommonTypes{}
+			ns.CommonTypes = ast2.CommonTypes{}
 		}
-		ct := ast.CommonType{Type: t}
+		ct := ast2.CommonType{Type: t}
 		if len(jct.Annotations) > 0 {
 			ct.Annotations = unmarshalAnnotations(jct.Annotations)
 		}
@@ -324,7 +324,7 @@ func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, erro
 	for etName, jet := range jns.EntityTypes {
 		qualName := qualify(etName, string(name))
 		if len(jet.Enum) > 0 {
-			enum := ast.Enum{}
+			enum := ast2.Enum{}
 			if len(jet.Annotations) > 0 {
 				enum.Annotations = unmarshalAnnotations(jet.Annotations)
 			}
@@ -332,75 +332,75 @@ func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, erro
 				enum.Values = append(enum.Values, types.String(v))
 			}
 			if ns.Enums == nil {
-				ns.Enums = ast.Enums{}
+				ns.Enums = ast2.Enums{}
 			}
 			ns.Enums[types.EntityType(qualName)] = enum
 		} else {
-			entity := ast.Entity{}
+			entity := ast2.Entity{}
 			if len(jet.Annotations) > 0 {
 				entity.Annotations = unmarshalAnnotations(jet.Annotations)
 			}
 			for _, ref := range jet.MemberOfTypes {
-				entity.MemberOf = append(entity.MemberOf, ast.EntityTypeRef(ref))
+				entity.MemberOf = append(entity.MemberOf, ast2.EntityTypeRef(ref))
 			}
 			if jet.Shape != nil {
 				rec, err := unmarshalRecordType(jet.Shape)
 				if err != nil {
-					return ast.Namespace{}, fmt.Errorf("entity %q shape: %w", etName, err)
+					return ast2.Namespace{}, fmt.Errorf("entity %q shape: %w", etName, err)
 				}
 				entity.Shape = &rec
 			}
 			if jet.Tags != nil {
 				t, err := unmarshalType(jet.Tags)
 				if err != nil {
-					return ast.Namespace{}, fmt.Errorf("entity %q tags: %w", etName, err)
+					return ast2.Namespace{}, fmt.Errorf("entity %q tags: %w", etName, err)
 				}
 				entity.Tags = t
 			}
 			if ns.Entities == nil {
-				ns.Entities = ast.Entities{}
+				ns.Entities = ast2.Entities{}
 			}
 			ns.Entities[types.EntityType(qualName)] = entity
 		}
 	}
 
 	for actionName, ja := range jns.Actions {
-		action := ast.Action{}
+		action := ast2.Action{}
 		if len(ja.Annotations) > 0 {
 			action.Annotations = unmarshalAnnotations(ja.Annotations)
 		}
 		for _, parent := range ja.MemberOf {
 			if parent.Type == "" {
-				action.MemberOf = append(action.MemberOf, ast.ParentRefFromID(types.String(parent.ID)))
+				action.MemberOf = append(action.MemberOf, ast2.ParentRefFromID(types.String(parent.ID)))
 			} else {
-				action.MemberOf = append(action.MemberOf, ast.NewParentRef(types.EntityType(parent.Type), types.String(parent.ID)))
+				action.MemberOf = append(action.MemberOf, ast2.NewParentRef(types.EntityType(parent.Type), types.String(parent.ID)))
 			}
 		}
 		if ja.AppliesTo != nil {
-			at := &ast.AppliesTo{}
+			at := &ast2.AppliesTo{}
 			for _, p := range ja.AppliesTo.PrincipalTypes {
-				at.Principals = append(at.Principals, ast.EntityTypeRef(p))
+				at.Principals = append(at.Principals, ast2.EntityTypeRef(p))
 			}
 			if at.Principals == nil {
-				at.Principals = []ast.EntityTypeRef{}
+				at.Principals = []ast2.EntityTypeRef{}
 			}
 			for _, r := range ja.AppliesTo.ResourceTypes {
-				at.Resources = append(at.Resources, ast.EntityTypeRef(r))
+				at.Resources = append(at.Resources, ast2.EntityTypeRef(r))
 			}
 			if at.Resources == nil {
-				at.Resources = []ast.EntityTypeRef{}
+				at.Resources = []ast2.EntityTypeRef{}
 			}
 			if ja.AppliesTo.Context != nil {
 				t, err := unmarshalType(ja.AppliesTo.Context)
 				if err != nil {
-					return ast.Namespace{}, fmt.Errorf("action %q context: %w", actionName, err)
+					return ast2.Namespace{}, fmt.Errorf("action %q context: %w", actionName, err)
 				}
 				at.Context = t
 			}
 			action.AppliesTo = at
 		}
 		if ns.Actions == nil {
-			ns.Actions = ast.Actions{}
+			ns.Actions = ast2.Actions{}
 		}
 		ns.Actions[types.String(actionName)] = action
 	}
@@ -408,16 +408,16 @@ func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, erro
 	return ns, nil
 }
 
-func unmarshalType(jt *jsonType) (ast.IsType, error) {
+func unmarshalType(jt *jsonType) (ast2.IsType, error) {
 	switch jt.Type {
 	case "String":
-		return ast.StringType{}, nil
+		return ast2.StringType{}, nil
 	case "Long":
-		return ast.LongType{}, nil
+		return ast2.LongType{}, nil
 	case "Boolean":
-		return ast.BoolType{}, nil
+		return ast2.BoolType{}, nil
 	case "Extension":
-		return ast.ExtensionType(jt.Name), nil
+		return ast2.ExtensionType(jt.Name), nil
 	case "Set":
 		if jt.Element == nil {
 			return nil, fmt.Errorf("set type missing element")
@@ -426,26 +426,26 @@ func unmarshalType(jt *jsonType) (ast.IsType, error) {
 		if err != nil {
 			return nil, err
 		}
-		return ast.Set(elem), nil
+		return ast2.Set(elem), nil
 	case "Record":
 		return unmarshalRecordType(jt)
 	case "Entity":
-		return ast.EntityTypeRef(jt.Name), nil
+		return ast2.EntityTypeRef(jt.Name), nil
 	case "EntityOrCommon":
-		return ast.TypeRef(jt.Name), nil
+		return ast2.TypeRef(jt.Name), nil
 	default:
 		return nil, fmt.Errorf("unknown type %q", jt.Type)
 	}
 }
 
-func unmarshalRecordType(jt *jsonType) (ast.RecordType, error) {
-	rec := ast.RecordType{}
+func unmarshalRecordType(jt *jsonType) (ast2.RecordType, error) {
+	rec := ast2.RecordType{}
 	for name, ja := range jt.Attributes {
 		t, err := unmarshalType(&ja.jsonType)
 		if err != nil {
 			return nil, fmt.Errorf("attribute %q: %w", name, err)
 		}
-		attr := ast.Attribute{
+		attr := ast2.Attribute{
 			Type:     t,
 			Optional: ja.Required != nil && !*ja.Required,
 		}
@@ -457,8 +457,8 @@ func unmarshalRecordType(jt *jsonType) (ast.RecordType, error) {
 	return rec, nil
 }
 
-func unmarshalAnnotations(m map[string]string) ast.Annotations {
-	a := make(ast.Annotations, len(m))
+func unmarshalAnnotations(m map[string]string) ast2.Annotations {
+	a := make(ast2.Annotations, len(m))
 	for k, v := range m {
 		a[types.Ident(k)] = types.String(v)
 	}

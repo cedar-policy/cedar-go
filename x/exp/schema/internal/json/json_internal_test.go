@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
-	"github.com/cedar-policy/cedar-go/schema/ast"
 	"github.com/cedar-policy/cedar-go/types"
+	ast2 "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 )
 
 func TestMarshalIsTypeUnknown(t *testing.T) {
@@ -16,23 +16,23 @@ func TestMarshalIsTypeUnknown(t *testing.T) {
 
 func TestMarshalIsTypeSetError(t *testing.T) {
 	// marshalIsType line 256-258: error marshaling Set element
-	_, err := marshalIsType(ast.SetType{Element: nil})
+	_, err := marshalIsType(ast2.SetType{Element: nil})
 	testutil.Error(t, err)
 }
 
 func TestMarshalRecordTypeError(t *testing.T) {
 	// marshalRecordType line 278-280: error marshaling attribute type
-	_, err := marshalRecordType(ast.RecordType{
-		"bad": ast.Attribute{Type: nil},
+	_, err := marshalRecordType(ast2.RecordType{
+		"bad": ast2.Attribute{Type: nil},
 	})
 	testutil.Error(t, err)
 }
 
 func TestMarshalNamespaceCommonTypeError(t *testing.T) {
 	// marshalNamespace line 149-151: marshalIsType error in common type
-	_, err := marshalNamespace("", ast.Namespace{
-		CommonTypes: ast.CommonTypes{
-			"Bad": ast.CommonType{Type: nil},
+	_, err := marshalNamespace("", ast2.Namespace{
+		CommonTypes: ast2.CommonTypes{
+			"Bad": ast2.CommonType{Type: nil},
 		},
 	})
 	testutil.Error(t, err)
@@ -40,11 +40,11 @@ func TestMarshalNamespaceCommonTypeError(t *testing.T) {
 
 func TestMarshalNamespaceEntityShapeError(t *testing.T) {
 	// marshalNamespace line 174-176: marshalRecordType error in entity shape
-	_, err := marshalNamespace("", ast.Namespace{
-		Entities: ast.Entities{
-			"Foo": ast.Entity{
-				Shape: &ast.RecordType{
-					"bad": ast.Attribute{Type: nil},
+	_, err := marshalNamespace("", ast2.Namespace{
+		Entities: ast2.Entities{
+			"Foo": ast2.Entity{
+				Shape: &ast2.RecordType{
+					"bad": ast2.Attribute{Type: nil},
 				},
 			},
 		},
@@ -54,9 +54,9 @@ func TestMarshalNamespaceEntityShapeError(t *testing.T) {
 
 func TestMarshalNamespaceEntityTagsError(t *testing.T) {
 	// marshalNamespace line 181-183: marshalIsType error in entity tags
-	_, err := marshalNamespace("", ast.Namespace{
-		Entities: ast.Entities{
-			"Foo": ast.Entity{Tags: nil},
+	_, err := marshalNamespace("", ast2.Namespace{
+		Entities: ast2.Entities{
+			"Foo": ast2.Entity{Tags: nil},
 		},
 	})
 	// Tags is nil, but the code checks `entity.Tags != nil` first (line 179)
@@ -66,9 +66,9 @@ func TestMarshalNamespaceEntityTagsError(t *testing.T) {
 
 func TestMarshalNamespaceEntityTagsError2(t *testing.T) {
 	// marshalNamespace line 181-183: marshalIsType error in entity tags
-	_, err := marshalNamespace("", ast.Namespace{
-		Entities: ast.Entities{
-			"Foo": ast.Entity{Tags: ast.SetType{Element: nil}},
+	_, err := marshalNamespace("", ast2.Namespace{
+		Entities: ast2.Entities{
+			"Foo": ast2.Entity{Tags: ast2.SetType{Element: nil}},
 		},
 	})
 	testutil.Error(t, err)
@@ -76,10 +76,10 @@ func TestMarshalNamespaceEntityTagsError2(t *testing.T) {
 
 func TestMarshalNamespaceActionAnnotations(t *testing.T) {
 	// marshalNamespace line 203-205: action with annotations
-	ns, err := marshalNamespace("", ast.Namespace{
-		Actions: ast.Actions{
-			"view": ast.Action{
-				Annotations: ast.Annotations{"doc": "test"},
+	ns, err := marshalNamespace("", ast2.Namespace{
+		Actions: ast2.Actions{
+			"view": ast2.Action{
+				Annotations: ast2.Annotations{"doc": "test"},
 			},
 		},
 	})
@@ -89,11 +89,11 @@ func TestMarshalNamespaceActionAnnotations(t *testing.T) {
 
 func TestMarshalNamespaceContextError(t *testing.T) {
 	// marshalNamespace line 231-233: marshalIsType error in appliesTo context
-	_, err := marshalNamespace("", ast.Namespace{
-		Actions: ast.Actions{
-			"view": ast.Action{
-				AppliesTo: &ast.AppliesTo{
-					Context: ast.SetType{Element: nil},
+	_, err := marshalNamespace("", ast2.Namespace{
+		Actions: ast2.Actions{
+			"view": ast2.Action{
+				AppliesTo: &ast2.AppliesTo{
+					Context: ast2.SetType{Element: nil},
 				},
 			},
 		},
@@ -104,8 +104,8 @@ func TestMarshalNamespaceContextError(t *testing.T) {
 func TestMarshalBareNamespaceError(t *testing.T) {
 	// MarshalJSON line 28-30: marshalNamespace error for bare decls
 	s := &Schema{
-		Entities: ast.Entities{
-			"Foo": ast.Entity{Tags: ast.SetType{Element: nil}},
+		Entities: ast2.Entities{
+			"Foo": ast2.Entity{Tags: ast2.SetType{Element: nil}},
 		},
 	}
 	_, err := s.MarshalJSON()
@@ -115,10 +115,10 @@ func TestMarshalBareNamespaceError(t *testing.T) {
 func TestMarshalNamespacedError(t *testing.T) {
 	// MarshalJSON line 36-38: marshalNamespace error for namespaced decls
 	s := &Schema{
-		Namespaces: ast.Namespaces{
-			"NS": ast.Namespace{
-				Entities: ast.Entities{
-					"NS::Foo": ast.Entity{Tags: ast.SetType{Element: nil}},
+		Namespaces: ast2.Namespaces{
+			"NS": ast2.Namespace{
+				Entities: ast2.Entities{
+					"NS::Foo": ast2.Entity{Tags: ast2.SetType{Element: nil}},
 				},
 			},
 		},

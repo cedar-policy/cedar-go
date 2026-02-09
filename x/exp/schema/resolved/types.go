@@ -1,8 +1,8 @@
 package resolved
 
 import (
-	"github.com/cedar-policy/cedar-go/schema/ast"
 	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 )
 
 // Annotations is a resolved annotation map.

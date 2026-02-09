@@ -3,7 +3,7 @@ package schema_test
 import (
 	"fmt"
 
-	"github.com/cedar-policy/cedar-go/schema"
+	"github.com/cedar-policy/cedar-go/x/exp/schema"
 )
 
 const exampleCedar = `entity User in [Group] {

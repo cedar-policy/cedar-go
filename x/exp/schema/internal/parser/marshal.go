@@ -7,12 +7,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cedar-policy/cedar-go/schema/ast"
 	"github.com/cedar-policy/cedar-go/types"
+	ast2 "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 )
 
 // MarshalSchema formats an AST schema as Cedar text.
-func MarshalSchema(schema *ast.Schema) []byte {
+func MarshalSchema(schema *ast2.Schema) []byte {
 	var buf bytes.Buffer
 	m := marshaler{w: &buf}
 	m.marshalSchema(schema)
@@ -30,7 +30,7 @@ func (m *marshaler) writeIndent() {
 	}
 }
 
-func (m *marshaler) marshalSchema(schema *ast.Schema) {
+func (m *marshaler) marshalSchema(schema *ast2.Schema) {
 	first := true
 
 	// Marshal bare declarations
@@ -56,7 +56,7 @@ func (m *marshaler) marshalSchema(schema *ast.Schema) {
 	}
 }
 
-func (m *marshaler) marshalDecls(first *bool, entities ast.Entities, enums ast.Enums, actions ast.Actions, commonTypes ast.CommonTypes) {
+func (m *marshaler) marshalDecls(first *bool, entities ast2.Entities, enums ast2.Enums, actions ast2.Actions, commonTypes ast2.CommonTypes) {
 	// Type declarations
 	typeNames := sortedIdents(commonTypes)
 	for _, name := range typeNames {
@@ -141,7 +141,7 @@ func (m *marshaler) marshalDecls(first *bool, entities ast.Entities, enums ast.E
 	}
 }
 
-func (m *marshaler) marshalAnnotations(annotations ast.Annotations) {
+func (m *marshaler) marshalAnnotations(annotations ast2.Annotations) {
 	keys := sortedAnnotationKeys(annotations)
 	for _, key := range keys {
 		val := annotations[key]
@@ -154,30 +154,30 @@ func (m *marshaler) marshalAnnotations(annotations ast.Annotations) {
 	}
 }
 
-func (m *marshaler) marshalType(t ast.IsType) {
+func (m *marshaler) marshalType(t ast2.IsType) {
 	switch t := t.(type) {
-	case ast.StringType:
+	case ast2.StringType:
 		m.w.WriteString("String")
-	case ast.LongType:
+	case ast2.LongType:
 		m.w.WriteString("Long")
-	case ast.BoolType:
+	case ast2.BoolType:
 		m.w.WriteString("Bool")
-	case ast.ExtensionType:
+	case ast2.ExtensionType:
 		m.w.WriteString(string(t))
-	case ast.SetType:
+	case ast2.SetType:
 		m.w.WriteString("Set<")
 		m.marshalType(t.Element)
 		m.w.WriteByte('>')
-	case ast.RecordType:
+	case ast2.RecordType:
 		m.marshalRecordType(t)
-	case ast.EntityTypeRef:
+	case ast2.EntityTypeRef:
 		m.w.WriteString(string(t))
-	case ast.TypeRef:
+	case ast2.TypeRef:
 		m.w.WriteString(string(t))
 	}
 }
 
-func (m *marshaler) marshalRecordType(rec ast.RecordType) {
+func (m *marshaler) marshalRecordType(rec ast2.RecordType) {
 	m.w.WriteByte('{')
 	keys := sortedRecordKeys(rec)
 	if len(keys) > 0 {
@@ -204,7 +204,7 @@ func (m *marshaler) marshalRecordType(rec ast.RecordType) {
 	m.w.WriteByte('}')
 }
 
-func (m *marshaler) marshalEntityTypeRefs(refs []ast.EntityTypeRef) {
+func (m *marshaler) marshalEntityTypeRefs(refs []ast2.EntityTypeRef) {
 	if len(refs) == 1 {
 		m.w.WriteString(string(refs[0]))
 		return
@@ -219,7 +219,7 @@ func (m *marshaler) marshalEntityTypeRefs(refs []ast.EntityTypeRef) {
 	m.w.WriteByte(']')
 }
 
-func (m *marshaler) marshalParentRefs(refs []ast.ParentRef) {
+func (m *marshaler) marshalParentRefs(refs []ast2.ParentRef) {
 	if len(refs) == 1 {
 		m.marshalParentRef(refs[0])
 		return
@@ -234,7 +234,7 @@ func (m *marshaler) marshalParentRefs(refs []ast.ParentRef) {
 	m.w.WriteByte(']')
 }
 
-func (m *marshaler) marshalParentRef(ref ast.ParentRef) {
+func (m *marshaler) marshalParentRef(ref ast2.ParentRef) {
 	if types.EntityType(ref.Type) == "" {
 		m.marshalActionName(ref.ID)
 	} else {
@@ -242,7 +242,7 @@ func (m *marshaler) marshalParentRef(ref ast.ParentRef) {
 	}
 }
 
-func (m *marshaler) marshalAppliesTo(at *ast.AppliesTo) {
+func (m *marshaler) marshalAppliesTo(at *ast2.AppliesTo) {
 	m.w.WriteString(" appliesTo {\n")
 	m.indent++
 	hasPrev := false
@@ -361,11 +361,11 @@ func sortedStrings[V any](m map[types.String]V) []types.String {
 	return keys
 }
 
-func sortedRecordKeys(m ast.RecordType) []types.String {
-	return sortedStrings(map[types.String]ast.Attribute(m))
+func sortedRecordKeys(m ast2.RecordType) []types.String {
+	return sortedStrings(map[types.String]ast2.Attribute(m))
 }
 
-func sortedAnnotationKeys(m ast.Annotations) []types.Ident {
+func sortedAnnotationKeys(m ast2.Annotations) []types.Ident {
 	return sortedIdents(map[types.Ident]types.String(m))
 }
 

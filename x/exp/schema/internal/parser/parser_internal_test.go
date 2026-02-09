@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
-	"github.com/cedar-policy/cedar-go/schema/ast"
 	"github.com/cedar-policy/cedar-go/types"
+	ast2 "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 )
 
 func TestLexerBasicTokens(t *testing.T) {
@@ -783,17 +783,17 @@ func TestParseNameReadTokenAfterIdentInAction(t *testing.T) {
 func TestMarshalMultipleDecls(t *testing.T) {
 	// marshal.go lines 64, 105: !*first newline separator between declarations
 	// Also lines 333, 342: sort comparison with 2+ keys
-	s := &ast.Schema{
-		Namespaces: ast.Namespaces{
-			"NS1": ast.Namespace{},
-			"NS2": ast.Namespace{
-				CommonTypes: ast.CommonTypes{
-					"A": ast.CommonType{Type: ast.StringType{}},
-					"B": ast.CommonType{Type: ast.LongType{}},
+	s := &ast2.Schema{
+		Namespaces: ast2.Namespaces{
+			"NS1": ast2.Namespace{},
+			"NS2": ast2.Namespace{
+				CommonTypes: ast2.CommonTypes{
+					"A": ast2.CommonType{Type: ast2.StringType{}},
+					"B": ast2.CommonType{Type: ast2.LongType{}},
 				},
-				Enums: ast.Enums{
-					"NS2::Color": ast.Enum{Values: []types.String{"red"}},
-					"NS2::Size":  ast.Enum{Values: []types.String{"small"}},
+				Enums: ast2.Enums{
+					"NS2::Color": ast2.Enum{Values: []types.String{"red"}},
+					"NS2::Size":  ast2.Enum{Values: []types.String{"small"}},
 				},
 			},
 		},

@@ -2,10 +2,10 @@
 package schema
 
 import (
-	"github.com/cedar-policy/cedar-go/schema/ast"
-	schemajson "github.com/cedar-policy/cedar-go/schema/internal/json"
-	"github.com/cedar-policy/cedar-go/schema/internal/parser"
-	"github.com/cedar-policy/cedar-go/schema/resolved"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
+	schemajson "github.com/cedar-policy/cedar-go/x/exp/schema/internal/json"
+	parser2 "github.com/cedar-policy/cedar-go/x/exp/schema/internal/parser"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/resolved"
 )
 
 // Schema provides parsing and marshaling for Cedar schemas.
@@ -42,12 +42,12 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 
 // MarshalCedar encodes the Schema in the human-readable format.
 func (s *Schema) MarshalCedar() ([]byte, error) {
-	return parser.MarshalSchema(s.schema), nil
+	return parser2.MarshalSchema(s.schema), nil
 }
 
 // UnmarshalCedar parses a Schema in the human-readable format.
 func (s *Schema) UnmarshalCedar(b []byte) error {
-	schema, err := parser.ParseSchema(s.filename, b)
+	schema, err := parser2.ParseSchema(s.filename, b)
 	if err != nil {
 		return err
 	}

@@ -5,33 +5,33 @@ import (
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
-	"github.com/cedar-policy/cedar-go/schema/ast"
-	schemajson "github.com/cedar-policy/cedar-go/schema/internal/json"
 	"github.com/cedar-policy/cedar-go/types"
+	ast2 "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
+	schemajson "github.com/cedar-policy/cedar-go/x/exp/schema/internal/json"
 )
 
 func TestRoundTripEmpty(t *testing.T) {
-	s := ast.Schema{}
+	s := ast2.Schema{}
 	b, err := (*schemajson.Schema)(&s).MarshalJSON()
 	testutil.OK(t, err)
 
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
-	testutil.Equals(t, (*ast.Schema)(&s2), &ast.Schema{})
+	testutil.Equals(t, (*ast2.Schema)(&s2), &ast2.Schema{})
 }
 
 func TestRoundTripEntity(t *testing.T) {
-	s := ast.Schema{
-		Namespaces: ast.Namespaces{
-			"NS": ast.Namespace{
-				Entities: ast.Entities{
-					"NS::User": ast.Entity{
-						MemberOf: []ast.EntityTypeRef{"Group"},
-						Shape: &ast.RecordType{
-							"name": ast.Attribute{Type: ast.StringType{}},
-							"age":  ast.Attribute{Type: ast.LongType{}, Optional: true},
+	s := ast2.Schema{
+		Namespaces: ast2.Namespaces{
+			"NS": ast2.Namespace{
+				Entities: ast2.Entities{
+					"NS::User": ast2.Entity{
+						MemberOf: []ast2.EntityTypeRef{"Group"},
+						Shape: &ast2.RecordType{
+							"name": ast2.Attribute{Type: ast2.StringType{}},
+							"age":  ast2.Attribute{Type: ast2.LongType{}, Optional: true},
 						},
-						Tags: ast.StringType{},
+						Tags: ast2.StringType{},
 					},
 				},
 			},
@@ -43,16 +43,16 @@ func TestRoundTripEntity(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	user := (*ast.Schema)(&s2).Namespaces["NS"].Entities["NS::User"]
-	testutil.Equals(t, user.MemberOf, []ast.EntityTypeRef{"Group"})
+	user := (*ast2.Schema)(&s2).Namespaces["NS"].Entities["NS::User"]
+	testutil.Equals(t, user.MemberOf, []ast2.EntityTypeRef{"Group"})
 	testutil.Equals(t, user.Shape != nil, true)
 	testutil.Equals(t, user.Tags != nil, true)
 }
 
 func TestRoundTripEnum(t *testing.T) {
-	s := ast.Schema{
-		Enums: ast.Enums{
-			"Status": ast.Enum{
+	s := ast2.Schema{
+		Enums: ast2.Enums{
+			"Status": ast2.Enum{
 				Values: []types.String{"active", "inactive"},
 			},
 		},
@@ -63,22 +63,22 @@ func TestRoundTripEnum(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	status := (*ast.Schema)(&s2).Enums["Status"]
+	status := (*ast2.Schema)(&s2).Enums["Status"]
 	testutil.Equals(t, status.Values, []types.String{"active", "inactive"})
 }
 
 func TestRoundTripAction(t *testing.T) {
-	s := ast.Schema{
-		Actions: ast.Actions{
-			"view": ast.Action{
-				MemberOf: []ast.ParentRef{
-					ast.NewParentRef("NS::Action", "readOnly"),
-					ast.ParentRefFromID("write"),
+	s := ast2.Schema{
+		Actions: ast2.Actions{
+			"view": ast2.Action{
+				MemberOf: []ast2.ParentRef{
+					ast2.NewParentRef("NS::Action", "readOnly"),
+					ast2.ParentRefFromID("write"),
 				},
-				AppliesTo: &ast.AppliesTo{
-					Principals: []ast.EntityTypeRef{"User"},
-					Resources:  []ast.EntityTypeRef{"Photo"},
-					Context:    ast.RecordType{},
+				AppliesTo: &ast2.AppliesTo{
+					Principals: []ast2.EntityTypeRef{"User"},
+					Resources:  []ast2.EntityTypeRef{"Photo"},
+					Context:    ast2.RecordType{},
 				},
 			},
 		},
@@ -89,19 +89,19 @@ func TestRoundTripAction(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	view := (*ast.Schema)(&s2).Actions["view"]
+	view := (*ast2.Schema)(&s2).Actions["view"]
 	testutil.Equals(t, len(view.MemberOf), 2)
 	testutil.Equals(t, view.AppliesTo != nil, true)
 	testutil.Equals(t, len(view.AppliesTo.Principals), 1)
 }
 
 func TestRoundTripCommonType(t *testing.T) {
-	s := ast.Schema{
-		CommonTypes: ast.CommonTypes{
-			"Context": ast.CommonType{
-				Annotations: ast.Annotations{"doc": "context type"},
-				Type: ast.RecordType{
-					"ip": ast.Attribute{Type: ast.ExtensionType("ipaddr")},
+	s := ast2.Schema{
+		CommonTypes: ast2.CommonTypes{
+			"Context": ast2.CommonType{
+				Annotations: ast2.Annotations{"doc": "context type"},
+				Type: ast2.RecordType{
+					"ip": ast2.Attribute{Type: ast2.ExtensionType("ipaddr")},
 				},
 			},
 		},
@@ -112,23 +112,23 @@ func TestRoundTripCommonType(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	ct := (*ast.Schema)(&s2).CommonTypes["Context"]
+	ct := (*ast2.Schema)(&s2).CommonTypes["Context"]
 	testutil.Equals(t, ct.Annotations["doc"], types.String("context type"))
 }
 
 func TestRoundTripAllTypes(t *testing.T) {
-	s := ast.Schema{
-		Entities: ast.Entities{
-			"User": ast.Entity{
-				Shape: &ast.RecordType{
-					"s":    ast.Attribute{Type: ast.StringType{}},
-					"l":    ast.Attribute{Type: ast.LongType{}},
-					"b":    ast.Attribute{Type: ast.BoolType{}},
-					"ip":   ast.Attribute{Type: ast.ExtensionType("ipaddr")},
-					"set":  ast.Attribute{Type: ast.Set(ast.LongType{})},
-					"rec":  ast.Attribute{Type: ast.RecordType{}},
-					"ref":  ast.Attribute{Type: ast.EntityTypeRef("Other")},
-					"tref": ast.Attribute{Type: ast.TypeRef("CommonT")},
+	s := ast2.Schema{
+		Entities: ast2.Entities{
+			"User": ast2.Entity{
+				Shape: &ast2.RecordType{
+					"s":    ast2.Attribute{Type: ast2.StringType{}},
+					"l":    ast2.Attribute{Type: ast2.LongType{}},
+					"b":    ast2.Attribute{Type: ast2.BoolType{}},
+					"ip":   ast2.Attribute{Type: ast2.ExtensionType("ipaddr")},
+					"set":  ast2.Attribute{Type: ast2.Set(ast2.LongType{})},
+					"rec":  ast2.Attribute{Type: ast2.RecordType{}},
+					"ref":  ast2.Attribute{Type: ast2.EntityTypeRef("Other")},
+					"tref": ast2.Attribute{Type: ast2.TypeRef("CommonT")},
 				},
 			},
 		},
@@ -138,18 +138,18 @@ func TestRoundTripAllTypes(t *testing.T) {
 
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
-	testutil.Equals(t, len(*(*ast.Schema)(&s2).Entities["User"].Shape), 8)
+	testutil.Equals(t, len(*(*ast2.Schema)(&s2).Entities["User"].Shape), 8)
 }
 
 func TestRoundTripAnnotations(t *testing.T) {
-	s := ast.Schema{
-		Entities: ast.Entities{
-			"User": ast.Entity{
-				Annotations: ast.Annotations{"doc": "user entity"},
-				Shape: &ast.RecordType{
-					"name": ast.Attribute{
-						Type:        ast.StringType{},
-						Annotations: ast.Annotations{"doc": "user name"},
+	s := ast2.Schema{
+		Entities: ast2.Entities{
+			"User": ast2.Entity{
+				Annotations: ast2.Annotations{"doc": "user entity"},
+				Shape: &ast2.RecordType{
+					"name": ast2.Attribute{
+						Type:        ast2.StringType{},
+						Annotations: ast2.Annotations{"doc": "user name"},
 					},
 				},
 			},
@@ -161,17 +161,17 @@ func TestRoundTripAnnotations(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	user := (*ast.Schema)(&s2).Entities["User"]
+	user := (*ast2.Schema)(&s2).Entities["User"]
 	testutil.Equals(t, user.Annotations["doc"], types.String("user entity"))
 	testutil.Equals(t, (*user.Shape)["name"].Annotations["doc"], types.String("user name"))
 }
 
 func TestRoundTripNamespaceAnnotations(t *testing.T) {
-	s := ast.Schema{
-		Namespaces: ast.Namespaces{
-			"NS": ast.Namespace{
-				Annotations: ast.Annotations{"doc": "my ns"},
-				Entities:    ast.Entities{},
+	s := ast2.Schema{
+		Namespaces: ast2.Namespaces{
+			"NS": ast2.Namespace{
+				Annotations: ast2.Annotations{"doc": "my ns"},
+				Entities:    ast2.Entities{},
 			},
 		},
 	}
@@ -181,14 +181,14 @@ func TestRoundTripNamespaceAnnotations(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	ns := (*ast.Schema)(&s2).Namespaces["NS"]
+	ns := (*ast2.Schema)(&s2).Namespaces["NS"]
 	testutil.Equals(t, ns.Annotations["doc"], types.String("my ns"))
 }
 
 func TestRoundTripActionNoAppliesTo(t *testing.T) {
-	s := ast.Schema{
-		Actions: ast.Actions{
-			"view": ast.Action{},
+	s := ast2.Schema{
+		Actions: ast2.Actions{
+			"view": ast2.Action{},
 		},
 	}
 	b, err := (*schemajson.Schema)(&s).MarshalJSON()
@@ -197,17 +197,17 @@ func TestRoundTripActionNoAppliesTo(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	view := (*ast.Schema)(&s2).Actions["view"]
+	view := (*ast2.Schema)(&s2).Actions["view"]
 	testutil.Equals(t, view.AppliesTo == nil, true)
 }
 
 func TestRoundTripActionEmptyLists(t *testing.T) {
-	s := ast.Schema{
-		Actions: ast.Actions{
-			"view": ast.Action{
-				AppliesTo: &ast.AppliesTo{
-					Principals: []ast.EntityTypeRef{},
-					Resources:  []ast.EntityTypeRef{},
+	s := ast2.Schema{
+		Actions: ast2.Actions{
+			"view": ast2.Action{
+				AppliesTo: &ast2.AppliesTo{
+					Principals: []ast2.EntityTypeRef{},
+					Resources:  []ast2.EntityTypeRef{},
 				},
 			},
 		},
@@ -218,7 +218,7 @@ func TestRoundTripActionEmptyLists(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	view := (*ast.Schema)(&s2).Actions["view"]
+	view := (*ast2.Schema)(&s2).Actions["view"]
 	testutil.Equals(t, view.AppliesTo != nil, true)
 	testutil.Equals(t, len(view.AppliesTo.Principals), 0)
 	testutil.Equals(t, len(view.AppliesTo.Resources), 0)
@@ -278,7 +278,7 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 	var s schemajson.Schema
 	testutil.OK(t, json.Unmarshal([]byte(input), &s))
 
-	ns := (*ast.Schema)(&s).Namespaces["NS"]
+	ns := (*ast2.Schema)(&s).Namespaces["NS"]
 	testutil.Equals(t, len(ns.Entities), 2)
 	testutil.Equals(t, len(ns.Actions), 1)
 	testutil.Equals(t, len(ns.CommonTypes), 1)
@@ -288,14 +288,14 @@ func TestMarshalUnmarshalJSON(t *testing.T) {
 
 	var s2 schemajson.Schema
 	testutil.OK(t, json.Unmarshal(b, &s2))
-	testutil.Equals(t, len((*ast.Schema)(&s2).Namespaces["NS"].Entities), 2)
+	testutil.Equals(t, len((*ast2.Schema)(&s2).Namespaces["NS"].Entities), 2)
 }
 
 func TestRoundTripEnumAnnotations(t *testing.T) {
-	s := ast.Schema{
-		Enums: ast.Enums{
-			"Status": ast.Enum{
-				Annotations: ast.Annotations{"doc": "status enum"},
+	s := ast2.Schema{
+		Enums: ast2.Enums{
+			"Status": ast2.Enum{
+				Annotations: ast2.Annotations{"doc": "status enum"},
 				Values:      []types.String{"active"},
 			},
 		},
@@ -306,19 +306,19 @@ func TestRoundTripEnumAnnotations(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	status := (*ast.Schema)(&s2).Enums["Status"]
+	status := (*ast2.Schema)(&s2).Enums["Status"]
 	testutil.Equals(t, status.Annotations["doc"], types.String("status enum"))
 }
 
 func TestRoundTripActionContext(t *testing.T) {
-	s := ast.Schema{
-		Actions: ast.Actions{
-			"view": ast.Action{
-				AppliesTo: &ast.AppliesTo{
-					Principals: []ast.EntityTypeRef{"User"},
-					Resources:  []ast.EntityTypeRef{"Photo"},
-					Context: ast.RecordType{
-						"ip": ast.Attribute{Type: ast.ExtensionType("ipaddr")},
+	s := ast2.Schema{
+		Actions: ast2.Actions{
+			"view": ast2.Action{
+				AppliesTo: &ast2.AppliesTo{
+					Principals: []ast2.EntityTypeRef{"User"},
+					Resources:  []ast2.EntityTypeRef{"Photo"},
+					Context: ast2.RecordType{
+						"ip": ast2.Attribute{Type: ast2.ExtensionType("ipaddr")},
 					},
 				},
 			},
@@ -330,6 +330,6 @@ func TestRoundTripActionContext(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	view := (*ast.Schema)(&s2).Actions["view"]
+	view := (*ast2.Schema)(&s2).Actions["view"]
 	testutil.Equals(t, view.AppliesTo.Context != nil, true)
 }
