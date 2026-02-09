@@ -836,8 +836,8 @@ func TestResolveQualifiedEntityType(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User": ast2.Entity{},
-					"Admin":    ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NS::User"}},
+					"User":  ast2.Entity{},
+					"Admin": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NS::User"}},
 				},
 			},
 		},
@@ -845,6 +845,47 @@ func TestResolveQualifiedEntityType(t *testing.T) {
 	result, err := resolved2.Resolve(s)
 	testutil.OK(t, err)
 	testutil.Equals(t, result.Entities["NS::Admin"].ParentTypes, []types.EntityType{"NS::User"})
+}
+
+func TestResolveNamespaceQualifiedKeyError(t *testing.T) {
+	// Using a namespace-qualified key in the Entities map is invalid;
+	// keys must be bare Idents. A qualified key gets double-qualified
+	// during resolution, causing references to it to fail.
+	s := &ast2.Schema{
+		Namespaces: ast2.Namespaces{
+			"NS": ast2.Namespace{
+				Entities: ast2.Entities{
+					"NS::User": ast2.Entity{},
+					"Admin":    ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NS::User"}},
+				},
+			},
+		},
+	}
+	_, err := resolved2.Resolve(s)
+	testutil.Error(t, err)
+}
+
+func TestResolveNamespaceQualifiedEnumKeyError(t *testing.T) {
+	// Same as above but for Enums: a namespace-qualified key causes
+	// double-qualification, so references to it fail.
+	s := &ast2.Schema{
+		Namespaces: ast2.Namespaces{
+			"NS": ast2.Namespace{
+				Enums: ast2.Enums{
+					"NS::Color": ast2.Enum{Values: []types.String{"red"}},
+				},
+				Entities: ast2.Entities{
+					"Item": ast2.Entity{
+						Shape: &ast2.RecordType{
+							"color": ast2.Attribute{Type: ast2.TypeRef("Color")},
+						},
+					},
+				},
+			},
+		},
+	}
+	_, err := resolved2.Resolve(s)
+	testutil.Error(t, err)
 }
 
 func TestResolveQualifiedEntityTypeRefAsType(t *testing.T) {
@@ -1124,4 +1165,162 @@ func TestResolveNamespacedCommonTypePath(t *testing.T) {
 	result, err := resolved2.Resolve(s)
 	testutil.OK(t, err)
 	_ = result
+}
+
+func TestResolveShadowingEntityEntity(t *testing.T) {
+	// Entity in namespace shadows entity in empty namespace.
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"T": ast.Entity{},
+		},
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"T": ast.Entity{},
+				},
+			},
+		},
+	}
+	_, err := resolved.Resolve(s)
+	testutil.Error(t, err)
+}
+
+func TestResolveShadowingCommonEntity(t *testing.T) {
+	// Common type in namespace shadows entity in empty namespace.
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"T": ast.Entity{},
+		},
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				CommonTypes: ast.CommonTypes{
+					"T": ast.CommonType{Type: ast.StringType{}},
+				},
+			},
+		},
+	}
+	_, err := resolved.Resolve(s)
+	testutil.Error(t, err)
+}
+
+func TestResolveShadowingEntityCommon(t *testing.T) {
+	// Entity in namespace shadows common type in empty namespace.
+	s := &ast.Schema{
+		CommonTypes: ast.CommonTypes{
+			"T": ast.CommonType{Type: ast.StringType{}},
+		},
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Entities: ast.Entities{
+					"T": ast.Entity{},
+				},
+			},
+		},
+	}
+	_, err := resolved.Resolve(s)
+	testutil.Error(t, err)
+}
+
+func TestResolveShadowingCommonCommon(t *testing.T) {
+	// Common type in namespace shadows common type in empty namespace.
+	s := &ast.Schema{
+		CommonTypes: ast.CommonTypes{
+			"T": ast.CommonType{Type: ast.StringType{}},
+		},
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				CommonTypes: ast.CommonTypes{
+					"T": ast.CommonType{Type: ast.LongType{}},
+				},
+			},
+		},
+	}
+	_, err := resolved.Resolve(s)
+	testutil.Error(t, err)
+}
+
+func TestResolveShadowingEnumEntity(t *testing.T) {
+	// Enum in namespace shadows entity in empty namespace.
+	s := &ast.Schema{
+		Entities: ast.Entities{
+			"T": ast.Entity{},
+		},
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Enums: ast.Enums{
+					"T": ast.Enum{Values: []types.String{"a"}},
+				},
+			},
+		},
+	}
+	_, err := resolved.Resolve(s)
+	testutil.Error(t, err)
+}
+
+func TestResolveShadowingActionAction(t *testing.T) {
+	// Action in namespace shadows action in empty namespace.
+	s := &ast.Schema{
+		Actions: ast.Actions{
+			"A": ast.Action{},
+		},
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Actions: ast.Actions{
+					"A": ast.Action{},
+				},
+			},
+		},
+	}
+	_, err := resolved.Resolve(s)
+	testutil.Error(t, err)
+}
+
+func TestResolveShadowingAllowed(t *testing.T) {
+	// No shadowing: same name in two non-empty namespaces is fine.
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"A": ast.Namespace{
+				Entities: ast.Entities{
+					"T": ast.Entity{},
+				},
+			},
+			"B": ast.Namespace{
+				Entities: ast.Entities{
+					"T": ast.Entity{},
+				},
+			},
+		},
+	}
+	_, err := resolved.Resolve(s)
+	testutil.OK(t, err)
+}
+
+func TestResolveDuplicateEntityEnum(t *testing.T) {
+	_, err := resolved.Resolve(&ast.Schema{
+		Entities: ast.Entities{
+			"Foo": ast.Entity{},
+		},
+		Enums: ast.Enums{
+			"Foo": ast.Enum{Values: []types.String{"a"}},
+		},
+	})
+	testutil.Error(t, err)
+	testutil.Equals(t, err.Error(), `"Foo" is declared twice`)
+}
+
+func TestResolveDuplicateEntityEnumInNamespace(t *testing.T) {
+	_, err := resolved.Resolve(&ast.Schema{
+		Namespaces: ast.Namespaces{
+			"Baz": ast.Namespace{
+				Entities: ast.Entities{
+					"Foo": ast.Entity{},
+				},
+				Enums: ast.Enums{
+					"Foo": ast.Enum{Values: []types.String{"Bar"}},
+				},
+			},
+		},
+	})
+	testutil.Error(t, err)
+	testutil.Equals(t, err.Error(), `"Baz::Foo" is declared twice`)
 }

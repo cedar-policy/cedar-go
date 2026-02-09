@@ -76,17 +76,26 @@ func Resolve(s *ast.Schema) (*Schema, error) {
 	}
 
 	// Phase 1: Register all declarations
-	r.registerDecls("", s.Entities, s.Enums, s.CommonTypes)
+	if err := r.registerDecls("", s.Entities, s.Enums, s.CommonTypes); err != nil {
+		return nil, err
+	}
 	for nsName, ns := range s.Namespaces {
-		r.registerDecls(nsName, ns.Entities, ns.Enums, ns.CommonTypes)
+		if err := r.registerDecls(nsName, ns.Entities, ns.Enums, ns.CommonTypes); err != nil {
+			return nil, err
+		}
 	}
 
-	// Phase 2: Detect cycles in common types
+	// Phase 2: Check for illegal shadowing (RFC 70)
+	if err := checkShadowing(s); err != nil {
+		return nil, err
+	}
+
+	// Phase 3: Detect cycles in common types
 	if err := r.detectCommonTypeCycles(); err != nil {
 		return nil, err
 	}
 
-	// Phase 3: Resolve everything
+	// Phase 4: Resolve everything
 	result := &Schema{
 		Namespaces: make(map[types.Path]Namespace),
 		Entities:   make(map[types.EntityType]Entity),
@@ -118,7 +127,7 @@ func Resolve(s *ast.Schema) (*Schema, error) {
 		}
 	}
 
-	// Phase 4: Validate and resolve action membership
+	// Phase 5: Validate and resolve action membership
 	if err := r.validateActionMembership(result); err != nil {
 		return nil, err
 	}
@@ -132,17 +141,73 @@ type resolverState struct {
 	commonTypes map[types.Path]ast.IsType
 }
 
-func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, enums ast.Enums, commonTypes ast.CommonTypes) {
+func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, enums ast.Enums, commonTypes ast.CommonTypes) error {
 	for name := range entities {
+		if _, ok := enums[name]; ok {
+			return fmt.Errorf("%q is declared twice", qualifyEntityType(nsName, name))
+		}
 		r.entityTypes[qualifyEntityType(nsName, name)] = true
 	}
 	for name := range enums {
 		r.enumTypes[qualifyEntityType(nsName, name)] = true
 	}
 	for name, ct := range commonTypes {
-		fullPath := qualifyPath(nsName, types.Path(name))
-		r.commonTypes[fullPath] = ct.Type
+		r.commonTypes[qualifyPath(nsName, name)] = ct.Type
 	}
+	return nil
+}
+
+// checkShadowing returns an error if any namespaced entity type, common type,
+// or action shadows a declaration with the same basename in the empty namespace.
+// See https://github.com/cedar-policy/rfcs/blob/main/text/0070-disallow-empty-namespace-shadowing.md
+func checkShadowing(s *ast.Schema) error {
+	// Collect bare (empty namespace) entity and common type basenames
+	bareTypes := make(map[types.Ident]bool)
+	for name := range s.Entities {
+		bareTypes[name] = true
+	}
+	for name := range s.Enums {
+		bareTypes[name] = true
+	}
+	for name := range s.CommonTypes {
+		bareTypes[name] = true
+	}
+
+	// Check each namespace for conflicts
+	for nsName, ns := range s.Namespaces {
+		for name := range ns.Entities {
+			if bareTypes[name] {
+				return fmt.Errorf("definition of %q illegally shadows the existing definition of %q", string(nsName)+"::"+string(name), name)
+			}
+		}
+		for name := range ns.Enums {
+			if bareTypes[name] {
+				return fmt.Errorf("definition of %q illegally shadows the existing definition of %q", string(nsName)+"::"+string(name), name)
+			}
+		}
+		for name := range ns.CommonTypes {
+			if bareTypes[name] {
+				return fmt.Errorf("definition of %q illegally shadows the existing definition of %q", string(nsName)+"::"+string(name), name)
+			}
+		}
+	}
+
+	// Check bare action names against namespaced actions
+	bareActions := make(map[types.String]bool)
+	for name := range s.Actions {
+		bareActions[name] = true
+	}
+	for nsName, ns := range s.Namespaces {
+		for name := range ns.Actions {
+			if bareActions[name] {
+				return fmt.Errorf("definition of %q illegally shadows the existing definition of %q",
+					string(nsName)+"::Action::\""+string(name)+"\"",
+					"Action::\""+string(name)+"\"")
+			}
+		}
+	}
+
+	return nil
 }
 
 func (r *resolverState) detectCommonTypeCycles() error {
@@ -554,11 +619,11 @@ func qualifyEntityType(ns types.Path, name types.Ident) types.EntityType {
 	return types.EntityType(name)
 }
 
-func qualifyPath(ns types.Path, name types.Path) types.Path {
+func qualifyPath(ns types.Path, name types.Ident) types.Path {
 	if ns != "" {
 		return types.Path(string(ns) + "::" + string(name))
 	}
-	return name
+	return types.Path(name)
 }
 
 func qualifyActionType(ns types.Path) types.EntityType {

@@ -777,6 +777,25 @@ func TestMarshalMultipleDecls(t *testing.T) {
 	testutil.OK(t, err)
 }
 
+func TestMarshalNamespaceQualifiedKeyRoundTripBreaks(t *testing.T) {
+	// Entity keys must be bare Idents, not namespace-qualified.
+	// A qualified key like "Foo::Bar" in namespace "Foo" marshals as
+	// "entity Foo::Bar" inside the namespace block. Re-parsing fails
+	// because "::" is not valid in a bare entity declaration name.
+	schema := &ast2.Schema{
+		Namespaces: ast2.Namespaces{
+			"Foo": ast2.Namespace{
+				Entities: ast2.Entities{
+					"Foo::Bar": ast2.Entity{},
+				},
+			},
+		},
+	}
+	out := parser2.MarshalSchema(schema)
+	_, err := parser2.ParseSchema("", out)
+	testutil.Error(t, err)
+}
+
 func TestParseSchemaErrors(t *testing.T) {
 	tests := []struct {
 		name  string
