@@ -124,7 +124,7 @@ func (p *parser) parseSchema() (*ast.Schema, error) {
 			}
 			schema.Namespaces[ns.name] = ns.ns
 		} else {
-			if err := p.parseDecl(annotations, nil, schema); err != nil {
+			if err := p.parseDecl(annotations, schema); err != nil {
 				return nil, err
 			}
 		}
@@ -155,8 +155,7 @@ func (p *parser) parseNamespace(annotations ast.Annotations) (parsedNamespace, e
 		if err != nil {
 			return parsedNamespace{}, err
 		}
-		pathPtr := path
-		if err := p.parseDecl(innerAnnotations, &pathPtr, &innerSchema); err != nil {
+		if err := p.parseDecl(innerAnnotations, &innerSchema); err != nil {
 			return parsedNamespace{}, err
 		}
 	}
@@ -170,7 +169,7 @@ func (p *parser) parseNamespace(annotations ast.Annotations) (parsedNamespace, e
 	return parsedNamespace{name: path, ns: ns}, nil
 }
 
-func (p *parser) parseDecl(annotations ast.Annotations, namespace *types.Path, schema *ast.Schema) error {
+func (p *parser) parseDecl(annotations ast.Annotations, schema *ast.Schema) error {
 	if p.tok.Type != tokenIdent {
 		return p.errorf("expected declaration (entity, action, or type), got %s", tokenDesc(p.tok))
 	}
@@ -179,12 +178,12 @@ func (p *parser) parseDecl(annotations ast.Annotations, namespace *types.Path, s
 		if err := p.readToken(); err != nil {
 			return err
 		}
-		return p.parseEntity(annotations, namespace, schema)
+		return p.parseEntity(annotations, schema)
 	case "action":
 		if err := p.readToken(); err != nil {
 			return err
 		}
-		return p.parseAction(annotations, namespace, schema)
+		return p.parseAction(annotations, schema)
 	case "type":
 		if err := p.readToken(); err != nil {
 			return err
@@ -195,7 +194,7 @@ func (p *parser) parseDecl(annotations ast.Annotations, namespace *types.Path, s
 	}
 }
 
-func (p *parser) parseEntity(annotations ast.Annotations, namespace *types.Path, schema *ast.Schema) error {
+func (p *parser) parseEntity(annotations ast.Annotations, schema *ast.Schema) error {
 	names, err := p.parseIdents()
 	if err != nil {
 		return err
@@ -206,7 +205,7 @@ func (p *parser) parseEntity(annotations ast.Annotations, namespace *types.Path,
 		if err := p.readToken(); err != nil {
 			return err
 		}
-		return p.parseEnumEntity(annotations, namespace, names, schema)
+		return p.parseEnumEntity(annotations, names, schema)
 	}
 
 	// Parse optional 'in' clause
@@ -271,7 +270,7 @@ func (p *parser) parseEntity(annotations ast.Annotations, namespace *types.Path,
 	return nil
 }
 
-func (p *parser) parseEnumEntity(annotations ast.Annotations, namespace *types.Path, names []types.Ident, schema *ast.Schema) error {
+func (p *parser) parseEnumEntity(annotations ast.Annotations, names []types.Ident, schema *ast.Schema) error {
 	if err := p.expect(tokenLBracket); err != nil {
 		return err
 	}
@@ -311,7 +310,7 @@ func (p *parser) parseEnumEntity(annotations ast.Annotations, namespace *types.P
 	return nil
 }
 
-func (p *parser) parseAction(annotations ast.Annotations, namespace *types.Path, schema *ast.Schema) error {
+func (p *parser) parseAction(annotations ast.Annotations, schema *ast.Schema) error {
 	names, err := p.parseNames()
 	if err != nil {
 		return err
@@ -323,7 +322,7 @@ func (p *parser) parseAction(annotations ast.Annotations, namespace *types.Path,
 		if err := p.readToken(); err != nil {
 			return err
 		}
-		memberOf, err = p.parseActionParents(namespace)
+		memberOf, err = p.parseActionParents()
 		if err != nil {
 			return err
 		}
@@ -598,14 +597,14 @@ func (p *parser) parseEntityTypes() ([]ast.EntityTypeRef, error) {
 }
 
 // parseActionParents parses QualName | '[' QualName { ',' QualName } ']'
-func (p *parser) parseActionParents(namespace *types.Path) ([]ast.ParentRef, error) {
+func (p *parser) parseActionParents() ([]ast.ParentRef, error) {
 	if p.tok.Type == tokenLBracket {
 		if err := p.readToken(); err != nil {
 			return nil, err
 		}
 		var result []ast.ParentRef
 		for p.tok.Type != tokenRBracket {
-			ref, err := p.parseQualName(namespace)
+			ref, err := p.parseQualName()
 			if err != nil {
 				return nil, err
 			}
@@ -620,7 +619,7 @@ func (p *parser) parseActionParents(namespace *types.Path) ([]ast.ParentRef, err
 		}
 		return result, p.readToken() // consume ']'
 	}
-	ref, err := p.parseQualName(namespace)
+	ref, err := p.parseQualName()
 	if err != nil {
 		return nil, err
 	}
@@ -628,7 +627,7 @@ func (p *parser) parseActionParents(namespace *types.Path) ([]ast.ParentRef, err
 }
 
 // parseQualName parses QualName = Name | Path '::' STR
-func (p *parser) parseQualName(namespace *types.Path) (ast.ParentRef, error) {
+func (p *parser) parseQualName() (ast.ParentRef, error) {
 	if p.tok.Type == tokenString {
 		name := types.String(p.tok.Text)
 		if err := p.readToken(); err != nil {

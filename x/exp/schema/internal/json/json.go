@@ -54,7 +54,7 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 		if err := json.Unmarshal(data, &jns); err != nil {
 			return fmt.Errorf("namespace %q: %w", name, err)
 		}
-		ns, err := unmarshalNamespace(types.Path(name), jns)
+		ns, err := unmarshalNamespace(jns)
 		if err != nil {
 			return fmt.Errorf("namespace %q: %w", name, err)
 		}
@@ -291,7 +291,7 @@ func marshalAnnotations(annotations ast.Annotations) map[string]string {
 	return m
 }
 
-func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, error) {
+func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 	ns := ast.Namespace{}
 
 	if len(jns.Annotations) > 0 {

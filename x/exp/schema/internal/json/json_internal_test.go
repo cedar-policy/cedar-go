@@ -117,7 +117,7 @@ func TestMarshalNamespacedError(t *testing.T) {
 }
 
 func TestUnmarshalCommonTypeError(t *testing.T) {
-	_, err := unmarshalNamespace("", jsonNamespace{
+	_, err := unmarshalNamespace(jsonNamespace{
 		EntityTypes: map[string]jsonEntityType{},
 		Actions:     map[string]jsonAction{},
 		CommonTypes: map[string]jsonCommonType{
@@ -128,7 +128,7 @@ func TestUnmarshalCommonTypeError(t *testing.T) {
 }
 
 func TestUnmarshalEntityShapeError(t *testing.T) {
-	_, err := unmarshalNamespace("", jsonNamespace{
+	_, err := unmarshalNamespace(jsonNamespace{
 		EntityTypes: map[string]jsonEntityType{
 			"Foo": {Shape: &jsonType{
 				Type: "Record",
@@ -143,7 +143,7 @@ func TestUnmarshalEntityShapeError(t *testing.T) {
 }
 
 func TestUnmarshalActionAnnotations(t *testing.T) {
-	ns, err := unmarshalNamespace("", jsonNamespace{
+	ns, err := unmarshalNamespace(jsonNamespace{
 		EntityTypes: map[string]jsonEntityType{},
 		Actions: map[string]jsonAction{
 			"view": {Annotations: map[string]string{"doc": "test"}},
@@ -154,7 +154,7 @@ func TestUnmarshalActionAnnotations(t *testing.T) {
 }
 
 func TestUnmarshalContextTypeError(t *testing.T) {
-	_, err := unmarshalNamespace("", jsonNamespace{
+	_, err := unmarshalNamespace(jsonNamespace{
 		EntityTypes: map[string]jsonEntityType{},
 		Actions: map[string]jsonAction{
 			"view": {AppliesTo: &jsonAppliesTo{
