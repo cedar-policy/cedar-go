@@ -82,7 +82,7 @@ func (m *marshaler) marshalDecls(first *bool, entities ast.Entities, enums ast.E
 		*first = false
 		m.marshalAnnotations(entity.Annotations)
 		m.writeIndent()
-		fmt.Fprintf(m.w, "entity %s", unqualifyEntityType(name))
+		fmt.Fprintf(m.w, "entity %s", name)
 		if len(entity.ParentTypes) > 0 {
 			m.w.WriteString(" in ")
 			m.marshalEntityTypeRefs(entity.ParentTypes)
@@ -108,7 +108,7 @@ func (m *marshaler) marshalDecls(first *bool, entities ast.Entities, enums ast.E
 		*first = false
 		m.marshalAnnotations(enum.Annotations)
 		m.writeIndent()
-		fmt.Fprintf(m.w, "entity %s enum [", unqualifyEntityType(name))
+		fmt.Fprintf(m.w, "entity %s enum [", name)
 		for i, v := range enum.Values {
 			if i > 0 {
 				m.w.WriteString(", ")
@@ -312,17 +312,6 @@ func isValidIdent(s string) bool {
 		}
 	}
 	return true
-}
-
-// unqualifyEntityType extracts the basename from a fully qualified entity type.
-// For types within a namespace (e.g., the namespace "NS" contains entity type
-// "NS::Foo"), the marshal output only writes "Foo" because the namespace is implied.
-func unqualifyEntityType(et types.EntityType) string {
-	s := string(et)
-	if idx := strings.LastIndex(s, "::"); idx >= 0 {
-		return s[idx+2:]
-	}
-	return s
 }
 
 // quoteCedar produces a double-quoted string literal using only Cedar-valid

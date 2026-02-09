@@ -27,7 +27,7 @@ func TestParseBasicFile(t *testing.T) {
 	testutil.Equals(t, len(ns.Actions), 2)
 	testutil.Equals(t, len(ns.CommonTypes), 1)
 
-	user := ns.Entities["PhotoApp::User"]
+	user := ns.Entities["User"]
 	testutil.Equals(t, user.ParentTypes, []ast2.EntityTypeRef{"Group"})
 	testutil.Equals(t, user.Shape != nil, true)
 	testutil.Equals(t, len(*user.Shape), 2)
@@ -36,11 +36,11 @@ func TestParseBasicFile(t *testing.T) {
 	testutil.Equals(t, (*user.Shape)["age"].Type, ast2.IsType(ast2.TypeRef("Long")))
 	testutil.Equals(t, (*user.Shape)["age"].Optional, true)
 
-	group := ns.Entities["PhotoApp::Group"]
+	group := ns.Entities["Group"]
 	testutil.Equals(t, group.Shape == nil, true)
 	testutil.Equals(t, len(group.ParentTypes), 0)
 
-	photo := ns.Entities["PhotoApp::Photo"]
+	photo := ns.Entities["Photo"]
 	testutil.Equals(t, photo.Shape != nil, true)
 	testutil.Equals(t, photo.Tags, ast2.IsType(ast2.TypeRef("String")))
 
@@ -59,7 +59,7 @@ func TestParseMultiNameEntity(t *testing.T) {
 	schema, err := parser2.ParseSchema("", []byte(src))
 	testutil.OK(t, err)
 	testutil.Equals(t, len(schema.Entities), 3)
-	for _, name := range []types.EntityType{"A", "B", "C"} {
+	for _, name := range []types.Ident{"A", "B", "C"} {
 		_, ok := schema.Entities[name]
 		testutil.Equals(t, ok, true)
 	}
@@ -261,7 +261,7 @@ namespace Foo {
 	_, ok := schema.Entities["Global"]
 	testutil.Equals(t, ok, true)
 	ns := schema.Namespaces["Foo"]
-	_, ok = ns.Entities["Foo::Bar"]
+	_, ok = ns.Entities["Bar"]
 	testutil.Equals(t, ok, true)
 }
 
@@ -270,7 +270,7 @@ func TestParseNestedNamespacePath(t *testing.T) {
 	schema, err := parser2.ParseSchema("", []byte(src))
 	testutil.OK(t, err)
 	ns := schema.Namespaces["Foo::Bar"]
-	_, ok := ns.Entities["Foo::Bar::Baz"]
+	_, ok := ns.Entities["Baz"]
 	testutil.Equals(t, ok, true)
 }
 
@@ -408,9 +408,9 @@ namespace B {
 	schema, err := parser2.ParseSchema("", []byte(src))
 	testutil.OK(t, err)
 	testutil.Equals(t, len(schema.Namespaces), 2)
-	_, ok := schema.Namespaces["A"].Entities["A::Foo"]
+	_, ok := schema.Namespaces["A"].Entities["Foo"]
 	testutil.Equals(t, ok, true)
-	_, ok = schema.Namespaces["B"].Entities["B::Bar"]
+	_, ok = schema.Namespaces["B"].Entities["Bar"]
 	testutil.Equals(t, ok, true)
 }
 
@@ -632,7 +632,7 @@ func TestMarshalNamespace(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"Foo": ast2.Namespace{
 				Entities: ast2.Entities{
-					"Foo::Bar": ast2.Entity{},
+					"Bar": ast2.Entity{},
 				},
 			},
 		},
@@ -640,7 +640,7 @@ func TestMarshalNamespace(t *testing.T) {
 	out := parser2.MarshalSchema(schema)
 	schema2, err := parser2.ParseSchema("", out)
 	testutil.OK(t, err)
-	_, ok := schema2.Namespaces["Foo"].Entities["Foo::Bar"]
+	_, ok := schema2.Namespaces["Foo"].Entities["Bar"]
 	testutil.Equals(t, ok, true)
 }
 
@@ -652,7 +652,7 @@ func TestMarshalNamespaceWithAnnotations(t *testing.T) {
 					"doc": "foo ns",
 				},
 				Entities: ast2.Entities{
-					"Foo::Bar": ast2.Entity{},
+					"Bar": ast2.Entity{},
 				},
 			},
 		},
@@ -741,7 +741,7 @@ func TestMarshalBareAndNamespaced(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"Foo": ast2.Namespace{
 				Entities: ast2.Entities{
-					"Foo::Bar": ast2.Entity{},
+					"Bar": ast2.Entity{},
 				},
 			},
 		},
@@ -751,7 +751,7 @@ func TestMarshalBareAndNamespaced(t *testing.T) {
 	testutil.OK(t, err)
 	_, ok := schema2.Entities["Global"]
 	testutil.Equals(t, ok, true)
-	_, ok = schema2.Namespaces["Foo"].Entities["Foo::Bar"]
+	_, ok = schema2.Namespaces["Foo"].Entities["Bar"]
 	testutil.Equals(t, ok, true)
 }
 
@@ -765,8 +765,8 @@ func TestMarshalMultipleDecls(t *testing.T) {
 					"B": ast2.CommonType{Type: ast2.LongType{}},
 				},
 				Enums: ast2.Enums{
-					"NS2::Color": ast2.Enum{Values: []types.String{"red"}},
-					"NS2::Size":  ast2.Enum{Values: []types.String{"small"}},
+					"Color": ast2.Enum{Values: []types.String{"red"}},
+					"Size":  ast2.Enum{Values: []types.String{"small"}},
 				},
 			},
 		},

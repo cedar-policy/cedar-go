@@ -107,7 +107,7 @@ func TestMarshalNamespacedError(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::Foo": ast2.Entity{Tags: ast2.SetType{Element: nil}},
+					"Foo": ast2.Entity{Tags: ast2.SetType{Element: nil}},
 				},
 			},
 		},

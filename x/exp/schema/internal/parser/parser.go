@@ -261,8 +261,7 @@ func (p *parser) parseEntity(annotations ast2.Annotations, namespace *types.Path
 		schema.Entities = ast2.Entities{}
 	}
 	for _, name := range names {
-		entityType := qualifyEntityType(namespace, name)
-		schema.Entities[entityType] = ast2.Entity{
+		schema.Entities[name] = ast2.Entity{
 			Annotations: annotations,
 			ParentTypes: memberOf,
 			Shape:       shape,
@@ -304,8 +303,7 @@ func (p *parser) parseEnumEntity(annotations ast2.Annotations, namespace *types.
 		schema.Enums = ast2.Enums{}
 	}
 	for _, name := range names {
-		entityType := qualifyEntityType(namespace, name)
-		schema.Enums[entityType] = ast2.Enum{
+		schema.Enums[name] = ast2.Enum{
 			Annotations: annotations,
 			Values:      values,
 		}
@@ -789,11 +787,4 @@ func (p *parser) parseRecordType() (ast2.RecordType, error) {
 		}
 	}
 	return rec, p.readToken() // consume '}'
-}
-
-func qualifyEntityType(namespace *types.Path, name types.Ident) types.EntityType {
-	if namespace != nil {
-		return types.EntityType(string(*namespace) + "::" + string(name))
-	}
-	return types.EntityType(name)
 }

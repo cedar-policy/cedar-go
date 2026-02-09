@@ -9,10 +9,10 @@ import (
 type Annotations map[types.Ident]types.String
 
 // Entities maps entity type names to their definitions.
-type Entities map[types.EntityType]Entity
+type Entities map[types.Ident]Entity
 
 // Enums maps entity type names to their enum definitions.
-type Enums map[types.EntityType]Enum
+type Enums map[types.Ident]Enum
 
 // Actions maps action names to their definitions.
 type Actions map[types.String]Action

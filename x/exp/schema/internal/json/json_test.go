@@ -25,7 +25,7 @@ func TestRoundTripEntity(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User": ast2.Entity{
+					"User": ast2.Entity{
 						ParentTypes: []ast2.EntityTypeRef{"Group"},
 						Shape: &ast2.RecordType{
 							"name": ast2.Attribute{Type: ast2.StringType{}},
@@ -43,7 +43,7 @@ func TestRoundTripEntity(t *testing.T) {
 	var s2 schemajson.Schema
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
-	user := (*ast2.Schema)(&s2).Namespaces["NS"].Entities["NS::User"]
+	user := (*ast2.Schema)(&s2).Namespaces["NS"].Entities["User"]
 	testutil.Equals(t, user.ParentTypes, []ast2.EntityTypeRef{"Group"})
 	testutil.Equals(t, user.Shape != nil, true)
 	testutil.Equals(t, user.Tags != nil, true)

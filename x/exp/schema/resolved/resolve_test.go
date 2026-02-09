@@ -200,8 +200,8 @@ func TestResolveTypeDisambiguation(t *testing.T) {
 						},
 					},
 					Entities: ast2.Entities{
-						"NS::name": ast2.Entity{},
-						"NS::User": ast2.Entity{
+						"name": ast2.Entity{},
+						"User": ast2.Entity{
 							Shape: &ast2.RecordType{
 								"n": ast2.Attribute{Type: ast2.TypeRef("name")},
 							},
@@ -228,8 +228,8 @@ func TestResolveTypeDisambiguation(t *testing.T) {
 			Namespaces: ast2.Namespaces{
 				"NS": ast2.Namespace{
 					Entities: ast2.Entities{
-						"NS::Long": ast2.Entity{},
-						"NS::User": ast2.Entity{
+						"Long": ast2.Entity{},
+						"User": ast2.Entity{
 							Shape: &ast2.RecordType{
 								"x": ast2.Attribute{Type: ast2.TypeRef("Long")},
 								"y": ast2.Attribute{Type: ast2.TypeRef("__cedar::Long")},
@@ -263,7 +263,7 @@ func TestResolveTypeDisambiguation(t *testing.T) {
 						},
 					},
 					Entities: ast2.Entities{
-						"NS::User": ast2.Entity{
+						"User": ast2.Entity{
 							Shape: &ast2.RecordType{
 								"x": ast2.Attribute{Type: ast2.TypeRef("Long")},
 								"y": ast2.Attribute{Type: ast2.TypeRef("__cedar::Long")},
@@ -290,8 +290,8 @@ func TestResolveNamespaceEntityRef(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User":  ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"Group"}},
-					"NS::Group": ast2.Entity{},
+					"User":  ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"Group"}},
+					"Group": ast2.Entity{},
 				},
 			},
 		},
@@ -306,12 +306,12 @@ func TestResolveCrossNamespaceEntityRef(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"A": ast2.Namespace{
 				Entities: ast2.Entities{
-					"A::User": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"B::Group"}},
+					"User": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"B::Group"}},
 				},
 			},
 			"B": ast2.Namespace{
 				Entities: ast2.Entities{
-					"B::Group": ast2.Entity{},
+					"Group": ast2.Entity{},
 				},
 			},
 		},
@@ -583,7 +583,7 @@ func TestResolveQualifiedCommonType(t *testing.T) {
 					},
 				},
 				Entities: ast2.Entities{
-					"NS::User": ast2.Entity{
+					"User": ast2.Entity{
 						Shape: &ast2.RecordType{
 							"c": ast2.Attribute{Type: ast2.TypeRef("NS::Ctx")},
 						},
@@ -689,7 +689,7 @@ func TestResolveEntityTypeRefQualified(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"A": ast2.Namespace{
 				Entities: ast2.Entities{
-					"A::Foo": ast2.Entity{},
+					"Foo": ast2.Entity{},
 				},
 			},
 		},
@@ -768,7 +768,7 @@ func TestResolveNamespacedEntitiesError(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User": ast2.Entity{
+					"User": ast2.Entity{
 						Shape: &ast2.RecordType{
 							"x": ast2.Attribute{Type: ast2.TypeRef("NonExistent")},
 						},
@@ -786,7 +786,7 @@ func TestResolveNamespacedEnumError(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Enums: ast2.Enums{
-					"NS::Status": ast2.Enum{Values: []types.String{"a"}},
+					"Status": ast2.Enum{Values: []types.String{"a"}},
 				},
 			},
 		},
@@ -801,7 +801,7 @@ func TestResolveNamespacedActionsError(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User": ast2.Entity{},
+					"User": ast2.Entity{},
 				},
 				Actions: ast2.Actions{
 					"view": ast2.Action{
@@ -836,8 +836,8 @@ func TestResolveQualifiedEntityType(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User":  ast2.Entity{},
-					"NS::Admin": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NS::User"}},
+					"User":  ast2.Entity{},
+					"Admin": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NS::User"}},
 				},
 			},
 		},
@@ -853,12 +853,12 @@ func TestResolveQualifiedEntityTypeRefAsType(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User": ast2.Entity{
+					"User": ast2.Entity{
 						Shape: &ast2.RecordType{
 							"ref": ast2.Attribute{Type: ast2.TypeRef("NS::Admin")},
 						},
 					},
-					"NS::Admin": ast2.Entity{},
+					"Admin": ast2.Entity{},
 				},
 			},
 		},
@@ -878,7 +878,7 @@ func TestResolveEmptyNamespaceCommonType(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User": ast2.Entity{
+					"User": ast2.Entity{
 						Shape: &ast2.RecordType{
 							"c": ast2.Attribute{Type: ast2.TypeRef("Ctx")},
 						},
@@ -903,7 +903,7 @@ func TestResolveEmptyNamespaceEntityType(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User": ast2.Entity{
+					"User": ast2.Entity{
 						Shape: &ast2.RecordType{
 							"g": ast2.Attribute{Type: ast2.TypeRef("Global")},
 						},
@@ -1026,8 +1026,8 @@ func TestResolveNamespacedEntityTypeRef(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User": ast2.Entity{},
-					"NS::Group": ast2.Entity{
+					"User": ast2.Entity{},
+					"Group": ast2.Entity{
 						Shape: &ast2.RecordType{
 							"members": ast2.Attribute{Type: ast2.SetType{Element: ast2.TypeRef("User")}},
 						},
@@ -1051,10 +1051,10 @@ func TestResolveNamespacedEnumTypeRef(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Enums: ast2.Enums{
-					"NS::Color": ast2.Enum{Values: []types.String{"red", "blue"}},
+					"Color": ast2.Enum{Values: []types.String{"red", "blue"}},
 				},
 				Entities: ast2.Entities{
-					"NS::Item": ast2.Entity{
+					"Item": ast2.Entity{
 						Shape: &ast2.RecordType{
 							"color": ast2.Attribute{Type: ast2.TypeRef("Color")},
 						},

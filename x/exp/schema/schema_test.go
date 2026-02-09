@@ -392,25 +392,25 @@ var wantAST = &ast2.Schema{
 				},
 			},
 			Entities: ast2.Entities{
-				"MyApp::Department": ast2.Entity{
+				"Department": ast2.Entity{
 					Shape: &ast2.RecordType{
 						"budget": ast2.Attribute{Type: ast2.TypeRef("decimal")},
 					},
 				},
-				"MyApp::Document": ast2.Entity{
+				"Document": ast2.Entity{
 					Shape: &ast2.RecordType{
 						"public": ast2.Attribute{Type: ast2.TypeRef("Bool")},
 						"title":  ast2.Attribute{Type: ast2.TypeRef("String")},
 					},
 				},
-				"MyApp::Group": ast2.Entity{
+				"Group": ast2.Entity{
 					ParentTypes: []ast2.EntityTypeRef{"Department"},
 					Shape: &ast2.RecordType{
 						"metadata": ast2.Attribute{Type: ast2.TypeRef("Metadata")},
 						"name":     ast2.Attribute{Type: ast2.TypeRef("String")},
 					},
 				},
-				"MyApp::User": ast2.Entity{
+				"User": ast2.Entity{
 					ParentTypes: []ast2.EntityTypeRef{"Group"},
 					Annotations: ast2.Annotations{
 						"doc": "User entity",
@@ -424,7 +424,7 @@ var wantAST = &ast2.Schema{
 				},
 			},
 			Enums: ast2.Enums{
-				"MyApp::Status": ast2.Enum{
+				"Status": ast2.Enum{
 					Values: []types.String{"draft", "published", "archived"},
 				},
 			},

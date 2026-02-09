@@ -98,7 +98,7 @@ func Resolve(s *ast.Schema) (*Schema, error) {
 	if err := r.resolveEntities("", s.Entities, result); err != nil {
 		return nil, err
 	}
-	r.resolveEnums(s.Enums, result)
+	r.resolveEnums("", s.Enums, result)
 	if err := r.resolveActions("", s.Actions, result); err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func Resolve(s *ast.Schema) (*Schema, error) {
 		if err := r.resolveEntities(nsName, ns.Entities, result); err != nil {
 			return nil, err
 		}
-		r.resolveEnums(ns.Enums, result)
+		r.resolveEnums(nsName, ns.Enums, result)
 		if err := r.resolveActions(nsName, ns.Actions, result); err != nil {
 			return nil, err
 		}
@@ -134,10 +134,10 @@ type resolverState struct {
 
 func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, enums ast.Enums, commonTypes ast.CommonTypes) {
 	for name := range entities {
-		r.entityTypes[name] = true
+		r.entityTypes[qualifyEntityType(nsName, name)] = true
 	}
 	for name := range enums {
-		r.enumTypes[name] = true
+		r.enumTypes[qualifyEntityType(nsName, name)] = true
 	}
 	for name, ct := range commonTypes {
 		fullPath := qualifyPath(nsName, types.Path(name))
@@ -204,40 +204,42 @@ func (r *resolverState) detectCommonTypeCycles() error {
 
 func (r *resolverState) resolveEntities(nsName types.Path, entities ast.Entities, result *Schema) error {
 	for name, entity := range entities {
+		qualName := qualifyEntityType(nsName, name)
 		resolved := Entity{
-			Name:        name,
+			Name:        qualName,
 			Annotations: Annotations(entity.Annotations),
 		}
 		for _, ref := range entity.ParentTypes {
 			et, err := r.resolveEntityTypeRef(nsName, ref)
 			if err != nil {
-				return fmt.Errorf("entity %q: %w", name, err)
+				return fmt.Errorf("entity %q: %w", qualName, err)
 			}
 			resolved.ParentTypes = append(resolved.ParentTypes, et)
 		}
 		if entity.Shape != nil {
 			rec, err := r.resolveRecordType(nsName, *entity.Shape)
 			if err != nil {
-				return fmt.Errorf("entity %q shape: %w", name, err)
+				return fmt.Errorf("entity %q shape: %w", qualName, err)
 			}
 			resolved.Shape = rec
 		}
 		if entity.Tags != nil {
 			tags, err := r.resolveType(nsName, entity.Tags)
 			if err != nil {
-				return fmt.Errorf("entity %q tags: %w", name, err)
+				return fmt.Errorf("entity %q tags: %w", qualName, err)
 			}
 			resolved.Tags = tags
 		}
-		result.Entities[name] = resolved
+		result.Entities[qualName] = resolved
 	}
 	return nil
 }
 
-func (r *resolverState) resolveEnums(enums ast.Enums, result *Schema) {
+func (r *resolverState) resolveEnums(nsName types.Path, enums ast.Enums, result *Schema) {
 	for name, enum := range enums {
-		result.Enums[name] = Enum{
-			Name:        name,
+		qualName := qualifyEntityType(nsName, name)
+		result.Enums[qualName] = Enum{
+			Name:        qualName,
 			Annotations: Annotations(enum.Annotations),
 			Values:      enum.Values,
 		}
@@ -547,6 +549,13 @@ func collectTypeRefs(t ast.IsType) []types.Path {
 	default:
 		return nil
 	}
+}
+
+func qualifyEntityType(ns types.Path, name types.Ident) types.EntityType {
+	if ns != "" {
+		return types.EntityType(string(ns) + "::" + string(name))
+	}
+	return types.EntityType(name)
 }
 
 func qualifyPath(ns types.Path, name types.Path) types.Path {

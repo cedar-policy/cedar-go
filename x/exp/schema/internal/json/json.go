@@ -158,7 +158,6 @@ func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) 
 	}
 
 	for etName, entity := range ns.Entities {
-		baseName := unqualify(string(etName), string(name))
 		jet := jsonEntityType{}
 		if len(entity.Annotations) > 0 {
 			jet.Annotations = marshalAnnotations(entity.Annotations)
@@ -183,11 +182,10 @@ func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) 
 			}
 			jet.Tags = jt
 		}
-		jns.EntityTypes[baseName] = jet
+		jns.EntityTypes[string(etName)] = jet
 	}
 
 	for etName, enum := range ns.Enums {
-		baseName := unqualify(string(etName), string(name))
 		jet := jsonEntityType{}
 		if len(enum.Annotations) > 0 {
 			jet.Annotations = marshalAnnotations(enum.Annotations)
@@ -195,7 +193,7 @@ func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) 
 		for _, v := range enum.Values {
 			jet.Enum = append(jet.Enum, string(v))
 		}
-		jns.EntityTypes[baseName] = jet
+		jns.EntityTypes[string(etName)] = jet
 	}
 
 	for actionName, action := range ns.Actions {
@@ -322,7 +320,6 @@ func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, erro
 	}
 
 	for etName, jet := range jns.EntityTypes {
-		qualName := qualify(etName, string(name))
 		if len(jet.Enum) > 0 {
 			enum := ast.Enum{}
 			if len(jet.Annotations) > 0 {
@@ -334,7 +331,7 @@ func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, erro
 			if ns.Enums == nil {
 				ns.Enums = ast.Enums{}
 			}
-			ns.Enums[types.EntityType(qualName)] = enum
+			ns.Enums[types.Ident(etName)] = enum
 		} else {
 			entity := ast.Entity{}
 			if len(jet.Annotations) > 0 {
@@ -360,7 +357,7 @@ func unmarshalNamespace(name types.Path, jns jsonNamespace) (ast.Namespace, erro
 			if ns.Entities == nil {
 				ns.Entities = ast.Entities{}
 			}
-			ns.Entities[types.EntityType(qualName)] = entity
+			ns.Entities[types.Ident(etName)] = entity
 		}
 	}
 
@@ -463,21 +460,4 @@ func unmarshalAnnotations(m map[string]string) ast.Annotations {
 		a[types.Ident(k)] = types.String(v)
 	}
 	return a
-}
-
-func unqualify(name, namespace string) string {
-	if namespace != "" && len(name) > len(namespace)+2 {
-		prefix := namespace + "::"
-		if name[:len(prefix)] == prefix {
-			return name[len(prefix):]
-		}
-	}
-	return name
-}
-
-func qualify(name, namespace string) string {
-	if namespace != "" {
-		return namespace + "::" + name
-	}
-	return name
 }
