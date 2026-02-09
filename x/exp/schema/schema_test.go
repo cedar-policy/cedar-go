@@ -359,7 +359,7 @@ var wantAST = &ast2.Schema{
 		"Admin":   ast2.Entity{},
 		"Country": ast2.Entity{},
 		"System": ast2.Entity{
-			MemberOf: []ast2.EntityTypeRef{"Admin"},
+			ParentTypes: []ast2.EntityTypeRef{"Admin"},
 			Shape: &ast2.RecordType{
 				"version": ast2.Attribute{Type: ast2.TypeRef("String")},
 			},
@@ -404,14 +404,14 @@ var wantAST = &ast2.Schema{
 					},
 				},
 				"MyApp::Group": ast2.Entity{
-					MemberOf: []ast2.EntityTypeRef{"Department"},
+					ParentTypes: []ast2.EntityTypeRef{"Department"},
 					Shape: &ast2.RecordType{
 						"metadata": ast2.Attribute{Type: ast2.TypeRef("Metadata")},
 						"name":     ast2.Attribute{Type: ast2.TypeRef("String")},
 					},
 				},
 				"MyApp::User": ast2.Entity{
-					MemberOf: []ast2.EntityTypeRef{"Group"},
+					ParentTypes: []ast2.EntityTypeRef{"Group"},
 					Annotations: ast2.Annotations{
 						"doc": "User entity",
 					},
@@ -485,8 +485,8 @@ var wantResolved = &resolved2.Schema{
 			Name: "Country",
 		},
 		"System": {
-			Name:     "System",
-			MemberOf: []types.EntityType{"Admin"},
+			Name:        "System",
+			ParentTypes: []types.EntityType{"Admin"},
 			Shape: resolved2.RecordType{
 				"version": resolved2.Attribute{Type: resolved2.StringType{}},
 			},
@@ -510,8 +510,8 @@ var wantResolved = &resolved2.Schema{
 			},
 		},
 		"MyApp::Group": {
-			Name:     "MyApp::Group",
-			MemberOf: []types.EntityType{"MyApp::Department"},
+			Name:        "MyApp::Group",
+			ParentTypes: []types.EntityType{"MyApp::Department"},
 			Shape: resolved2.RecordType{
 				"metadata": resolved2.Attribute{
 					Type: resolved2.RecordType{
@@ -525,7 +525,7 @@ var wantResolved = &resolved2.Schema{
 		"MyApp::User": {
 			Name:        "MyApp::User",
 			Annotations: resolved2.Annotations{"doc": "User entity"},
-			MemberOf:    []types.EntityType{"MyApp::Group"},
+			ParentTypes: []types.EntityType{"MyApp::Group"},
 			Shape: resolved2.RecordType{
 				"active": resolved2.Attribute{Type: resolved2.BoolType{}},
 				"address": resolved2.Attribute{

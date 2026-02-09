@@ -264,7 +264,7 @@ func (p *parser) parseEntity(annotations ast2.Annotations, namespace *types.Path
 		entityType := qualifyEntityType(namespace, name)
 		schema.Entities[entityType] = ast2.Entity{
 			Annotations: annotations,
-			MemberOf:    memberOf,
+			ParentTypes: memberOf,
 			Shape:       shape,
 			Tags:        tags,
 		}
@@ -367,7 +367,7 @@ func (p *parser) parseAction(annotations ast2.Annotations, namespace *types.Path
 	for _, name := range names {
 		schema.Actions[name] = ast2.Action{
 			Annotations: annotations,
-			MemberOf:    memberOf,
+			Parents:     memberOf,
 			AppliesTo:   appliesTo,
 		}
 	}

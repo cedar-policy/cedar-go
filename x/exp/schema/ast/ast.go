@@ -50,7 +50,7 @@ type CommonType struct {
 // Entity defines the shape and membership of an entity type.
 type Entity struct {
 	Annotations Annotations
-	MemberOf    []EntityTypeRef
+	ParentTypes []EntityTypeRef
 	Shape       *RecordType
 	Tags        IsType
 }
@@ -65,7 +65,7 @@ type Enum struct {
 // If AppliesTo is nil, the action never applies.
 type Action struct {
 	Annotations Annotations
-	MemberOf    []ParentRef
+	Parents     []ParentRef
 	AppliesTo   *AppliesTo
 }
 

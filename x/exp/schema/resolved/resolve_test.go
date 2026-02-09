@@ -39,19 +39,19 @@ func TestResolveBasicEntity(t *testing.T) {
 func TestResolveEntityMemberOf(t *testing.T) {
 	s := &ast2.Schema{
 		Entities: ast2.Entities{
-			"User":  ast2.Entity{MemberOf: []ast2.EntityTypeRef{"Group"}},
+			"User":  ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"Group"}},
 			"Group": ast2.Entity{},
 		},
 	}
 	result, err := resolved2.Resolve(s)
 	testutil.OK(t, err)
-	testutil.Equals(t, result.Entities["User"].MemberOf, []types.EntityType{"Group"})
+	testutil.Equals(t, result.Entities["User"].ParentTypes, []types.EntityType{"Group"})
 }
 
 func TestResolveEntityMemberOfUndefined(t *testing.T) {
 	s := &ast2.Schema{
 		Entities: ast2.Entities{
-			"User": ast2.Entity{MemberOf: []ast2.EntityTypeRef{"NonExistent"}},
+			"User": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NonExistent"}},
 		},
 	}
 	_, err := resolved2.Resolve(s)
@@ -290,7 +290,7 @@ func TestResolveNamespaceEntityRef(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
-					"NS::User":  ast2.Entity{MemberOf: []ast2.EntityTypeRef{"Group"}},
+					"NS::User":  ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"Group"}},
 					"NS::Group": ast2.Entity{},
 				},
 			},
@@ -298,7 +298,7 @@ func TestResolveNamespaceEntityRef(t *testing.T) {
 	}
 	result, err := resolved2.Resolve(s)
 	testutil.OK(t, err)
-	testutil.Equals(t, result.Entities["NS::User"].MemberOf, []types.EntityType{"NS::Group"})
+	testutil.Equals(t, result.Entities["NS::User"].ParentTypes, []types.EntityType{"NS::Group"})
 }
 
 func TestResolveCrossNamespaceEntityRef(t *testing.T) {
@@ -306,7 +306,7 @@ func TestResolveCrossNamespaceEntityRef(t *testing.T) {
 		Namespaces: ast2.Namespaces{
 			"A": ast2.Namespace{
 				Entities: ast2.Entities{
-					"A::User": ast2.Entity{MemberOf: []ast2.EntityTypeRef{"B::Group"}},
+					"A::User": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"B::Group"}},
 				},
 			},
 			"B": ast2.Namespace{
@@ -318,7 +318,7 @@ func TestResolveCrossNamespaceEntityRef(t *testing.T) {
 	}
 	result, err := resolved2.Resolve(s)
 	testutil.OK(t, err)
-	testutil.Equals(t, result.Entities["A::User"].MemberOf, []types.EntityType{"B::Group"})
+	testutil.Equals(t, result.Entities["A::User"].ParentTypes, []types.EntityType{"B::Group"})
 }
 
 func TestResolveAction(t *testing.T) {
@@ -348,7 +348,7 @@ func TestResolveAction(t *testing.T) {
 func TestResolveActionMemberOf(t *testing.T) {
 	s := &ast2.Schema{
 		Actions: ast2.Actions{
-			"view":     ast2.Action{MemberOf: []ast2.ParentRef{ast2.ParentRefFromID("readOnly")}},
+			"view":     ast2.Action{Parents: []ast2.ParentRef{ast2.ParentRefFromID("readOnly")}},
 			"readOnly": ast2.Action{},
 		},
 	}
@@ -356,14 +356,14 @@ func TestResolveActionMemberOf(t *testing.T) {
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("Action", "view")
 	view := result.Actions[uid]
-	testutil.Equals(t, view.MemberOf, []types.EntityUID{types.NewEntityUID("Action", "readOnly")})
+	testutil.Equals(t, view.Parents, []types.EntityUID{types.NewEntityUID("Action", "readOnly")})
 }
 
 func TestResolveActionCycle(t *testing.T) {
 	s := &ast2.Schema{
 		Actions: ast2.Actions{
-			"a": ast2.Action{MemberOf: []ast2.ParentRef{ast2.ParentRefFromID("b")}},
-			"b": ast2.Action{MemberOf: []ast2.ParentRef{ast2.ParentRefFromID("a")}},
+			"a": ast2.Action{Parents: []ast2.ParentRef{ast2.ParentRefFromID("b")}},
+			"b": ast2.Action{Parents: []ast2.ParentRef{ast2.ParentRefFromID("a")}},
 		},
 	}
 	_, err := resolved2.Resolve(s)
@@ -373,7 +373,7 @@ func TestResolveActionCycle(t *testing.T) {
 func TestResolveActionUndefinedParent(t *testing.T) {
 	s := &ast2.Schema{
 		Actions: ast2.Actions{
-			"view": ast2.Action{MemberOf: []ast2.ParentRef{ast2.ParentRefFromID("nonExistent")}},
+			"view": ast2.Action{Parents: []ast2.ParentRef{ast2.ParentRefFromID("nonExistent")}},
 		},
 	}
 	_, err := resolved2.Resolve(s)
@@ -474,7 +474,7 @@ func TestResolveActionQualifiedParent(t *testing.T) {
 			"NS": ast2.Namespace{
 				Actions: ast2.Actions{
 					"view": ast2.Action{
-						MemberOf: []ast2.ParentRef{
+						Parents: []ast2.ParentRef{
 							ast2.NewParentRef("NS::Action", "readOnly"),
 						},
 					},
@@ -487,7 +487,7 @@ func TestResolveActionQualifiedParent(t *testing.T) {
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("NS::Action", "view")
 	view := result.Actions[uid]
-	testutil.Equals(t, view.MemberOf, []types.EntityUID{types.NewEntityUID("NS::Action", "readOnly")})
+	testutil.Equals(t, view.Parents, []types.EntityUID{types.NewEntityUID("NS::Action", "readOnly")})
 }
 
 func TestResolveActionContextNull(t *testing.T) {
@@ -822,7 +822,7 @@ func TestResolveEntityMemberOfValidationError(t *testing.T) {
 	s := &ast2.Schema{
 		Entities: ast2.Entities{
 			"User": ast2.Entity{
-				MemberOf: []ast2.EntityTypeRef{"NonExistent"},
+				ParentTypes: []ast2.EntityTypeRef{"NonExistent"},
 			},
 		},
 	}
@@ -837,14 +837,14 @@ func TestResolveQualifiedEntityType(t *testing.T) {
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
 					"NS::User":  ast2.Entity{},
-					"NS::Admin": ast2.Entity{MemberOf: []ast2.EntityTypeRef{"NS::User"}},
+					"NS::Admin": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"NS::User"}},
 				},
 			},
 		},
 	}
 	result, err := resolved2.Resolve(s)
 	testutil.OK(t, err)
-	testutil.Equals(t, result.Entities["NS::Admin"].MemberOf, []types.EntityType{"NS::User"})
+	testutil.Equals(t, result.Entities["NS::Admin"].ParentTypes, []types.EntityType{"NS::User"})
 }
 
 func TestResolveQualifiedEntityTypeRefAsType(t *testing.T) {
@@ -1073,7 +1073,7 @@ func TestResolveUndefinedMemberOf(t *testing.T) {
 	// Resolve returns an error when an entity references an undefined parent type.
 	s := &ast2.Schema{
 		Entities: ast2.Entities{
-			"User": ast2.Entity{MemberOf: []ast2.EntityTypeRef{"Nonexistent"}},
+			"User": ast2.Entity{ParentTypes: []ast2.EntityTypeRef{"Nonexistent"}},
 		},
 	}
 	_, err := resolved2.Resolve(s)

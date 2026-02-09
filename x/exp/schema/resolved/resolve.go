@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/types"
-	ast2 "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 )
 
 // Schema is a Cedar schema with resolved types and indexed declarations.
@@ -29,7 +29,7 @@ type Namespace struct {
 type Entity struct {
 	Name        types.EntityType
 	Annotations Annotations
-	MemberOf    []types.EntityType
+	ParentTypes []types.EntityType
 	Shape       RecordType
 	Tags        IsType
 }
@@ -63,16 +63,16 @@ type AppliesTo struct {
 type Action struct {
 	Name        types.String
 	Annotations Annotations
-	MemberOf    []types.EntityUID
+	Parents     []types.EntityUID
 	AppliesTo   *AppliesTo
 }
 
 // Resolve transforms an AST schema into a fully resolved schema.
-func Resolve(s *ast2.Schema) (*Schema, error) {
+func Resolve(s *ast.Schema) (*Schema, error) {
 	r := &resolverState{
 		entityTypes: make(map[types.EntityType]bool),
 		enumTypes:   make(map[types.EntityType]bool),
-		commonTypes: make(map[types.Path]ast2.IsType),
+		commonTypes: make(map[types.Path]ast.IsType),
 	}
 
 	// Phase 1: Register all declarations
@@ -129,10 +129,10 @@ func Resolve(s *ast2.Schema) (*Schema, error) {
 type resolverState struct {
 	entityTypes map[types.EntityType]bool
 	enumTypes   map[types.EntityType]bool
-	commonTypes map[types.Path]ast2.IsType
+	commonTypes map[types.Path]ast.IsType
 }
 
-func (r *resolverState) registerDecls(nsName types.Path, entities ast2.Entities, enums ast2.Enums, commonTypes ast2.CommonTypes) {
+func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, enums ast.Enums, commonTypes ast.CommonTypes) {
 	for name := range entities {
 		r.entityTypes[name] = true
 	}
@@ -202,18 +202,18 @@ func (r *resolverState) detectCommonTypeCycles() error {
 	return nil
 }
 
-func (r *resolverState) resolveEntities(nsName types.Path, entities ast2.Entities, result *Schema) error {
+func (r *resolverState) resolveEntities(nsName types.Path, entities ast.Entities, result *Schema) error {
 	for name, entity := range entities {
 		resolved := Entity{
 			Name:        name,
 			Annotations: Annotations(entity.Annotations),
 		}
-		for _, ref := range entity.MemberOf {
+		for _, ref := range entity.ParentTypes {
 			et, err := r.resolveEntityTypeRef(nsName, ref)
 			if err != nil {
 				return fmt.Errorf("entity %q: %w", name, err)
 			}
-			resolved.MemberOf = append(resolved.MemberOf, et)
+			resolved.ParentTypes = append(resolved.ParentTypes, et)
 		}
 		if entity.Shape != nil {
 			rec, err := r.resolveRecordType(nsName, *entity.Shape)
@@ -234,7 +234,7 @@ func (r *resolverState) resolveEntities(nsName types.Path, entities ast2.Entitie
 	return nil
 }
 
-func (r *resolverState) resolveEnums(enums ast2.Enums, result *Schema) {
+func (r *resolverState) resolveEnums(enums ast.Enums, result *Schema) {
 	for name, enum := range enums {
 		result.Enums[name] = Enum{
 			Name:        name,
@@ -244,7 +244,7 @@ func (r *resolverState) resolveEnums(enums ast2.Enums, result *Schema) {
 	}
 }
 
-func (r *resolverState) resolveActions(nsName types.Path, actions ast2.Actions, result *Schema) error {
+func (r *resolverState) resolveActions(nsName types.Path, actions ast.Actions, result *Schema) error {
 	for name, action := range actions {
 		actionTypeName := qualifyActionType(nsName)
 		uid := types.NewEntityUID(actionTypeName, types.String(name))
@@ -252,8 +252,8 @@ func (r *resolverState) resolveActions(nsName types.Path, actions ast2.Actions, 
 			Name:        name,
 			Annotations: Annotations(action.Annotations),
 		}
-		for _, ref := range action.MemberOf {
-			resolved.MemberOf = append(resolved.MemberOf, resolveActionParentRef(nsName, ref))
+		for _, ref := range action.Parents {
+			resolved.Parents = append(resolved.Parents, resolveActionParentRef(nsName, ref))
 		}
 		if action.AppliesTo != nil {
 			at := &AppliesTo{}
@@ -297,38 +297,38 @@ func (r *resolverState) resolveActions(nsName types.Path, actions ast2.Actions, 
 	return nil
 }
 
-func (r *resolverState) resolveType(ns types.Path, t ast2.IsType) (IsType, error) {
+func (r *resolverState) resolveType(ns types.Path, t ast.IsType) (IsType, error) {
 	switch t := t.(type) {
-	case ast2.StringType:
+	case ast.StringType:
 		return StringType{}, nil
-	case ast2.LongType:
+	case ast.LongType:
 		return LongType{}, nil
-	case ast2.BoolType:
+	case ast.BoolType:
 		return BoolType{}, nil
-	case ast2.ExtensionType:
+	case ast.ExtensionType:
 		return ExtensionType(t), nil
-	case ast2.SetType:
+	case ast.SetType:
 		elem, err := r.resolveType(ns, t.Element)
 		if err != nil {
 			return nil, err
 		}
 		return SetType{Element: elem}, nil
-	case ast2.RecordType:
+	case ast.RecordType:
 		return r.resolveRecordType(ns, t)
-	case ast2.EntityTypeRef:
+	case ast.EntityTypeRef:
 		et, err := r.resolveEntityTypeRef(ns, t)
 		if err != nil {
 			return nil, err
 		}
 		return EntityType(et), nil
-	case ast2.TypeRef:
+	case ast.TypeRef:
 		return r.resolveTypeRef(ns, t)
 	default:
 		return nil, fmt.Errorf("unknown AST type: %T", t)
 	}
 }
 
-func (r *resolverState) resolveRecordType(ns types.Path, rec ast2.RecordType) (RecordType, error) {
+func (r *resolverState) resolveRecordType(ns types.Path, rec ast.RecordType) (RecordType, error) {
 	result := make(RecordType, len(rec))
 	for name, attr := range rec {
 		t, err := r.resolveType(ns, attr.Type)
@@ -344,7 +344,7 @@ func (r *resolverState) resolveRecordType(ns types.Path, rec ast2.RecordType) (R
 	return result, nil
 }
 
-func (r *resolverState) resolveEntityTypeRef(ns types.Path, ref ast2.EntityTypeRef) (types.EntityType, error) {
+func (r *resolverState) resolveEntityTypeRef(ns types.Path, ref ast.EntityTypeRef) (types.EntityType, error) {
 	path := types.Path(ref)
 	// If it's already a qualified path (contains ::), resolve directly
 	if strings.Contains(string(path), "::") {
@@ -375,7 +375,7 @@ func (r *resolverState) resolveEntityTypeRef(ns types.Path, ref ast2.EntityTypeR
 // 4. Check if N (empty namespace) is declared as an entity type
 // 5. Check if N is a built-in type
 // 6. Error
-func (r *resolverState) resolveTypeRef(ns types.Path, ref ast2.TypeRef) (IsType, error) {
+func (r *resolverState) resolveTypeRef(ns types.Path, ref ast.TypeRef) (IsType, error) {
 	// Qualified: resolve directly
 	if strings.Contains(string(ref), "::") {
 		return r.resolveQualifiedTypeRef(ref)
@@ -415,7 +415,7 @@ func (r *resolverState) resolveTypeRef(ns types.Path, ref ast2.TypeRef) (IsType,
 	return nil, fmt.Errorf("undefined type %q", ref)
 }
 
-func (r *resolverState) resolveQualifiedTypeRef(ref ast2.TypeRef) (IsType, error) {
+func (r *resolverState) resolveQualifiedTypeRef(ref ast.TypeRef) (IsType, error) {
 	// Check for __cedar:: prefix first
 	if strings.HasPrefix(string(ref), "__cedar::") {
 		builtinName := ref[len("__cedar::"):]
@@ -456,7 +456,7 @@ func (r *resolverState) resolveTypePath(ns types.Path, path types.Path) types.Pa
 	return path
 }
 
-func resolveActionParentRef(ns types.Path, ref ast2.ParentRef) types.EntityUID {
+func resolveActionParentRef(ns types.Path, ref ast.ParentRef) types.EntityUID {
 	if types.EntityType(ref.Type) == "" {
 		// Bare reference: action in same namespace
 		actionType := qualifyActionType(ns)
@@ -474,7 +474,7 @@ func (r *resolverState) validateActionMembership(result *Schema) error {
 
 	// Validate references and detect cycles
 	for uid, action := range result.Actions {
-		for _, parent := range action.MemberOf {
+		for _, parent := range action.Parents {
 			if !actionUIDs[parent] {
 				return fmt.Errorf("action %s: undefined parent action %s", uid, parent)
 			}
@@ -493,7 +493,7 @@ func (r *resolverState) validateActionMembership(result *Schema) error {
 		}
 		visited[uid] = 1
 		action := result.Actions[uid]
-		for _, parent := range action.MemberOf {
+		for _, parent := range action.Parents {
 			if err := visit(parent); err != nil {
 				return err
 			}
@@ -532,13 +532,13 @@ func lookupBuiltin(path types.Path) IsType {
 	}
 }
 
-func collectTypeRefs(t ast2.IsType) []types.Path {
+func collectTypeRefs(t ast.IsType) []types.Path {
 	switch t := t.(type) {
-	case ast2.TypeRef:
+	case ast.TypeRef:
 		return []types.Path{types.Path(t)}
-	case ast2.SetType:
+	case ast.SetType:
 		return collectTypeRefs(t.Element)
-	case ast2.RecordType:
+	case ast.RecordType:
 		var refs []types.Path
 		for _, attr := range t {
 			refs = append(refs, collectTypeRefs(attr.Type)...)

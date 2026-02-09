@@ -26,7 +26,7 @@ func TestRoundTripEntity(t *testing.T) {
 			"NS": ast2.Namespace{
 				Entities: ast2.Entities{
 					"NS::User": ast2.Entity{
-						MemberOf: []ast2.EntityTypeRef{"Group"},
+						ParentTypes: []ast2.EntityTypeRef{"Group"},
 						Shape: &ast2.RecordType{
 							"name": ast2.Attribute{Type: ast2.StringType{}},
 							"age":  ast2.Attribute{Type: ast2.LongType{}, Optional: true},
@@ -44,7 +44,7 @@ func TestRoundTripEntity(t *testing.T) {
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
 	user := (*ast2.Schema)(&s2).Namespaces["NS"].Entities["NS::User"]
-	testutil.Equals(t, user.MemberOf, []ast2.EntityTypeRef{"Group"})
+	testutil.Equals(t, user.ParentTypes, []ast2.EntityTypeRef{"Group"})
 	testutil.Equals(t, user.Shape != nil, true)
 	testutil.Equals(t, user.Tags != nil, true)
 }
@@ -71,7 +71,7 @@ func TestRoundTripAction(t *testing.T) {
 	s := ast2.Schema{
 		Actions: ast2.Actions{
 			"view": ast2.Action{
-				MemberOf: []ast2.ParentRef{
+				Parents: []ast2.ParentRef{
 					ast2.NewParentRef("NS::Action", "readOnly"),
 					ast2.ParentRefFromID("write"),
 				},
@@ -90,7 +90,7 @@ func TestRoundTripAction(t *testing.T) {
 	testutil.OK(t, s2.UnmarshalJSON(b))
 
 	view := (*ast2.Schema)(&s2).Actions["view"]
-	testutil.Equals(t, len(view.MemberOf), 2)
+	testutil.Equals(t, len(view.Parents), 2)
 	testutil.Equals(t, view.AppliesTo != nil, true)
 	testutil.Equals(t, len(view.AppliesTo.Principals), 1)
 }

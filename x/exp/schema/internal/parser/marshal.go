@@ -3,16 +3,16 @@ package parser
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/types"
-	ast2 "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 )
 
 // MarshalSchema formats an AST schema as Cedar text.
-func MarshalSchema(schema *ast2.Schema) []byte {
+func MarshalSchema(schema *ast.Schema) []byte {
 	var buf bytes.Buffer
 	m := marshaler{w: &buf}
 	m.marshalSchema(schema)
@@ -30,14 +30,14 @@ func (m *marshaler) writeIndent() {
 	}
 }
 
-func (m *marshaler) marshalSchema(schema *ast2.Schema) {
+func (m *marshaler) marshalSchema(schema *ast.Schema) {
 	first := true
 
 	// Marshal bare declarations
 	m.marshalDecls(&first, schema.Entities, schema.Enums, schema.Actions, schema.CommonTypes)
 
 	// Marshal namespaces in sorted order
-	nsNames := sortedKeys(schema.Namespaces)
+	nsNames := slices.Sorted(maps.Keys(schema.Namespaces))
 	for _, name := range nsNames {
 		ns := schema.Namespaces[name]
 		if !first {
@@ -56,9 +56,9 @@ func (m *marshaler) marshalSchema(schema *ast2.Schema) {
 	}
 }
 
-func (m *marshaler) marshalDecls(first *bool, entities ast2.Entities, enums ast2.Enums, actions ast2.Actions, commonTypes ast2.CommonTypes) {
+func (m *marshaler) marshalDecls(first *bool, entities ast.Entities, enums ast.Enums, actions ast.Actions, commonTypes ast.CommonTypes) {
 	// Type declarations
-	typeNames := sortedIdents(commonTypes)
+	typeNames := slices.Sorted(maps.Keys(commonTypes))
 	for _, name := range typeNames {
 		ct := commonTypes[name]
 		if !*first {
@@ -73,7 +73,7 @@ func (m *marshaler) marshalDecls(first *bool, entities ast2.Entities, enums ast2
 	}
 
 	// Entity declarations
-	entityNames := sortedEntityTypes(entities)
+	entityNames := slices.Sorted(maps.Keys(entities))
 	for _, name := range entityNames {
 		entity := entities[name]
 		if !*first {
@@ -83,9 +83,9 @@ func (m *marshaler) marshalDecls(first *bool, entities ast2.Entities, enums ast2
 		m.marshalAnnotations(entity.Annotations)
 		m.writeIndent()
 		fmt.Fprintf(m.w, "entity %s", unqualifyEntityType(name))
-		if len(entity.MemberOf) > 0 {
+		if len(entity.ParentTypes) > 0 {
 			m.w.WriteString(" in ")
-			m.marshalEntityTypeRefs(entity.MemberOf)
+			m.marshalEntityTypeRefs(entity.ParentTypes)
 		}
 		if entity.Shape != nil {
 			m.w.WriteByte(' ')
@@ -99,7 +99,7 @@ func (m *marshaler) marshalDecls(first *bool, entities ast2.Entities, enums ast2
 	}
 
 	// Enum entity declarations
-	enumNames := sortedEntityTypes(enums)
+	enumNames := slices.Sorted(maps.Keys(enums))
 	for _, name := range enumNames {
 		enum := enums[name]
 		if !*first {
@@ -119,7 +119,7 @@ func (m *marshaler) marshalDecls(first *bool, entities ast2.Entities, enums ast2
 	}
 
 	// Action declarations
-	actionNames := sortedStrings(actions)
+	actionNames := slices.Sorted(maps.Keys(actions))
 	for _, name := range actionNames {
 		action := actions[name]
 		if !*first {
@@ -130,9 +130,9 @@ func (m *marshaler) marshalDecls(first *bool, entities ast2.Entities, enums ast2
 		m.writeIndent()
 		m.w.WriteString("action ")
 		m.marshalActionName(name)
-		if len(action.MemberOf) > 0 {
+		if len(action.Parents) > 0 {
 			m.w.WriteString(" in ")
-			m.marshalParentRefs(action.MemberOf)
+			m.marshalParentRefs(action.Parents)
 		}
 		if action.AppliesTo != nil {
 			m.marshalAppliesTo(action.AppliesTo)
@@ -141,8 +141,8 @@ func (m *marshaler) marshalDecls(first *bool, entities ast2.Entities, enums ast2
 	}
 }
 
-func (m *marshaler) marshalAnnotations(annotations ast2.Annotations) {
-	keys := sortedAnnotationKeys(annotations)
+func (m *marshaler) marshalAnnotations(annotations ast.Annotations) {
+	keys := slices.Sorted(maps.Keys(annotations))
 	for _, key := range keys {
 		val := annotations[key]
 		m.writeIndent()
@@ -154,32 +154,32 @@ func (m *marshaler) marshalAnnotations(annotations ast2.Annotations) {
 	}
 }
 
-func (m *marshaler) marshalType(t ast2.IsType) {
+func (m *marshaler) marshalType(t ast.IsType) {
 	switch t := t.(type) {
-	case ast2.StringType:
+	case ast.StringType:
 		m.w.WriteString("String")
-	case ast2.LongType:
+	case ast.LongType:
 		m.w.WriteString("Long")
-	case ast2.BoolType:
+	case ast.BoolType:
 		m.w.WriteString("Bool")
-	case ast2.ExtensionType:
+	case ast.ExtensionType:
 		m.w.WriteString(string(t))
-	case ast2.SetType:
+	case ast.SetType:
 		m.w.WriteString("Set<")
 		m.marshalType(t.Element)
 		m.w.WriteByte('>')
-	case ast2.RecordType:
+	case ast.RecordType:
 		m.marshalRecordType(t)
-	case ast2.EntityTypeRef:
+	case ast.EntityTypeRef:
 		m.w.WriteString(string(t))
-	case ast2.TypeRef:
+	case ast.TypeRef:
 		m.w.WriteString(string(t))
 	}
 }
 
-func (m *marshaler) marshalRecordType(rec ast2.RecordType) {
+func (m *marshaler) marshalRecordType(rec ast.RecordType) {
 	m.w.WriteByte('{')
-	keys := sortedRecordKeys(rec)
+	keys := slices.Sorted(maps.Keys(rec))
 	if len(keys) > 0 {
 		m.w.WriteByte('\n')
 		m.indent++
@@ -204,7 +204,7 @@ func (m *marshaler) marshalRecordType(rec ast2.RecordType) {
 	m.w.WriteByte('}')
 }
 
-func (m *marshaler) marshalEntityTypeRefs(refs []ast2.EntityTypeRef) {
+func (m *marshaler) marshalEntityTypeRefs(refs []ast.EntityTypeRef) {
 	if len(refs) == 1 {
 		m.w.WriteString(string(refs[0]))
 		return
@@ -219,7 +219,7 @@ func (m *marshaler) marshalEntityTypeRefs(refs []ast2.EntityTypeRef) {
 	m.w.WriteByte(']')
 }
 
-func (m *marshaler) marshalParentRefs(refs []ast2.ParentRef) {
+func (m *marshaler) marshalParentRefs(refs []ast.ParentRef) {
 	if len(refs) == 1 {
 		m.marshalParentRef(refs[0])
 		return
@@ -234,7 +234,7 @@ func (m *marshaler) marshalParentRefs(refs []ast2.ParentRef) {
 	m.w.WriteByte(']')
 }
 
-func (m *marshaler) marshalParentRef(ref ast2.ParentRef) {
+func (m *marshaler) marshalParentRef(ref ast.ParentRef) {
 	if types.EntityType(ref.Type) == "" {
 		m.marshalActionName(ref.ID)
 	} else {
@@ -242,7 +242,7 @@ func (m *marshaler) marshalParentRef(ref ast2.ParentRef) {
 	}
 }
 
-func (m *marshaler) marshalAppliesTo(at *ast2.AppliesTo) {
+func (m *marshaler) marshalAppliesTo(at *ast.AppliesTo) {
 	m.w.WriteString(" appliesTo {\n")
 	m.indent++
 	hasPrev := false
@@ -323,50 +323,6 @@ func unqualifyEntityType(et types.EntityType) string {
 		return s[idx+2:]
 	}
 	return s
-}
-
-func sortedKeys[V any](m map[types.Path]V) []types.Path {
-	keys := make([]types.Path, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	return keys
-}
-
-func sortedIdents[V any](m map[types.Ident]V) []types.Ident {
-	keys := make([]types.Ident, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	return keys
-}
-
-func sortedEntityTypes[V any](m map[types.EntityType]V) []types.EntityType {
-	keys := make([]types.EntityType, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	return keys
-}
-
-func sortedStrings[V any](m map[types.String]V) []types.String {
-	keys := make([]types.String, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	return keys
-}
-
-func sortedRecordKeys(m ast2.RecordType) []types.String {
-	return sortedStrings(map[types.String]ast2.Attribute(m))
-}
-
-func sortedAnnotationKeys(m ast2.Annotations) []types.Ident {
-	return sortedIdents(map[types.Ident]types.String(m))
 }
 
 // quoteCedar produces a double-quoted string literal using only Cedar-valid
