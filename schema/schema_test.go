@@ -2,6 +2,7 @@ package schema_test
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -11,279 +12,738 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 )
 
-func TestNewSchemaFromAST(t *testing.T) {
-	t.Parallel()
-	a := &ast.Schema{
-		Entities: ast.Entities{
-			"User": ast.Entity{},
-		},
-	}
-	s := schema.NewSchemaFromAST(a)
-	testutil.Equals(t, s.AST(), a)
-}
-
-func TestSetFilename(t *testing.T) {
-	t.Parallel()
-	s := &schema.Schema{}
-	s.SetFilename("test.cedarschema")
-	err := s.UnmarshalCedar([]byte("entity 42;"))
-	testutil.Error(t, err)
-	// The error should include the filename
-	testutil.Equals(t, true, len(err.Error()) > 0)
-}
-
-func TestMarshalUnmarshalCedar(t *testing.T) {
-	t.Parallel()
-	input := []byte("entity User;\n")
-
-	var s schema.Schema
-	testutil.OK(t, s.UnmarshalCedar(input))
-
-	b, err := s.MarshalCedar()
-	testutil.OK(t, err)
-
-	var s2 schema.Schema
-	testutil.OK(t, s2.UnmarshalCedar(b))
-	testutil.Equals(t, len(s2.AST().Entities), 1)
-}
-
-func TestMarshalUnmarshalJSON(t *testing.T) {
-	t.Parallel()
-	input := []byte(`{"": {"entityTypes": {"User": {}}, "actions": {}}}`)
-
-	var s schema.Schema
-	testutil.OK(t, s.UnmarshalJSON(input))
-
-	b, err := s.MarshalJSON()
-	testutil.OK(t, err)
-
-	var s2 schema.Schema
-	testutil.OK(t, s2.UnmarshalJSON(b))
-	testutil.Equals(t, len(s2.AST().Entities), 1)
-}
-
-func TestCedarToJSONRoundTrip(t *testing.T) {
-	t.Parallel()
-	input := []byte(`entity User {
-	name: String,
-	age?: Long
+var wantCedar = `
+@doc("Address information")
+@personal_information
+type Address = {
+	@also("town")
+	city: String,
+	country: Country,
+	street: String,
+	zipcode?: String
 };
 
-action "view" appliesTo {
-	principal: User,
-	resource: User,
-	context: {}
+type decimal = {
+	decimal: Long,
+	whole: Long
 };
-`)
 
-	var s schema.Schema
-	testutil.OK(t, s.UnmarshalCedar(input))
+entity Admin;
 
-	jsonBytes, err := s.MarshalJSON()
-	testutil.OK(t, err)
+entity Country;
 
-	var s2 schema.Schema
-	testutil.OK(t, s2.UnmarshalJSON(jsonBytes))
-
-	cedarBytes, err := s2.MarshalCedar()
-	testutil.OK(t, err)
-
-	var s3 schema.Schema
-	testutil.OK(t, s3.UnmarshalCedar(cedarBytes))
-
-	testutil.Equals(t, len(s3.AST().Entities), 1)
-	testutil.Equals(t, len(s3.AST().Actions), 1)
-}
-
-func TestJSONToCedarRoundTrip(t *testing.T) {
-	t.Parallel()
-	input := []byte(`{
-		"NS": {
-			"entityTypes": {
-				"User": {
-					"memberOfTypes": ["Group"],
-					"shape": {
-						"type": "Record",
-						"attributes": {
-							"name": {"type": "String"}
-						}
-					}
-				},
-				"Group": {}
-			},
-			"actions": {
-				"view": {
-					"appliesTo": {
-						"principalTypes": ["User"],
-						"resourceTypes": ["Group"],
-						"context": {"type": "Record", "attributes": {}}
-					}
-				}
-			}
-		}
-	}`)
-
-	var s schema.Schema
-	testutil.OK(t, s.UnmarshalJSON(input))
-
-	cedarBytes, err := s.MarshalCedar()
-	testutil.OK(t, err)
-
-	var s2 schema.Schema
-	testutil.OK(t, s2.UnmarshalCedar(cedarBytes))
-
-	jsonBytes, err := s2.MarshalJSON()
-	testutil.OK(t, err)
-
-	var s3 schema.Schema
-	testutil.OK(t, s3.UnmarshalJSON(jsonBytes))
-
-	ns := s3.AST().Namespaces["NS"]
-	testutil.Equals(t, len(ns.Entities), 2)
-	testutil.Equals(t, len(ns.Actions), 1)
-}
-
-func TestResolve(t *testing.T) {
-	t.Parallel()
-	input := []byte(`entity User;
-
-action "view" appliesTo {
-	principal: User,
-	resource: User,
-	context: {}
+entity System in Admin {
+	version: String
 };
-`)
 
-	var s schema.Schema
-	testutil.OK(t, s.UnmarshalCedar(input))
+entity Role enum ["superuser", "operator"];
 
-	res, err := s.Resolve()
-	testutil.OK(t, err)
+action audit appliesTo {
+	principal: Admin,
+	resource: [MyApp::Document, System]
+};
 
-	testutil.Equals(t, len(res.Entities), 1)
-	testutil.Equals(t, len(res.Actions), 1)
+@doc("Doc manager")
+namespace MyApp {
+	type Metadata = {
+		created: datetime,
+		tags: Set<String>
+	};
 
-	action := res.Actions[types.NewEntityUID("Action", "view")]
-	testutil.Equals(t, action.Name, types.String("view"))
-	testutil.Equals(t, action.AppliesTo != nil, true)
-	testutil.Equals(t, action.AppliesTo.Principals, []types.EntityType{"User"})
-}
+	entity Department {
+		budget: decimal
+	};
 
-func TestResolveError(t *testing.T) {
-	t.Parallel()
-	input := []byte(`entity User in [NonExistent];`)
+	entity Document {
+		public: Bool,
+		title: String
+	};
 
-	var s schema.Schema
-	testutil.OK(t, s.UnmarshalCedar(input))
+	entity Group in Department {
+		metadata: Metadata,
+		name: String
+	};
 
-	_, err := s.Resolve()
-	testutil.Error(t, err)
-}
+	@doc("User entity")
+	entity User in Group {
+		active: Bool,
+		address: Address,
+		email: String,
+		level: Long
+	};
 
-func TestUnmarshalCedarError(t *testing.T) {
-	t.Parallel()
-	var s schema.Schema
-	testutil.Error(t, s.UnmarshalCedar([]byte("not valid cedar {")))
-}
+	entity Status enum ["draft", "published", "archived"];
 
-func TestUnmarshalJSONError(t *testing.T) {
-	t.Parallel()
-	var s schema.Schema
-	testutil.Error(t, s.UnmarshalJSON([]byte("not json")))
-}
-
-func TestJSONMarshalInterface(t *testing.T) {
-	t.Parallel()
-	var s schema.Schema
-	testutil.OK(t, s.UnmarshalCedar([]byte("entity User;")))
-
-	b, err := json.Marshal(&s)
-	testutil.OK(t, err)
-
-	var s2 schema.Schema
-	testutil.OK(t, json.Unmarshal(b, &s2))
-	testutil.Equals(t, len(s2.AST().Entities), 1)
-}
-
-func TestResolveWithNamespace(t *testing.T) {
-	t.Parallel()
-	input := []byte(`namespace NS {
-	entity User;
-
-	action "view" appliesTo {
+	@doc("View or edit document")
+	action edit appliesTo {
 		principal: User,
-		resource: User,
-		context: {}
+		resource: Document,
+		context: {
+			ip: ipaddr,
+			timestamp: datetime
+		}
+	};
+
+	action manage appliesTo {
+		principal: User,
+		resource: [Document, Group]
+	};
+
+	@doc("View or edit document")
+	action view appliesTo {
+		principal: User,
+		resource: Document,
+		context: {
+			ip: ipaddr,
+			timestamp: datetime
+		}
 	};
 }
-`)
+`
 
-	var s schema.Schema
-	testutil.OK(t, s.UnmarshalCedar(input))
+var wantJSON = `{
+  "": {
+    "entityTypes": {
+      "Admin": {},
+      "Country": {},
+      "Role": {
+        "enum": ["superuser", "operator"]
+      },
+      "System": {
+        "memberOfTypes": ["Admin"],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "version": {
+              "type": "EntityOrCommon",
+              "name": "String"
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+      "audit": {
+        "appliesTo": {
+          "principalTypes": ["Admin"],
+          "resourceTypes": ["MyApp::Document", "System"]
+        }
+      }
+    },
+    "commonTypes": {
+      "Address": {
+        "type": "Record",
+        "attributes": {
+          "city": {
+            "type": "EntityOrCommon",
+            "name": "String",
+            "annotations": {
+              "also": "town"
+            }
+          },
+          "country": {
+            "type": "EntityOrCommon",
+            "name": "Country"
+          },
+          "street": {
+            "type": "EntityOrCommon",
+            "name": "String"
+          },
+          "zipcode": {
+            "type": "EntityOrCommon",
+            "name": "String",
+            "required": false
+          }
+        },
+        "annotations": {
+          "doc": "Address information",
+          "personal_information": ""
+        }
+      },
+      "decimal": {
+        "type": "Record",
+        "attributes": {
+          "decimal": {
+            "type": "EntityOrCommon",
+            "name": "Long"
+          },
+          "whole": {
+            "type": "EntityOrCommon",
+            "name": "Long"
+          }
+        }
+      }
+    }
+  },
+  "MyApp": {
+    "annotations": {
+      "doc": "Doc manager"
+    },
+    "entityTypes": {
+      "Department": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "budget": {
+              "type": "EntityOrCommon",
+              "name": "decimal"
+            }
+          }
+        }
+      },
+      "Document": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "public": {
+              "type": "EntityOrCommon",
+              "name": "Bool"
+            },
+            "title": {
+              "type": "EntityOrCommon",
+              "name": "String"
+            }
+          }
+        }
+      },
+      "Group": {
+        "memberOfTypes": ["Department"],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "metadata": {
+              "type": "EntityOrCommon",
+              "name": "Metadata"
+            },
+            "name": {
+              "type": "EntityOrCommon",
+              "name": "String"
+            }
+          }
+        }
+      },
+      "Status": {
+        "enum": ["draft", "published", "archived"]
+      },
+      "User": {
+        "memberOfTypes": ["Group"],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "active": {
+              "type": "EntityOrCommon",
+              "name": "Bool"
+            },
+            "address": {
+              "type": "EntityOrCommon",
+              "name": "Address"
+            },
+            "email": {
+              "type": "EntityOrCommon",
+              "name": "String"
+            },
+            "level": {
+              "type": "EntityOrCommon",
+              "name": "Long"
+            }
+          }
+        },
+        "annotations": {
+          "doc": "User entity"
+        }
+      }
+    },
+    "actions": {
+      "edit": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Document"],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "ip": {
+                "type": "EntityOrCommon",
+                "name": "ipaddr"
+              },
+              "timestamp": {
+                "type": "EntityOrCommon",
+                "name": "datetime"
+              }
+            }
+          }
+        },
+        "annotations": {
+          "doc": "View or edit document"
+        }
+      },
+      "manage": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Document", "Group"]
+        }
+      },
+      "view": {
+        "appliesTo": {
+          "principalTypes": ["User"],
+          "resourceTypes": ["Document"],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "ip": {
+                "type": "EntityOrCommon",
+                "name": "ipaddr"
+              },
+              "timestamp": {
+                "type": "EntityOrCommon",
+                "name": "datetime"
+              }
+            }
+          }
+        },
+        "annotations": {
+          "doc": "View or edit document"
+        }
+      }
+    },
+    "commonTypes": {
+      "Metadata": {
+        "type": "Record",
+        "attributes": {
+          "created": {
+            "type": "EntityOrCommon",
+            "name": "datetime"
+          },
+          "tags": {
+            "type": "Set",
+            "element": {
+              "type": "EntityOrCommon",
+              "name": "String"
+            }
+          }
+        }
+      }
+    }
+  }
+}`
 
-	res, err := s.Resolve()
-	testutil.OK(t, err)
-
-	_, ok := res.Entities["NS::User"]
-	testutil.Equals(t, ok, true)
-
-	action := res.Actions[types.NewEntityUID("NS::Action", "view")]
-	testutil.Equals(t, action.AppliesTo.Principals, []types.EntityType{"NS::User"})
+// wantAST is the expected AST structure for the test schema.
+// The Cedar parser produces ast.TypeRef for all type names (including
+// builtins like String, Long, Bool). Resolution happens later.
+var wantAST = &ast.Schema{
+	CommonTypes: ast.CommonTypes{
+		"Address": ast.CommonType{
+			Annotations: ast.Annotations{
+				"doc":                  "Address information",
+				"personal_information": "",
+			},
+			Type: ast.RecordType{
+				"city": ast.Attribute{
+					Type: ast.TypeRef("String"),
+					Annotations: ast.Annotations{
+						"also": "town",
+					},
+				},
+				"country": ast.Attribute{Type: ast.TypeRef("Country")},
+				"street":  ast.Attribute{Type: ast.TypeRef("String")},
+				"zipcode": ast.Attribute{Type: ast.TypeRef("String"), Optional: true},
+			},
+		},
+		"decimal": ast.CommonType{
+			Type: ast.RecordType{
+				"decimal": ast.Attribute{Type: ast.TypeRef("Long")},
+				"whole":   ast.Attribute{Type: ast.TypeRef("Long")},
+			},
+		},
+	},
+	Entities: ast.Entities{
+		"Admin":   ast.Entity{},
+		"Country": ast.Entity{},
+		"System": ast.Entity{
+			MemberOf: []ast.EntityTypeRef{"Admin"},
+			Shape: &ast.RecordType{
+				"version": ast.Attribute{Type: ast.TypeRef("String")},
+			},
+		},
+	},
+	Enums: ast.Enums{
+		"Role": ast.Enum{
+			Values: []types.String{"superuser", "operator"},
+		},
+	},
+	Actions: ast.Actions{
+		"audit": ast.Action{
+			AppliesTo: &ast.AppliesTo{
+				Principals: []ast.EntityTypeRef{"Admin"},
+				Resources:  []ast.EntityTypeRef{"MyApp::Document", "System"},
+			},
+		},
+	},
+	Namespaces: ast.Namespaces{
+		"MyApp": ast.Namespace{
+			Annotations: ast.Annotations{
+				"doc": "Doc manager",
+			},
+			CommonTypes: ast.CommonTypes{
+				"Metadata": ast.CommonType{
+					Type: ast.RecordType{
+						"created": ast.Attribute{Type: ast.TypeRef("datetime")},
+						"tags":    ast.Attribute{Type: ast.SetType{Element: ast.TypeRef("String")}},
+					},
+				},
+			},
+			Entities: ast.Entities{
+				"MyApp::Department": ast.Entity{
+					Shape: &ast.RecordType{
+						"budget": ast.Attribute{Type: ast.TypeRef("decimal")},
+					},
+				},
+				"MyApp::Document": ast.Entity{
+					Shape: &ast.RecordType{
+						"public": ast.Attribute{Type: ast.TypeRef("Bool")},
+						"title":  ast.Attribute{Type: ast.TypeRef("String")},
+					},
+				},
+				"MyApp::Group": ast.Entity{
+					MemberOf: []ast.EntityTypeRef{"Department"},
+					Shape: &ast.RecordType{
+						"metadata": ast.Attribute{Type: ast.TypeRef("Metadata")},
+						"name":     ast.Attribute{Type: ast.TypeRef("String")},
+					},
+				},
+				"MyApp::User": ast.Entity{
+					MemberOf: []ast.EntityTypeRef{"Group"},
+					Annotations: ast.Annotations{
+						"doc": "User entity",
+					},
+					Shape: &ast.RecordType{
+						"active":  ast.Attribute{Type: ast.TypeRef("Bool")},
+						"address": ast.Attribute{Type: ast.TypeRef("Address")},
+						"email":   ast.Attribute{Type: ast.TypeRef("String")},
+						"level":   ast.Attribute{Type: ast.TypeRef("Long")},
+					},
+				},
+			},
+			Enums: ast.Enums{
+				"MyApp::Status": ast.Enum{
+					Values: []types.String{"draft", "published", "archived"},
+				},
+			},
+			Actions: ast.Actions{
+				"edit": ast.Action{
+					Annotations: ast.Annotations{
+						"doc": "View or edit document",
+					},
+					AppliesTo: &ast.AppliesTo{
+						Principals: []ast.EntityTypeRef{"User"},
+						Resources:  []ast.EntityTypeRef{"Document"},
+						Context: ast.RecordType{
+							"ip":        ast.Attribute{Type: ast.TypeRef("ipaddr")},
+							"timestamp": ast.Attribute{Type: ast.TypeRef("datetime")},
+						},
+					},
+				},
+				"manage": ast.Action{
+					AppliesTo: &ast.AppliesTo{
+						Principals: []ast.EntityTypeRef{"User"},
+						Resources:  []ast.EntityTypeRef{"Document", "Group"},
+					},
+				},
+				"view": ast.Action{
+					Annotations: ast.Annotations{
+						"doc": "View or edit document",
+					},
+					AppliesTo: &ast.AppliesTo{
+						Principals: []ast.EntityTypeRef{"User"},
+						Resources:  []ast.EntityTypeRef{"Document"},
+						Context: ast.RecordType{
+							"ip":        ast.Attribute{Type: ast.TypeRef("ipaddr")},
+							"timestamp": ast.Attribute{Type: ast.TypeRef("datetime")},
+						},
+					},
+				},
+			},
+		},
+	},
 }
 
-func TestResolveCommonType(t *testing.T) {
-	t.Parallel()
-	input := []byte(`type Context = {
-	ip: ipaddr
-};
-
-entity User {
-	ctx: Context
-};
-
-action "view" appliesTo {
-	principal: User,
-	resource: User,
-	context: Context
-};
-`)
-
-	var s schema.Schema
-	testutil.OK(t, s.UnmarshalCedar(input))
-
-	res, err := s.Resolve()
-	testutil.OK(t, err)
-
-	user := res.Entities["User"]
-	attr := (*user.Shape)["ctx"]
-	_, ok := attr.Type.(resolved.RecordType)
-	testutil.Equals(t, ok, true)
+// wantResolved is the expected resolved schema structure.
+// All type references have been fully qualified and common types inlined.
+var wantResolved = &resolved.Schema{
+	Namespaces: map[types.Path]resolved.Namespace{
+		"MyApp": {
+			Name: "MyApp",
+			Annotations: resolved.Annotations{
+				"doc": "Doc manager",
+			},
+		},
+	},
+	Entities: map[types.EntityType]resolved.Entity{
+		"Admin": {
+			Name: "Admin",
+		},
+		"Country": {
+			Name: "Country",
+		},
+		"System": {
+			Name:     "System",
+			MemberOf: []types.EntityType{"Admin"},
+			Shape: &resolved.RecordType{
+				"version": resolved.Attribute{Type: resolved.StringType{}},
+			},
+		},
+		"MyApp::Department": {
+			Name: "MyApp::Department",
+			Shape: &resolved.RecordType{
+				"budget": resolved.Attribute{
+					Type: resolved.RecordType{
+						"decimal": resolved.Attribute{Type: resolved.LongType{}},
+						"whole":   resolved.Attribute{Type: resolved.LongType{}},
+					},
+				},
+			},
+		},
+		"MyApp::Document": {
+			Name: "MyApp::Document",
+			Shape: &resolved.RecordType{
+				"public": resolved.Attribute{Type: resolved.BoolType{}},
+				"title":  resolved.Attribute{Type: resolved.StringType{}},
+			},
+		},
+		"MyApp::Group": {
+			Name:     "MyApp::Group",
+			MemberOf: []types.EntityType{"MyApp::Department"},
+			Shape: &resolved.RecordType{
+				"metadata": resolved.Attribute{
+					Type: resolved.RecordType{
+						"created": resolved.Attribute{Type: resolved.ExtensionType("datetime")},
+						"tags":    resolved.Attribute{Type: resolved.SetType{Element: resolved.StringType{}}},
+					},
+				},
+				"name": resolved.Attribute{Type: resolved.StringType{}},
+			},
+		},
+		"MyApp::User": {
+			Name:        "MyApp::User",
+			Annotations: resolved.Annotations{"doc": "User entity"},
+			MemberOf:    []types.EntityType{"MyApp::Group"},
+			Shape: &resolved.RecordType{
+				"active": resolved.Attribute{Type: resolved.BoolType{}},
+				"address": resolved.Attribute{
+					Type: resolved.RecordType{
+						"city": resolved.Attribute{
+							Type:        resolved.StringType{},
+							Annotations: resolved.Annotations{"also": "town"},
+						},
+						"country": resolved.Attribute{Type: resolved.EntityType("Country")},
+						"street":  resolved.Attribute{Type: resolved.StringType{}},
+						"zipcode": resolved.Attribute{Type: resolved.StringType{}, Optional: true},
+					},
+				},
+				"email": resolved.Attribute{Type: resolved.StringType{}},
+				"level": resolved.Attribute{Type: resolved.LongType{}},
+			},
+		},
+	},
+	Enums: map[types.EntityType]resolved.Enum{
+		"Role": {
+			Name:   "Role",
+			Values: []types.String{"superuser", "operator"},
+		},
+		"MyApp::Status": {
+			Name:   "MyApp::Status",
+			Values: []types.String{"draft", "published", "archived"},
+		},
+	},
+	Actions: map[types.EntityUID]resolved.Action{
+		types.NewEntityUID("Action", "audit"): {
+			Name: "audit",
+			AppliesTo: &resolved.AppliesTo{
+				Principals: []types.EntityType{"Admin"},
+				Resources:  []types.EntityType{"MyApp::Document", "System"},
+				Context:    resolved.RecordType{},
+			},
+		},
+		types.NewEntityUID("MyApp::Action", "edit"): {
+			Name:        "edit",
+			Annotations: resolved.Annotations{"doc": "View or edit document"},
+			AppliesTo: &resolved.AppliesTo{
+				Principals: []types.EntityType{"MyApp::User"},
+				Resources:  []types.EntityType{"MyApp::Document"},
+				Context: resolved.RecordType{
+					"ip":        resolved.Attribute{Type: resolved.ExtensionType("ipaddr")},
+					"timestamp": resolved.Attribute{Type: resolved.ExtensionType("datetime")},
+				},
+			},
+		},
+		types.NewEntityUID("MyApp::Action", "manage"): {
+			Name: "manage",
+			AppliesTo: &resolved.AppliesTo{
+				Principals: []types.EntityType{"MyApp::User"},
+				Resources:  []types.EntityType{"MyApp::Document", "MyApp::Group"},
+				Context:    resolved.RecordType{},
+			},
+		},
+		types.NewEntityUID("MyApp::Action", "view"): {
+			Name:        "view",
+			Annotations: resolved.Annotations{"doc": "View or edit document"},
+			AppliesTo: &resolved.AppliesTo{
+				Principals: []types.EntityType{"MyApp::User"},
+				Resources:  []types.EntityType{"MyApp::Document"},
+				Context: resolved.RecordType{
+					"ip":        resolved.Attribute{Type: resolved.ExtensionType("ipaddr")},
+					"timestamp": resolved.Attribute{Type: resolved.ExtensionType("datetime")},
+				},
+			},
+		},
+	},
 }
 
-func TestResolveEnum(t *testing.T) {
+func TestSchema(t *testing.T) {
 	t.Parallel()
-	input := []byte(`entity Status enum ["active", "inactive"];`)
 
-	var s schema.Schema
-	testutil.OK(t, s.UnmarshalCedar(input))
+	t.Run("UnmarshalCedar", func(t *testing.T) {
+		t.Parallel()
+		var s schema.Schema
+		err := s.UnmarshalCedar([]byte(wantCedar))
+		testutil.OK(t, err)
+		testutil.Equals(t, s.AST(), wantAST)
+	})
 
-	res, err := s.Resolve()
-	testutil.OK(t, err)
+	t.Run("UnmarshalJSON", func(t *testing.T) {
+		t.Parallel()
+		var s schema.Schema
+		err := s.UnmarshalJSON([]byte(wantJSON))
+		testutil.OK(t, err)
+		testutil.Equals(t, s.AST(), wantAST)
+	})
 
-	testutil.Equals(t, len(res.Enums), 1)
-	status := res.Enums["Status"]
-	testutil.Equals(t, status.Values, []types.String{"active", "inactive"})
+	t.Run("MarshalCedar", func(t *testing.T) {
+		t.Parallel()
+		s := schema.NewSchemaFromAST(wantAST)
+		b, err := s.MarshalCedar()
+		testutil.OK(t, err)
+		stringEquals(t, string(b), wantCedar)
+	})
+
+	t.Run("MarshalJSON", func(t *testing.T) {
+		t.Parallel()
+		s := schema.NewSchemaFromAST(wantAST)
+		b, err := s.MarshalJSON()
+		testutil.OK(t, err)
+		stringEquals(t, string(normalizeJSON(t, b)), string(normalizeJSON(t, []byte(wantJSON))))
+	})
+
+	t.Run("Resolve", func(t *testing.T) {
+		t.Parallel()
+		s := schema.NewSchemaFromAST(wantAST)
+		r, err := s.Resolve()
+		testutil.OK(t, err)
+		testutil.Equals(t, r, wantResolved)
+	})
+
+	t.Run("CedarRoundTrip", func(t *testing.T) {
+		t.Parallel()
+		var s schema.Schema
+		testutil.OK(t, s.UnmarshalCedar([]byte(wantCedar)))
+		b, err := s.MarshalCedar()
+		testutil.OK(t, err)
+		var s2 schema.Schema
+		testutil.OK(t, s2.UnmarshalCedar(b))
+		testutil.Equals(t, s2.AST(), wantAST)
+	})
+
+	t.Run("JSONRoundTrip", func(t *testing.T) {
+		t.Parallel()
+		var s schema.Schema
+		testutil.OK(t, s.UnmarshalJSON([]byte(wantJSON)))
+		b, err := s.MarshalJSON()
+		testutil.OK(t, err)
+		var s2 schema.Schema
+		testutil.OK(t, s2.UnmarshalJSON(b))
+		testutil.Equals(t, s2.AST(), wantAST)
+	})
+
+	t.Run("CedarToJSONRoundTrip", func(t *testing.T) {
+		t.Parallel()
+		var s schema.Schema
+		testutil.OK(t, s.UnmarshalCedar([]byte(wantCedar)))
+		jsonBytes, err := s.MarshalJSON()
+		testutil.OK(t, err)
+		var s2 schema.Schema
+		testutil.OK(t, s2.UnmarshalJSON(jsonBytes))
+		testutil.Equals(t, s2.AST(), wantAST)
+	})
+
+	t.Run("JSONToCedarRoundTrip", func(t *testing.T) {
+		t.Parallel()
+		var s schema.Schema
+		testutil.OK(t, s.UnmarshalJSON([]byte(wantJSON)))
+		cedarBytes, err := s.MarshalCedar()
+		testutil.OK(t, err)
+		var s2 schema.Schema
+		testutil.OK(t, s2.UnmarshalCedar(cedarBytes))
+		testutil.Equals(t, s2.AST(), wantAST)
+	})
+
+	t.Run("JSONMarshalInterface", func(t *testing.T) {
+		t.Parallel()
+		s := schema.NewSchemaFromAST(wantAST)
+		b, err := json.Marshal(s)
+		testutil.OK(t, err)
+		var s2 schema.Schema
+		testutil.OK(t, json.Unmarshal(b, &s2))
+		testutil.Equals(t, s2.AST(), wantAST)
+	})
+
+	t.Run("UnmarshalCedarErr", func(t *testing.T) {
+		t.Parallel()
+		var s schema.Schema
+		const filename = "path/to/my-file-name.cedarschema"
+		s.SetFilename(filename)
+		err := s.UnmarshalCedar([]byte("LSKJDFN"))
+		testutil.Error(t, err)
+		testutil.FatalIf(t, !strings.Contains(err.Error(), filename+":1:1"), "expected %q in error: %v", filename, err)
+	})
+
+	t.Run("UnmarshalJSONErr", func(t *testing.T) {
+		t.Parallel()
+		var s schema.Schema
+		err := s.UnmarshalJSON([]byte("LSKJDFN"))
+		testutil.Error(t, err)
+	})
+
+	t.Run("ResolveErr", func(t *testing.T) {
+		t.Parallel()
+		var s schema.Schema
+		testutil.OK(t, s.UnmarshalCedar([]byte(`entity User in [NonExistent];`)))
+		_, err := s.Resolve()
+		testutil.Error(t, err)
+	})
+
+	t.Run("EmptySchema", func(t *testing.T) {
+		t.Parallel()
+		s := schema.NewSchemaFromAST(&ast.Schema{})
+		b, err := s.MarshalCedar()
+		testutil.OK(t, err)
+		testutil.Equals(t, string(b), "")
+
+		jb, err := s.MarshalJSON()
+		testutil.OK(t, err)
+		testutil.Equals(t, string(jb), "{}")
+	})
 }
 
-func TestNewSchemaFromASTNil(t *testing.T) {
-	t.Parallel()
-	a := &ast.Schema{}
-	s := schema.NewSchemaFromAST(a)
-	b, err := s.MarshalCedar()
-	testutil.OK(t, err)
-	testutil.Equals(t, string(b), "")
+func stringEquals(t *testing.T, got, want string) {
+	t.Helper()
+	testutil.Equals(t, strings.TrimSpace(got), strings.TrimSpace(want))
+}
 
-	jb, err := s.MarshalJSON()
+func normalizeJSON(t *testing.T, in []byte) []byte {
+	t.Helper()
+	var out any
+	err := json.Unmarshal(in, &out)
 	testutil.OK(t, err)
-	testutil.Equals(t, string(jb), "{}")
+	b, err := json.MarshalIndent(out, "", "  ")
+	testutil.OK(t, err)
+	return b
 }
