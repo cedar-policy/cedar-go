@@ -4,6 +4,7 @@ package parser
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
@@ -86,6 +87,8 @@ func tokenName(tt tokenType) string {
 		return "'?'"
 	case tokenEquals:
 		return "'='"
+	case tokenReservedKeyword:
+		return "reserved keyword"
 	default:
 		return "unknown"
 	}
@@ -99,6 +102,8 @@ func tokenDesc(tok token) string {
 		return fmt.Sprintf("identifier %q", tok.Text)
 	case tokenString:
 		return fmt.Sprintf("string %q", tok.Text)
+	case tokenReservedKeyword:
+		return fmt.Sprintf("reserved keyword %q", tok.Text)
 	default:
 		return fmt.Sprintf("%q", tok.Text)
 	}
@@ -144,6 +149,9 @@ func (p *parser) parseNamespace(annotations ast.Annotations) (parsedNamespace, e
 	path, err := p.parsePath()
 	if err != nil {
 		return parsedNamespace{}, err
+	}
+	if slices.Contains(strings.Split(string(path), "::"), "__cedar") {
+		return parsedNamespace{}, fmt.Errorf("%s: the name %q contains \"__cedar\", which is reserved", p.tok.Pos, path)
 	}
 	if err := p.expect(tokenLBrace); err != nil {
 		return parsedNamespace{}, err
@@ -213,7 +221,7 @@ func (p *parser) parseEntity(annotations ast.Annotations, schema *ast.Schema) er
 
 	// Parse optional 'in' clause
 	var memberOf []ast.EntityTypeRef
-	if p.tok.Type == tokenIdent && p.tok.Text == "in" {
+	if p.tok.Type == tokenReservedKeyword && p.tok.Text == "in" {
 		if err := p.readToken(); err != nil {
 			return err
 		}
@@ -333,7 +341,7 @@ func (p *parser) parseAction(annotations ast.Annotations, schema *ast.Schema) er
 
 	// Parse optional 'in' clause
 	var memberOf []ast.ParentRef
-	if p.tok.Type == tokenIdent && p.tok.Text == "in" {
+	if p.tok.Type == tokenReservedKeyword && p.tok.Text == "in" {
 		if err := p.readToken(); err != nil {
 			return err
 		}
@@ -431,7 +439,7 @@ func (p *parser) parseAnnotations() (ast.Annotations, error) {
 		if err := p.readToken(); err != nil {
 			return nil, err
 		}
-		if p.tok.Type != tokenIdent {
+		if p.tok.Type != tokenIdent && p.tok.Type != tokenReservedKeyword {
 			return nil, p.errorf("expected annotation name, got %s", tokenDesc(p.tok))
 		}
 		key := types.Ident(p.tok.Text)
@@ -459,6 +467,9 @@ func (p *parser) parseAnnotations() (ast.Annotations, error) {
 		if annotations == nil {
 			annotations = ast.Annotations{}
 		}
+		if _, ok := annotations[key]; ok {
+			return nil, p.errorf("duplicate annotation %q", key)
+		}
 		if hasValue {
 			annotations[key] = value
 		} else {
@@ -469,8 +480,10 @@ func (p *parser) parseAnnotations() (ast.Annotations, error) {
 }
 
 // parsePath parses IDENT { '::' IDENT }
+// As a special case, "__cedar" is accepted as the first component even though it is
+// a reserved keyword, because it is valid as a type reference prefix (e.g. __cedar::String).
 func (p *parser) parsePath() (types.Path, error) {
-	if p.tok.Type != tokenIdent {
+	if p.tok.Type != tokenIdent && (p.tok.Type != tokenReservedKeyword || p.tok.Text != "__cedar") {
 		return "", p.errorf("expected identifier, got %s", tokenDesc(p.tok))
 	}
 	path := p.tok.Text
@@ -494,8 +507,10 @@ func (p *parser) parsePath() (types.Path, error) {
 
 // parsePathForRef parses a path that may include a trailing '::' followed by a string literal
 // for action parent references. Returns the path and whether a string was found.
+// As a special case, "__cedar" is accepted as the first component even though it is
+// a reserved keyword, because it is valid as a type reference prefix (e.g. __cedar::String).
 func (p *parser) parsePathForRef() (path types.Path, str types.String, qualified bool, err error) {
-	if p.tok.Type != tokenIdent {
+	if p.tok.Type != tokenIdent && (p.tok.Type != tokenReservedKeyword || p.tok.Text != "__cedar") {
 		return "", "", false, p.errorf("expected identifier, got %s", tokenDesc(p.tok))
 	}
 	pathStr := p.tok.Text
@@ -570,14 +585,17 @@ func (p *parser) parseNames() ([]types.String, error) {
 }
 
 func (p *parser) parseName() (types.String, error) {
-	switch p.tok.Type {
-	case tokenIdent:
+	// Weirdly, Cedar schemas allow __cedar as an attribute or action name without
+	// double quotes, while all other reserved keywords require double quotes
+	switch {
+	case p.tok.Type == tokenIdent,
+		p.tok.Type == tokenReservedKeyword && p.tok.Text == "__cedar":
 		name := types.String(p.tok.Text)
 		if err := p.readToken(); err != nil {
 			return "", err
 		}
 		return name, nil
-	case tokenString:
+	case p.tok.Type == tokenString:
 		name := types.String(p.tok.Text)
 		if err := p.readToken(); err != nil {
 			return "", err
@@ -674,6 +692,9 @@ func (p *parser) parseAppliesTo() (*ast.AppliesTo, error) {
 		return nil, err
 	}
 	at := &ast.AppliesTo{}
+	hasPrincipal := false
+	hasResource := false
+	hasContext := false
 	for p.tok.Type != tokenRBrace {
 		if p.tok.Type == tokenEOF {
 			return nil, p.errorf("expected '}' to close appliesTo, got EOF")
@@ -683,6 +704,10 @@ func (p *parser) parseAppliesTo() (*ast.AppliesTo, error) {
 		}
 		switch p.tok.Text {
 		case "principal":
+			if hasPrincipal {
+				return nil, p.errorf("duplicate principal declaration in appliesTo")
+			}
+			hasPrincipal = true
 			if err := p.readToken(); err != nil {
 				return nil, err
 			}
@@ -692,9 +717,16 @@ func (p *parser) parseAppliesTo() (*ast.AppliesTo, error) {
 			refs, err := p.parseEntityTypes()
 			if err != nil {
 				return nil, err
+			}
+			if len(refs) == 0 {
+				return nil, p.errorf("principal types must not be empty")
 			}
 			at.Principals = refs
 		case "resource":
+			if hasResource {
+				return nil, p.errorf("duplicate resource declaration in appliesTo")
+			}
+			hasResource = true
 			if err := p.readToken(); err != nil {
 				return nil, err
 			}
@@ -705,8 +737,15 @@ func (p *parser) parseAppliesTo() (*ast.AppliesTo, error) {
 			if err != nil {
 				return nil, err
 			}
+			if len(refs) == 0 {
+				return nil, p.errorf("resource types must not be empty")
+			}
 			at.Resources = refs
 		case "context":
+			if hasContext {
+				return nil, p.errorf("duplicate context declaration in appliesTo")
+			}
+			hasContext = true
 			if err := p.readToken(); err != nil {
 				return nil, err
 			}
@@ -726,6 +765,12 @@ func (p *parser) parseAppliesTo() (*ast.AppliesTo, error) {
 				return nil, err
 			}
 		}
+	}
+	if !hasPrincipal {
+		return nil, p.errorf("appliesTo must include a principal declaration")
+	}
+	if !hasResource {
+		return nil, p.errorf("appliesTo must include a resource declaration")
 	}
 	return at, p.readToken() // consume '}'
 }
