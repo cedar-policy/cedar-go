@@ -21,6 +21,30 @@ func TestConstructors(t *testing.T) {
 	testutil.Equals(t, ast.Type("MyType"), ast.TypeRef("MyType"))
 }
 
+func TestEntityTypeRefQualification(t *testing.T) {
+	qualified := ast.EntityTypeRef("NS::User")
+	testutil.Equals(t, qualified.IsQualified(), true)
+	testutil.Equals(t, qualified.Namespace(), types.Namespace("NS"))
+	testutil.Equals(t, qualified.Basename(), "User")
+
+	unqualified := ast.EntityTypeRef("User")
+	testutil.Equals(t, unqualified.IsQualified(), false)
+	testutil.Equals(t, unqualified.Namespace(), types.Namespace(""))
+	testutil.Equals(t, unqualified.Basename(), "User")
+}
+
+func TestTypeRefQualification(t *testing.T) {
+	qualified := ast.TypeRef("NS::MyType")
+	testutil.Equals(t, qualified.IsQualified(), true)
+	testutil.Equals(t, qualified.Namespace(), types.Namespace("NS"))
+	testutil.Equals(t, qualified.Basename(), "MyType")
+
+	unqualified := ast.TypeRef("MyType")
+	testutil.Equals(t, unqualified.IsQualified(), false)
+	testutil.Equals(t, unqualified.Namespace(), types.Namespace(""))
+	testutil.Equals(t, unqualified.Basename(), "MyType")
+}
+
 func TestParentRefFromID(t *testing.T) {
 	ref := ast.ParentRefFromID("view")
 	testutil.Equals(t, ref.ID, types.String("view"))
