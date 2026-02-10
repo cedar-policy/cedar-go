@@ -26,7 +26,7 @@ func (s *Schema) SetFilename(filename string) {
 
 // MarshalJSON encodes the Schema in the JSON format.
 func (s *Schema) MarshalJSON() ([]byte, error) {
-	jsonSchema := (*json.Schema)(s.schema)
+	jsonSchema := (*json.Schema)(s.astOrEmpty())
 	return jsonSchema.MarshalJSON()
 }
 
@@ -42,7 +42,7 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 
 // MarshalCedar encodes the Schema in the human-readable format.
 func (s *Schema) MarshalCedar() ([]byte, error) {
-	return parser.MarshalSchema(s.schema), nil
+	return parser.MarshalSchema(s.astOrEmpty()), nil
 }
 
 // UnmarshalCedar parses a Schema in the human-readable format.
@@ -57,10 +57,17 @@ func (s *Schema) UnmarshalCedar(b []byte) error {
 
 // AST returns the underlying AST.
 func (s *Schema) AST() *ast.Schema {
-	return s.schema
+	return s.astOrEmpty()
 }
 
 // Resolve returns a resolved.Schema with type references resolved and declarations indexed.
 func (s *Schema) Resolve() (*resolved.Schema, error) {
-	return resolved.Resolve(s.schema)
+	return resolved.Resolve(s.astOrEmpty())
+}
+
+func (s *Schema) astOrEmpty() *ast.Schema {
+	if s.schema == nil {
+		return &ast.Schema{}
+	}
+	return s.schema
 }

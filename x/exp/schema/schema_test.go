@@ -720,6 +720,25 @@ func TestSchema(t *testing.T) {
 		testutil.Error(t, err)
 	})
 
+	t.Run("ZeroValueSchema", func(t *testing.T) {
+		t.Parallel()
+		var s schema.Schema
+
+		b, err := s.MarshalCedar()
+		testutil.OK(t, err)
+		testutil.Equals(t, string(b), "")
+
+		jb, err := s.MarshalJSON()
+		testutil.OK(t, err)
+		testutil.Equals(t, string(jb), "{}")
+
+		r, err := s.Resolve()
+		testutil.OK(t, err)
+		testutil.Equals(t, r != nil, true)
+
+		testutil.Equals(t, s.AST() != nil, true)
+	})
+
 	t.Run("EmptySchema", func(t *testing.T) {
 		t.Parallel()
 		s := schema.NewSchemaFromAST(&ast.Schema{})
