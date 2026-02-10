@@ -56,6 +56,9 @@ type corpusTest struct {
 //go:embed corpus-tests.tar.gz
 var corpusArchive []byte
 
+//go:embed corpus-tests-json-schemas.tar.gz
+var corpusJSONSchemasArchive []byte
+
 type tarFileDataPointer struct {
 	Position int64
 	Size     int64
@@ -91,26 +94,24 @@ func (fdm TarFileMap) GetFileData(path string) ([]byte, error) {
 	return content, nil
 }
 
-//nolint:revive // due to test cognitive complexity
-func TestCorpus(t *testing.T) {
-	t.Parallel()
+func loadTarGz(t testing.TB, archive []byte) TarFileMap {
+	t.Helper()
 
-	gzipReader, err := gzip.NewReader(bytes.NewReader(corpusArchive))
+	gzipReader, err := gzip.NewReader(bytes.NewReader(archive))
 	if err != nil {
-		t.Fatal("error reading corpus compressed archive header", err)
+		t.Fatal("error reading compressed archive header", err)
 	}
 	defer gzipReader.Close() //nolint:errcheck
 
 	buf, err := io.ReadAll(gzipReader)
 	if err != nil {
-		t.Fatal("error reading corpus compressed archive", err)
+		t.Fatal("error reading compressed archive", err)
 	}
 
 	bufReader := bytes.NewReader(buf)
 	archiveReader := tar.NewReader(bufReader)
 
 	fdm := NewTarFileMap(bufReader)
-	var testFiles []string
 	for file, err := archiveReader.Next(); err == nil; file, err = archiveReader.Next() {
 		if file.Typeflag != tar.TypeReg {
 			continue
@@ -118,11 +119,26 @@ func TestCorpus(t *testing.T) {
 
 		cursor, _ := bufReader.Seek(0, io.SeekCurrent)
 		fdm.AddFileData(file.Name, cursor, file.Size)
+	}
 
-		if strings.HasSuffix(file.Name, ".json") && !strings.HasSuffix(file.Name, ".entities.json") {
-			testFiles = append(testFiles, file.Name)
+	return fdm
+}
+
+//nolint:revive // due to test cognitive complexity
+func TestCorpus(t *testing.T) {
+	t.Parallel()
+
+	// Load corpus test files
+	fdm := loadTarGz(t, corpusArchive)
+	var testFiles []string
+	for fileName := range fdm.files {
+		if strings.HasSuffix(fileName, ".json") && !strings.HasSuffix(fileName, ".entities.json") {
+			testFiles = append(testFiles, fileName)
 		}
 	}
+
+	// Load JSON schemas for validation
+	jsonSchemasFdm := loadTarGz(t, corpusJSONSchemasArchive)
 
 	for _, testFile := range testFiles {
 		testFile := testFile
@@ -152,11 +168,69 @@ func TestCorpus(t *testing.T) {
 			if err != nil {
 				t.Fatal("error reading schema content", err)
 			}
+			// Rust converted JSON never contains the empty context record
+			schemaContent = bytes.ReplaceAll(schemaContent, []byte("context: {}\n"), nil)
+
 			var s schema.Schema
 			s.SetFilename("test.schema")
 			if err := s.UnmarshalCedar(schemaContent); err != nil {
 				t.Fatal("error parsing schema", err, "\n===\n", string(schemaContent))
 			}
+
+			// Validate schema round-trip
+			t.Run("schema-round-trip", func(t *testing.T) {
+				t.Parallel()
+
+				js, err := s.MarshalJSON()
+				testutil.OK(t, err)
+
+				var s2 schema.Schema
+				err = s2.UnmarshalJSON(js)
+				testutil.OK(t, err)
+
+				sb, err := s2.MarshalCedar()
+				testutil.OK(t, err)
+
+				var s3 schema.Schema
+				err = s3.UnmarshalCedar(sb)
+				testutil.OK(t, err)
+
+				j2, err := s3.MarshalJSON()
+				testutil.OK(t, err)
+
+				testutil.Equals(t, string(j2), string(js))
+			})
+
+			// Validate schema matches Rust Cedar CLI output
+			t.Run("schema-vs-rust", func(t *testing.T) {
+				t.Parallel()
+
+				// Extract schema filename from path (e.g., "corpus-tests/abc123.cedarschema" -> "abc123")
+				schemaFilename := strings.TrimSuffix(strings.TrimPrefix(tt.Schema, "corpus-tests/"), ".cedarschema")
+				jsonSchemaPath := fmt.Sprintf("corpus-tests-json-schemas/%s.cedarschema.json", schemaFilename)
+
+				rustJSON, err := jsonSchemasFdm.GetFileData(jsonSchemaPath)
+				testutil.OK(t, err)
+
+				// Normalize Rust JSON: appliesTo is optional - match testdata_test.go pattern
+				// Need to handle trailing comma to avoid creating invalid JSON like {,"other":...}
+				rustJSON = bytes.ReplaceAll(rustJSON, []byte(`"appliesTo":{"resourceTypes":[],"principalTypes":[]},`), nil)
+				rustJSON = bytes.ReplaceAll(rustJSON, []byte(`"appliesTo":{"resourceTypes":[],"principalTypes":[]}`), nil)
+
+				// Unmarshal Rust JSON to handle any syntax issues from replacement
+				var rustSchema schema.Schema
+				err = rustSchema.UnmarshalJSON(rustJSON)
+				testutil.OK(t, err)
+
+				// Marshal both schemas to JSON for comparison
+				goJSON, err := s.MarshalJSON()
+				testutil.OK(t, err)
+				rustJSON2, err := rustSchema.MarshalJSON()
+				testutil.OK(t, err)
+
+				// Normalize and compare
+				stringEquals(t, string(normalizeJSON(t, goJSON)), string(normalizeJSON(t, rustJSON2)))
+			})
 
 			policyContent, err := fdm.GetFileData(tt.Policies)
 			if err != nil {
@@ -248,6 +322,21 @@ func TestCorpus(t *testing.T) {
 			}
 		})
 	}
+}
+
+func normalizeJSON(t *testing.T, in []byte) []byte {
+	t.Helper()
+	var out any
+	err := json.Unmarshal(in, &out)
+	testutil.OK(t, err)
+	b, err := json.MarshalIndent(out, "", "  ")
+	testutil.OK(t, err)
+	return b
+}
+
+func stringEquals(t *testing.T, got, want string) {
+	t.Helper()
+	testutil.Equals(t, strings.TrimSpace(got), strings.TrimSpace(want))
 }
 
 // Specific corpus tests that have been extracted for easy regression testing purposes

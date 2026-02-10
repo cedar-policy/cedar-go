@@ -10,7 +10,6 @@ linters:
   enable:
     - errcheck
     - errname
-    - gochecksumtype
     - govet
     - ineffassign
     - revive

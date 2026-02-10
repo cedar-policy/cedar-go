@@ -1,83 +1,73 @@
+// Package schema provides schema parsing, serialization, and resolution.
 package schema
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-
-	"github.com/cedar-policy/cedar-go/internal/schema/ast"
-	"github.com/cedar-policy/cedar-go/internal/schema/parser"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/internal/json"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/internal/parser"
+	"github.com/cedar-policy/cedar-go/x/exp/schema/resolved"
 )
 
-// Schema is a description of entities and actions that are allowed for a PolicySet. They can be used to validate policies
-// and entity definitions and also provide documentation.
-//
-// Schemas can be represented in either JSON (*JSON functions) or Human-readable formats (*Cedar functions) just like policies.
-// Marshalling and unmarshalling between the formats is allowed.
+// Schema provides parsing and marshaling for Cedar schemas.
 type Schema struct {
-	filename    string
-	jsonSchema  ast.JSONSchema
-	humanSchema *ast.Schema
+	filename string
+	schema   *ast.Schema
 }
 
-// UnmarshalCedar parses and stores the human-readable schema from src and returns an error if the schema is invalid.
-//
-// Any errors returned will have file positions matching filename.
-func (old *Schema) UnmarshalCedar(src []byte) (err error) {
-	var s Schema
-	s.humanSchema, err = parser.ParseFile(old.filename, src)
-	if err != nil {
-		return err
-	}
-	if old.filename != "" {
-		s.filename = old.filename
-	}
-	*old = s
-	return nil
+// NewSchemaFromAST creates a Schema from an AST.
+func NewSchemaFromAST(in *ast.Schema) *Schema {
+	return &Schema{schema: in}
 }
 
-// MarshalCedar serializes the schema into the human readable format.
-func (s *Schema) MarshalCedar() ([]byte, error) {
-	if s.jsonSchema != nil {
-		s.humanSchema = ast.ConvertJSON2Human(s.jsonSchema)
-	}
-	if s.humanSchema == nil {
-		return nil, fmt.Errorf("schema is empty")
-	}
-	var buf bytes.Buffer
-	err := ast.Format(s.humanSchema, &buf)
-	return buf.Bytes(), err
-}
-
-// UnmarshalJSON deserializes the JSON schema from src or returns an error if the JSON is not valid schema JSON.
-func (old *Schema) UnmarshalJSON(src []byte) error {
-	var s Schema
-	err := json.Unmarshal(src, &s.jsonSchema)
-	if err != nil {
-		return err
-	}
-	s.filename = old.filename
-	*old = s
-	return nil
-}
-
-// MarshalJSON serializes the schema into the JSON format.
-//
-// If the schema was loaded from UnmarshalCedar, it will convert the human-readable format into the JSON format.
-// An error is returned if the schema is invalid.
-func (s *Schema) MarshalJSON() (out []byte, err error) {
-	if s.humanSchema != nil {
-		// Error should not be possible since s.humanSchema comes from our parser.
-		// If it happens, we return empty JSON.
-		s.jsonSchema = ast.ConvertHuman2JSON(s.humanSchema)
-	}
-	if s.jsonSchema == nil {
-		return nil, nil
-	}
-	return json.Marshal(s.jsonSchema)
-}
-
-// SetFilename sets the filename for the schema in the returned error messagers from Unmarshal*.
+// SetFilename sets the filename for error reporting.
 func (s *Schema) SetFilename(filename string) {
 	s.filename = filename
+}
+
+// MarshalJSON encodes the Schema in the JSON format.
+func (s *Schema) MarshalJSON() ([]byte, error) {
+	jsonSchema := (*json.Schema)(s.astOrEmpty())
+	return jsonSchema.MarshalJSON()
+}
+
+// UnmarshalJSON parses a Schema in the JSON format.
+func (s *Schema) UnmarshalJSON(b []byte) error {
+	var jsonSchema json.Schema
+	if err := jsonSchema.UnmarshalJSON(b); err != nil {
+		return err
+	}
+	s.schema = (*ast.Schema)(&jsonSchema)
+	return nil
+}
+
+// MarshalCedar encodes the Schema in the human-readable format.
+func (s *Schema) MarshalCedar() ([]byte, error) {
+	return parser.MarshalSchema(s.astOrEmpty()), nil
+}
+
+// UnmarshalCedar parses a Schema in the human-readable format.
+func (s *Schema) UnmarshalCedar(b []byte) error {
+	schema, err := parser.ParseSchema(s.filename, b)
+	if err != nil {
+		return err
+	}
+	s.schema = schema
+	return nil
+}
+
+// AST returns the underlying AST.
+func (s *Schema) AST() *ast.Schema {
+	return s.astOrEmpty()
+}
+
+// Resolve returns a resolved.Schema with type references resolved and declarations indexed.
+func (s *Schema) Resolve() (*resolved.Schema, error) {
+	return resolved.Resolve(s.astOrEmpty())
+}
+
+func (s *Schema) astOrEmpty() *ast.Schema {
+	if s.schema == nil {
+		return &ast.Schema{}
+	}
+	return s.schema
 }
