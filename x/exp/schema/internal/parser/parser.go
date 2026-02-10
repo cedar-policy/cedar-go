@@ -122,6 +122,9 @@ func (p *parser) parseSchema() (*ast.Schema, error) {
 			if schema.Namespaces == nil {
 				schema.Namespaces = ast.Namespaces{}
 			}
+			if _, ok := schema.Namespaces[ns.name]; ok {
+				return nil, p.errorf("namespace %q is declared twice", ns.name)
+			}
 			schema.Namespaces[ns.name] = ns.ns
 		} else {
 			if err := p.parseDecl(annotations, schema); err != nil {
@@ -260,6 +263,12 @@ func (p *parser) parseEntity(annotations ast.Annotations, schema *ast.Schema) er
 		schema.Entities = ast.Entities{}
 	}
 	for _, name := range names {
+		if _, ok := schema.Entities[name]; ok {
+			return p.errorf("entity %q is declared twice", name)
+		}
+		if _, ok := schema.Enums[name]; ok {
+			return p.errorf("entity %q is declared twice", name)
+		}
 		schema.Entities[name] = ast.Entity{
 			Annotations: annotations,
 			ParentTypes: memberOf,
@@ -302,6 +311,12 @@ func (p *parser) parseEnumEntity(annotations ast.Annotations, names []types.Iden
 		schema.Enums = ast.Enums{}
 	}
 	for _, name := range names {
+		if _, ok := schema.Enums[name]; ok {
+			return p.errorf("entity %q is declared twice", name)
+		}
+		if _, ok := schema.Entities[name]; ok {
+			return p.errorf("entity %q is declared twice", name)
+		}
 		schema.Enums[name] = ast.Enum{
 			Annotations: annotations,
 			Values:      values,
@@ -362,6 +377,9 @@ func (p *parser) parseAction(annotations ast.Annotations, schema *ast.Schema) er
 		schema.Actions = ast.Actions{}
 	}
 	for _, name := range names {
+		if _, ok := schema.Actions[name]; ok {
+			return p.errorf("action %q is declared twice", name)
+		}
 		schema.Actions[name] = ast.Action{
 			Annotations: annotations,
 			Parents:     memberOf,
@@ -396,7 +414,11 @@ func (p *parser) parseTypeDecl(annotations ast.Annotations, schema *ast.Schema) 
 	if schema.CommonTypes == nil {
 		schema.CommonTypes = ast.CommonTypes{}
 	}
-	schema.CommonTypes[types.Ident(name)] = ast.CommonType{
+	ident := types.Ident(name)
+	if _, ok := schema.CommonTypes[ident]; ok {
+		return p.errorf("type %q is declared twice", name)
+	}
+	schema.CommonTypes[ident] = ast.CommonType{
 		Annotations: annotations,
 		Type:        typ,
 	}

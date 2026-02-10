@@ -943,3 +943,28 @@ func TestParseSchemaErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestParseDuplicateDeclarations(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"duplicate entity", `entity User; entity User;`},
+		{"duplicate entity in namespace", `namespace Foo { entity User; entity User; }`},
+		{"duplicate enum", `entity Status enum ["a"]; entity Status enum ["b"];`},
+		{"duplicate action", `action view; action view;`},
+		{"duplicate action in namespace", `namespace Foo { action view; action view; }`},
+		{"duplicate common type", `type Ctx = { x: Long }; type Ctx = { y: Long };`},
+		{"duplicate namespace", "namespace Foo { entity A; }\nnamespace Foo { entity B; }"},
+		{"entity conflicts with enum", `entity User; entity User enum ["a"];`},
+		{"enum conflicts with entity", `entity User enum ["a"]; entity User;`},
+		{"duplicate multi-name entity", `entity A, A { name: String };`},
+		{"duplicate multi-name action", `action read, read;`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := parser.ParseSchema("", []byte(tt.input))
+			testutil.Error(t, err)
+		})
+	}
+}
