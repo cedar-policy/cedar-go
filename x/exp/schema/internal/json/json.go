@@ -119,11 +119,10 @@ type jsonCommonType struct {
 }
 
 type jsonType struct {
-	Type                 string              `json:"type"`
-	Element              *jsonType           `json:"element,omitempty"`
-	Attributes           map[string]jsonAttr `json:"attributes,omitempty"`
-	AdditionalAttributes bool                `json:"additionalAttributes,omitempty"`
-	Name                 string              `json:"name,omitempty"`
+	Type       string              `json:"type"`
+	Element    *jsonType           `json:"element,omitempty"`
+	Attributes map[string]jsonAttr `json:"attributes,omitempty"`
+	Name       string              `json:"name,omitempty"`
 }
 
 type jsonAttr struct {
