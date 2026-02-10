@@ -24,6 +24,9 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v7
 
+      - name: Sum type linter
+        run: go install github.com/alecthomas/go-check-sumtype/cmd/go-check-sumtype@latest && go-check-sumtype -default-signifies-exhaustive=false ./...
+
       - name: Fuzz
         run: mkdir -p testdata && go test -fuzz=FuzzParse -fuzztime 60s && go test -fuzz=FuzzTokenize -fuzztime 60s
 

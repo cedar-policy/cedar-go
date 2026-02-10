@@ -377,7 +377,7 @@ func (r *resolverState) resolveType(ns types.Path, t ast.IsType) (IsType, error)
 	case ast.TypeRef:
 		return r.resolveTypeRef(ns, t)
 	default:
-		return nil, fmt.Errorf("unknown AST type: %T", t)
+		panic(fmt.Sprintf("unknown AST type: %T", t))
 	}
 }
 
@@ -593,8 +593,10 @@ func collectTypeRefs(t ast.IsType) []ast.TypeRef {
 			refs = append(refs, collectTypeRefs(attr.Type)...)
 		}
 		return refs
-	default:
+	case ast.BoolType, ast.EntityTypeRef, ast.ExtensionType, ast.LongType, ast.StringType:
 		return nil
+	default:
+		panic(fmt.Sprintf("unknown AST type: %T", t))
 	}
 }
 

@@ -15,8 +15,9 @@ func TestResolveTypeDefault(t *testing.T) {
 		enumTypes:   make(map[types.EntityType]bool),
 		commonTypes: make(map[types.Path]ast.IsType),
 	}
-	_, err := r.resolveType("", nil)
-	testutil.Error(t, err)
+	testutil.Panic(t, func() {
+		_, _ = r.resolveType("", nil)
+	})
 }
 
 func TestResolveTypePath(t *testing.T) {
@@ -55,9 +56,14 @@ func TestResolveActionParentRef(t *testing.T) {
 }
 
 func TestCollectTypeRefsDefault(t *testing.T) {
-	// Exercise the default branch (non-TypeRef, non-Set, non-Record).
+	// Exercise the non-container type branch
 	refs := collectTypeRefs(ast.StringType{})
 	testutil.Equals(t, len(refs), 0)
+
+	// Exercise the impossible to hit branch
+	testutil.Panic(t, func() {
+		collectTypeRefs(nil)
+	})
 }
 
 func TestDetectCommonTypeCyclesBuiltinRef(t *testing.T) {
