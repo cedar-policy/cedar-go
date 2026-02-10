@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"unicode/utf8"
 
+	cedarparser "github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/internal/rust"
 )
 
@@ -28,6 +29,7 @@ const (
 	tokenDoubleColon
 	tokenQuestion
 	tokenEquals
+	tokenReservedKeyword
 )
 
 type position struct {
@@ -202,7 +204,11 @@ func (l *lexer) next() (token, error) {
 
 	if isIdentStart(r) {
 		text := l.scanIdent()
-		return token{Type: tokenIdent, Pos: pos, Text: text}, nil
+		tt := tokenIdent
+		if cedarparser.IsReservedKeyword(text) {
+			tt = tokenReservedKeyword
+		}
+		return token{Type: tt, Pos: pos, Text: text}, nil
 	}
 
 	if r == '"' {

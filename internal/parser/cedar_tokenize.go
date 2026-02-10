@@ -36,9 +36,12 @@ type Token struct {
 	Text string
 }
 
-// N.B. "is" is included here for compatibility with the Rust implementation. The Cedar specification does not list
-// "is" as a reserved keyword
-var reservedKeywords = []string{"true", "false", "if", "then", "else", "in", "like", "has", "is"}
+var reservedKeywords = []string{"true", "false", "if", "then", "else", "in", "like", "has", "is", "__cedar"}
+
+// IsReservedKeyword reports whether s is a reserved Cedar keyword.
+func IsReservedKeyword(s string) bool {
+	return slices.Contains(reservedKeywords, s)
+}
 
 func (t Token) isEOF() bool {
 	return t.Type == TokenEOF
@@ -488,7 +491,7 @@ redo:
 
 	// last minute check for reserved keywords
 	text := s.tokenText()
-	if tt == TokenIdent && slices.Contains(reservedKeywords, text) {
+	if tt == TokenIdent && IsReservedKeyword(text) {
 		tt = TokenReservedKeyword
 	}
 

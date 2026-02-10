@@ -2,6 +2,7 @@ package parser_test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -124,6 +125,47 @@ func TestParseActionStringName(t *testing.T) {
 	schema, err := parser.ParseSchema("", []byte(src))
 	testutil.OK(t, err)
 	_, ok := schema.Actions["view photo"]
+	testutil.Equals(t, ok, true)
+}
+
+func TestParseReservedWordAsStringName(t *testing.T) {
+	// Reserved Cedar keywords are allowed when quoted as strings
+	src := `action "true" appliesTo { principal: User, resource: Photo };`
+	schema, err := parser.ParseSchema("", []byte(src))
+	testutil.OK(t, err)
+	_, ok := schema.Actions["true"]
+	testutil.Equals(t, ok, true)
+}
+
+func TestParseReservedWordAsStringAttr(t *testing.T) {
+	// Reserved Cedar keywords are allowed as quoted attribute names
+	src := `entity Foo { "if": String };`
+	schema, err := parser.ParseSchema("", []byte(src))
+	testutil.OK(t, err)
+	_, ok := schema.Entities["Foo"].Shape["if"]
+	testutil.Equals(t, ok, true)
+}
+
+func TestParseReservedWordAsAnnotationName(t *testing.T) {
+	src := `@in("group") entity Foo;`
+	schema, err := parser.ParseSchema("", []byte(src))
+	testutil.OK(t, err)
+	testutil.Equals(t, schema.Entities["Foo"].Annotations["in"], types.String("group"))
+}
+
+func TestParseCedarAsActionName(t *testing.T) {
+	src := `action __cedar;`
+	schema, err := parser.ParseSchema("", []byte(src))
+	testutil.OK(t, err)
+	_, ok := schema.Actions["__cedar"]
+	testutil.Equals(t, ok, true)
+}
+
+func TestParseCedarAsAttrName(t *testing.T) {
+	src := `entity Foo { __cedar: String };`
+	schema, err := parser.ParseSchema("", []byte(src))
+	testutil.OK(t, err)
+	_, ok := schema.Entities["Foo"].Shape["__cedar"]
 	testutil.Equals(t, ok, true)
 }
 
@@ -292,11 +334,8 @@ func TestParseEntityTypeQualified(t *testing.T) {
 
 func TestParseActionAppliesToEmptyPrincipal(t *testing.T) {
 	src := `action view appliesTo { principal: [], resource: Photo };`
-	schema, err := parser.ParseSchema("", []byte(src))
-	testutil.OK(t, err)
-	view := schema.Actions["view"]
-	testutil.Equals(t, len(view.AppliesTo.Principals), 0)
-	testutil.Equals(t, view.AppliesTo.Resources, []ast.EntityTypeRef{"Photo"})
+	_, err := parser.ParseSchema("", []byte(src))
+	testutil.Error(t, err)
 }
 
 func TestParseContextTypeName(t *testing.T) {
@@ -607,6 +646,42 @@ func TestMarshalQuotedAttrName(t *testing.T) {
 	schema2, err := parser.ParseSchema("", out)
 	testutil.OK(t, err)
 	_, ok := schema2.Entities["User"].Shape["has space"]
+	testutil.Equals(t, ok, true)
+}
+
+func TestMarshalReservedKeywordAttrName(t *testing.T) {
+	schema := &ast.Schema{
+		Entities: ast.Entities{
+			"User": ast.Entity{
+				Shape: ast.RecordType{
+					"true": ast.Attribute{Type: ast.TypeRef("String")},
+				},
+			},
+		},
+	}
+	out := parser.MarshalSchema(schema)
+	// Verify the marshaled output quotes the reserved keyword
+	testutil.Equals(t, strings.Contains(string(out), `"true"`), true)
+	// Verify it round-trips
+	schema2, err := parser.ParseSchema("", out)
+	testutil.OK(t, err)
+	_, ok := schema2.Entities["User"].Shape["true"]
+	testutil.Equals(t, ok, true)
+}
+
+func TestMarshalReservedKeywordActionName(t *testing.T) {
+	schema := &ast.Schema{
+		Actions: ast.Actions{
+			"true": ast.Action{},
+		},
+	}
+	out := parser.MarshalSchema(schema)
+	// Verify the marshaled output quotes the reserved keyword
+	testutil.Equals(t, strings.Contains(string(out), `"true"`), true)
+	// Verify it round-trips
+	schema2, err := parser.ParseSchema("", out)
+	testutil.OK(t, err)
+	_, ok := schema2.Actions["true"]
 	testutil.Equals(t, ok, true)
 }
 
@@ -935,6 +1010,49 @@ func TestParseSchemaErrors(t *testing.T) {
 		{"record missing colon", `entity User { name String };`},
 		{"idents non-ident after comma", `entity A, 42 {};`},
 		{"names non-ident after comma", `action foo, 42;`},
+
+		// Reserved Cedar keywords as identifiers
+		{"reserved identifier entity name true", `entity true;`},
+		{"reserved identifier entity name false", `entity false;`},
+		{"reserved identifier entity name if", `entity if;`},
+		{"reserved identifier entity name then", `entity then;`},
+		{"reserved identifier entity name else", `entity else;`},
+		{"reserved identifier entity name in", `entity in;`},
+		{"reserved identifier entity name is", `entity is;`},
+		{"reserved identifier entity name like", `entity like;`},
+		{"reserved identifier entity name has", `entity has;`},
+		{"reserved identifier in namespace path", `namespace true {}`},
+		{"reserved identifier in type reference", `entity Foo { x: true };`},
+		{"reserved identifier type name", `type true = String;`},
+		{"reserved identifier action name", `action true;`},
+		{"reserved identifier attr name", `entity Foo { true: String };`},
+		{"reserved identifier in path component", `entity Foo in [true::Bar];`},
+		{"reserved identifier in path after double colon", `entity Foo in [Bar::true];`},
+		{"reserved identifier second entity name", `entity A, true {};`},
+		{"reserved identifier in action parent path", `action view in [true::Action::"foo"];`},
+		{"reserved identifier in action parent path after double colon", `action view in [Foo::true::"bar"];`},
+
+		// __cedar as definition name
+		{"__cedar as namespace name", `namespace __cedar {}`},
+		{"__cedar in namespace path", `namespace Foo::__cedar {}`},
+		{"__cedar as entity name", `entity __cedar;`},
+		{"__cedar as second entity name", `entity A, __cedar;`},
+		{"__cedar as enum name", `entity __cedar enum ["x"];`},
+		{"__cedar as type name", `type __cedar = String;`},
+
+		// Duplicate annotations
+		{"duplicate annotation key", `@doc("a") @doc("b") entity Foo;`},
+		{"duplicate annotation key no value", `@deprecated @deprecated entity Foo;`},
+
+		// AppliesTo semantic errors
+		{"duplicate principal in appliesTo", `action view appliesTo { principal: A, principal: B };`},
+		{"duplicate resource in appliesTo", `action view appliesTo { resource: A, principal: C, resource: B };`},
+		{"duplicate context in appliesTo", `action view appliesTo { principal: A, resource: B, context: {}, context: {} };`},
+		{"empty principal list", `action view appliesTo { principal: [], resource: Photo };`},
+		{"empty resource list", `action view appliesTo { principal: Photo, resource: [] };`},
+		{"missing principal in appliesTo", `action view appliesTo { resource: Photo };`},
+		{"missing resource in appliesTo", `action view appliesTo { principal: Photo };`},
+		{"empty appliesTo", `action view appliesTo {};`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

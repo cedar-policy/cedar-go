@@ -137,6 +137,7 @@ func TestTokenName(t *testing.T) {
 		{tokenDoubleColon, "'::'"},
 		{tokenQuestion, "'?'"},
 		{tokenEquals, "'='"},
+		{tokenReservedKeyword, "reserved keyword"},
 		{tokenType(999), "unknown"},
 	}
 	for _, tt := range tests {
@@ -158,6 +159,8 @@ func TestIsValidIdent(t *testing.T) {
 	testutil.Equals(t, isValidIdent(""), false)
 	testutil.Equals(t, isValidIdent("1abc"), false)
 	testutil.Equals(t, isValidIdent("foo bar"), false)
+	testutil.Equals(t, isValidIdent("in"), false)
+	testutil.Equals(t, isValidIdent("__cedar"), false)
 }
 
 func TestLexerBadStringEscape(t *testing.T) {
