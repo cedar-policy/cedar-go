@@ -556,7 +556,7 @@ var wantResolved = &resolved.Schema{
 	},
 	Actions: map[types.EntityUID]resolved.Action{
 		types.NewEntityUID("Action", "audit"): {
-			Name: "audit",
+			Entity: types.Entity{UID: types.NewEntityUID("Action", "audit"), Parents: types.NewEntityUIDSet()},
 			AppliesTo: &resolved.AppliesTo{
 				Principals: []types.EntityType{"Admin"},
 				Resources:  []types.EntityType{"MyApp::Document", "System"},
@@ -564,7 +564,7 @@ var wantResolved = &resolved.Schema{
 			},
 		},
 		types.NewEntityUID("MyApp::Action", "edit"): {
-			Name:        "edit",
+			Entity:      types.Entity{UID: types.NewEntityUID("MyApp::Action", "edit"), Parents: types.NewEntityUIDSet()},
 			Annotations: resolved.Annotations{"doc": "View or edit document"},
 			AppliesTo: &resolved.AppliesTo{
 				Principals: []types.EntityType{"MyApp::User"},
@@ -576,7 +576,7 @@ var wantResolved = &resolved.Schema{
 			},
 		},
 		types.NewEntityUID("MyApp::Action", "manage"): {
-			Name: "manage",
+			Entity: types.Entity{UID: types.NewEntityUID("MyApp::Action", "manage"), Parents: types.NewEntityUIDSet()},
 			AppliesTo: &resolved.AppliesTo{
 				Principals: []types.EntityType{"MyApp::User"},
 				Resources:  []types.EntityType{"MyApp::Document", "MyApp::Group"},
@@ -584,7 +584,7 @@ var wantResolved = &resolved.Schema{
 			},
 		},
 		types.NewEntityUID("MyApp::Action", "view"): {
-			Name:        "view",
+			Entity:      types.Entity{UID: types.NewEntityUID("MyApp::Action", "view"), Parents: types.NewEntityUIDSet()},
 			Annotations: resolved.Annotations{"doc": "View or edit document"},
 			AppliesTo: &resolved.AppliesTo{
 				Principals: []types.EntityType{"MyApp::User"},

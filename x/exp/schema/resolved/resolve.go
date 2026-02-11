@@ -49,9 +49,8 @@ type AppliesTo struct {
 
 // Action is a resolved action definition.
 type Action struct {
-	Name        types.String
+	Entity      types.Entity
 	Annotations Annotations
-	Parents     []types.EntityUID
 	AppliesTo   *AppliesTo
 }
 
@@ -307,12 +306,16 @@ func (r *resolverState) resolveActions(nsName types.Path, actions ast.Actions, r
 	for name, action := range actions {
 		actionTypeName := qualifyActionType(nsName)
 		uid := types.NewEntityUID(actionTypeName, types.String(name))
-		resolved := Action{
-			Name:        name,
-			Annotations: Annotations(action.Annotations),
-		}
+		var parents []types.EntityUID
 		for _, ref := range action.Parents {
-			resolved.Parents = append(resolved.Parents, resolveActionParentRef(nsName, ref))
+			parents = append(parents, resolveActionParentRef(nsName, ref))
+		}
+		resolved := Action{
+			Entity: types.Entity{
+				UID:     uid,
+				Parents: types.NewEntityUIDSet(parents...),
+			},
+			Annotations: Annotations(action.Annotations),
 		}
 		if action.AppliesTo != nil {
 			at := &AppliesTo{}
@@ -523,7 +526,7 @@ func (r *resolverState) validateActionMembership(result *Schema) error {
 
 	// Validate references and detect cycles
 	for uid, action := range result.Actions {
-		for _, parent := range action.Parents {
+		for parent := range action.Entity.Parents.All() {
 			if !actionUIDs[parent] {
 				return fmt.Errorf("action %s: undefined parent action %s", uid, parent)
 			}
@@ -542,7 +545,7 @@ func (r *resolverState) validateActionMembership(result *Schema) error {
 		}
 		visited[uid] = 1
 		action := result.Actions[uid]
-		for _, parent := range action.Parents {
+		for parent := range action.Entity.Parents.All() {
 			if err := visit(parent); err != nil {
 				return err
 			}
