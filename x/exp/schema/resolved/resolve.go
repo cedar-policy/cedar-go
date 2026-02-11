@@ -12,7 +12,7 @@ import (
 
 // Schema is a Cedar schema with resolved types and indexed declarations.
 type Schema struct {
-	Namespaces map[types.Path]Namespace
+	Namespaces map[types.Namespace]Namespace
 	Entities   map[types.EntityType]Entity
 	Enums      map[types.EntityType]Enum
 	Actions    map[types.EntityUID]Action
@@ -20,7 +20,7 @@ type Schema struct {
 
 // Namespace represents a resolved namespace.
 type Namespace struct {
-	Name        types.Path
+	Name        types.Namespace
 	Annotations Annotations
 }
 
@@ -55,12 +55,19 @@ type Action struct {
 	AppliesTo   *AppliesTo
 }
 
+type commonType types.Path
+
+// Namespace returns the namespace for the commonType or "" if the type is un-namespaced
+func (c commonType) Namespace() types.Namespace {
+	return types.Namespace(types.Path(c).Qualifier())
+}
+
 // Resolve transforms an AST schema into a fully resolved schema.
 func Resolve(s *ast.Schema) (*Schema, error) {
 	r := &resolverState{
 		entityTypes: make(map[types.EntityType]bool),
 		enumTypes:   make(map[types.EntityType]bool),
-		commonTypes: make(map[types.Path]ast.IsType),
+		commonTypes: make(map[commonType]ast.IsType),
 	}
 
 	// Phase 1: Register all declarations
@@ -85,7 +92,7 @@ func Resolve(s *ast.Schema) (*Schema, error) {
 
 	// Phase 4: Resolve everything
 	result := &Schema{
-		Namespaces: make(map[types.Path]Namespace),
+		Namespaces: make(map[types.Namespace]Namespace),
 		Entities:   make(map[types.EntityType]Entity),
 		Enums:      make(map[types.EntityType]Enum),
 		Actions:    make(map[types.EntityUID]Action),
@@ -126,10 +133,10 @@ func Resolve(s *ast.Schema) (*Schema, error) {
 type resolverState struct {
 	entityTypes map[types.EntityType]bool
 	enumTypes   map[types.EntityType]bool
-	commonTypes map[types.Path]ast.IsType
+	commonTypes map[commonType]ast.IsType
 }
 
-func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, enums ast.Enums, commonTypes ast.CommonTypes) error {
+func (r *resolverState) registerDecls(nsName types.Namespace, entities ast.Entities, enums ast.Enums, commonTypes ast.CommonTypes) error {
 	for name := range entities {
 		if _, ok := enums[name]; ok {
 			return fmt.Errorf("%q is declared twice", qualifyEntityType(nsName, name))
@@ -140,7 +147,7 @@ func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, 
 		r.enumTypes[qualifyEntityType(nsName, name)] = true
 	}
 	for name, ct := range commonTypes {
-		r.commonTypes[qualifyPath(nsName, name)] = ct.Type
+		r.commonTypes[qualifyCommonType(nsName, name)] = ct.Type
 	}
 	return nil
 }
@@ -200,12 +207,11 @@ func checkShadowing(s *ast.Schema) error {
 
 func (r *resolverState) detectCommonTypeCycles() error {
 	// Build dependency graph
-	deps := make(map[types.Path][]types.Path)
+	deps := make(map[commonType][]commonType)
 	for name, typ := range r.commonTypes {
-		ns := extractNamespace(name)
 		refs := collectTypeRefs(typ)
 		for _, ref := range refs {
-			resolved := r.resolveTypeRefPath(ns, ref)
+			resolved := r.resolveCommonTypeRefPath(name.Namespace(), ref)
 			if _, ok := r.commonTypes[resolved]; ok {
 				deps[name] = append(deps[name], resolved)
 			}
@@ -213,7 +219,7 @@ func (r *resolverState) detectCommonTypeCycles() error {
 	}
 
 	// Kahn's algorithm for topological sort / cycle detection
-	inDegree := make(map[types.Path]int)
+	inDegree := make(map[commonType]int)
 	for name := range r.commonTypes {
 		inDegree[name] = 0
 	}
@@ -223,7 +229,7 @@ func (r *resolverState) detectCommonTypeCycles() error {
 		}
 	}
 
-	var queue []types.Path
+	var queue []commonType
 	for name, degree := range inDegree {
 		if degree == 0 {
 			queue = append(queue, name)
@@ -255,7 +261,7 @@ func (r *resolverState) detectCommonTypeCycles() error {
 	return nil
 }
 
-func (r *resolverState) resolveEntities(nsName types.Path, entities ast.Entities, result *Schema) error {
+func (r *resolverState) resolveEntities(nsName types.Namespace, entities ast.Entities, result *Schema) error {
 	for name, entity := range entities {
 		qualName := qualifyEntityType(nsName, name)
 		resolved := Entity{
@@ -288,7 +294,7 @@ func (r *resolverState) resolveEntities(nsName types.Path, entities ast.Entities
 	return nil
 }
 
-func (r *resolverState) resolveEnums(nsName types.Path, enums ast.Enums, result *Schema) {
+func (r *resolverState) resolveEnums(nsName types.Namespace, enums ast.Enums, result *Schema) {
 	for name, enum := range enums {
 		qualName := qualifyEntityType(nsName, name)
 		values := make([]types.EntityUID, len(enum.Values))
@@ -303,7 +309,7 @@ func (r *resolverState) resolveEnums(nsName types.Path, enums ast.Enums, result 
 	}
 }
 
-func (r *resolverState) resolveActions(nsName types.Path, actions ast.Actions, result *Schema) error {
+func (r *resolverState) resolveActions(nsName types.Namespace, actions ast.Actions, result *Schema) error {
 	for name, action := range actions {
 		actionTypeName := qualifyActionType(nsName)
 		uid := types.NewEntityUID(actionTypeName, types.String(name))
@@ -350,7 +356,7 @@ func (r *resolverState) resolveActions(nsName types.Path, actions ast.Actions, r
 	return nil
 }
 
-func (r *resolverState) resolveType(ns types.Path, t ast.IsType) (IsType, error) {
+func (r *resolverState) resolveType(ns types.Namespace, t ast.IsType) (IsType, error) {
 	switch t := t.(type) {
 	case ast.StringType:
 		return StringType{}, nil
@@ -381,7 +387,7 @@ func (r *resolverState) resolveType(ns types.Path, t ast.IsType) (IsType, error)
 	}
 }
 
-func (r *resolverState) resolveRecordType(ns types.Path, rec ast.RecordType) (RecordType, error) {
+func (r *resolverState) resolveRecordType(ns types.Namespace, rec ast.RecordType) (RecordType, error) {
 	result := make(RecordType, len(rec))
 	for name, attr := range rec {
 		t, err := r.resolveType(ns, attr.Type)
@@ -397,28 +403,27 @@ func (r *resolverState) resolveRecordType(ns types.Path, rec ast.RecordType) (Re
 	return result, nil
 }
 
-func (r *resolverState) resolveEntityTypeRef(ns types.Path, ref ast.EntityTypeRef) (types.EntityType, error) {
-	path := types.Path(ref)
+func (r *resolverState) resolveEntityTypeRef(ns types.Namespace, ref ast.EntityTypeRef) (types.EntityType, error) {
 	// If it's already a qualified path (contains ::), resolve directly
-	if strings.Contains(string(path), "::") {
-		et := types.EntityType(path)
+	if ref.IsQualified() {
+		et := types.EntityType(ref)
 		if r.entityTypes[et] || r.enumTypes[et] {
 			return et, nil
 		}
-		return "", fmt.Errorf("undefined entity type %q", path)
+		return "", fmt.Errorf("undefined entity type %q", ref)
 	}
 	// Unqualified: try NS::Name first, then bare Name
 	if ns != "" {
-		qualified := types.EntityType(string(ns) + "::" + string(path))
+		qualified := types.EntityType(string(ns) + "::" + string(ref))
 		if r.entityTypes[qualified] || r.enumTypes[qualified] {
 			return qualified, nil
 		}
 	}
-	bare := types.EntityType(path)
+	bare := types.EntityType(ref)
 	if r.entityTypes[bare] || r.enumTypes[bare] {
 		return bare, nil
 	}
-	return "", fmt.Errorf("undefined entity type %q", path)
+	return "", fmt.Errorf("undefined entity type %q", ref)
 }
 
 // resolveTypeRef resolves a type reference (TypeRef) following the Cedar disambiguation rules:
@@ -428,9 +433,9 @@ func (r *resolverState) resolveEntityTypeRef(ns types.Path, ref ast.EntityTypeRe
 // 4. Check if N (empty namespace) is declared as an entity type
 // 5. Check if N is a built-in type
 // 6. Error
-func (r *resolverState) resolveTypeRef(ns types.Path, ref ast.TypeRef) (IsType, error) {
+func (r *resolverState) resolveTypeRef(ns types.Namespace, ref ast.TypeRef) (IsType, error) {
 	// Qualified: resolve directly
-	if strings.Contains(string(ref), "::") {
+	if ref.IsQualified() {
 		return r.resolveQualifiedTypeRef(ref)
 	}
 
@@ -438,7 +443,8 @@ func (r *resolverState) resolveTypeRef(ns types.Path, ref ast.TypeRef) (IsType, 
 	if ns != "" {
 		qualifiedPath := types.Path(string(ns) + "::" + string(ref))
 		// 1. Check NS::N as common type
-		if ct, ok := r.commonTypes[qualifiedPath]; ok {
+		qualifiedCT := commonType(qualifiedPath)
+		if ct, ok := r.commonTypes[qualifiedCT]; ok {
 			return r.resolveType(ns, ct)
 		}
 		// 2. Check NS::N as entity type
@@ -449,8 +455,8 @@ func (r *resolverState) resolveTypeRef(ns types.Path, ref ast.TypeRef) (IsType, 
 	}
 
 	// 3. Check N as common type in empty namespace
-	path := types.Path(ref)
-	if ct, ok := r.commonTypes[path]; ok {
+	ct := commonType(ref)
+	if ct, ok := r.commonTypes[ct]; ok {
 		return r.resolveType("", ct)
 	}
 
@@ -461,7 +467,7 @@ func (r *resolverState) resolveTypeRef(ns types.Path, ref ast.TypeRef) (IsType, 
 	}
 
 	// 5. Check built-in types
-	if t := lookupBuiltin(path); t != nil {
+	if t := lookupBuiltin(ref); t != nil {
 		return t, nil
 	}
 
@@ -472,17 +478,16 @@ func (r *resolverState) resolveQualifiedTypeRef(ref ast.TypeRef) (IsType, error)
 	// Check for __cedar:: prefix first
 	if strings.HasPrefix(string(ref), "__cedar::") {
 		builtinName := ref[len("__cedar::"):]
-		if t := lookupBuiltin(types.Path(builtinName)); t != nil {
+		if t := lookupBuiltin(builtinName); t != nil {
 			return t, nil
 		}
 		return nil, fmt.Errorf("undefined built-in type %q", ref)
 	}
 
 	// Try as common type first
-	path := types.Path(ref)
-	if ct, ok := r.commonTypes[path]; ok {
-		ns := extractNamespace(path)
-		return r.resolveType(ns, ct)
+	ctName := commonType(ref)
+	if ct, ok := r.commonTypes[ctName]; ok {
+		return r.resolveType(ctName.Namespace(), ct)
 	}
 	// Try as entity type
 	et := types.EntityType(ref)
@@ -492,20 +497,20 @@ func (r *resolverState) resolveQualifiedTypeRef(ref ast.TypeRef) (IsType, error)
 	return nil, fmt.Errorf("undefined type %q", ref)
 }
 
-func (r *resolverState) resolveTypeRefPath(ns types.Path, ref ast.TypeRef) types.Path {
-	if strings.Contains(string(ref), "::") {
-		return types.Path(ref)
+func (r *resolverState) resolveCommonTypeRefPath(ns types.Namespace, ref ast.TypeRef) commonType {
+	if ref.IsQualified() {
+		return commonType(ref)
 	}
 	if ns != "" {
-		qualifiedPath := types.Path(string(ns) + "::" + string(ref))
+		qualifiedPath := commonType(string(ns) + "::" + string(ref))
 		if _, ok := r.commonTypes[qualifiedPath]; ok {
 			return qualifiedPath
 		}
 	}
-	return types.Path(ref)
+	return commonType(ref)
 }
 
-func resolveActionParentRef(ns types.Path, ref ast.ParentRef) types.EntityUID {
+func resolveActionParentRef(ns types.Namespace, ref ast.ParentRef) types.EntityUID {
 	if types.EntityType(ref.Type) == "" {
 		// Bare reference: action in same namespace
 		actionType := qualifyActionType(ns)
@@ -560,7 +565,7 @@ func (r *resolverState) validateActionMembership(result *Schema) error {
 	return nil
 }
 
-func lookupBuiltin(path types.Path) IsType {
+func lookupBuiltin(path ast.TypeRef) IsType {
 	switch path {
 	case "String":
 		return StringType{}
@@ -600,31 +605,20 @@ func collectTypeRefs(t ast.IsType) []ast.TypeRef {
 	}
 }
 
-func qualifyEntityType(ns types.Path, name types.Ident) types.EntityType {
+func qualifyEntityType(ns types.Namespace, name types.Ident) types.EntityType {
 	if ns != "" {
 		return types.EntityType(string(ns) + "::" + string(name))
 	}
 	return types.EntityType(name)
 }
 
-func qualifyPath(ns types.Path, name types.Ident) types.Path {
+func qualifyCommonType(ns types.Namespace, name types.Ident) commonType {
 	if ns != "" {
-		return types.Path(string(ns) + "::" + string(name))
+		return commonType(string(ns) + "::" + string(name))
 	}
-	return types.Path(name)
+	return commonType(name)
 }
 
-func qualifyActionType(ns types.Path) types.EntityType {
-	if ns != "" {
-		return types.EntityType(string(ns) + "::Action")
-	}
-	return types.EntityType("Action")
-}
-
-func extractNamespace(path types.Path) types.Path {
-	s := string(path)
-	if idx := strings.LastIndex(s, "::"); idx >= 0 {
-		return types.Path(s[:idx])
-	}
-	return ""
+func qualifyActionType(ns types.Namespace) types.EntityType {
+	return qualifyEntityType(ns, "Action")
 }

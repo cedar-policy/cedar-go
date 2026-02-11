@@ -13,7 +13,7 @@ func TestResolveTypeDefault(t *testing.T) {
 	r := &resolverState{
 		entityTypes: make(map[types.EntityType]bool),
 		enumTypes:   make(map[types.EntityType]bool),
-		commonTypes: make(map[types.Path]ast.IsType),
+		commonTypes: make(map[commonType]ast.IsType),
 	}
 	testutil.Panic(t, func() {
 		_, _ = r.resolveType("", nil)
@@ -22,7 +22,7 @@ func TestResolveTypeDefault(t *testing.T) {
 
 func TestResolveTypePath(t *testing.T) {
 	r := &resolverState{
-		commonTypes: map[types.Path]ast.IsType{
+		commonTypes: map[commonType]ast.IsType{
 			"NS::A": ast.StringType{},
 			"B":     ast.LongType{},
 		},
@@ -31,16 +31,16 @@ func TestResolveTypePath(t *testing.T) {
 	}
 
 	// __cedar:: prefix returns path unchanged
-	p := r.resolveTypeRefPath("NS", "__cedar::String")
-	testutil.Equals(t, p, types.Path("__cedar::String"))
+	p := r.resolveCommonTypeRefPath("NS", "__cedar::String")
+	testutil.Equals(t, p, "__cedar::String")
 
 	// Already qualified (contains ::) returns path unchanged
-	p = r.resolveTypeRefPath("NS", "Other::Foo")
-	testutil.Equals(t, p, types.Path("Other::Foo"))
+	p = r.resolveCommonTypeRefPath("NS", "Other::Foo")
+	testutil.Equals(t, p, "Other::Foo")
 
 	// Unqualified in namespace resolves to NS::A
-	p = r.resolveTypeRefPath("NS", "A")
-	testutil.Equals(t, p, types.Path("NS::A"))
+	p = r.resolveCommonTypeRefPath("NS", "A")
+	testutil.Equals(t, p, "NS::A")
 }
 
 func TestResolveActionParentRef(t *testing.T) {
@@ -69,7 +69,7 @@ func TestCollectTypeRefsDefault(t *testing.T) {
 func TestDetectCommonTypeCyclesBuiltinRef(t *testing.T) {
 	// Verify cycle detection works correctly with __cedar:: refs.
 	r := &resolverState{
-		commonTypes: map[types.Path]ast.IsType{
+		commonTypes: map[commonType]ast.IsType{
 			"NS::A": ast.TypeRef("__cedar::String"),
 		},
 		entityTypes: make(map[types.EntityType]bool),

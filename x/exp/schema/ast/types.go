@@ -81,6 +81,21 @@ type EntityTypeRef types.EntityType
 
 func (EntityTypeRef) isType() { _ = 0 }
 
+// IsQualified reports whether the entity type reference contains a namespace qualifier.
+func (e EntityTypeRef) IsQualified() bool {
+	return types.EntityType(e).Namespace() != ""
+}
+
+// Namespace returns the namespace portion of a qualified entity type reference, or "" if unqualified.
+func (e EntityTypeRef) Namespace() types.Namespace {
+	return types.Namespace(types.Path(e).Qualifier())
+}
+
+// Basename returns the unqualified entity type name.
+func (e EntityTypeRef) Basename() string {
+	return types.EntityType(e).Basename()
+}
+
 // EntityType returns an EntityTypeRef for the given entity type name.
 func EntityType(name types.EntityType) EntityTypeRef {
 	return EntityTypeRef(name)
@@ -90,6 +105,21 @@ func EntityType(name types.EntityType) EntityTypeRef {
 type TypeRef types.Path
 
 func (TypeRef) isType() { _ = 0 }
+
+// IsQualified reports whether the type reference contains a namespace qualifier.
+func (t TypeRef) IsQualified() bool {
+	return types.Path(t).IsQualified()
+}
+
+// Namespace returns the namespace portion of a qualified type reference, or "" if unqualified.
+func (t TypeRef) Namespace() types.Namespace {
+	return types.Namespace(types.Path(t).Qualifier())
+}
+
+// Basename returns the unqualified type name.
+func (t TypeRef) Basename() string {
+	return types.Path(t).Basename()
+}
 
 // Type returns a TypeRef for the given path.
 func Type(name types.Path) TypeRef {

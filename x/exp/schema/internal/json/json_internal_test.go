@@ -26,7 +26,7 @@ func TestMarshalRecordTypeError(t *testing.T) {
 }
 
 func TestMarshalNamespaceCommonTypeError(t *testing.T) {
-	_, err := marshalNamespace("", ast.Namespace{
+	_, err := marshalNamespace(ast.Namespace{
 		CommonTypes: ast.CommonTypes{
 			"Bad": ast.CommonType{Type: nil},
 		},
@@ -35,7 +35,7 @@ func TestMarshalNamespaceCommonTypeError(t *testing.T) {
 }
 
 func TestMarshalNamespaceEntityShapeError(t *testing.T) {
-	_, err := marshalNamespace("", ast.Namespace{
+	_, err := marshalNamespace(ast.Namespace{
 		Entities: ast.Entities{
 			"Foo": ast.Entity{
 				Shape: ast.RecordType{
@@ -50,7 +50,7 @@ func TestMarshalNamespaceEntityShapeError(t *testing.T) {
 func TestMarshalNamespaceEntityTagsError(t *testing.T) {
 	// Tags is nil, but the code checks `entity.Tags != nil` first
 	// So we need a non-nil tags that fails. Use SetType{Element: nil}.
-	_, err := marshalNamespace("", ast.Namespace{
+	_, err := marshalNamespace(ast.Namespace{
 		Entities: ast.Entities{
 			"Foo": ast.Entity{Tags: nil},
 		},
@@ -59,7 +59,7 @@ func TestMarshalNamespaceEntityTagsError(t *testing.T) {
 }
 
 func TestMarshalNamespaceEntityTagsError2(t *testing.T) {
-	_, err := marshalNamespace("", ast.Namespace{
+	_, err := marshalNamespace(ast.Namespace{
 		Entities: ast.Entities{
 			"Foo": ast.Entity{Tags: ast.SetType{Element: nil}},
 		},
@@ -68,7 +68,7 @@ func TestMarshalNamespaceEntityTagsError2(t *testing.T) {
 }
 
 func TestMarshalNamespaceActionAnnotations(t *testing.T) {
-	ns, err := marshalNamespace("", ast.Namespace{
+	ns, err := marshalNamespace(ast.Namespace{
 		Actions: ast.Actions{
 			"view": ast.Action{
 				Annotations: ast.Annotations{"doc": "test"},
@@ -80,7 +80,7 @@ func TestMarshalNamespaceActionAnnotations(t *testing.T) {
 }
 
 func TestMarshalNamespaceContextError(t *testing.T) {
-	_, err := marshalNamespace("", ast.Namespace{
+	_, err := marshalNamespace(ast.Namespace{
 		Actions: ast.Actions{
 			"view": ast.Action{
 				AppliesTo: &ast.AppliesTo{
