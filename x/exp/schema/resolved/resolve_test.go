@@ -356,7 +356,7 @@ func TestResolveActionParents(t *testing.T) {
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("Action", "view")
 	view := result.Actions[uid]
-	testutil.Equals(t, view.Parents, []types.EntityUID{types.NewEntityUID("Action", "readOnly")})
+	testutil.Equals(t, view.Entity.Parents, types.NewEntityUIDSet(types.NewEntityUID("Action", "readOnly")))
 }
 
 func TestResolveActionCycle(t *testing.T) {
@@ -482,7 +482,7 @@ func TestResolveActionQualifiedParent(t *testing.T) {
 	testutil.OK(t, err)
 	uid := types.NewEntityUID("NS::Action", "view")
 	view := result.Actions[uid]
-	testutil.Equals(t, view.Parents, []types.EntityUID{types.NewEntityUID("NS::Action", "readOnly")})
+	testutil.Equals(t, view.Entity.Parents, types.NewEntityUIDSet(types.NewEntityUID("NS::Action", "readOnly")))
 }
 
 func TestResolveActionContextNull(t *testing.T) {
