@@ -14,8 +14,44 @@ import (
 // Path is a series of idents separated by ::
 type Path string
 
+// IsQualified returns whether a Path has any qualifiers (i.e. at least one ::)
+func (p Path) IsQualified() bool {
+	return strings.Contains(string(p), "::")
+}
+
+// Qualifier returns a Path with everything but the last element in the original Path or "" if there is only one element.
+func (p Path) Qualifier() Path {
+	idx := strings.LastIndex(string(p), "::")
+	if idx == -1 {
+		return ""
+	}
+	return p[:idx]
+}
+
+// Basename returns the last element in the Path
+func (p Path) Basename() string {
+	idx := strings.LastIndex(string(p), "::")
+	if idx == -1 {
+		return string(p)
+	}
+	return string(p[idx+2:])
+}
+
+// Namespace is a type of Path whose basename does not refer to a type
+type Namespace Path
+
 // EntityType is the type portion of an EntityUID
 type EntityType Path
+
+// Namespace returns the namespace for the EntityType or "" if the type has no namespace.
+func (e EntityType) Namespace() Namespace {
+	return Namespace(Path(e).Qualifier())
+}
+
+// Basename returns the unqualified entity type name.
+func (e EntityType) Basename() string {
+	return Path(e).Basename()
+}
 
 // An EntityUID is the identifier for a principal, action, or resource.
 type EntityUID struct {
