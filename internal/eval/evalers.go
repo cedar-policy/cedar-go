@@ -1516,7 +1516,11 @@ func (n *offsetEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.NewDatetimeFromMillis(lhs.Milliseconds() + rhs.ToMilliseconds()), nil
+	res, ok := checkedAddI64(types.Long(lhs.Milliseconds()), types.Long(rhs.ToMilliseconds()))
+	if !ok {
+		return zeroValue(), fmt.Errorf("%w while attempting to compute datetime offset", errOverflow)
+	}
+	return types.NewDatetimeFromMillis(int64(res)), nil
 }
 
 type durationSinceEval struct {
@@ -1537,5 +1541,9 @@ func (n *durationSinceEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.NewDurationFromMillis(lhs.Milliseconds() - rhs.Milliseconds()), nil
+	res, ok := checkedSubI64(types.Long(lhs.Milliseconds()), types.Long(rhs.Milliseconds()))
+	if !ok {
+		return zeroValue(), fmt.Errorf("%w while attempting to compute durationSince", errOverflow)
+	}
+	return types.NewDurationFromMillis(int64(res)), nil
 }

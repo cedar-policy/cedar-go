@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"math"
 	"net/netip"
 	"strings"
 	"testing"
@@ -2403,6 +2404,7 @@ func TestDatetimeDurationSince(t *testing.T) {
 		{"TypeError", newLiteralEval(bad), newLiteralEval(endTime), zeroValue(), ErrType},
 		{"ArgTypeError", newLiteralEval(baseTime), newLiteralEval(bad), zeroValue(), ErrType},
 		{"Success", newLiteralEval(baseTime), newLiteralEval(endTime), dur, nil},
+		{"Overflow", newLiteralEval(types.NewDatetimeFromMillis(math.MaxInt64)), newLiteralEval(types.NewDatetimeFromMillis(math.MinInt64)), zeroValue(), errOverflow},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2436,6 +2438,7 @@ func TestDatetimeOffset(t *testing.T) {
 		{"TypeError", newLiteralEval(bad), newLiteralEval(dur), zeroValue(), ErrType},
 		{"ArgTypeError", newLiteralEval(baseTime), newLiteralEval(bad), zeroValue(), ErrType},
 		{"Success", newLiteralEval(baseTime), newLiteralEval(dur), endTime, nil},
+		{"Overflow", newLiteralEval(types.NewDatetimeFromMillis(math.MaxInt64)), newLiteralEval(types.NewDurationFromMillis(1)), zeroValue(), errOverflow},
 	}
 	for _, tt := range tests {
 		tt := tt
