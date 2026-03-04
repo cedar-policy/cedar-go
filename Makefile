@@ -9,7 +9,7 @@ linters:
 	golangci-lint run
 	go run github.com/alecthomas/go-check-sumtype/cmd/go-check-sumtype@latest -default-signifies-exhaustive=false ./...
 	go test -coverprofile=coverage.out ./...
-	sed -i'' -e '/^github.com\/cedar-policy\/cedar-go\/internal\/schema\/parser\/cedarschema.go/d' coverage.out
+	sed -i '' '/^github.com\/cedar-policy\/cedar-go\/internal\/schema\/parser\/cedarschema.go/d' coverage.out
 	go tool cover -func=coverage.out | sed 's/%$$//' | awk '{ if ($$3 < 100.0) { printf "Insufficient code coverage for %s\n", $$0; failed=1 } } END { exit failed }'
 
 # Download the latest corpus tests tarball
