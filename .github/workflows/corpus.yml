@@ -46,7 +46,7 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   title: 'Upstream Integration Test Corpus Modified',
-                  body: 'The upstream integration test corpus at https://raw.githubusercontent.com/cedar-policy/cedar-integration-tests/main/corpus-tests.tar.gz has been updated. Please integrate the changes into the local copy; see DEVELOPMENT.md for instructions on how to do so.',
+                  body: 'The upstream integration test corpus at https://raw.githubusercontent.com/cedar-policy/cedar-integration-tests/main/corpus-tests.tar.gz has been updated. Please integrate the changes by running `make corpus-update` to download and convert, then `make test` to verify. See DEVELOPMENT.md for details.',
                   assignees: ['jmccarthy', 'philhassey', 'patjakdev'],
                   labels: ['upstream-corpus-test']
                 })

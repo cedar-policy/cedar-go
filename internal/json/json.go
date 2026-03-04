@@ -109,7 +109,7 @@ type nodeJSON struct {
 	And                *binaryJSON `json:"&&,omitempty"`
 	Or                 *binaryJSON `json:"||,omitempty"`
 	Add                *binaryJSON `json:"+,omitempty"`
-	Subtract           *binaryJSON `json:"-,omitempty"`
+	Subtract           *binaryJSON `json:"-,omitempty"` //nolint:staticcheck // "-,omitempty" means field name is "-" with omitempty, not skip
 	Multiply           *binaryJSON `json:"*,omitempty"`
 	Contains           *binaryJSON `json:"contains,omitempty"`
 	ContainsAll        *binaryJSON `json:"containsAll,omitempty"`

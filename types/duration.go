@@ -76,12 +76,11 @@ func ParseDuration(s string) (Duration, error) {
 	// ([0-9]+)(d|h|m|s|ms) ...
 	for i < len(s) && unitI < len(unitOrder) {
 		if unicode.IsDigit(rune(s[i])) {
-			value = value*10 + int64(s[i]-'0')
-
-			// check overflow
-			if value > math.MaxInt32 {
+			digit := int64(s[i] - '0')
+			if value > (math.MaxInt64-digit)/10 {
 				return Duration{}, fmt.Errorf("%w: overflow", errDuration)
 			}
+			value = value*10 + digit
 			hasValue = true
 			i++
 		} else if s[i] == 'd' || s[i] == 'h' || s[i] == 'm' || s[i] == 's' {
@@ -109,7 +108,15 @@ func ParseDuration(s string) (Duration, error) {
 				return Duration{}, fmt.Errorf("%w: unexpected unit '%s'", errDuration, unit)
 			}
 
-			total = total + value*unitToMillis[unit]
+			millis := unitToMillis[unit]
+			if millis > 0 && value > math.MaxInt64/millis {
+				return Duration{}, fmt.Errorf("%w: overflow", errDuration)
+			}
+			product := value * millis
+			if total > math.MaxInt64-product {
+				return Duration{}, fmt.Errorf("%w: overflow", errDuration)
+			}
+			total = total + product
 			i++
 			hasValue = false
 			value = 0

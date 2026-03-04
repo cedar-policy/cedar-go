@@ -42,6 +42,8 @@ func TestDuration(t *testing.T) {
 			{"-60s60000ms", "-2m"},
 			{"-62m", "-1h2m"},
 			{"-2m3600s", "-1h2m"},
+			{"2147483648ms", "24d20h31m23s648ms"},
+			{"106751991167d7h12m55s807ms", "106751991167d7h12m55s807ms"},
 		}
 		for ti, tt := range tests {
 			tt := tt
@@ -69,6 +71,9 @@ func TestDuration(t *testing.T) {
 			{"3600ms30ms", "error parsing duration value: invalid duration"},
 			{"36ms30h", "error parsing duration value: invalid duration"},
 			{"999999999999999999999ms", "error parsing duration value: overflow"},
+			{"106751991168d", "error parsing duration value: overflow"},
+			{"9223372036854775808ms", "error parsing duration value: overflow"},
+			{"106751991167d7h12m55s808ms", "error parsing duration value: overflow"},
 		}
 		for ti, tt := range tests {
 			tt := tt
