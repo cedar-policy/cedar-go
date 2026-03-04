@@ -24,7 +24,7 @@ To download the latest corpus tests and regenerate JSON schemas:
 make corpus-update
 ```
 
-This runs `make corpus-download` (fetches the latest tarball) followed by `make corpus-convert` (regenerates JSON schemas). These can also be run individually.
+This runs `make corpus-tests.tar.gz` (fetches the latest tarball) followed by `make corpus-tests-json-schemas.tar.gz` (regenerates JSON schemas). These can also be run individually.
 
 Then, run the tests and fix any that may be broken:
 
