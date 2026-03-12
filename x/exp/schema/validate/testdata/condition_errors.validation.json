@@ -1,0 +1,40 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, attribute `nonexistent` in context for Action::\"view\" not found",
+      "for policy `policy1`, unexpected type: expected Bool but saw String"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, attribute `nonexistent` in context for Action::\"view\" not found",
+      "for policy `policy1`, unexpected type: expected Bool but saw String"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, attribute `nonexistent` in context for Action::\"view\" not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, attribute `nonexistent` in context for Action::\"view\" not found"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unexpected type: expected Bool but saw String"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

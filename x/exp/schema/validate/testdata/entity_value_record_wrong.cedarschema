@@ -1,0 +1,12 @@
+entity User {
+    profile: {
+        bio: String,
+    },
+};
+entity Document;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

@@ -1,0 +1,12 @@
+[
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": {
+            "ip_addr": "not_an_ip",
+            "amount": { "__extn": { "fn": "decimal", "arg": "1.23" } },
+            "created": { "__extn": { "fn": "datetime", "arg": "2024-01-01T00:00:00Z" } },
+            "ttl": { "__extn": { "fn": "duration", "arg": "1h" } }
+        },
+        "parents": []
+    }
+]

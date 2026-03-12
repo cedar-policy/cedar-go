@@ -1,0 +1,17 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {}
+  },
+  "entityValidation": {
+    "perEntity": {
+      "Document::doc1": {
+        "errors": [
+          "entity does not conform to the schema: in tag `category` on `Document::\"doc1\"`, type mismatch: value was expected to have type string, but it actually has type long: `42`"
+        ]
+      }
+    }
+  },
+  "requestValidation": []
+}

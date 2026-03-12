@@ -1,0 +1,22 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "User::alice": {
+        "errors": [
+          "error during entity deserialization: in attribute `profile` on `User::\"alice\"`, type mismatch: value was expected to have type { \"bio\" => (required) string }, but it actually has type string: `\"not_a_record\"`"
+        ]
+      }
+    }
+  },
+  "requestValidation": []
+}

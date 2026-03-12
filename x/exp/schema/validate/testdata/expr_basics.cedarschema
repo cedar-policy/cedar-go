@@ -1,0 +1,34 @@
+entity User {
+    name: String,
+    age: Long,
+    active: Bool,
+    scores: Set<Long>,
+    tags: Set<String>,
+} tags Set<String>;
+
+entity Group in [Group] {
+    label: String,
+};
+
+entity Document {
+    owner: User,
+    public: Bool,
+    title: String,
+};
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {
+        ip: ipaddr,
+        time: datetime,
+        dur: duration,
+        amount: decimal,
+    },
+};
+
+action "edit" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

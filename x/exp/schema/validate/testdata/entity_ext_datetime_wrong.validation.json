@@ -1,0 +1,22 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "User::alice": {
+        "errors": [
+          "entity does not conform to the schema: in attribute `joined` on `User::\"alice\"`, type mismatch: value was expected to have type datetime, but it actually has type ipaddr: `ip(\"10.0.0.1\")`"
+        ]
+      }
+    }
+  },
+  "requestValidation": []
+}

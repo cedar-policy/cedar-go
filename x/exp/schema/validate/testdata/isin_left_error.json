@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/isin_left_error.cedarschema",
+    "policies": "testdata/isin_left_error.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/isin_left_error.entities.json",
+    "requests": []
+}

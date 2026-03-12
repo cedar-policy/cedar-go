@@ -1,0 +1,34 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": true,
+    "strictErrors": [
+      "for policy `policy0`, empty set literals are forbidden in policies"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "for policy `policy0`, empty set literals are forbidden in policies"
+        ]
+      },
+      "policy1": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy2": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy3": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

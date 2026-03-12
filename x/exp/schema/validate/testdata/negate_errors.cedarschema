@@ -1,0 +1,11 @@
+entity User {
+    name: String,
+};
+entity Document;
+entity Group;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

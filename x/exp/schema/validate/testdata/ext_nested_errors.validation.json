@@ -1,0 +1,34 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, extension constructors may not be called with non-literal expressions",
+      "for policy `policy0`, unexpected type: expected Long but saw String",
+      "for policy `policy0`, unexpected type: expected Bool but saw Long"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unexpected type: expected Long but saw String",
+      "for policy `policy0`, unexpected type: expected Bool but saw Long"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unexpected type: expected Long but saw String",
+          "for policy `policy0`, extension constructors may not be called with non-literal expressions",
+          "for policy `policy0`, unexpected type: expected Bool but saw Long"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unexpected type: expected Long but saw String",
+          "for policy `policy0`, unexpected type: expected Bool but saw Long"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

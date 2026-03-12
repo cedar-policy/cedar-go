@@ -1,0 +1,22 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "Unknown::x": {
+        "errors": [
+          "error during entity deserialization: entity `Unknown::\"x\"` has type `Unknown` which is not declared in the schema"
+        ]
+      }
+    }
+  },
+  "requestValidation": []
+}

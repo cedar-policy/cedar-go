@@ -1,0 +1,10 @@
+entity User {
+    tags: Set<Long>,
+};
+entity Document;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

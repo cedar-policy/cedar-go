@@ -1,0 +1,24 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "Action::edit": {},
+      "Action::unknown_action": {
+        "errors": [
+          "entity does not conform to the schema: found action entity `Action::\"unknown_action\"`, but it was not declared as an action in the schema"
+        ]
+      },
+      "Action::view": {}
+    }
+  },
+  "requestValidation": []
+}

@@ -1,0 +1,19 @@
+entity User in [Group];
+entity Admin in [Group];
+entity Group in [Group];
+entity Document;
+entity Folder;
+
+action "view" appliesTo {
+    principal: [User, Admin],
+    resource: [Document, Folder],
+    context: {},
+};
+
+action "admin_view" in [Action::"view"] appliesTo {
+    principal: Admin,
+    resource: Document,
+    context: {},
+};
+
+action "no_applies_to";

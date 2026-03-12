@@ -1,0 +1,15 @@
+entity TypeA {
+    shared: Long,
+} tags Long;
+
+entity TypeB {
+    shared: String,
+} tags String;
+
+entity Resource;
+
+action "test" appliesTo {
+    principal: TypeA,
+    resource: Resource,
+    context: { flag?: Bool },
+};

@@ -1,0 +1,36 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unexpected type: expected __cedar::internal::AnyEntity but saw Long",
+      "for policy `policy0`, unexpected type: expected __cedar::internal::AnyEntity but saw Long",
+      "for policy `policy0`, unexpected type: expected Long but saw String"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unexpected type: expected __cedar::internal::AnyEntity but saw Long",
+      "for policy `policy0`, unexpected type: expected Long but saw String",
+      "for policy `policy0`, unexpected type: expected __cedar::internal::AnyEntity but saw Long"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unexpected type: expected __cedar::internal::AnyEntity but saw Long",
+          "for policy `policy0`, unexpected type: expected __cedar::internal::AnyEntity but saw Long",
+          "for policy `policy0`, unexpected type: expected Long but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unexpected type: expected __cedar::internal::AnyEntity but saw Long",
+          "for policy `policy0`, unexpected type: expected Long but saw String",
+          "for policy `policy0`, unexpected type: expected __cedar::internal::AnyEntity but saw Long"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

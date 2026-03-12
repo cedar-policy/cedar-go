@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/action_uid_expr.cedarschema",
+    "policies": "testdata/action_uid_expr.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/action_uid_expr.entities.json",
+    "requests": []
+}

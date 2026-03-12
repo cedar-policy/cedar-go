@@ -193,6 +193,73 @@ func TestRustUnquote(t *testing.T) {
 	}
 }
 
+func TestEscapeString(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   string
+		out  string
+	}{
+		{"empty", "", ""},
+		{"plain", "hello", "hello"},
+		{"null", "\x00", `\0`},
+		{"tab", "\t", `\t`},
+		{"newline", "\n", `\n`},
+		{"cr", "\r", `\r`},
+		{"backslash", `\`, `\\`},
+		{"single_quote", "'", `\'`},
+		{"double_quote", `"`, `\"`},
+		{"mixed", "a\tb\nc", `a\tb\nc`},
+		{"ascii_control", "\x01", `\u{1}`},
+		{"del", "\x7f", `\u{7f}`},
+		{"c1_control", string(rune(0x80)), `\u{80}`},
+		{"c1_control_end", string(rune(0x9f)), `\u{9f}`},
+		{"non_printable_0xa0", string(rune(0xa0)), `\u{a0}`}, // 0xa0 is not printable in Go
+		{"combining_mark", "\u0300", `\u{300}`},              // combining grave accent (Mn)
+		{"enclosing_mark", "\u20DD", `\u{20dd}`},             // combining enclosing circle (Me)
+		{"spacing_mark", "\u0903", `\u{903}`},                // devanagari visarga (Mc)
+		{"normal_unicode", "\u00e9", "\u00e9"},               // é is printable
+		{"emoji", "\U0001F600", "\U0001F600"},                // emoji is printable
+		{"non_printable_high", "\uFFFE", `\u{fffe}`},         // non-printable
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := EscapeString(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
+
+func TestShouldEscape(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   rune
+		out  bool
+	}{
+		{"ascii_control_start", 0x01, true},
+		{"ascii_control_end", 0x1f, true},
+		{"space", ' ', false},
+		{"del", 0x7f, true},
+		{"c1_start", 0x80, true},
+		{"c1_end", 0x9f, true},
+		{"non_printable_0xa0", 0xa0, true}, // 0xa0 is not printable in Go
+		{"letter", 'A', false},
+		{"combining_mark", 0x0300, true},
+		{"printable_unicode", 0x00e9, false},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := ShouldEscape(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
+
 func TestDigitVal(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

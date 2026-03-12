@@ -1,0 +1,17 @@
+entity User {
+    name: String,
+};
+
+entity Admin {
+    name: String,
+};
+
+entity Document {
+    title: String,
+};
+
+action "view" appliesTo {
+    principal: [User, Admin],
+    resource: Document,
+    context: {},
+};

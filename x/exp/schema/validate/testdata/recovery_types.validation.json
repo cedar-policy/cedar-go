@@ -1,0 +1,94 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, error during extension function argument validation: Failed to parse as IP address: `\"\"`",
+      "for policy `policy0`, error during extension function argument validation: Failed to parse as IP address: `\"\"`",
+      "for policy `policy0`, empty set literals are forbidden in policies",
+      "for policy `policy1`, attribute `r.nonexistent` on entity type `a` not found",
+      "for policy `policy2`, unable to guarantee safety of access to tag `if true then \"k\" else \"k\"` on entity type `a`",
+      "for policy `policy3`, error during extension function argument validation: Failed to parse as IP address: `\"\\u{1}\\u{2}\"`",
+      "for policy `policy4`, unable to guarantee safety of access to tag `if false then \"b\" else \"b\"` on entity type `a`",
+      "for policy `policy5`, attribute `r[\"\"]` on entity type `a` not found"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, error during extension function argument validation: Failed to parse as IP address: `\"\"`",
+      "for policy `policy0`, error during extension function argument validation: Failed to parse as IP address: `\"\"`",
+      "for policy `policy1`, attribute `r.nonexistent` on entity type `a` not found",
+      "for policy `policy2`, unable to guarantee safety of access to tag `if true then \"k\" else \"k\"` on entity type `a`",
+      "for policy `policy3`, error during extension function argument validation: Failed to parse as IP address: `\"\\u{1}\\u{2}\"`",
+      "for policy `policy4`, unable to guarantee safety of access to tag `if false then \"b\" else \"b\"` on entity type `a`",
+      "for policy `policy5`, attribute `r[\"\"]` on entity type `a` not found"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, empty set literals are forbidden in policies",
+          "for policy `policy0`, error during extension function argument validation: Failed to parse as IP address: `\"\"`",
+          "for policy `policy0`, error during extension function argument validation: Failed to parse as IP address: `\"\"`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, error during extension function argument validation: Failed to parse as IP address: `\"\"`",
+          "for policy `policy0`, error during extension function argument validation: Failed to parse as IP address: `\"\"`"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, attribute `r.nonexistent` on entity type `a` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, attribute `r.nonexistent` on entity type `a` not found"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unable to guarantee safety of access to tag `if true then \"k\" else \"k\"` on entity type `a`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unable to guarantee safety of access to tag `if true then \"k\" else \"k\"` on entity type `a`"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, error during extension function argument validation: Failed to parse as IP address: `\"\\u{1}\\u{2}\"`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, error during extension function argument validation: Failed to parse as IP address: `\"\\u{1}\\u{2}\"`"
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy4`, unable to guarantee safety of access to tag `if false then \"b\" else \"b\"` on entity type `a`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy4`, unable to guarantee safety of access to tag `if false then \"b\" else \"b\"` on entity type `a`"
+        ]
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy5`, attribute `r[\"\"]` on entity type `a` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy5`, attribute `r[\"\"]` on entity type `a` not found"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

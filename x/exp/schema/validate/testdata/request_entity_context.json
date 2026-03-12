@@ -1,0 +1,19 @@
+{
+    "schema": "testdata/request_entity_context.cedarschema",
+    "policies": "testdata/request_entity_context.cedar",
+    "shouldValidate": true,
+    "entities": "testdata/request_entity_context.entities.json",
+    "requests": [
+        {
+            "description": "entity uid in context instead of long",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": { "count": { "__entity": { "type": "User", "id": "alice" } } },
+            "validateRequest": true,
+            "decision": "allow",
+            "reason": ["policy0"],
+            "errors": []
+        }
+    ]
+}

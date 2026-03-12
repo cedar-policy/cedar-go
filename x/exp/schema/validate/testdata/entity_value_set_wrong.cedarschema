@@ -1,0 +1,10 @@
+entity User {
+    scores: Set<Long>,
+};
+entity Document;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

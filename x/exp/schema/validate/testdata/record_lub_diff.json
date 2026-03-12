@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/record_lub_diff.cedarschema",
+    "policies": "testdata/record_lub_diff.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/record_lub_diff.entities.json",
+    "requests": []
+}

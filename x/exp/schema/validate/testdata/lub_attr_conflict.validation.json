@@ -1,0 +1,50 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "the types TypeA and TypeB are not compatible",
+      "the types TypeA and TypeB are not compatible",
+      "the types TypeA and TypeB are not compatible",
+      "the types TypeA and TypeB are not compatible"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, attribute `shared` on entity types `TypeA`, `TypeB` not found",
+      "the types Long and String are not compatible"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types TypeA and TypeB are not compatible"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, attribute `shared` on entity types `TypeA`, `TypeB` not found"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types TypeA and TypeB are not compatible"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types TypeA and TypeB are not compatible",
+          "the types TypeA and TypeB are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types Long and String are not compatible"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

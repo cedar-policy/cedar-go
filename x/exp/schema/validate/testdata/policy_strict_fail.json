@@ -1,0 +1,19 @@
+{
+    "schema": "testdata/policy_strict_fail.cedarschema",
+    "policies": "testdata/policy_strict_fail.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/policy_strict_fail.entities.json",
+    "requests": [
+        {
+            "description": "User views Document",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": {},
+            "validateRequest": true,
+            "decision": "deny",
+            "reason": [],
+            "errors": ["policy0"]
+        }
+    ]
+}

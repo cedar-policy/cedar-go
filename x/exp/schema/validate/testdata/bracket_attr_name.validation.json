@@ -1,0 +1,40 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, attribute `[\"123start\"].nonexistent` on entity type `User` not found",
+      "for policy `policy1`, attribute `[\"has-dash\"].nonexistent` on entity type `User` not found"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, attribute `[\"123start\"].nonexistent` on entity type `User` not found",
+      "for policy `policy1`, attribute `[\"has-dash\"].nonexistent` on entity type `User` not found"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, attribute `[\"123start\"].nonexistent` on entity type `User` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, attribute `[\"123start\"].nonexistent` on entity type `User` not found"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, attribute `[\"has-dash\"].nonexistent` on entity type `User` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, attribute `[\"has-dash\"].nonexistent` on entity type `User` not found"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

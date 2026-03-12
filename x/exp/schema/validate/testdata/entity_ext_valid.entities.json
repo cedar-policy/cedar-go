@@ -1,0 +1,41 @@
+[
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": {
+            "name": "Alice",
+            "age": 30,
+            "active": true,
+            "scores": [90, 85],
+            "addr": { "__extn": { "fn": "ip", "arg": "10.0.0.1" } },
+            "balance": { "__extn": { "fn": "decimal", "arg": "100.50" } },
+            "joined": { "__extn": { "fn": "datetime", "arg": "2024-01-15" } },
+            "session": { "__extn": { "fn": "duration", "arg": "1h30m" } },
+            "buddy": { "type": "User", "id": "bob" },
+            "profile": { "bio": "Hello" }
+        },
+        "parents": []
+    },
+    {
+        "uid": { "type": "User", "id": "bob" },
+        "attrs": {
+            "name": "Bob",
+            "age": 25,
+            "active": false,
+            "scores": [],
+            "addr": { "__extn": { "fn": "ip", "arg": "10.0.0.2" } },
+            "balance": { "__extn": { "fn": "decimal", "arg": "50.00" } },
+            "joined": { "__extn": { "fn": "datetime", "arg": "2024-06-01" } },
+            "session": { "__extn": { "fn": "duration", "arg": "30m" } },
+            "buddy": { "type": "User", "id": "alice" },
+            "profile": { "bio": "World" }
+        },
+        "parents": []
+    },
+    {
+        "uid": { "type": "Document", "id": "doc1" },
+        "attrs": {
+            "title": "Test"
+        },
+        "parents": []
+    }
+]

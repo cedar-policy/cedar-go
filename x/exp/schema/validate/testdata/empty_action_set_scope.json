@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/empty_action_set_scope.cedarschema",
+    "policies": "testdata/empty_action_set_scope.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/empty_action_set_scope.entities.json",
+    "requests": []
+}

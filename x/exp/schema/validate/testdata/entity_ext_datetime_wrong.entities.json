@@ -1,0 +1,9 @@
+[
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": {
+            "joined": { "__extn": { "fn": "ip", "arg": "10.0.0.1" } }
+        },
+        "parents": []
+    }
+]

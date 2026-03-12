@@ -1,0 +1,15 @@
+entity User {
+    "123start": {
+        inner: String,
+    },
+    "has-dash": {
+        inner: String,
+    },
+};
+entity Document;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

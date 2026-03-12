@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/contains_strict_suberr.cedarschema",
+    "policies": "testdata/contains_strict_suberr.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/contains_strict_suberr.entities.json",
+    "requests": []
+}

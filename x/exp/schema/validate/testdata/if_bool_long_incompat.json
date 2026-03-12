@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/if_bool_long_incompat.cedarschema",
+    "policies": "testdata/if_bool_long_incompat.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/if_bool_long_incompat.entities.json",
+    "requests": []
+}

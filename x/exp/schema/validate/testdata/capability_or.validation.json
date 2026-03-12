@@ -1,0 +1,32 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy1`, unable to guarantee safety of access to optional attribute `email` on entity type `User`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy1`, unable to guarantee safety of access to optional attribute `email` on entity type `User`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unable to guarantee safety of access to optional attribute `email` on entity type `User`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unable to guarantee safety of access to optional attribute `email` on entity type `User`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

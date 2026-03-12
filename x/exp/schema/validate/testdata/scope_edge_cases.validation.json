@@ -1,0 +1,72 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+      "for policy `policy1`, unable to find an applicable action given the policy scope constraints",
+      "for policy `policy2`, unrecognized entity type `Unknown`",
+      "for policy `policy2`, unable to find an applicable action given the policy scope constraints",
+      "for policy `policy3`, unrecognized entity type `Unknown`",
+      "for policy `policy3`, unable to find an applicable action given the policy scope constraints"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+      "for policy `policy1`, unable to find an applicable action given the policy scope constraints",
+      "for policy `policy2`, unrecognized entity type `Unknown`",
+      "for policy `policy2`, unable to find an applicable action given the policy scope constraints",
+      "for policy `policy3`, unrecognized entity type `Unknown`",
+      "for policy `policy3`, unable to find an applicable action given the policy scope constraints"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unable to find an applicable action given the policy scope constraints"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unable to find an applicable action given the policy scope constraints"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unable to find an applicable action given the policy scope constraints"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unable to find an applicable action given the policy scope constraints"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unrecognized entity type `Unknown`",
+          "for policy `policy2`, unable to find an applicable action given the policy scope constraints"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unrecognized entity type `Unknown`",
+          "for policy `policy2`, unable to find an applicable action given the policy scope constraints"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, unrecognized entity type `Unknown`",
+          "for policy `policy3`, unable to find an applicable action given the policy scope constraints"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, unrecognized entity type `Unknown`",
+          "for policy `policy3`, unable to find an applicable action given the policy scope constraints"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

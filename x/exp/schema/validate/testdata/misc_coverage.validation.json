@@ -1,0 +1,84 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy1`, unrecognized entity type `BadType`",
+      "for policy `policy2`, empty set literals are forbidden in policies",
+      "the types Document and User are not compatible",
+      "for policy `policy6`, unexpected type: expected String but saw Long",
+      "for policy `policy8`, unable to guarantee safety of access to tag `context.tagKey` on entity type `Document`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy1`, unrecognized entity type `BadType`",
+      "for policy `policy6`, unexpected type: expected String but saw Long",
+      "for policy `policy8`, unable to guarantee safety of access to tag `context.tagKey` on entity type `Document`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unrecognized entity type `BadType`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unrecognized entity type `BadType`"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "for policy `policy2`, empty set literals are forbidden in policies"
+        ]
+      },
+      "policy3": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types Document and User are not compatible"
+        ]
+      },
+      "policy5": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy6": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy6`, unexpected type: expected String but saw Long"
+        ],
+        "permissiveErrors": [
+          "for policy `policy6`, unexpected type: expected String but saw Long"
+        ]
+      },
+      "policy7": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy8": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy8`, unable to guarantee safety of access to tag `context.tagKey` on entity type `Document`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy8`, unable to guarantee safety of access to tag `context.tagKey` on entity type `Document`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

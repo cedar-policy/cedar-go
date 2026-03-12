@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/tag_format_exprs.cedarschema",
+    "policies": "testdata/tag_format_exprs.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/tag_format_exprs.entities.json",
+    "requests": []
+}

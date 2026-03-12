@@ -1,0 +1,34 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unable to find an applicable action given the policy scope constraints"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unable to find an applicable action given the policy scope constraints"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unable to find an applicable action given the policy scope constraints"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unable to find an applicable action given the policy scope constraints"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": [
+    {
+      "description": "User views Document",
+      "strict": true,
+      "permissive": true
+    }
+  ]
+}

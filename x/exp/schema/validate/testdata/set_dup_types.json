@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/set_dup_types.cedarschema",
+    "policies": "testdata/set_dup_types.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/set_dup_types.entities.json",
+    "requests": []
+}

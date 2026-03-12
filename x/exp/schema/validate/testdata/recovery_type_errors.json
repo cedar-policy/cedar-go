@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/recovery_type_errors.cedarschema",
+    "policies": "testdata/recovery_type_errors.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/recovery_type_errors.entities.json",
+    "requests": []
+}

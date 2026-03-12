@@ -1,0 +1,8 @@
+entity Status enum ["active", "inactive"];
+entity User;
+entity Document;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+};

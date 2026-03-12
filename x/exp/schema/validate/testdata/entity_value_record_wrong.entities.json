@@ -1,0 +1,9 @@
+[
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": {
+            "profile": "not_a_record"
+        },
+        "parents": []
+    }
+]

@@ -1,0 +1,16 @@
+{
+    "schema": "testdata/request_action_no_applies_to.cedarschema",
+    "policies": "testdata/request_action_no_applies_to.cedar",
+    "shouldValidate": true,
+    "entities": "testdata/request_action_no_applies_to.entities.json",
+    "requests": [
+        {
+            "description": "Request with action that has no appliesTo should fail",
+            "principal": { "type": "App::User", "id": "alice" },
+            "action": { "type": "App::Action", "id": "noop" },
+            "resource": { "type": "App::Document", "id": "doc1" },
+            "context": {},
+            "validateRequest": true
+        }
+    ]
+}

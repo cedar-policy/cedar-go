@@ -1,0 +1,32 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "the types Long and String are not compatible",
+      "for policy `policy0`, unexpected type: expected Long but saw String"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unexpected type: expected Long but saw String",
+      "the types Long and String are not compatible"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unexpected type: expected Long but saw String",
+          "the types Long and String are not compatible"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unexpected type: expected Long but saw String",
+          "the types Long and String are not compatible"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

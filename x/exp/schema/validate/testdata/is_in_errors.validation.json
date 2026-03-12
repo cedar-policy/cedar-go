@@ -1,0 +1,28 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unexpected type: expected Set<__cedar::internal::AnyEntity>, or __cedar::internal::AnyEntity but saw String"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unexpected type: expected Set<__cedar::internal::AnyEntity>, or __cedar::internal::AnyEntity but saw String"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unexpected type: expected Set<__cedar::internal::AnyEntity>, or __cedar::internal::AnyEntity but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unexpected type: expected Set<__cedar::internal::AnyEntity>, or __cedar::internal::AnyEntity but saw String"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

@@ -1,0 +1,22 @@
+[
+    {
+        "uid": { "type": "Action", "id": "top" },
+        "attrs": {},
+        "parents": []
+    },
+    {
+        "uid": { "type": "Action", "id": "mid" },
+        "attrs": {},
+        "parents": [
+            { "type": "Action", "id": "top" }
+        ]
+    },
+    {
+        "uid": { "type": "Action", "id": "leaf" },
+        "attrs": {},
+        "parents": [
+            { "type": "Action", "id": "mid" },
+            { "type": "Action", "id": "top" }
+        ]
+    }
+]

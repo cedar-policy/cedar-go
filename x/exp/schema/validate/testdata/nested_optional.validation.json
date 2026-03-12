@@ -1,0 +1,32 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy1`, unable to guarantee safety of access to optional attribute `session.token` in context for Action::\"view\""
+    ],
+    "permissiveErrors": [
+      "for policy `policy1`, unable to guarantee safety of access to optional attribute `session.token` in context for Action::\"view\""
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unable to guarantee safety of access to optional attribute `session.token` in context for Action::\"view\""
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unable to guarantee safety of access to optional attribute `session.token` in context for Action::\"view\""
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

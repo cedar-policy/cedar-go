@@ -1,0 +1,26 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "Document::doc1": {},
+      "Status::active": {},
+      "User::alice": {}
+    }
+  },
+  "requestValidation": [
+    {
+      "description": "User views Document with enum entity present",
+      "strict": true,
+      "permissive": true
+    }
+  ]
+}

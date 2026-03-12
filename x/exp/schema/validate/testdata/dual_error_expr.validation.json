@@ -1,0 +1,76 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unexpected type: expected Bool but saw String",
+      "for policy `policy1`, unexpected type: expected Bool but saw String",
+      "for policy `policy2`, unexpected type: expected Bool but saw String",
+      "for policy `policy3`, unexpected type: expected Bool but saw String",
+      "for policy `policy4`, unexpected type: expected Bool but saw String"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unexpected type: expected Bool but saw String",
+      "for policy `policy1`, unexpected type: expected Bool but saw String",
+      "for policy `policy2`, unexpected type: expected Bool but saw String",
+      "for policy `policy3`, unexpected type: expected Bool but saw String",
+      "for policy `policy4`, unexpected type: expected Bool but saw String"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unexpected type: expected Bool but saw String"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unexpected type: expected Bool but saw String"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unexpected type: expected Bool but saw String"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, unexpected type: expected Bool but saw String"
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy4`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy4`, unexpected type: expected Bool but saw String"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

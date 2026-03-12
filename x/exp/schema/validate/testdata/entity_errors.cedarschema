@@ -1,0 +1,19 @@
+entity User in [Group] {
+    name: String,
+    age: Long,
+};
+
+entity Group {
+    label: String,
+};
+
+entity Document {
+    title: String,
+};
+
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

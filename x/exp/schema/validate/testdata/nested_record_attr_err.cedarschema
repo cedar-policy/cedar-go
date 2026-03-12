@@ -1,0 +1,21 @@
+entity User {
+    profile: {
+        name: String,
+    },
+};
+entity Admin {
+    profile: {
+        name: String,
+    },
+};
+entity Document {
+    profile: {
+        name: String,
+    },
+};
+
+action "view" appliesTo {
+    principal: [User, Admin],
+    resource: Document,
+    context: {},
+};

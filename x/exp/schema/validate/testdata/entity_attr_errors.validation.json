@@ -1,0 +1,22 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "User::alice": {
+        "errors": [
+          "error during entity deserialization: attribute `extra_field` on `User::\"alice\"` should not exist according to the schema"
+        ]
+      }
+    }
+  },
+  "requestValidation": []
+}

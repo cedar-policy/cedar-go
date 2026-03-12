@@ -1,0 +1,41 @@
+{
+    "schema": "testdata/request_context_format.cedarschema",
+    "policies": "testdata/request_context_format.cedar",
+    "shouldValidate": true,
+    "entities": "testdata/request_context_format.entities.json",
+    "requests": [
+        {
+            "description": "wrong context with string bool and long values",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": { "count": "not_a_number", "name": true, "active": 42 },
+            "validateRequest": true,
+            "decision": "allow",
+            "reason": ["policy0"],
+            "errors": []
+        },
+        {
+            "description": "wrong context with false boolean values",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": { "count": false, "name": false, "active": "not_bool" },
+            "validateRequest": true,
+            "decision": "allow",
+            "reason": ["policy0"],
+            "errors": []
+        },
+        {
+            "description": "wrong context with set value",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": { "count": [1, 2], "name": "ok", "active": true },
+            "validateRequest": true,
+            "decision": "allow",
+            "reason": ["policy0"],
+            "errors": []
+        }
+    ]
+}

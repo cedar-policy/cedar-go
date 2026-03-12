@@ -1,0 +1,28 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "the types __cedar::internal::True and Long are not compatible"
+    ],
+    "permissiveErrors": [
+      "the types __cedar::internal::True and Long are not compatible"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types __cedar::internal::True and Long are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types __cedar::internal::True and Long are not compatible"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

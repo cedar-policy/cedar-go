@@ -1,0 +1,17 @@
+entity User {
+    name: String,
+    age: Long,
+    active: Bool,
+    buddy: User,
+    scores: Set<Long>,
+};
+
+entity Document {
+    title: String,
+};
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

@@ -1,0 +1,20 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {}
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": [
+    {
+      "description": "Request with action that has no appliesTo should fail",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "principal type `App::User` is not valid for `App::Action::\"noop\"`"
+      ]
+    }
+  ]
+}

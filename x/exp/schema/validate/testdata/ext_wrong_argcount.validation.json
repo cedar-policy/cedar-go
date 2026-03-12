@@ -1,0 +1,28 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, wrong number of arguments in extension function application. Expected 1, got 0"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, wrong number of arguments in extension function application. Expected 1, got 0"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, wrong number of arguments in extension function application. Expected 1, got 0"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, wrong number of arguments in extension function application. Expected 1, got 0"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

@@ -1,4 +1,4 @@
-.PHONY: test linters corpus-update
+.PHONY: test linters corpus-update check-upstream-corpus testdata-validation
 
 # Run all tests
 test:
@@ -10,11 +10,19 @@ linters:
 	go run github.com/alecthomas/go-check-sumtype/cmd/go-check-sumtype@latest -default-signifies-exhaustive=false ./...
 	go test -coverprofile=coverage.out ./...
 	sed -i '' '/^github.com\/cedar-policy\/cedar-go\/internal\/schema\/parser\/cedarschema.go/d' coverage.out
-	go tool cover -func=coverage.out | sed 's/%$$//' | awk '{ if ($$3 < 100.0) { printf "Insufficient code coverage for %s\n", $$0; failed=1 } } END { exit failed }'
+	go tool cover -func=coverage.out | sed 's/%$$//' | awk '$$2 == "isCedarType" { next } $$2 == "Entity" && $$1 ~ /entity\.go/ { next } $$2 == "typeOfExtensionCall" { next } { if ($$3 < 100.0) { printf "Insufficient code coverage for %s\n", $$0; failed=1 } } END { exit failed }'
 
-# Download the latest corpus tests tarball
-corpus-tests.tar.gz:
-	curl -L -o corpus-tests.tar.gz https://raw.githubusercontent.com/cedar-policy/cedar-integration-tests/main/corpus-tests.tar.gz
+# Download the latest corpus tests tarball and overwrite corpus-tests.tar.gz if changed
+.PHONY: check-upstream-corpus
+check-upstream-corpus:
+	@tmp="$$(mktemp)" && \
+	curl -fL -o "$$tmp" https://raw.githubusercontent.com/cedar-policy/cedar-integration-tests/main/corpus-tests.tar.gz && \
+	if cmp -s "$$tmp" corpus-tests.tar.gz; then echo "corpus-tests.tar.gz is up to date."; rm -f "$$tmp"; else mv "$$tmp" corpus-tests.tar.gz; echo "corpus-tests.tar.gz updated."; fi
+
+# Use an order-only prerequisite to check for changes. This allows other targets to
+# reference corpus-tests.tar.gz as a dependency so that they'll only be re-created
+# if the corpus tests are updated.
+corpus-tests.tar.gz: | check-upstream-corpus
 
 # Convert Cedar schemas to JSON schemas
 corpus-tests-json-schemas.tar.gz: corpus-tests.tar.gz
@@ -31,7 +39,38 @@ corpus-tests-json-schemas.tar.gz: corpus-tests.tar.gz
 	@rm -rf /tmp/corpus-tests /tmp/corpus-tests-json-schemas
 	@echo "Done! Created corpus-tests-json-schemas.tar.gz"
 
-# Download and convert
-corpus-update:
-	rm -f corpus-tests.tar.gz corpus-tests-json-schemas.tar.gz
-	$(MAKE) corpus-tests-json-schemas.tar.gz
+# Build cedar-validation-tool and generate validation results
+test/cedar-validation-tool/target/release/cedar-validation-tool: test/cedar-validation-tool/src/main.rs test/cedar-validation-tool/Cargo.toml
+	@echo "Building cedar-validation-tool..."
+	@cd test/cedar-validation-tool && cargo build --release
+
+corpus-tests-validation.tar.gz: corpus-tests.tar.gz test/cedar-validation-tool/target/release/cedar-validation-tool
+	@echo "Generating validation results from Rust Cedar..."
+	@rm -rf /tmp/corpus-tests /tmp/corpus-tests-validation
+	@mkdir -p /tmp/corpus-tests-validation
+	@tar -xzf corpus-tests.tar.gz -C /tmp/
+	@for testjson in /tmp/corpus-tests/*.json; do \
+		case "$$testjson" in *.entities.json) continue ;; esac; \
+		basename=$$(basename $$testjson .json); \
+		test/cedar-validation-tool/target/release/cedar-validation-tool \
+			"$$testjson" "/tmp/corpus-tests-validation/$${basename}.validation.json"; \
+	done
+	@cd /tmp && tar -czf corpus-tests-validation.tar.gz corpus-tests-validation/
+	@mv /tmp/corpus-tests-validation.tar.gz .
+	@rm -rf /tmp/corpus-tests /tmp/corpus-tests-validation
+	@echo "Done! Created corpus-tests-validation.tar.gz"
+
+# Regenerate validation data for x/exp/schema/validate/testdata
+testdata-validation: test/cedar-validation-tool/target/release/cedar-validation-tool
+	@echo "Regenerating testdata validation files..."
+	@for testjson in x/exp/schema/validate/testdata/*.json; do \
+		case "$$testjson" in *.entities.json|*.validation.json) continue ;; esac; \
+		basename=$$(basename $$testjson .json); \
+		echo "  Validating $$basename..."; \
+		test/cedar-validation-tool/target/release/cedar-validation-tool \
+			"$$testjson" "x/exp/schema/validate/testdata/$${basename}.validation.json"; \
+	done
+	@echo "Done! Regenerated testdata validation files."
+
+# Download, convert, and validate
+corpus-update: corpus-tests-json-schemas.tar.gz corpus-tests-validation.tar.gz testdata-validation

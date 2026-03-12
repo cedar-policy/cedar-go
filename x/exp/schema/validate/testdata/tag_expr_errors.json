@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/tag_expr_errors.cedarschema",
+    "policies": "testdata/tag_expr_errors.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/tag_expr_errors.entities.json",
+    "requests": []
+}

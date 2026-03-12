@@ -30,6 +30,9 @@ var _ TB = &TBMock{}
 //
 //	}
 type TBMock struct {
+	// ErrorfFunc mocks the Errorf method.
+	ErrorfFunc func(format string, args ...any)
+
 	// FatalfFunc mocks the Fatalf method.
 	FatalfFunc func(format string, args ...any)
 
@@ -38,6 +41,13 @@ type TBMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// Errorf holds details about calls to the Errorf method.
+		Errorf []struct {
+			// Format is the format argument value.
+			Format string
+			// Args is the args argument value.
+			Args []any
+		}
 		// Fatalf holds details about calls to the Fatalf method.
 		Fatalf []struct {
 			// Format is the format argument value.
@@ -49,8 +59,45 @@ type TBMock struct {
 		Helper []struct {
 		}
 	}
+	lockErrorf sync.RWMutex
 	lockFatalf sync.RWMutex
 	lockHelper sync.RWMutex
+}
+
+// Errorf calls ErrorfFunc.
+func (mock *TBMock) Errorf(format string, args ...any) {
+	if mock.ErrorfFunc == nil {
+		panic("TBMock.ErrorfFunc: method is nil but TB.Errorf was just called")
+	}
+	callInfo := struct {
+		Format string
+		Args   []any
+	}{
+		Format: format,
+		Args:   args,
+	}
+	mock.lockErrorf.Lock()
+	mock.calls.Errorf = append(mock.calls.Errorf, callInfo)
+	mock.lockErrorf.Unlock()
+	mock.ErrorfFunc(format, args...)
+}
+
+// ErrorfCalls gets all the calls that were made to Errorf.
+// Check the length with:
+//
+//	len(mockedTB.ErrorfCalls())
+func (mock *TBMock) ErrorfCalls() []struct {
+	Format string
+	Args   []any
+} {
+	var calls []struct {
+		Format string
+		Args   []any
+	}
+	mock.lockErrorf.RLock()
+	calls = mock.calls.Errorf
+	mock.lockErrorf.RUnlock()
+	return calls
 }
 
 // Fatalf calls FatalfFunc.

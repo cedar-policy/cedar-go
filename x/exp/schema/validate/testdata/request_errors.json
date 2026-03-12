@@ -1,0 +1,74 @@
+{
+    "schema": "testdata/request_errors.cedarschema",
+    "policies": "testdata/request_errors.cedar",
+    "shouldValidate": true,
+    "entities": "testdata/request_errors.entities.json",
+    "requests": [
+        {
+            "description": "valid request",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": { "reason": "testing" },
+            "validateRequest": true,
+            "decision": "allow",
+            "reason": ["policy0"],
+            "errors": []
+        },
+        {
+            "description": "unknown action",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "delete" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": {},
+            "validateRequest": true,
+            "decision": "deny",
+            "reason": [],
+            "errors": []
+        },
+        {
+            "description": "wrong principal type",
+            "principal": { "type": "Document", "id": "doc1" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": { "reason": "test" },
+            "validateRequest": true,
+            "decision": "deny",
+            "reason": [],
+            "errors": []
+        },
+        {
+            "description": "wrong resource type",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "User", "id": "bob" },
+            "context": { "reason": "test" },
+            "validateRequest": true,
+            "decision": "deny",
+            "reason": [],
+            "errors": []
+        },
+        {
+            "description": "unknown principal type",
+            "principal": { "type": "Unknown", "id": "x" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": { "reason": "test" },
+            "validateRequest": true,
+            "decision": "deny",
+            "reason": [],
+            "errors": []
+        },
+        {
+            "description": "invalid context",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": { "reason": 42 },
+            "validateRequest": true,
+            "decision": "deny",
+            "reason": [],
+            "errors": []
+        }
+    ]
+}

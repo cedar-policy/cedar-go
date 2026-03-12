@@ -1,0 +1,48 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy1`, unable to guarantee safety of access to optional attribute `nickname` on entity type `User`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy1`, unable to guarantee safety of access to optional attribute `nickname` on entity type `User`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unable to guarantee safety of access to optional attribute `nickname` on entity type `User`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unable to guarantee safety of access to optional attribute `nickname` on entity type `User`"
+        ]
+      },
+      "policy2": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy3": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy4": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy5": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

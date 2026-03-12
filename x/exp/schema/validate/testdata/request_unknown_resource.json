@@ -1,0 +1,19 @@
+{
+    "schema": "testdata/request_unknown_resource.cedarschema",
+    "policies": "testdata/request_unknown_resource.cedar",
+    "shouldValidate": true,
+    "entities": "testdata/request_unknown_resource.entities.json",
+    "requests": [
+        {
+            "description": "unknown resource type",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Unknown", "id": "x" },
+            "context": {},
+            "validateRequest": true,
+            "decision": "deny",
+            "reason": [],
+            "errors": []
+        }
+    ]
+}

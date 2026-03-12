@@ -1,0 +1,25 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": [
+    {
+      "description": "entity uid in context instead of long",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "context `{count: User::\"alice\"}` is not valid for `Action::\"view\"`"
+      ]
+    }
+  ]
+}

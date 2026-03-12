@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/dual_errors.cedarschema",
+    "policies": "testdata/dual_errors.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/dual_errors.entities.json",
+    "requests": []
+}

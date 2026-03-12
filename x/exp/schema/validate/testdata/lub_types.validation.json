@@ -1,0 +1,44 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy2": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy3": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy4": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy5": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy6": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy7": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

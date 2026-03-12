@@ -53,3 +53,26 @@ func TestEncoderError(t *testing.T) {
 	err := encoder.Encode((*parser.Policy)(policy))
 	testutil.Error(t, err)
 }
+
+func TestMarshalExpr(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		node ast.Node
+		want string
+	}{
+		{"boolean", ast.Boolean(true), "true"},
+		{"string", ast.String("hello"), `"hello"`},
+		{"long", ast.Long(42), "42"},
+		{"variable", ast.Principal(), "principal"},
+		{"add", ast.Long(1).Add(ast.Long(2)), "1 + 2"},
+		{"equals", ast.Principal().Equal(ast.Principal()), "principal == principal"},
+		{"access", ast.Context().Access("foo"), "context.foo"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parser.MarshalExpr(tt.node.AsIsNode())
+			testutil.Equals(t, got, tt.want)
+		})
+	}
+}

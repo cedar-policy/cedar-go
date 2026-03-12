@@ -1,0 +1,68 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
+      "the types Document and User are not compatible",
+      "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found",
+      "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found",
+      "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found",
+      "for policy `policy3`, attribute `nonexistent` on entity type `User` not found"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, attribute `nonexistent` on entity type `User` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, attribute `nonexistent` on entity type `User` not found"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types Document and User are not compatible"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
+          "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found",
+          "for policy `policy2`, attribute `nonexistent` on entity type `User` not found"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
+          "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
+          "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

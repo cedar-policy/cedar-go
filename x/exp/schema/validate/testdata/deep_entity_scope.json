@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/deep_entity_scope.cedarschema",
+    "policies": "testdata/deep_entity_scope.cedar",
+    "shouldValidate": true,
+    "entities": "testdata/deep_entity_scope.entities.json",
+    "requests": []
+}

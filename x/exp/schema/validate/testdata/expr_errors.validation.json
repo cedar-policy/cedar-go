@@ -1,0 +1,396 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unexpected type: expected Bool but saw String",
+      "for policy `policy1`, unexpected type: expected Bool but saw String",
+      "for policy `policy2`, unexpected type: expected Bool but saw String",
+      "for policy `policy3`, unexpected type: expected Bool but saw String",
+      "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String",
+      "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String",
+      "for policy `policy5`, unexpected type: expected Long but saw String",
+      "for policy `policy6`, unexpected type: expected Long but saw String",
+      "for policy `policy7`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy8`, unexpected type: expected Set<__cedar::internal::AnyEntity>, or __cedar::internal::AnyEntity but saw String",
+      "for policy `policy9`, unexpected type: expected Set<__cedar::internal::Any> but saw String",
+      "for policy `policy10`, unexpected type: expected Set<__cedar::internal::Any> but saw String",
+      "for policy `policy11`, unexpected type: expected Set<__cedar::internal::Any> but saw String",
+      "for policy `policy12`, unexpected type: expected String but saw Long",
+      "for policy `policy13`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy14`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw String",
+      "for policy `policy15`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw String",
+      "for policy `policy16`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy17`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy18`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy19`, extension constructors may not be called with non-literal expressions",
+      "for policy `policy20`, error during extension function argument validation: Failed to parse as IP address: `\"not-an-ip\"`",
+      "for policy `policy21`, error during extension function argument validation: Failed to parse as a decimal value: `\"not-a-decimal\"`",
+      "for policy `policy22`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`",
+      "for policy `policy23`, unexpected type: expected String but saw Long",
+      "for policy `policy24`, unexpected type: expected Bool but saw String",
+      "for policy `policy25`, unexpected type: expected Bool but saw String",
+      "the types Long and String are not compatible",
+      "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy28`, unexpected type: expected Set<__cedar::internal::Any> but saw String",
+      "for policy `policy29`, error during extension function argument validation: Failed to parse as a datetime value: `\"not-a-date\"`",
+      "for policy `policy30`, error during extension function argument validation: Failed to parse as a duration value: `\"not-a-dur\"`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unexpected type: expected Bool but saw String",
+      "for policy `policy1`, unexpected type: expected Bool but saw String",
+      "for policy `policy2`, unexpected type: expected Bool but saw String",
+      "for policy `policy3`, unexpected type: expected Bool but saw String",
+      "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String",
+      "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String",
+      "for policy `policy5`, unexpected type: expected Long but saw String",
+      "for policy `policy6`, unexpected type: expected Long but saw String",
+      "for policy `policy7`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy8`, unexpected type: expected Set<__cedar::internal::AnyEntity>, or __cedar::internal::AnyEntity but saw String",
+      "for policy `policy9`, unexpected type: expected Set<__cedar::internal::Any> but saw String",
+      "for policy `policy10`, unexpected type: expected Set<__cedar::internal::Any> but saw String",
+      "for policy `policy11`, unexpected type: expected Set<__cedar::internal::Any> but saw String",
+      "for policy `policy12`, unexpected type: expected String but saw Long",
+      "for policy `policy13`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy14`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw String",
+      "for policy `policy15`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw String",
+      "for policy `policy16`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy17`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy18`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy19`, unexpected type: expected String but saw Long",
+      "for policy `policy20`, error during extension function argument validation: Failed to parse as IP address: `\"not-an-ip\"`",
+      "for policy `policy21`, error during extension function argument validation: Failed to parse as a decimal value: `\"not-a-decimal\"`",
+      "for policy `policy22`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`",
+      "for policy `policy23`, unexpected type: expected String but saw Long",
+      "for policy `policy24`, unexpected type: expected Bool but saw String",
+      "for policy `policy25`, unexpected type: expected Bool but saw String",
+      "the types Long and String are not compatible",
+      "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+      "for policy `policy28`, unexpected type: expected Set<__cedar::internal::Any> but saw String",
+      "for policy `policy29`, error during extension function argument validation: Failed to parse as a datetime value: `\"not-a-date\"`",
+      "for policy `policy30`, error during extension function argument validation: Failed to parse as a duration value: `\"not-a-dur\"`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unexpected type: expected Bool but saw String"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unexpected type: expected Bool but saw String"
+        ]
+      },
+      "policy10": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy10`, unexpected type: expected Set<__cedar::internal::Any> but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy10`, unexpected type: expected Set<__cedar::internal::Any> but saw String"
+        ]
+      },
+      "policy11": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy11`, unexpected type: expected Set<__cedar::internal::Any> but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy11`, unexpected type: expected Set<__cedar::internal::Any> but saw String"
+        ]
+      },
+      "policy12": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy12`, unexpected type: expected String but saw Long"
+        ],
+        "permissiveErrors": [
+          "for policy `policy12`, unexpected type: expected String but saw Long"
+        ]
+      },
+      "policy13": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy13`, unexpected type: expected __cedar::internal::AnyEntity but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy13`, unexpected type: expected __cedar::internal::AnyEntity but saw String"
+        ]
+      },
+      "policy14": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy14`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy14`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw String"
+        ]
+      },
+      "policy15": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy15`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy15`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw String"
+        ]
+      },
+      "policy16": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy16`, attribute `nonexistent` on entity type `User` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy16`, attribute `nonexistent` on entity type `User` not found"
+        ]
+      },
+      "policy17": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy17`, unexpected type: expected __cedar::internal::AnyEntity but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy17`, unexpected type: expected __cedar::internal::AnyEntity but saw String"
+        ]
+      },
+      "policy18": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy18`, unexpected type: expected __cedar::internal::AnyEntity but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy18`, unexpected type: expected __cedar::internal::AnyEntity but saw String"
+        ]
+      },
+      "policy19": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy19`, extension constructors may not be called with non-literal expressions"
+        ],
+        "permissiveErrors": [
+          "for policy `policy19`, unexpected type: expected String but saw Long"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unexpected type: expected Bool but saw String"
+        ]
+      },
+      "policy20": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy20`, error during extension function argument validation: Failed to parse as IP address: `\"not-an-ip\"`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy20`, error during extension function argument validation: Failed to parse as IP address: `\"not-an-ip\"`"
+        ]
+      },
+      "policy21": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy21`, error during extension function argument validation: Failed to parse as a decimal value: `\"not-a-decimal\"`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy21`, error during extension function argument validation: Failed to parse as a decimal value: `\"not-a-decimal\"`"
+        ]
+      },
+      "policy22": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy22`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy22`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`"
+        ]
+      },
+      "policy23": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy23`, unexpected type: expected String but saw Long"
+        ],
+        "permissiveErrors": [
+          "for policy `policy23`, unexpected type: expected String but saw Long"
+        ]
+      },
+      "policy24": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy24`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy24`, unexpected type: expected Bool but saw String"
+        ]
+      },
+      "policy25": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy25`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy25`, unexpected type: expected Bool but saw String"
+        ]
+      },
+      "policy26": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types Long and String are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types Long and String are not compatible"
+        ]
+      },
+      "policy27": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+          "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
+          "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String"
+        ]
+      },
+      "policy28": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy28`, unexpected type: expected Set<__cedar::internal::Any> but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy28`, unexpected type: expected Set<__cedar::internal::Any> but saw String"
+        ]
+      },
+      "policy29": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy29`, error during extension function argument validation: Failed to parse as a datetime value: `\"not-a-date\"`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy29`, error during extension function argument validation: Failed to parse as a datetime value: `\"not-a-date\"`"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, unexpected type: expected Bool but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, unexpected type: expected Bool but saw String"
+        ]
+      },
+      "policy30": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy30`, error during extension function argument validation: Failed to parse as a duration value: `\"not-a-dur\"`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy30`, error during extension function argument validation: Failed to parse as a duration value: `\"not-a-dur\"`"
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String",
+          "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String",
+          "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String"
+        ]
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy5`, unexpected type: expected Long but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy5`, unexpected type: expected Long but saw String"
+        ]
+      },
+      "policy6": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy6`, unexpected type: expected Long but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy6`, unexpected type: expected Long but saw String"
+        ]
+      },
+      "policy7": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy7`, unexpected type: expected __cedar::internal::AnyEntity but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy7`, unexpected type: expected __cedar::internal::AnyEntity but saw String"
+        ]
+      },
+      "policy8": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy8`, unexpected type: expected Set<__cedar::internal::AnyEntity>, or __cedar::internal::AnyEntity but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy8`, unexpected type: expected Set<__cedar::internal::AnyEntity>, or __cedar::internal::AnyEntity but saw String"
+        ]
+      },
+      "policy9": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy9`, unexpected type: expected Set<__cedar::internal::Any> but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy9`, unexpected type: expected Set<__cedar::internal::Any> but saw String"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}
