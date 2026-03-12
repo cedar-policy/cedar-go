@@ -46,9 +46,9 @@ func TestInspectCounts(t *testing.T) {
 		{"Record", NewNode(NodeTypeRecord{Elements: []RecordElementNode{{Key: "k", Value: leaf1}}}), 2},
 		{"Set", NewNode(NodeTypeSet{Elements: []IsNode{leaf1, leaf2}}), 3},
 		{"Variable", NewNode(NodeTypeVariable{Name: "v"}), 1},
-		{"StrOpNode", NewNode(StrOpNode{Arg: leaf1, Value: "a"}), 2},
-		{"BinaryNode", NewNode(BinaryNode{Left: leaf1, Right: leaf2}), 3},
-		{"UnaryNode", NewNode(UnaryNode{Arg: leaf1}), 2},
+		{"StrOpNode", NewNode(NodeTypeAccess{StrOpNode{Arg: leaf1, Value: "a"}}), 2},
+		{"BinaryNode", NewNode(NodeTypeOr{BinaryNode{Left: leaf1, Right: leaf2}}), 3},
+		{"UnaryNode", NewNode(NodeTypeNot{UnaryNode{Arg: leaf1}}), 2},
 		{"Value", NewNode(leaf1), 1},
 	}
 

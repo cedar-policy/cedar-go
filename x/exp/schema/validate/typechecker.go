@@ -1302,6 +1302,18 @@ func exprVarName(n ast.IsNode) types.String {
 		if parent != "" {
 			return parent + "." + nd.Value
 		}
+	case ast.NodeTypeIfThenElse, ast.NodeTypeOr, ast.NodeTypeAnd,
+		ast.NodeTypeLessThan, ast.NodeTypeLessThanOrEqual,
+		ast.NodeTypeGreaterThan, ast.NodeTypeGreaterThanOrEqual,
+		ast.NodeTypeNotEquals, ast.NodeTypeEquals, ast.NodeTypeIn,
+		ast.NodeTypeHas, ast.NodeTypeHasTag, ast.NodeTypeLike,
+		ast.NodeTypeIs, ast.NodeTypeIsIn,
+		ast.NodeTypeSub, ast.NodeTypeAdd, ast.NodeTypeMult,
+		ast.NodeTypeNegate, ast.NodeTypeNot,
+		ast.NodeTypeGetTag, ast.NodeTypeExtensionCall,
+		ast.NodeTypeContains, ast.NodeTypeContainsAll, ast.NodeTypeContainsAny,
+		ast.NodeTypeIsEmpty, ast.NodeValue, ast.NodeTypeRecord,
+		ast.NodeTypeSet:
 	}
 	return ""
 }
@@ -1426,6 +1438,17 @@ func (v *Validator) exprToActionEUID(env *requestEnv, n ast.IsNode) *types.Entit
 				return &uid
 			}
 		}
+	case ast.NodeTypeIfThenElse, ast.NodeTypeOr, ast.NodeTypeAnd,
+		ast.NodeTypeLessThan, ast.NodeTypeLessThanOrEqual,
+		ast.NodeTypeGreaterThan, ast.NodeTypeGreaterThanOrEqual,
+		ast.NodeTypeNotEquals, ast.NodeTypeEquals, ast.NodeTypeIn,
+		ast.NodeTypeHas, ast.NodeTypeHasTag, ast.NodeTypeLike,
+		ast.NodeTypeIs, ast.NodeTypeIsIn,
+		ast.NodeTypeSub, ast.NodeTypeAdd, ast.NodeTypeMult,
+		ast.NodeTypeNegate, ast.NodeTypeNot,
+		ast.NodeTypeAccess, ast.NodeTypeGetTag, ast.NodeTypeExtensionCall,
+		ast.NodeTypeContains, ast.NodeTypeContainsAll, ast.NodeTypeContainsAny,
+		ast.NodeTypeIsEmpty, ast.NodeTypeRecord, ast.NodeTypeSet:
 	}
 	return nil
 }

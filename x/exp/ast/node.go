@@ -21,7 +21,6 @@ type StrOpNode struct {
 	Value types.String
 }
 
-func (n StrOpNode) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
 func (n StrOpNode) inspect(fn func(IsNode) bool) {
 	inspectNode(n.Arg, fn)
 }
@@ -30,7 +29,6 @@ type BinaryNode struct {
 	Left, Right IsNode
 }
 
-func (n BinaryNode) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
 func (n BinaryNode) inspect(fn func(IsNode) bool) {
 	inspectNode(n.Left, fn)
 	inspectNode(n.Right, fn)
@@ -49,37 +47,65 @@ func (n NodeTypeIfThenElse) inspect(fn func(IsNode) bool) {
 
 type NodeTypeOr struct{ BinaryNode }
 
+func (n NodeTypeOr) isNode() { _ = 0 }
+
 type NodeTypeAnd struct {
 	BinaryNode
 }
 
+func (n NodeTypeAnd) isNode() { _ = 0 }
+
 type NodeTypeLessThan struct {
 	BinaryNode
 }
+
+func (n NodeTypeLessThan) isNode() { _ = 0 }
+
 type NodeTypeLessThanOrEqual struct {
 	BinaryNode
 }
+
+func (n NodeTypeLessThanOrEqual) isNode() { _ = 0 }
+
 type NodeTypeGreaterThan struct {
 	BinaryNode
 }
+
+func (n NodeTypeGreaterThan) isNode() { _ = 0 }
+
 type NodeTypeGreaterThanOrEqual struct {
 	BinaryNode
 }
+
+func (n NodeTypeGreaterThanOrEqual) isNode() { _ = 0 }
+
 type NodeTypeNotEquals struct {
 	BinaryNode
 }
+
+func (n NodeTypeNotEquals) isNode() { _ = 0 }
+
 type NodeTypeEquals struct {
 	BinaryNode
 }
+
+func (n NodeTypeEquals) isNode() { _ = 0 }
+
 type NodeTypeIn struct {
 	BinaryNode
 }
+
+func (n NodeTypeIn) isNode() { _ = 0 }
 
 type NodeTypeHas struct {
 	StrOpNode
 }
 
+func (n NodeTypeHas) isNode() { _ = 0 }
+
 type NodeTypeHasTag struct{ BinaryNode }
+
+func (n NodeTypeHasTag) isNode() { _ = 0 }
 
 type NodeTypeLike struct {
 	Arg   IsNode
@@ -118,28 +144,42 @@ type NodeTypeSub struct {
 	AddNode
 }
 
+func (n NodeTypeSub) isNode() { _ = 0 }
+
 type NodeTypeAdd struct {
 	BinaryNode
 	AddNode
 }
 
+func (n NodeTypeAdd) isNode() { _ = 0 }
+
 type NodeTypeMult struct{ BinaryNode }
+
+func (n NodeTypeMult) isNode() { _ = 0 }
 
 type UnaryNode struct {
 	Arg IsNode
 }
 
-func (n UnaryNode) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
 func (n UnaryNode) inspect(fn func(IsNode) bool) {
 	inspectNode(n.Arg, fn)
 }
 
 type NodeTypeNegate struct{ UnaryNode }
+
+func (n NodeTypeNegate) isNode() { _ = 0 }
+
 type NodeTypeNot struct{ UnaryNode }
+
+func (n NodeTypeNot) isNode() { _ = 0 }
 
 type NodeTypeAccess struct{ StrOpNode }
 
+func (n NodeTypeAccess) isNode() { _ = 0 }
+
 type NodeTypeGetTag struct{ BinaryNode }
+
+func (n NodeTypeGetTag) isNode() { _ = 0 }
 
 type NodeTypeExtensionCall struct {
 	Name types.Path
@@ -186,16 +226,26 @@ func NewMethodCall(lhs Node, method types.Path, args ...Node) Node {
 type NodeTypeContains struct {
 	BinaryNode
 }
+
+func (n NodeTypeContains) isNode() { _ = 0 }
+
 type NodeTypeContainsAll struct {
 	BinaryNode
 }
+
+func (n NodeTypeContainsAll) isNode() { _ = 0 }
+
 type NodeTypeContainsAny struct {
 	BinaryNode
 }
 
+func (n NodeTypeContainsAny) isNode() { _ = 0 }
+
 type NodeTypeIsEmpty struct {
 	UnaryNode
 }
+
+func (n NodeTypeIsEmpty) isNode() { _ = 0 }
 
 type NodeValue struct {
 	Value types.Value
@@ -238,6 +288,7 @@ type NodeTypeVariable struct {
 func (n NodeTypeVariable) isNode()                   { _ = 0 } // No-op statement injected for code coverage instrumentation
 func (n NodeTypeVariable) inspect(func(IsNode) bool) { _ = 0 } // No-op statements injected for code coverage instrumentation
 
+//sumtype:decl
 type IsNode interface {
 	isNode()
 	inspect(func(IsNode) bool)
