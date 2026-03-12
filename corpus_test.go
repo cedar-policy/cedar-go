@@ -14,6 +14,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
+	"github.com/cedar-policy/cedar-go/internal/testvalidate"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/batch"
 	"github.com/cedar-policy/cedar-go/x/exp/schema"
@@ -58,6 +59,9 @@ var corpusArchive []byte
 
 //go:embed corpus-tests-json-schemas.tar.gz
 var corpusJSONSchemasArchive []byte
+
+//go:embed corpus-tests-validation.tar.gz
+var corpusValidationArchive []byte
 
 type tarFileDataPointer struct {
 	Position int64
@@ -139,6 +143,9 @@ func TestCorpus(t *testing.T) {
 
 	// Load JSON schemas for validation
 	jsonSchemasFdm := loadTarGz(t, corpusJSONSchemasArchive)
+
+	// Load validation results from Rust Cedar
+	validationFdm := loadTarGz(t, corpusValidationArchive)
 
 	for _, testFile := range testFiles {
 		testFile := testFile
@@ -241,6 +248,33 @@ func TestCorpus(t *testing.T) {
 			if err != nil {
 				t.Fatal("error parsing policy set", err)
 			}
+
+			// Load Rust validation results for this test
+			testBasename := strings.TrimSuffix(strings.TrimPrefix(testFile, "corpus-tests/"), ".json")
+			validationPath := fmt.Sprintf("corpus-tests-validation/%s.validation.json", testBasename)
+			validationContent, err := validationFdm.GetFileData(validationPath)
+			if err != nil {
+				t.Fatal("error reading validation data", err)
+			}
+			cv := testvalidate.ParseValidation(t, validationContent)
+
+			rs, err := s.Resolve()
+			testutil.OK(t, err)
+
+			// Build requests for validation checks
+			var requests []cedar.Request
+			for _, r := range tt.Requests {
+				requests = append(requests, cedar.Request{
+					Principal: cedar.EntityUID(r.Principal),
+					Action:    cedar.EntityUID(r.Action),
+					Resource:  cedar.EntityUID(r.Resource),
+					Context:   r.Context,
+				})
+			}
+
+			testvalidate.RunPolicyChecks(t, rs, policySet, cv)
+			testvalidate.RunEntityChecks(t, rs, entities, cv)
+			testvalidate.RunRequestChecks(t, rs, cv, requests)
 
 			for _, request := range tt.Requests {
 				if len(request.Reasons) == 0 && request.Reasons != nil {

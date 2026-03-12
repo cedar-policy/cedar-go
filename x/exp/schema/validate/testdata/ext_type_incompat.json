@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/ext_type_incompat.cedarschema",
+    "policies": "testdata/ext_type_incompat.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/ext_type_incompat.entities.json",
+    "requests": []
+}

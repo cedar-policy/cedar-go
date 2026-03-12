@@ -1,0 +1,62 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": [
+    {
+      "description": "valid request",
+      "strict": true,
+      "permissive": true
+    },
+    {
+      "description": "unknown action",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "action `Action::\"delete\"` does not exist in the supplied schema"
+      ]
+    },
+    {
+      "description": "wrong principal type",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "principal type `Document` is not valid for `Action::\"view\"`"
+      ]
+    },
+    {
+      "description": "wrong resource type",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "resource type `User` is not valid for `Action::\"view\"`"
+      ]
+    },
+    {
+      "description": "unknown principal type",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "principal type `Unknown` is not declared in the schema"
+      ]
+    },
+    {
+      "description": "invalid context",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "context `{reason: 42}` is not valid for `Action::\"view\"`"
+      ]
+    }
+  ]
+}

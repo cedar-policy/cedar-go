@@ -1,0 +1,25 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": [
+    {
+      "description": "unknown resource type",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "resource type `Unknown` is not declared in the schema"
+      ]
+    }
+  ]
+}

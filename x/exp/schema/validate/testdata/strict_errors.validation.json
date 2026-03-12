@@ -1,0 +1,66 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": true,
+    "strictErrors": [
+      "for policy `policy0`, empty set literals are forbidden in policies",
+      "the types Long and String are not compatible",
+      "for policy `policy2`, extension constructors may not be called with non-literal expressions",
+      "the types Document and User are not compatible",
+      "the types Long and String are not compatible",
+      "the types Set<Long> and Set<String> are not compatible"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "for policy `policy0`, empty set literals are forbidden in policies"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types Long and String are not compatible"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "for policy `policy2`, extension constructors may not be called with non-literal expressions"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types Document and User are not compatible"
+        ]
+      },
+      "policy4": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types Long and String are not compatible"
+        ]
+      },
+      "policy6": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types Set<Long> and Set<String> are not compatible"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

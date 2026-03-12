@@ -1,0 +1,23 @@
+entity User;
+entity Document;
+
+action "top" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};
+action "mid1" in [Action::"top"] appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};
+action "mid2" in [Action::"top"] appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};
+action "leaf" in [Action::"mid1", Action::"mid2"] appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

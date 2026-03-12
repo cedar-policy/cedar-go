@@ -1,0 +1,9 @@
+entity a = {
+  r: { inner: String },
+} tags Set<String>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {},
+};

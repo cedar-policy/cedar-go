@@ -1,0 +1,13 @@
+entity User {
+    name: String,
+    age: Long,
+};
+entity Document;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {
+        level: Long,
+    },
+};

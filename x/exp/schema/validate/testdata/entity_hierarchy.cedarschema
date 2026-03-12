@@ -1,0 +1,18 @@
+entity User in [Group, Team];
+entity Admin in [Group];
+entity Group in [Org];
+entity Team in [Org];
+entity Org;
+entity Document;
+
+action "view" appliesTo {
+    principal: [User, Admin],
+    resource: Document,
+    context: {},
+};
+
+action "edit" in [Action::"view"] appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

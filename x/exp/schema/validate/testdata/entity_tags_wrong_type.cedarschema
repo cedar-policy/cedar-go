@@ -1,0 +1,11 @@
+entity Folder;
+
+entity Document in [Folder] {
+  title: String,
+  public: Bool,
+} tags String;
+
+action view appliesTo {
+  principal: Document,
+  resource: Document
+};

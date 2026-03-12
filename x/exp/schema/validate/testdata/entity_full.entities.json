@@ -1,0 +1,44 @@
+[
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": {
+            "name": "Alice",
+            "age": 30,
+            "active": true,
+            "scores": [90, 85, 95],
+            "addr": { "__extn": { "fn": "ip", "arg": "10.0.0.1" } }
+        },
+        "parents": [
+            { "type": "Group", "id": "staff" }
+        ],
+        "tags": {
+            "role": ["admin"]
+        }
+    },
+    {
+        "uid": { "type": "Group", "id": "staff" },
+        "attrs": {
+            "label": "Staff Group"
+        },
+        "parents": []
+    },
+    {
+        "uid": { "type": "Document", "id": "doc1" },
+        "attrs": {
+            "title": "Test Doc"
+        },
+        "parents": []
+    },
+    {
+        "uid": { "type": "Action", "id": "view" },
+        "attrs": {},
+        "parents": []
+    },
+    {
+        "uid": { "type": "Action", "id": "admin" },
+        "attrs": {},
+        "parents": [
+            { "type": "Action", "id": "view" }
+        ]
+    }
+]

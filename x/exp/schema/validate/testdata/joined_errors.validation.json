@@ -1,0 +1,120 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unrecognized entity type `Unknown`",
+      "for policy `policy0`, unrecognized entity type `Unknown`",
+      "for policy `policy1`, unrecognized entity type `Unknown`",
+      "for policy `policy2`, unrecognized entity type `Bar`",
+      "for policy `policy2`, unrecognized entity type `Foo`",
+      "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy4`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy4`, unable to guarantee safety of access to tag `principal.nonexistent` on entity type `User`",
+      "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`",
+      "for policy `policy5`, unexpected type: expected String but saw Long",
+      "for policy `policy6`, unrecognized entity type `Bar`",
+      "for policy `policy6`, unrecognized entity type `Foo`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unrecognized entity type `Unknown`",
+      "for policy `policy0`, unrecognized entity type `Unknown`",
+      "for policy `policy1`, unrecognized entity type `Unknown`",
+      "for policy `policy2`, unrecognized entity type `Bar`",
+      "for policy `policy2`, unrecognized entity type `Foo`",
+      "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy4`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy4`, unable to guarantee safety of access to tag `principal.nonexistent` on entity type `User`",
+      "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`",
+      "for policy `policy5`, unexpected type: expected String but saw Long",
+      "for policy `policy6`, unrecognized entity type `Bar`",
+      "for policy `policy6`, unrecognized entity type `Foo`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unrecognized entity type `Unknown`",
+          "for policy `policy0`, unrecognized entity type `Unknown`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unrecognized entity type `Unknown`",
+          "for policy `policy0`, unrecognized entity type `Unknown`"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unrecognized entity type `Unknown`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unrecognized entity type `Unknown`"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unrecognized entity type `Bar`",
+          "for policy `policy2`, unrecognized entity type `Foo`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unrecognized entity type `Bar`",
+          "for policy `policy2`, unrecognized entity type `Foo`"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, attribute `nonexistent` on entity type `User` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, attribute `nonexistent` on entity type `User` not found"
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy4`, attribute `nonexistent` on entity type `User` not found",
+          "for policy `policy4`, unable to guarantee safety of access to tag `principal.nonexistent` on entity type `User`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy4`, attribute `nonexistent` on entity type `User` not found",
+          "for policy `policy4`, unable to guarantee safety of access to tag `principal.nonexistent` on entity type `User`"
+        ]
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy5`, unexpected type: expected String but saw Long",
+          "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy5`, unexpected type: expected String but saw Long",
+          "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`"
+        ]
+      },
+      "policy6": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy6`, unrecognized entity type `Bar`",
+          "for policy `policy6`, unrecognized entity type `Foo`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy6`, unrecognized entity type `Bar`",
+          "for policy `policy6`, unrecognized entity type `Foo`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

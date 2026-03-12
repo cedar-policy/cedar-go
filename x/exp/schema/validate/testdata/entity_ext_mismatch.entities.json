@@ -1,0 +1,9 @@
+[
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": {
+            "amount": { "__extn": { "fn": "ip", "arg": "127.0.0.1" } }
+        },
+        "parents": []
+    }
+]

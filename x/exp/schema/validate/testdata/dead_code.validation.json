@@ -1,0 +1,116 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy1`, unrecognized entity type `Unknown`",
+      "for policy `policy1`, unrecognized entity type `Unknown`",
+      "for policy `policy3`, unrecognized entity type `Unknown`",
+      "for policy `policy3`, unrecognized entity type `Unknown`",
+      "for policy `policy4`, unrecognized entity type `Unknown`",
+      "for policy `policy4`, unrecognized entity type `Unknown`",
+      "for policy `policy5`, unrecognized entity type `Unknown`",
+      "for policy `policy5`, unrecognized entity type `Unknown`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy1`, unrecognized entity type `Unknown`",
+      "for policy `policy1`, unrecognized entity type `Unknown`",
+      "for policy `policy3`, unrecognized entity type `Unknown`",
+      "for policy `policy3`, unrecognized entity type `Unknown`",
+      "for policy `policy4`, unrecognized entity type `Unknown`",
+      "for policy `policy4`, unrecognized entity type `Unknown`",
+      "for policy `policy5`, unrecognized entity type `Unknown`",
+      "for policy `policy5`, unrecognized entity type `Unknown`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unrecognized entity type `Unknown`",
+          "for policy `policy1`, unrecognized entity type `Unknown`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unrecognized entity type `Unknown`",
+          "for policy `policy1`, unrecognized entity type `Unknown`"
+        ]
+      },
+      "policy10": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy11": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy12": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy2": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, unrecognized entity type `Unknown`",
+          "for policy `policy3`, unrecognized entity type `Unknown`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, unrecognized entity type `Unknown`",
+          "for policy `policy3`, unrecognized entity type `Unknown`"
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy4`, unrecognized entity type `Unknown`",
+          "for policy `policy4`, unrecognized entity type `Unknown`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy4`, unrecognized entity type `Unknown`",
+          "for policy `policy4`, unrecognized entity type `Unknown`"
+        ]
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy5`, unrecognized entity type `Unknown`",
+          "for policy `policy5`, unrecognized entity type `Unknown`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy5`, unrecognized entity type `Unknown`",
+          "for policy `policy5`, unrecognized entity type `Unknown`"
+        ]
+      },
+      "policy6": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy7": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy8": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy9": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

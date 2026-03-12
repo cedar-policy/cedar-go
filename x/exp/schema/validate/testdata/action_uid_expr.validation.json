@@ -1,0 +1,56 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy1`, unrecognized action `Action::\"nonexistent\"`",
+      "for policy `policy5`, attribute `nonexistent` on entity type `User` not found"
+    ],
+    "permissiveErrors": [
+      "for policy `policy1`, unrecognized action `Action::\"nonexistent\"`",
+      "for policy `policy5`, attribute `nonexistent` on entity type `User` not found"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unrecognized action `Action::\"nonexistent\"`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unrecognized action `Action::\"nonexistent\"`"
+        ]
+      },
+      "policy2": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy3": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy4": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy5`, attribute `nonexistent` on entity type `User` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy5`, attribute `nonexistent` on entity type `User` not found"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

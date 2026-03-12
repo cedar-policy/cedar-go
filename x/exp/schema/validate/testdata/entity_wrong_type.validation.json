@@ -1,0 +1,22 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "User::alice": {
+        "errors": [
+          "entity does not conform to the schema: in attribute `name` on `User::\"alice\"`, type mismatch: value was expected to have type string, but it actually has type long: `42`"
+        ]
+      }
+    }
+  },
+  "requestValidation": []
+}

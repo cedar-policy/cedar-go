@@ -1,0 +1,41 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": [
+    {
+      "description": "wrong context with string bool and long values",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "context `{active: 42, count: \"not_a_number\", name: true}` is not valid for `Action::\"view\"`"
+      ]
+    },
+    {
+      "description": "wrong context with false boolean values",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "context `{active: \"not_bool\", count: false, name: false}` is not valid for `Action::\"view\"`"
+      ]
+    },
+    {
+      "description": "wrong context with set value",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "context `{active: true, count: [1, 2], name: \"ok\"}` is not valid for `Action::\"view\"`"
+      ]
+    }
+  ]
+}

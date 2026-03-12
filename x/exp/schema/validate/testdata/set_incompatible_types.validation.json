@@ -1,0 +1,28 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "the types Long and String are not compatible"
+    ],
+    "permissiveErrors": [
+      "the types Long and String are not compatible"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types Long and String are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types Long and String are not compatible"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

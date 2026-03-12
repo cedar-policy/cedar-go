@@ -1,0 +1,22 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "User::alice": {
+        "errors": [
+          "entity does not conform to the schema: expected entity `User::\"alice\"` to have attribute `age`, but it does not"
+        ]
+      }
+    }
+  },
+  "requestValidation": []
+}

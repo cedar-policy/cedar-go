@@ -1,0 +1,9 @@
+[
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": {
+            "session": { "__extn": { "fn": "decimal", "arg": "1.0" } }
+        },
+        "parents": []
+    }
+]

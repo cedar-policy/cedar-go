@@ -1,0 +1,22 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "User::alice": {
+        "errors": [
+          "error during entity deserialization: failed to evaluate attribute `ip_addr` of `User::\"alice\"`: error while evaluating `ipaddr` extension function: invalid IP address: not_an_ip"
+        ]
+      }
+    }
+  },
+  "requestValidation": []
+}

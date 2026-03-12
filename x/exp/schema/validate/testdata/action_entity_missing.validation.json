@@ -1,0 +1,23 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "Action::edit": {
+        "errors": [
+          "entity does not conform to the schema: definition of action `Action::\"edit\"` does not match its schema declaration"
+        ]
+      },
+      "Action::view": {}
+    }
+  },
+  "requestValidation": []
+}

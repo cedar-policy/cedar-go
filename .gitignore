@@ -2,3 +2,8 @@
 tmp/
 .DS_Store
 coverage.out
+test/cedar-validation-tool/target/
+*.out
+.ai/
+ideas/
+agate-*

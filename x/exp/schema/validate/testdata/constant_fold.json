@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/constant_fold.cedarschema",
+    "policies": "testdata/constant_fold.cedar",
+    "shouldValidate": true,
+    "entities": "testdata/constant_fold.entities.json",
+    "requests": []
+}

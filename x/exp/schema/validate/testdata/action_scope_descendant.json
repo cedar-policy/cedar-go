@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/action_scope_descendant.cedarschema",
+    "policies": "testdata/action_scope_descendant.cedar",
+    "shouldValidate": true,
+    "entities": "testdata/action_scope_descendant.entities.json",
+    "requests": []
+}

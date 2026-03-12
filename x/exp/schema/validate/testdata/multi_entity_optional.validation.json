@@ -1,0 +1,28 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "the types Admin and User are not compatible"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unable to guarantee safety of access to optional attribute `email` on entity types `Admin`, `User`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types Admin and User are not compatible"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unable to guarantee safety of access to optional attribute `email` on entity types `Admin`, `User`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

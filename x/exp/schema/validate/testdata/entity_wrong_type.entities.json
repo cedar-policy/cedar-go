@@ -1,0 +1,13 @@
+[
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": {
+            "name": 42,
+            "age": 30,
+            "active": true,
+            "buddy": { "type": "User", "id": "bob" },
+            "scores": [1, 2]
+        },
+        "parents": []
+    }
+]

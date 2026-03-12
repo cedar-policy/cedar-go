@@ -1,0 +1,40 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy1`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw Long"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy1`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw Long"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, attribute `nonexistent` on entity type `User` not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, attribute `nonexistent` on entity type `User` not found"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw Long"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw Long"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

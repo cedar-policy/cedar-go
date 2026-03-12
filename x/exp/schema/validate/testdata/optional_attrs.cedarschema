@@ -1,0 +1,16 @@
+entity User {
+    name: String,
+    nickname?: String,
+};
+
+entity Document {
+    title: String,
+};
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {
+        reason?: String,
+    },
+};

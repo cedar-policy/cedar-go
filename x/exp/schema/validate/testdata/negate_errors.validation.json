@@ -1,0 +1,60 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unexpected type: expected Long but saw User",
+      "for policy `policy2`, unrecognized entity type `Unknown`",
+      "for policy `policy3`, unrecognized entity type `Unknown`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unexpected type: expected Long but saw User",
+      "for policy `policy2`, unrecognized entity type `Unknown`",
+      "for policy `policy3`, unrecognized entity type `Unknown`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unexpected type: expected Long but saw User"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unexpected type: expected Long but saw User"
+        ]
+      },
+      "policy1": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unrecognized entity type `Unknown`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unrecognized entity type `Unknown`"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, unrecognized entity type `Unknown`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, unrecognized entity type `Unknown`"
+        ]
+      },
+      "policy4": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

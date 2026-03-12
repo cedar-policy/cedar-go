@@ -1,0 +1,5 @@
+namespace App {
+    entity User;
+    entity Document;
+    action noop;
+}

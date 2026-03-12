@@ -1,8 +1,10 @@
 package types
 
 import (
+	"fmt"
 	"hash/fnv"
-	"strconv"
+
+	"github.com/cedar-policy/cedar-go/internal/rust"
 )
 
 // A String is a sequence of characters consisting of letters, numbers, or symbols.
@@ -21,7 +23,7 @@ func (s String) String() string {
 
 // MarshalCedar produces a valid MarshalCedar language representation of the String, e.g. `"hello"`.
 func (s String) MarshalCedar() []byte {
-	return []byte(strconv.Quote(string(s)))
+	return []byte(fmt.Sprintf(`"%s"`, rust.EscapeString(string(s))))
 }
 
 func (s String) hash() uint64 {

@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/lub_attr_conflict.cedarschema",
+    "policies": "testdata/lub_attr_conflict.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/lub_attr_conflict.entities.json",
+    "requests": []
+}

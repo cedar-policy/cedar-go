@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/scope_edge_cases.cedarschema",
+    "policies": "testdata/scope_edge_cases.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/scope_edge_cases.entities.json",
+    "requests": []
+}

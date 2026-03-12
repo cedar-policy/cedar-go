@@ -1,0 +1,22 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "User::alice": {
+        "errors": [
+          "error during entity deserialization: in attribute `friend` on `User::\"alice\"`, expected a literal entity reference, but got `\"not_an_entity\"`"
+        ]
+      }
+    }
+  },
+  "requestValidation": []
+}

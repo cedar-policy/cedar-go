@@ -1,0 +1,30 @@
+[
+    {
+        "uid": { "__entity": { "type": "Action", "id": "top" } },
+        "attrs": {},
+        "parents": []
+    },
+    {
+        "uid": { "__entity": { "type": "Action", "id": "mid1" } },
+        "attrs": {},
+        "parents": [
+            { "__entity": { "type": "Action", "id": "top" } }
+        ]
+    },
+    {
+        "uid": { "__entity": { "type": "Action", "id": "mid2" } },
+        "attrs": {},
+        "parents": [
+            { "__entity": { "type": "Action", "id": "top" } }
+        ]
+    },
+    {
+        "uid": { "__entity": { "type": "Action", "id": "leaf" } },
+        "attrs": {},
+        "parents": [
+            { "__entity": { "type": "Action", "id": "mid1" } },
+            { "__entity": { "type": "Action", "id": "mid2" } },
+            { "__entity": { "type": "Action", "id": "top" } }
+        ]
+    }
+]

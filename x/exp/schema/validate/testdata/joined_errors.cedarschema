@@ -1,0 +1,14 @@
+entity User {
+    name: String,
+    age: Long,
+} tags String;
+
+entity Document {
+    title: String,
+};
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

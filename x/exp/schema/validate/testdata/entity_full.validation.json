@@ -1,0 +1,28 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "Action::admin": {},
+      "Action::view": {},
+      "Document::doc1": {},
+      "Group::staff": {},
+      "User::alice": {}
+    }
+  },
+  "requestValidation": [
+    {
+      "description": "User views Document",
+      "strict": true,
+      "permissive": true
+    }
+  ]
+}

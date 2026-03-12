@@ -1,0 +1,7 @@
+[
+    {
+        "uid": { "type": "Action", "id": "view" },
+        "attrs": { "extra": "bad" },
+        "parents": []
+    }
+]

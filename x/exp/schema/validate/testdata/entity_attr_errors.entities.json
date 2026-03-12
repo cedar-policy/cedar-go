@@ -1,0 +1,22 @@
+[
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": {
+            "name": "Alice",
+            "age": 30,
+            "active": true,
+            "scores": [90, 85],
+            "addr": { "__extn": { "fn": "ip", "arg": "10.0.0.1" } },
+            "balance": { "__extn": { "fn": "decimal", "arg": "100.50" } },
+            "joined": { "__extn": { "fn": "datetime", "arg": "2024-01-15" } },
+            "session": { "__extn": { "fn": "duration", "arg": "1h30m" } },
+            "extra_field": "should not be here"
+        },
+        "parents": [
+            { "type": "Group", "id": "staff" }
+        ],
+        "tags": {
+            "role": ["admin"]
+        }
+    }
+]

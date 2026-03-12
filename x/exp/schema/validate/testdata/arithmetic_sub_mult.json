@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/arithmetic_sub_mult.cedarschema",
+    "policies": "testdata/arithmetic_sub_mult.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/arithmetic_sub_mult.entities.json",
+    "requests": []
+}

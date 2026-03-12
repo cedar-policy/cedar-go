@@ -10,6 +10,13 @@ import (
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
+// MarshalExpr marshals an AST expression node to its Cedar text representation.
+func MarshalExpr(n ast.IsNode) string {
+	var buf bytes.Buffer
+	astNodeToMarshalNode(n).marshalCedar(&buf)
+	return buf.String()
+}
+
 func (p *Policy) MarshalCedar(buf *bytes.Buffer) {
 	for _, a := range p.Annotations {
 		marshalAnnotation(a, buf)

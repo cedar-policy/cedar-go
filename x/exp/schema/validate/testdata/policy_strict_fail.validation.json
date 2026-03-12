@@ -1,0 +1,28 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": true,
+    "strictErrors": [
+      "for policy `policy0`, empty set literals are forbidden in policies"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "for policy `policy0`, empty set literals are forbidden in policies"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": [
+    {
+      "description": "User views Document",
+      "strict": true,
+      "permissive": true
+    }
+  ]
+}

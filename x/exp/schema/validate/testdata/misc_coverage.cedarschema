@@ -1,0 +1,17 @@
+entity User {
+    name: String,
+};
+
+entity Document {
+    title: String,
+} tags String;
+
+action "view" appliesTo {
+    principal: [User],
+    resource: Document,
+    context: {
+        tagKey: String,
+    },
+};
+
+action "noop";

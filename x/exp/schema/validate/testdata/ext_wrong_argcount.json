@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/ext_wrong_argcount.cedarschema",
+    "policies": "testdata/ext_wrong_argcount.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/ext_wrong_argcount.entities.json",
+    "requests": []
+}

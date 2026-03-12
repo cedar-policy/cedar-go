@@ -1,0 +1,15 @@
+[
+    {
+        "uid": { "type": "Action", "id": "view" },
+        "attrs": {},
+        "parents": []
+    },
+    {
+        "uid": { "type": "Action", "id": "edit" },
+        "attrs": {},
+        "parents": [
+            { "type": "Action", "id": "view" },
+            { "type": "Action", "id": "nonexistent" }
+        ]
+    }
+]

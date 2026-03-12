@@ -1,0 +1,10 @@
+entity User in [Group];
+entity Group in [Org];
+entity Org;
+entity Document;
+
+action "view" appliesTo {
+    principal: [User, Group, Org],
+    resource: Document,
+    context: {},
+};

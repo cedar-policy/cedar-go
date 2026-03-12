@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/resource_isin_errors.cedarschema",
+    "policies": "testdata/resource_isin_errors.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/resource_isin_errors.entities.json",
+    "requests": []
+}

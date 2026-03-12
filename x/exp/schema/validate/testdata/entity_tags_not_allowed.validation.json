@@ -1,0 +1,22 @@
+{
+  "policyValidation": {
+    "strict": true,
+    "permissive": true,
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "User::alice": {
+        "errors": [
+          "error during entity deserialization: found a tag `role` on `User::\"alice\"`, but no tags should exist on `User::\"alice\"` according to the schema"
+        ]
+      }
+    }
+  },
+  "requestValidation": []
+}

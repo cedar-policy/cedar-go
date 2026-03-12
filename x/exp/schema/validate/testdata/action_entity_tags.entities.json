@@ -1,0 +1,8 @@
+[
+    {
+        "uid": { "type": "Action", "id": "view" },
+        "attrs": {},
+        "parents": [],
+        "tags": { "env": "prod" }
+    }
+]

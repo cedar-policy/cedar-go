@@ -1,0 +1,19 @@
+{
+    "schema": "testdata/entity_full.cedarschema",
+    "policies": "testdata/entity_full.cedar",
+    "shouldValidate": true,
+    "entities": "testdata/entity_full.entities.json",
+    "requests": [
+        {
+            "description": "User views Document",
+            "principal": { "type": "User", "id": "alice" },
+            "action": { "type": "Action", "id": "view" },
+            "resource": { "type": "Document", "id": "doc1" },
+            "context": {},
+            "validateRequest": true,
+            "decision": "allow",
+            "reason": ["policy0"],
+            "errors": []
+        }
+    ]
+}

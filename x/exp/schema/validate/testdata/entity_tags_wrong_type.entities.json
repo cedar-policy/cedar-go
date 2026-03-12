@@ -1,0 +1,15 @@
+[
+  {
+    "uid": {"type": "Document", "id": "doc1"},
+    "parents": [
+      {"type": "Folder", "id": "folder1"}
+    ],
+    "attrs": {
+      "title": "My Doc",
+      "public": true
+    },
+    "tags": {
+      "category": 42
+    }
+  }
+]

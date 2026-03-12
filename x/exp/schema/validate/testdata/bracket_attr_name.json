@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/bracket_attr_name.cedarschema",
+    "policies": "testdata/bracket_attr_name.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/bracket_attr_name.entities.json",
+    "requests": []
+}
