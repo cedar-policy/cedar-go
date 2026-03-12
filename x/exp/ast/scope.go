@@ -85,81 +85,74 @@ func (p *Policy) ResourceIsIn(entityType types.EntityType, entity types.EntityUI
 	return p
 }
 
+//sumtype:decl
 type IsScopeNode interface {
 	isScope()
 }
 
+//sumtype:decl
 type IsPrincipalScopeNode interface {
 	IsScopeNode
 	isPrincipalScope()
 }
 
+//sumtype:decl
 type IsActionScopeNode interface {
 	IsScopeNode
 	isActionScope()
 }
 
+//sumtype:decl
 type IsResourceScopeNode interface {
 	IsScopeNode
 	isResourceScope()
 }
 
-type ScopeNode struct{}
+type ScopeTypeAll struct{}
 
-func (n ScopeNode) isScope() { _ = 0 } // No-op statement injected for code coverage instrumentation
-
-type PrincipalScopeNode struct{}
-
-func (n PrincipalScopeNode) isPrincipalScope() { _ = 0 } // No-op statement injected for code coverage instrumentation
-
-type ActionScopeNode struct{}
-
-func (n ActionScopeNode) isActionScope() { _ = 0 } // No-op statement injected for code coverage instrumentation
-
-type ResourceScopeNode struct{}
-
-func (n ResourceScopeNode) isResourceScope() { _ = 0 } // No-op statement injected for code coverage instrumentation
-
-type ScopeTypeAll struct {
-	ScopeNode
-	PrincipalScopeNode
-	ActionScopeNode
-	ResourceScopeNode
-}
+func (n ScopeTypeAll) isScope()          { _ = 0 }
+func (n ScopeTypeAll) isPrincipalScope() { _ = 0 }
+func (n ScopeTypeAll) isActionScope()    { _ = 0 }
+func (n ScopeTypeAll) isResourceScope()  { _ = 0 }
 
 type ScopeTypeEq struct {
-	ScopeNode
-	PrincipalScopeNode
-	ActionScopeNode
-	ResourceScopeNode
 	Entity types.EntityUID
 }
+
+func (n ScopeTypeEq) isScope()          { _ = 0 }
+func (n ScopeTypeEq) isPrincipalScope() { _ = 0 }
+func (n ScopeTypeEq) isActionScope()    { _ = 0 }
+func (n ScopeTypeEq) isResourceScope()  { _ = 0 }
 
 type ScopeTypeIn struct {
-	ScopeNode
-	PrincipalScopeNode
-	ActionScopeNode
-	ResourceScopeNode
 	Entity types.EntityUID
 }
 
+func (n ScopeTypeIn) isScope()          { _ = 0 }
+func (n ScopeTypeIn) isPrincipalScope() { _ = 0 }
+func (n ScopeTypeIn) isActionScope()    { _ = 0 }
+func (n ScopeTypeIn) isResourceScope()  { _ = 0 }
+
 type ScopeTypeInSet struct {
-	ScopeNode
-	ActionScopeNode
 	Entities []types.EntityUID
 }
 
+func (n ScopeTypeInSet) isScope()       { _ = 0 }
+func (n ScopeTypeInSet) isActionScope() { _ = 0 }
+
 type ScopeTypeIs struct {
-	ScopeNode
-	PrincipalScopeNode
-	ResourceScopeNode
 	Type types.EntityType
 }
 
+func (n ScopeTypeIs) isScope()          { _ = 0 }
+func (n ScopeTypeIs) isPrincipalScope() { _ = 0 }
+func (n ScopeTypeIs) isResourceScope()  { _ = 0 }
+
 type ScopeTypeIsIn struct {
-	ScopeNode
-	PrincipalScopeNode
-	ResourceScopeNode
 	Type   types.EntityType
 	Entity types.EntityUID
 }
+
+func (n ScopeTypeIsIn) isScope()          { _ = 0 }
+func (n ScopeTypeIsIn) isPrincipalScope() { _ = 0 }
+func (n ScopeTypeIsIn) isResourceScope()  { _ = 0 }

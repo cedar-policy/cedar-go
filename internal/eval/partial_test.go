@@ -152,13 +152,6 @@ func TestPartialScopeEval(t *testing.T) {
 
 }
 
-func TestPartialScopeEvalPanic(t *testing.T) {
-	t.Parallel()
-	testutil.Panic(t, func() {
-		partialScopeEval(Env{}, types.NewEntityUID("T", "1"), nil)
-	})
-}
-
 func TestPartialPolicy(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

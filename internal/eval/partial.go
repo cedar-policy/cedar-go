@@ -123,7 +123,7 @@ func partialResourceScope(env Env, ent types.Value, scope ast.IsResourceScopeNod
 	}
 }
 
-func partialScopeEval(env Env, ent types.Value, in ast.IsScopeNode) (evaled bool, result bool) {
+func partialScopeEval(env Env, ent types.Value, in ast.IsScopeNode) (bool, bool) {
 	if IsVariable(ent) {
 		return false, false
 	} else if IsIgnore(ent) {
@@ -133,23 +133,24 @@ func partialScopeEval(env Env, ent types.Value, in ast.IsScopeNode) (evaled bool
 	if !ok {
 		return false, false
 	}
+
+	var result bool
 	switch t := in.(type) {
 	case ast.ScopeTypeAll:
-		return true, true
+		result = true
 	case ast.ScopeTypeEq:
-		return true, e == t.Entity
+		result = e == t.Entity
 	case ast.ScopeTypeIn:
-		return true, entityInOne(env, e, t.Entity)
+		result = entityInOne(env, e, t.Entity)
 	case ast.ScopeTypeInSet:
 		set := mapset.Immutable(t.Entities...)
-		return true, entityInSet(env, e, set)
+		result = entityInSet(env, e, set)
 	case ast.ScopeTypeIs:
-		return true, e.Type == t.Type
+		result = e.Type == t.Type
 	case ast.ScopeTypeIsIn:
-		return true, e.Type == t.Type && entityInOne(env, e, t.Entity)
-	default:
-		panic(fmt.Sprintf("unknown scope type %T", t))
+		result = e.Type == t.Type && entityInOne(env, e, t.Entity)
 	}
+	return true, result
 }
 
 var errVariable = fmt.Errorf("variable")

@@ -42,8 +42,6 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 			Entity: types.ImplicitlyMarshaledEntityUID(t.Entity),
 		}
 		return
-	default:
-		panic(fmt.Sprintf("unknown scope type %T", t))
 	}
 }
 
