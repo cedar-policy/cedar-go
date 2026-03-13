@@ -124,7 +124,7 @@ func ParseDecimal(s string) (Decimal, error) {
 	}
 
 	tenThousandths := int16(fracPart) * int16(math.Pow10(4-decimalPlaces))
-	if intPart < 0 {
+	if s[0] == '-' {
 		tenThousandths = -tenThousandths
 	}
 
