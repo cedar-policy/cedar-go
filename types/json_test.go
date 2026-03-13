@@ -28,9 +28,9 @@ func TestJSON_Value(t *testing.T) {
 		want Value
 		err  error
 	}{
-		{"impliedEntity", `{ "type": "User", "id": "alice" }`, EntityUID{Type: "User", ID: "alice"}, nil},
+		{"impliedEntity", `{ "type": "User", "id": "alice" }`, NewRecord(RecordMap{"type": String("User"), "id": String("alice")}), nil},
 		{"explicitEntity", `{ "__entity": { "type": "User", "id": "alice" } }`, EntityUID{Type: "User", ID: "alice"}, nil},
-		{"impliedLongEntity", `{ "type": "User::External", "id": "alice" }`, EntityUID{Type: "User::External", ID: "alice"}, nil},
+		{"impliedLongEntity", `{ "type": "User::External", "id": "alice" }`, NewRecord(RecordMap{"type": String("User::External"), "id": String("alice")}), nil},
 		{"explicitLongEntity", `{ "__entity": { "type": "User::External", "id": "alice" } }`, EntityUID{Type: "User::External", ID: "alice"}, nil},
 		{"invalidJSON", `!@#$`, zeroValue(), errJSONDecode},
 		{"numericOverflow", "12341234123412341234", zeroValue(), errJSONLongOutOfRange},
