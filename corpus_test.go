@@ -18,6 +18,7 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/batch"
 	"github.com/cedar-policy/cedar-go/x/exp/schema"
+	exptypes "github.com/cedar-policy/cedar-go/x/exp/types"
 )
 
 // jsonEntity is not part of entityValue as I can find
@@ -161,16 +162,6 @@ func TestCorpus(t *testing.T) {
 				t.Fatal("error unmarshalling test", err)
 			}
 
-			entitiesContent, err := fdm.GetFileData(tt.Entities)
-			if err != nil {
-				t.Fatal("error reading entities content", err)
-			}
-
-			var entities cedar.EntityMap
-			if err := json.Unmarshal(entitiesContent, &entities); err != nil {
-				t.Fatal("error unmarshalling test", err)
-			}
-
 			schemaContent, err := fdm.GetFileData(tt.Schema)
 			if err != nil {
 				t.Fatal("error reading schema content", err)
@@ -260,6 +251,18 @@ func TestCorpus(t *testing.T) {
 
 			rs, err := s.Resolve()
 			testutil.OK(t, err)
+
+			// Load and parse entities using schema-guided parsing
+			entitiesContent, err := fdm.GetFileData(tt.Entities)
+			if err != nil {
+				t.Fatal("error reading entities content", err)
+			}
+
+			var expEntities exptypes.EntityMap
+			if err := expEntities.UnmarshalJSONWithSchema(entitiesContent, rs); err != nil {
+				t.Fatal("error unmarshalling entities with schema", err)
+			}
+			entities := cedar.EntityMap(expEntities)
 
 			// Build requests for validation checks
 			var requests []cedar.Request
