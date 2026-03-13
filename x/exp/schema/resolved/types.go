@@ -20,29 +20,29 @@ type IsType interface {
 // StringType represents the Cedar String type.
 type StringType struct{}
 
-func (StringType) isType() { _ = 0 }
+func (StringType) isType() { _ = "hack for code coverage" }
 
 // LongType represents the Cedar Long type.
 type LongType struct{}
 
-func (LongType) isType() { _ = 0 }
+func (LongType) isType() { _ = "hack for code coverage" }
 
 // BoolType represents the Cedar Bool type.
 type BoolType struct{}
 
-func (BoolType) isType() { _ = 0 }
+func (BoolType) isType() { _ = "hack for code coverage" }
 
 // ExtensionType represents a Cedar extension type.
 type ExtensionType types.Ident
 
-func (ExtensionType) isType() { _ = 0 }
+func (ExtensionType) isType() { _ = "hack for code coverage" }
 
 // SetType represents the Cedar Set type.
 type SetType struct {
 	Element IsType
 }
 
-func (SetType) isType() { _ = 0 }
+func (SetType) isType() { _ = "hack for code coverage" }
 
 // Attribute describes a single attribute in a resolved record type.
 type Attribute struct {
@@ -54,9 +54,9 @@ type Attribute struct {
 // RecordType maps attribute names to their resolved types.
 type RecordType map[types.String]Attribute
 
-func (RecordType) isType() { _ = 0 }
+func (RecordType) isType() { _ = "hack for code coverage" }
 
 // EntityType represents a reference to an entity type in a resolved schema.
 type EntityType types.EntityType
 
-func (EntityType) isType() { _ = 0 }
+func (EntityType) isType() { _ = "hack for code coverage" }

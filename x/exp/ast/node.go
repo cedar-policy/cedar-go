@@ -38,7 +38,7 @@ type NodeTypeIfThenElse struct {
 	If, Then, Else IsNode
 }
 
-func (n NodeTypeIfThenElse) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
+func (n NodeTypeIfThenElse) isNode() { _ = "hack for code coverage" }
 func (n NodeTypeIfThenElse) inspect(fn func(IsNode) bool) {
 	inspectNode(n.If, fn)
 	inspectNode(n.Then, fn)
@@ -47,72 +47,72 @@ func (n NodeTypeIfThenElse) inspect(fn func(IsNode) bool) {
 
 type NodeTypeOr struct{ BinaryNode }
 
-func (n NodeTypeOr) isNode() { _ = 0 }
+func (n NodeTypeOr) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeAnd struct {
 	BinaryNode
 }
 
-func (n NodeTypeAnd) isNode() { _ = 0 }
+func (n NodeTypeAnd) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeLessThan struct {
 	BinaryNode
 }
 
-func (n NodeTypeLessThan) isNode() { _ = 0 }
+func (n NodeTypeLessThan) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeLessThanOrEqual struct {
 	BinaryNode
 }
 
-func (n NodeTypeLessThanOrEqual) isNode() { _ = 0 }
+func (n NodeTypeLessThanOrEqual) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeGreaterThan struct {
 	BinaryNode
 }
 
-func (n NodeTypeGreaterThan) isNode() { _ = 0 }
+func (n NodeTypeGreaterThan) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeGreaterThanOrEqual struct {
 	BinaryNode
 }
 
-func (n NodeTypeGreaterThanOrEqual) isNode() { _ = 0 }
+func (n NodeTypeGreaterThanOrEqual) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeNotEquals struct {
 	BinaryNode
 }
 
-func (n NodeTypeNotEquals) isNode() { _ = 0 }
+func (n NodeTypeNotEquals) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeEquals struct {
 	BinaryNode
 }
 
-func (n NodeTypeEquals) isNode() { _ = 0 }
+func (n NodeTypeEquals) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeIn struct {
 	BinaryNode
 }
 
-func (n NodeTypeIn) isNode() { _ = 0 }
+func (n NodeTypeIn) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeHas struct {
 	StrOpNode
 }
 
-func (n NodeTypeHas) isNode() { _ = 0 }
+func (n NodeTypeHas) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeHasTag struct{ BinaryNode }
 
-func (n NodeTypeHasTag) isNode() { _ = 0 }
+func (n NodeTypeHasTag) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeLike struct {
 	Arg   IsNode
 	Value types.Pattern
 }
 
-func (n NodeTypeLike) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
+func (n NodeTypeLike) isNode() { _ = "hack for code coverage" }
 func (n NodeTypeLike) inspect(fn func(IsNode) bool) {
 	inspectNode(n.Arg, fn)
 }
@@ -122,7 +122,7 @@ type NodeTypeIs struct {
 	EntityType types.EntityType
 }
 
-func (n NodeTypeIs) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
+func (n NodeTypeIs) isNode() { _ = "hack for code coverage" }
 func (n NodeTypeIs) inspect(fn func(IsNode) bool) {
 	inspectNode(n.Left, fn)
 }
@@ -144,18 +144,18 @@ type NodeTypeSub struct {
 	AddNode
 }
 
-func (n NodeTypeSub) isNode() { _ = 0 }
+func (n NodeTypeSub) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeAdd struct {
 	BinaryNode
 	AddNode
 }
 
-func (n NodeTypeAdd) isNode() { _ = 0 }
+func (n NodeTypeAdd) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeMult struct{ BinaryNode }
 
-func (n NodeTypeMult) isNode() { _ = 0 }
+func (n NodeTypeMult) isNode() { _ = "hack for code coverage" }
 
 type UnaryNode struct {
 	Arg IsNode
@@ -167,26 +167,26 @@ func (n UnaryNode) inspect(fn func(IsNode) bool) {
 
 type NodeTypeNegate struct{ UnaryNode }
 
-func (n NodeTypeNegate) isNode() { _ = 0 }
+func (n NodeTypeNegate) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeNot struct{ UnaryNode }
 
-func (n NodeTypeNot) isNode() { _ = 0 }
+func (n NodeTypeNot) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeAccess struct{ StrOpNode }
 
-func (n NodeTypeAccess) isNode() { _ = 0 }
+func (n NodeTypeAccess) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeGetTag struct{ BinaryNode }
 
-func (n NodeTypeGetTag) isNode() { _ = 0 }
+func (n NodeTypeGetTag) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeExtensionCall struct {
 	Name types.Path
 	Args []IsNode
 }
 
-func (n NodeTypeExtensionCall) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
+func (n NodeTypeExtensionCall) isNode() { _ = "hack for code coverage" }
 func (n NodeTypeExtensionCall) inspect(fn func(IsNode) bool) {
 	for _, a := range n.Args {
 		inspectNode(a, fn)
@@ -227,32 +227,32 @@ type NodeTypeContains struct {
 	BinaryNode
 }
 
-func (n NodeTypeContains) isNode() { _ = 0 }
+func (n NodeTypeContains) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeContainsAll struct {
 	BinaryNode
 }
 
-func (n NodeTypeContainsAll) isNode() { _ = 0 }
+func (n NodeTypeContainsAll) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeContainsAny struct {
 	BinaryNode
 }
 
-func (n NodeTypeContainsAny) isNode() { _ = 0 }
+func (n NodeTypeContainsAny) isNode() { _ = "hack for code coverage" }
 
 type NodeTypeIsEmpty struct {
 	UnaryNode
 }
 
-func (n NodeTypeIsEmpty) isNode() { _ = 0 }
+func (n NodeTypeIsEmpty) isNode() { _ = "hack for code coverage" }
 
 type NodeValue struct {
 	Value types.Value
 }
 
-func (n NodeValue) isNode()                   { _ = 0 } // No-op statement injected for code coverage instrumentation
-func (n NodeValue) inspect(func(IsNode) bool) { _ = 0 } // No-op statement injected for code coverage instrumentation
+func (n NodeValue) isNode()                   { _ = "hack for code coverage" }
+func (n NodeValue) inspect(func(IsNode) bool) { _ = "hack for code coverage" }
 
 type RecordElementNode struct {
 	Key   types.String
@@ -263,7 +263,7 @@ type NodeTypeRecord struct {
 	Elements []RecordElementNode
 }
 
-func (n NodeTypeRecord) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
+func (n NodeTypeRecord) isNode() { _ = "hack for code coverage" }
 func (n NodeTypeRecord) inspect(fn func(IsNode) bool) {
 	for _, e := range n.Elements {
 		inspectNode(e.Value, fn)
@@ -274,7 +274,7 @@ type NodeTypeSet struct {
 	Elements []IsNode
 }
 
-func (n NodeTypeSet) isNode() { _ = 0 } // No-op statement injected for code coverage instrumentation
+func (n NodeTypeSet) isNode() { _ = "hack for code coverage" }
 func (n NodeTypeSet) inspect(fn func(IsNode) bool) {
 	for _, e := range n.Elements {
 		inspectNode(e, fn)
@@ -285,8 +285,8 @@ type NodeTypeVariable struct {
 	Name types.String
 }
 
-func (n NodeTypeVariable) isNode()                   { _ = 0 } // No-op statement injected for code coverage instrumentation
-func (n NodeTypeVariable) inspect(func(IsNode) bool) { _ = 0 } // No-op statements injected for code coverage instrumentation
+func (n NodeTypeVariable) isNode()                   { _ = "hack for code coverage" }
+func (n NodeTypeVariable) inspect(func(IsNode) bool) { _ = "hack for code coverage" }
 
 //sumtype:decl
 type IsNode interface {
