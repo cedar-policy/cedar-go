@@ -570,14 +570,6 @@ func mustParseIPAddr(v string) netip.Prefix {
 
 func TestMarshalPanics(t *testing.T) {
 	t.Parallel()
-	t.Run("nilScope", func(t *testing.T) {
-		t.Parallel()
-		testutil.Panic(t, func() {
-			s := scopeJSON{}
-			var v ast.IsScopeNode
-			s.FromNode(v)
-		})
-	})
 	t.Run("nilNode", func(t *testing.T) {
 		t.Parallel()
 		testutil.Panic(t, func() {

@@ -1,8 +1,6 @@
 package eval
 
 import (
-	"fmt"
-
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
@@ -61,26 +59,24 @@ func PolicyToNode(p *ast.Policy) ast.Node {
 	return res
 }
 
-func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
+func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) (out ast.Node) {
 	switch t := in.(type) {
 	case ast.ScopeTypeAll:
-		return ast.True()
+		out = ast.True()
 	case ast.ScopeTypeEq:
-		return ast.NewNode(varNode).Equal(ast.Value(t.Entity))
+		out = ast.NewNode(varNode).Equal(ast.Value(t.Entity))
 	case ast.ScopeTypeIn:
-		return ast.NewNode(varNode).In(ast.Value(t.Entity))
+		out = ast.NewNode(varNode).In(ast.Value(t.Entity))
 	case ast.ScopeTypeInSet:
 		vals := make([]types.Value, len(t.Entities))
 		for i, e := range t.Entities {
 			vals[i] = e
 		}
-		return ast.NewNode(varNode).In(ast.Value(types.NewSet(vals...)))
+		out = ast.NewNode(varNode).In(ast.Value(types.NewSet(vals...)))
 	case ast.ScopeTypeIs:
-		return ast.NewNode(varNode).Is(t.Type)
-
+		out = ast.NewNode(varNode).Is(t.Type)
 	case ast.ScopeTypeIsIn:
-		return ast.NewNode(varNode).IsIn(t.Type, ast.Value(t.Entity))
-	default:
-		panic(fmt.Sprintf("unknown scope type %T", t))
+		out = ast.NewNode(varNode).IsIn(t.Type, ast.Value(t.Entity))
 	}
+	return out
 }

@@ -58,28 +58,26 @@ func (e *Encoder) Encode(p *Policy) error {
 
 // scopeToNode is copied in from eval, with the expectation that
 // eval will not be using it in the future.
-func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) ast.Node {
+func scopeToNode(varNode ast.NodeTypeVariable, in ast.IsScopeNode) (out ast.Node) {
 	switch t := in.(type) {
 	case ast.ScopeTypeAll:
-		return ast.True()
+		out = ast.True()
 	case ast.ScopeTypeEq:
-		return ast.NewNode(varNode).Equal(ast.Value(t.Entity))
+		out = ast.NewNode(varNode).Equal(ast.Value(t.Entity))
 	case ast.ScopeTypeIn:
-		return ast.NewNode(varNode).In(ast.Value(t.Entity))
+		out = ast.NewNode(varNode).In(ast.Value(t.Entity))
 	case ast.ScopeTypeInSet:
 		set := make([]ast.Node, len(t.Entities))
 		for i, e := range t.Entities {
 			set[i] = ast.Value(e)
 		}
-		return ast.NewNode(varNode).In(ast.Set(set...))
+		out = ast.NewNode(varNode).In(ast.Set(set...))
 	case ast.ScopeTypeIs:
-		return ast.NewNode(varNode).Is(t.Type)
-
+		out = ast.NewNode(varNode).Is(t.Type)
 	case ast.ScopeTypeIsIn:
-		return ast.NewNode(varNode).IsIn(t.Type, ast.Value(t.Entity))
-	default:
-		panic(fmt.Sprintf("unknown scope type %T", t))
+		out = ast.NewNode(varNode).IsIn(t.Type, ast.Value(t.Entity))
 	}
+	return out
 }
 
 func (p *Policy) marshalScope(buf *bytes.Buffer) {

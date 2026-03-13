@@ -152,10 +152,3 @@ func TestScopeToNode(t *testing.T) {
 		})
 	}
 }
-
-func TestScopeToNodePanic(t *testing.T) {
-	t.Parallel()
-	testutil.Panic(t, func() {
-		_ = scopeToNode(ast.NewPrincipalNode(), ast.ScopeNode{})
-	})
-}

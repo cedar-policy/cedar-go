@@ -10,19 +10,36 @@ import (
 func TestIsNode(t *testing.T) {
 	t.Parallel()
 
-	BinaryNode{}.isNode()
+	NodeTypeOr{}.isNode()
+	NodeTypeAnd{}.isNode()
+	NodeTypeLessThan{}.isNode()
+	NodeTypeLessThanOrEqual{}.isNode()
+	NodeTypeGreaterThan{}.isNode()
+	NodeTypeGreaterThanOrEqual{}.isNode()
+	NodeTypeNotEquals{}.isNode()
+	NodeTypeEquals{}.isNode()
+	NodeTypeIn{}.isNode()
+	NodeTypeHas{}.isNode()
+	NodeTypeHasTag{}.isNode()
+	NodeTypeSub{}.isNode()
+	NodeTypeAdd{}.isNode()
+	NodeTypeMult{}.isNode()
+	NodeTypeNegate{}.isNode()
+	NodeTypeNot{}.isNode()
+	NodeTypeAccess{}.isNode()
+	NodeTypeGetTag{}.isNode()
+	NodeTypeContains{}.isNode()
+	NodeTypeContainsAll{}.isNode()
+	NodeTypeContainsAny{}.isNode()
+	NodeTypeIsEmpty{}.isNode()
 	NodeTypeExtensionCall{}.isNode()
 	NodeTypeIfThenElse{}.isNode()
-	NodeTypeIsEmpty{}.isNode()
 	NodeTypeIs{}.isNode()
 	NodeTypeLike{}.isNode()
 	NodeTypeRecord{}.isNode()
 	NodeTypeSet{}.isNode()
 	NodeTypeVariable{}.isNode()
 	NodeValue{}.isNode()
-	ScopeNode{}.isScope()
-	StrOpNode{}.isNode()
-	UnaryNode{}.isNode()
 }
 
 func TestAsNode(t *testing.T) {
@@ -34,10 +51,31 @@ func TestAsNode(t *testing.T) {
 
 func TestIsScope(t *testing.T) {
 	t.Parallel()
-	ScopeNode{}.isScope()
-	PrincipalScopeNode{}.isPrincipalScope()
-	ActionScopeNode{}.isActionScope()
-	ResourceScopeNode{}.isResourceScope()
+	ScopeTypeAll{}.isScope()
+	ScopeTypeAll{}.isPrincipalScope()
+	ScopeTypeAll{}.isActionScope()
+	ScopeTypeAll{}.isResourceScope()
+
+	ScopeTypeEq{}.isScope()
+	ScopeTypeEq{}.isPrincipalScope()
+	ScopeTypeEq{}.isActionScope()
+	ScopeTypeEq{}.isResourceScope()
+
+	ScopeTypeIn{}.isScope()
+	ScopeTypeIn{}.isPrincipalScope()
+	ScopeTypeIn{}.isActionScope()
+	ScopeTypeIn{}.isResourceScope()
+
+	ScopeTypeInSet{}.isScope()
+	ScopeTypeInSet{}.isActionScope()
+
+	ScopeTypeIs{}.isScope()
+	ScopeTypeIs{}.isPrincipalScope()
+	ScopeTypeIs{}.isResourceScope()
+
+	ScopeTypeIsIn{}.isScope()
+	ScopeTypeIsIn{}.isPrincipalScope()
+	ScopeTypeIsIn{}.isResourceScope()
 }
 
 func TestStripNodes(t *testing.T) {

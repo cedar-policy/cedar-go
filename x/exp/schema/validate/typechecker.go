@@ -1294,12 +1294,11 @@ func isEntityOrSetOfEntity(t cedarType) bool {
 }
 
 func exprVarName(n ast.IsNode) types.String {
-	switch nd := n.(type) {
-	case ast.NodeTypeVariable:
+	if nd, ok := n.(ast.NodeTypeVariable); ok {
 		return nd.Name
-	case ast.NodeTypeAccess:
-		parent := exprVarName(nd.Arg)
-		if parent != "" {
+	}
+	if nd, ok := n.(ast.NodeTypeAccess); ok {
+		if parent := exprVarName(nd.Arg); parent != "" {
 			return parent + "." + nd.Value
 		}
 	}
@@ -1415,12 +1414,10 @@ func evalLiteralEquality(left, right ast.IsNode) (bool, bool) {
 // exprToActionEUID resolves an expression to an action EntityUID if possible.
 // Returns the EUID for the `action` variable or an action entity literal.
 func (v *Validator) exprToActionEUID(env *requestEnv, n ast.IsNode) *types.EntityUID {
-	switch nd := n.(type) {
-	case ast.NodeTypeVariable:
-		if nd.Name == "action" {
-			return &env.actionUID
-		}
-	case ast.NodeValue:
+	if nd, ok := n.(ast.NodeTypeVariable); ok && nd.Name == "action" {
+		return &env.actionUID
+	}
+	if nd, ok := n.(ast.NodeValue); ok {
 		if uid, ok := nd.Value.(types.EntityUID); ok {
 			if _, isAction := v.schema.Actions[uid]; isAction {
 				return &uid

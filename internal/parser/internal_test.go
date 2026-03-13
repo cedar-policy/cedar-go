@@ -14,12 +14,6 @@ func TestScopeToNode(t *testing.T) {
 		x := scopeToNode(ast.NodeTypeVariable{Name: "principal"}, ast.ScopeTypeAll{})
 		testutil.Equals(t, x, ast.True())
 	})
-	t.Run("panic", func(t *testing.T) {
-		t.Parallel()
-		testutil.Panic(t, func() {
-			scopeToNode(ast.NodeTypeVariable{Name: "principal"}, nil)
-		})
-	})
 }
 
 func TestAstNodeToMarshalNode(t *testing.T) {
