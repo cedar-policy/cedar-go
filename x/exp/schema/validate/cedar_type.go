@@ -36,16 +36,16 @@ type entityAttrSource struct {
 type typeEntity struct{ lub entityLUB }       // Entity with LUB of types
 type typeExtension struct{ name types.Ident } // Extension type (ipaddr, decimal, etc.)
 
-func (typeNever) isCedarType()     { _ = 0 }
-func (typeTrue) isCedarType()      { _ = 0 }
-func (typeFalse) isCedarType()     { _ = 0 }
-func (typeBool) isCedarType()      { _ = 0 }
-func (typeLong) isCedarType()      { _ = 0 }
-func (typeString) isCedarType()    { _ = 0 }
-func (typeSet) isCedarType()       { _ = 0 }
-func (typeRecord) isCedarType()    { _ = 0 }
-func (typeEntity) isCedarType()    { _ = 0 }
-func (typeExtension) isCedarType() { _ = 0 }
+func (typeNever) isCedarType()     { _ = "hack for code coverage" }
+func (typeTrue) isCedarType()      { _ = "hack for code coverage" }
+func (typeFalse) isCedarType()     { _ = "hack for code coverage" }
+func (typeBool) isCedarType()      { _ = "hack for code coverage" }
+func (typeLong) isCedarType()      { _ = "hack for code coverage" }
+func (typeString) isCedarType()    { _ = "hack for code coverage" }
+func (typeSet) isCedarType()       { _ = "hack for code coverage" }
+func (typeRecord) isCedarType()    { _ = "hack for code coverage" }
+func (typeEntity) isCedarType()    { _ = "hack for code coverage" }
+func (typeExtension) isCedarType() { _ = "hack for code coverage" }
 
 // typeIncompatErr creates a type incompatibility error with types sorted to match Rust's order.
 func typeIncompatErr(a, b cedarType) *typeIncompatError {

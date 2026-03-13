@@ -110,49 +110,49 @@ type IsResourceScopeNode interface {
 
 type ScopeTypeAll struct{}
 
-func (n ScopeTypeAll) isScope()          { _ = 0 }
-func (n ScopeTypeAll) isPrincipalScope() { _ = 0 }
-func (n ScopeTypeAll) isActionScope()    { _ = 0 }
-func (n ScopeTypeAll) isResourceScope()  { _ = 0 }
+func (n ScopeTypeAll) isScope()          { _ = "hack for code coverage" }
+func (n ScopeTypeAll) isPrincipalScope() { _ = "hack for code coverage" }
+func (n ScopeTypeAll) isActionScope()    { _ = "hack for code coverage" }
+func (n ScopeTypeAll) isResourceScope()  { _ = "hack for code coverage" }
 
 type ScopeTypeEq struct {
 	Entity types.EntityUID
 }
 
-func (n ScopeTypeEq) isScope()          { _ = 0 }
-func (n ScopeTypeEq) isPrincipalScope() { _ = 0 }
-func (n ScopeTypeEq) isActionScope()    { _ = 0 }
-func (n ScopeTypeEq) isResourceScope()  { _ = 0 }
+func (n ScopeTypeEq) isScope()          { _ = "hack for code coverage" }
+func (n ScopeTypeEq) isPrincipalScope() { _ = "hack for code coverage" }
+func (n ScopeTypeEq) isActionScope()    { _ = "hack for code coverage" }
+func (n ScopeTypeEq) isResourceScope()  { _ = "hack for code coverage" }
 
 type ScopeTypeIn struct {
 	Entity types.EntityUID
 }
 
-func (n ScopeTypeIn) isScope()          { _ = 0 }
-func (n ScopeTypeIn) isPrincipalScope() { _ = 0 }
-func (n ScopeTypeIn) isActionScope()    { _ = 0 }
-func (n ScopeTypeIn) isResourceScope()  { _ = 0 }
+func (n ScopeTypeIn) isScope()          { _ = "hack for code coverage" }
+func (n ScopeTypeIn) isPrincipalScope() { _ = "hack for code coverage" }
+func (n ScopeTypeIn) isActionScope()    { _ = "hack for code coverage" }
+func (n ScopeTypeIn) isResourceScope()  { _ = "hack for code coverage" }
 
 type ScopeTypeInSet struct {
 	Entities []types.EntityUID
 }
 
-func (n ScopeTypeInSet) isScope()       { _ = 0 }
-func (n ScopeTypeInSet) isActionScope() { _ = 0 }
+func (n ScopeTypeInSet) isScope()       { _ = "hack for code coverage" }
+func (n ScopeTypeInSet) isActionScope() { _ = "hack for code coverage" }
 
 type ScopeTypeIs struct {
 	Type types.EntityType
 }
 
-func (n ScopeTypeIs) isScope()          { _ = 0 }
-func (n ScopeTypeIs) isPrincipalScope() { _ = 0 }
-func (n ScopeTypeIs) isResourceScope()  { _ = 0 }
+func (n ScopeTypeIs) isScope()          { _ = "hack for code coverage" }
+func (n ScopeTypeIs) isPrincipalScope() { _ = "hack for code coverage" }
+func (n ScopeTypeIs) isResourceScope()  { _ = "hack for code coverage" }
 
 type ScopeTypeIsIn struct {
 	Type   types.EntityType
 	Entity types.EntityUID
 }
 
-func (n ScopeTypeIsIn) isScope()          { _ = 0 }
-func (n ScopeTypeIsIn) isPrincipalScope() { _ = 0 }
-func (n ScopeTypeIsIn) isResourceScope()  { _ = 0 }
+func (n ScopeTypeIsIn) isScope()          { _ = "hack for code coverage" }
+func (n ScopeTypeIsIn) isPrincipalScope() { _ = "hack for code coverage" }
+func (n ScopeTypeIsIn) isResourceScope()  { _ = "hack for code coverage" }
