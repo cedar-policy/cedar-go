@@ -113,6 +113,46 @@ func TestEntity(t *testing.T) {
 	})
 }
 
+func TestPathQualification(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		path      types.Path
+		qualified bool
+		qualifier types.Path
+		basename  string
+	}{
+		{"NS::User", true, "NS", "User"},
+		{"A::B::C", true, "A::B", "C"},
+		{"User", false, "", "User"},
+		{"", false, "", ""},
+	}
+	for _, tt := range tests {
+		testutil.Equals(t, tt.path.IsQualified(), tt.qualified)
+		testutil.Equals(t, tt.path.Qualifier(), tt.qualifier)
+		testutil.Equals(t, tt.path.Basename(), tt.basename)
+	}
+}
+
+func TestEntityTypeQualification(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		typ       types.EntityType
+		qualified bool
+		namespace types.Namespace
+		basename  string
+	}{
+		{"NS::User", true, "NS", "User"},
+		{"A::B::C", true, "A::B", "C"},
+		{"User", false, "", "User"},
+	}
+	for _, tt := range tests {
+		testutil.Equals(t, tt.typ.Namespace(), tt.namespace)
+		testutil.Equals(t, tt.typ.Basename(), tt.basename)
+	}
+}
+
 func TestEntityUIDSet(t *testing.T) {
 	t.Parallel()
 
