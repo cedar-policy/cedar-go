@@ -260,9 +260,9 @@ func TestCorpus(t *testing.T) {
 
 			var expEntities exptypes.EntityMap
 			if err := expEntities.UnmarshalJSONWithSchema(entitiesContent, rs); err != nil {
-				t.Fatal("error unmarshalling entities with schema", err)
+				t.Fatal("error unmarshalling entities", err)
 			}
-			entities := cedar.EntityMap(expEntities)
+			entities := types.EntityMap(expEntities)
 
 			// Build requests for validation checks
 			var requests []cedar.Request

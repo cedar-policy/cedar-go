@@ -91,8 +91,8 @@ func UnmarshalJSON(b []byte, v *Value) error {
 		case '{':
 			// Try explicit EntityUID form {"__entity": {...}} before Record.
 			// Only the explicit escape is attempted here; the implicit form
-			// {"type":"X","id":"Y"} requires schema-guided parsing (see
-			// x/exp/types.EntityMap.UnmarshalJSONWithSchema).
+			// {"type":"X","id":"Y"} parses as a Record and requires
+			// schema-guided coercion (see x/exp/types.EntityMap.UnmarshalJSONWithSchema).
 			var ej entityValueJSON
 			if err := json.Unmarshal(b, &ej); err == nil && ej.Entity != nil {
 				*v = EntityUID{
