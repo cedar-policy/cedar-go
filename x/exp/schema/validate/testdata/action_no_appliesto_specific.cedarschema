@@ -1,0 +1,10 @@
+entity User;
+entity Document;
+
+action "noop";
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

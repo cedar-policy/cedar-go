@@ -12,6 +12,35 @@ import (
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
+// scopedError wraps an error with env-specific context for cross-env dedup.
+// Matches Rust's EntityLUB-based structural identity on ValidationError.
+type scopedError struct {
+	err    error
+	lubKey string
+}
+
+func (e *scopedError) Error() string { return e.err.Error() }
+func (e *scopedError) Unwrap() error { return e.err }
+
+// exprRootVar returns the root variable name of an expression, or "".
+func exprRootVar(n ast.IsNode) types.String {
+	switch v := n.(type) {
+	case ast.NodeTypeVariable:
+		return v.Name
+	case ast.NodeTypeAccess:
+		return exprRootVar(v.Arg)
+	case ast.NodeTypeAdd, ast.NodeTypeAnd, ast.NodeTypeContains, ast.NodeTypeContainsAll,
+		ast.NodeTypeContainsAny, ast.NodeTypeEquals, ast.NodeTypeExtensionCall,
+		ast.NodeTypeGetTag, ast.NodeTypeGreaterThan, ast.NodeTypeGreaterThanOrEqual,
+		ast.NodeTypeHas, ast.NodeTypeHasTag, ast.NodeTypeIfThenElse, ast.NodeTypeIn,
+		ast.NodeTypeIs, ast.NodeTypeIsEmpty, ast.NodeTypeIsIn, ast.NodeTypeLessThan,
+		ast.NodeTypeLessThanOrEqual, ast.NodeTypeLike, ast.NodeTypeMult, ast.NodeTypeNegate,
+		ast.NodeTypeNot, ast.NodeTypeNotEquals, ast.NodeTypeOr, ast.NodeTypeRecord,
+		ast.NodeTypeSet, ast.NodeTypeSub, ast.NodeValue:
+	}
+	return ""
+}
+
 // typeOfExpr infers the type of an expression given a request environment, schema, and capabilities.
 // Returns the inferred type, updated capabilities (from `has` guards), and any type error.
 func (v *Validator) typeOfExpr(env *requestEnv, expr ast.IsNode, caps capabilitySet) (cedarType, capabilitySet, error) {
@@ -327,20 +356,34 @@ func (v *Validator) typeOfIfThenElse(env *requestEnv, n ast.NodeTypeIfThenElse, 
 
 	thenCaps := caps.merge(condCaps)
 
-	// Only do constant folding when condition had no errors
-	if condErr == nil {
-		if _, ok := condType.(typeFalse); ok {
-			if err := v.validateEntityRefs(n.Then); err != nil {
-				return nil, caps, err
+	// Constant folding: skip dead branches even when condition has soft errors.
+	// This matches Rust where typeTrue/typeFalse conditions trigger dead-branch
+	// elimination regardless of sub-expression errors.
+	if _, ok := condType.(typeFalse); ok {
+		if err := v.validateEntityRefs(n.Then); err != nil {
+			if condErr != nil {
+				return nil, caps, errors.Join(condErr, err)
 			}
-			return v.typeOfExpr(env, n.Else, caps)
+			return nil, caps, err
 		}
-		if _, ok := condType.(typeTrue); ok {
-			if err := v.validateEntityRefs(n.Else); err != nil {
-				return nil, caps, err
+		t, c, e := v.typeOfExpr(env, n.Else, caps)
+		if condErr != nil {
+			return t, c, errors.Join(condErr, e)
+		}
+		return t, c, e
+	}
+	if _, ok := condType.(typeTrue); ok {
+		if err := v.validateEntityRefs(n.Else); err != nil {
+			if condErr != nil {
+				return nil, caps, errors.Join(condErr, err)
 			}
-			return v.typeOfExpr(env, n.Then, thenCaps)
+			return nil, caps, err
 		}
+		t, c, e := v.typeOfExpr(env, n.Then, thenCaps)
+		if condErr != nil {
+			return t, c, errors.Join(condErr, e)
+		}
+		return t, c, e
 	}
 
 	// Evaluate both branches
@@ -357,7 +400,14 @@ func (v *Validator) typeOfIfThenElse(env *requestEnv, n ast.NodeTypeIfThenElse, 
 		collectErrors(&errs, elseErr)
 	}
 	if len(errs) > 0 {
-		return nil, caps, errors.Join(errs...)
+		// Return recovery type from branches if available (for parent type checks)
+		var resultType cedarType
+		if thenType != nil && elseType != nil {
+			if lub, lubErr := v.leastUpperBound(thenType, elseType); lubErr == nil {
+				resultType = lub
+			}
+		}
+		return resultType, caps, errors.Join(errs...)
 	}
 
 	if err := v.checkStrictEntityLUB(thenType, elseType); err != nil {
@@ -397,6 +447,14 @@ func (v *Validator) typeOfEquality(env *requestEnv, left, right ast.IsNode, nega
 				return typeTrue{}, caps, nil
 			}
 			return typeFalse{}, caps, nil
+		}
+		if lv, lok := left.(ast.NodeTypeVariable); lok {
+			if rv, rok := right.(ast.NodeTypeVariable); rok && lv.Name == rv.Name {
+				if negated {
+					return typeFalse{}, caps, nil
+				}
+				return typeTrue{}, caps, nil
+			}
 		}
 		if areTypesDisjoint(lt, rt) {
 			if negated {
@@ -1038,7 +1096,19 @@ func (v *Validator) typeOfGetTag(env *requestEnv, n ast.NodeTypeGetTag, caps cap
 			}
 		}
 
-		errs = append(errs, fmt.Errorf("unable to guarantee safety of access to tag `%s`%s", tagExpr, entityTypeMsg))
+		var lubKey string
+		switch string(exprRootVar(n.Right)) {
+		case "principal":
+			lubKey = string(env.principalType)
+		case "resource":
+			lubKey = string(env.resourceType)
+		case "action", "context":
+			lubKey = env.actionUID.String()
+		}
+		errs = append(errs, &scopedError{
+			err:    fmt.Errorf("unable to guarantee safety of access to tag `%s`%s", tagExpr, entityTypeMsg),
+			lubKey: lubKey,
+		})
 	}
 	if len(errs) > 0 {
 		return nil, caps, errors.Join(errs...)
@@ -1127,7 +1197,11 @@ func (v *Validator) typeOfSet(env *requestEnv, n ast.NodeTypeSet, caps capabilit
 		for _, et := range elemTypes {
 			lub, err := v.leastUpperBound(elemType, et)
 			if err != nil {
-				errs = append(errs, typeIncompatErr(elemType, et))
+				if len(elemTypes) > 2 {
+					errs = append(errs, typeIncompatErrMulti(elemTypes))
+				} else {
+					errs = append(errs, typeIncompatErr(elemType, et))
+				}
 				break
 			}
 			elemType = lub
@@ -1167,6 +1241,19 @@ func (v *Validator) typeOfExtensionCall(env *requestEnv, n ast.NodeTypeExtension
 			}
 		}
 		errs = append(errs, fmt.Errorf("wrong number of arguments in extension function application. Expected %d, got %d", len(sig.argTypes), len(n.Args)))
+		// Non-literal check is independent of arg count (matches Rust behavior)
+		if sig.isConstructor && v.strict {
+			allLiteral := true
+			for _, arg := range n.Args {
+				if _, ok := arg.(ast.NodeValue); !ok {
+					allLiteral = false
+					break
+				}
+			}
+			if !allLiteral {
+				errs = append(errs, fmt.Errorf("extension constructors may not be called with non-literal expressions"))
+			}
+		}
 		return nil, caps, errors.Join(errs...)
 	}
 

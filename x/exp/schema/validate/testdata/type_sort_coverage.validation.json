@@ -1,0 +1,64 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "the types Bool and Long are not compatible",
+      "the types decimal and ipaddr are not compatible",
+      "the types Long, Document, and User are not compatible",
+      "for policy `policy3`, empty set literals are forbidden in policies"
+    ],
+    "permissiveErrors": [
+      "the types Bool and Long are not compatible",
+      "the types decimal and ipaddr are not compatible",
+      "the types Long, Document, and User are not compatible",
+      "the types Long and Set<__cedar::internal::Never> are not compatible"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types Bool and Long are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types Bool and Long are not compatible"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types decimal and ipaddr are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types decimal and ipaddr are not compatible"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types Long, Document, and User are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types Long, Document, and User are not compatible"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, empty set literals are forbidden in policies"
+        ],
+        "permissiveErrors": [
+          "the types Long and Set<__cedar::internal::Never> are not compatible"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

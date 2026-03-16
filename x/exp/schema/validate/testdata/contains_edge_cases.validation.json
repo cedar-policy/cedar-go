@@ -7,15 +7,15 @@
       "the types Document and User are not compatible",
       "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found",
       "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
-      "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
-      "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
+      "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found",
+      "for policy `policy3`, attribute `nonexistent` on entity type `User` not found"
     ],
     "permissiveErrors": [
       "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
-      "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found",
-      "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found",
-      "for policy `policy3`, attribute `nonexistent` on entity type `User` not found"
+      "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
     ],
     "perPolicy": {
       "policy0": {
@@ -43,20 +43,20 @@
           "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found"
         ],
         "permissiveErrors": [
-          "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found",
-          "for policy `policy2`, attribute `nonexistent` on entity type `User` not found"
+          "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
+          "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found"
         ]
       },
       "policy3": {
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
-          "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
+          "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found",
+          "for policy `policy3`, attribute `nonexistent` on entity type `User` not found"
         ],
         "permissiveErrors": [
-          "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
-          "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
+          "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found",
+          "for policy `policy3`, attribute `nonexistent` on entity type `User` not found"
         ]
       }
     }

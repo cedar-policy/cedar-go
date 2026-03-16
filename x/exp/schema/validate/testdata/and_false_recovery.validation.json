@@ -3,26 +3,26 @@
     "strict": false,
     "permissive": false,
     "strictErrors": [
-      "for policy `policy0`, unexpected type: expected Bool but saw Long",
       "for policy `policy0`, unexpected type: expected Long but saw String",
+      "for policy `policy0`, unexpected type: expected Bool but saw Long",
+      "for policy `policy1`, unexpected type: expected Long but saw String",
       "for policy `policy1`, unexpected type: expected Bool but saw Long",
       "for policy `policy1`, unexpected type: expected Long but saw String",
-      "for policy `policy1`, unexpected type: expected Long but saw String",
       "for policy `policy1`, unexpected type: expected Bool but saw Long",
-      "for policy `policy2`, unexpected type: expected Bool but saw Long",
       "for policy `policy2`, unexpected type: expected Long but saw String",
+      "for policy `policy2`, unexpected type: expected Bool but saw Long",
       "for policy `policy3`, unrecognized entity type `Bogus`",
       "for policy `policy3`, unrecognized entity type `Bogus`",
       "for policy `policy3`, unexpected type: expected Long but saw String",
       "for policy `policy3`, unexpected type: expected Bool but saw Long"
     ],
     "permissiveErrors": [
-      "for policy `policy0`, unexpected type: expected Long but saw String",
       "for policy `policy0`, unexpected type: expected Bool but saw Long",
+      "for policy `policy0`, unexpected type: expected Long but saw String",
+      "for policy `policy1`, unexpected type: expected Long but saw String",
+      "for policy `policy1`, unexpected type: expected Bool but saw Long",
       "for policy `policy1`, unexpected type: expected Bool but saw Long",
       "for policy `policy1`, unexpected type: expected Long but saw String",
-      "for policy `policy1`, unexpected type: expected Long but saw String",
-      "for policy `policy1`, unexpected type: expected Bool but saw Long",
       "for policy `policy2`, unexpected type: expected Long but saw String",
       "for policy `policy2`, unexpected type: expected Bool but saw Long",
       "for policy `policy3`, unrecognized entity type `Bogus`",
@@ -35,8 +35,8 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy0`, unexpected type: expected Bool but saw Long",
-          "for policy `policy0`, unexpected type: expected Long but saw String"
+          "for policy `policy0`, unexpected type: expected Long but saw String",
+          "for policy `policy0`, unexpected type: expected Bool but saw Long"
         ],
         "permissiveErrors": [
           "for policy `policy0`, unexpected type: expected Long but saw String",
@@ -48,23 +48,23 @@
         "permissive": false,
         "strictErrors": [
           "for policy `policy1`, unexpected type: expected Bool but saw Long",
-          "for policy `policy1`, unexpected type: expected Bool but saw Long",
           "for policy `policy1`, unexpected type: expected Long but saw String",
-          "for policy `policy1`, unexpected type: expected Long but saw String"
+          "for policy `policy1`, unexpected type: expected Long but saw String",
+          "for policy `policy1`, unexpected type: expected Bool but saw Long"
         ],
         "permissiveErrors": [
-          "for policy `policy1`, unexpected type: expected Bool but saw Long",
-          "for policy `policy1`, unexpected type: expected Bool but saw Long",
           "for policy `policy1`, unexpected type: expected Long but saw String",
-          "for policy `policy1`, unexpected type: expected Long but saw String"
+          "for policy `policy1`, unexpected type: expected Long but saw String",
+          "for policy `policy1`, unexpected type: expected Bool but saw Long",
+          "for policy `policy1`, unexpected type: expected Bool but saw Long"
         ]
       },
       "policy2": {
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy2`, unexpected type: expected Bool but saw Long",
-          "for policy `policy2`, unexpected type: expected Long but saw String"
+          "for policy `policy2`, unexpected type: expected Long but saw String",
+          "for policy `policy2`, unexpected type: expected Bool but saw Long"
         ],
         "permissiveErrors": [
           "for policy `policy2`, unexpected type: expected Long but saw String",
@@ -83,8 +83,8 @@
         "permissiveErrors": [
           "for policy `policy3`, unrecognized entity type `Bogus`",
           "for policy `policy3`, unrecognized entity type `Bogus`",
-          "for policy `policy3`, unexpected type: expected Bool but saw Long",
-          "for policy `policy3`, unexpected type: expected Long but saw String"
+          "for policy `policy3`, unexpected type: expected Long but saw String",
+          "for policy `policy3`, unexpected type: expected Bool but saw Long"
         ]
       }
     }

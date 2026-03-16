@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/error_dedup_multi_env.cedarschema",
+    "policies": "testdata/error_dedup_multi_env.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/error_dedup_multi_env.entities.json",
+    "requests": []
+}

@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/neq_same_var.cedarschema",
+    "policies": "testdata/neq_same_var.cedar",
+    "shouldValidate": true,
+    "entities": "testdata/neq_same_var.entities.json",
+    "requests": []
+}

@@ -1,0 +1,14 @@
+entity User;
+entity Document;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};
+
+action "edit" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

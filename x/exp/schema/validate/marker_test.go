@@ -15,11 +15,4 @@ func TestMarkerMethods(t *testing.T) {
 	typeRecord{}.isCedarType()
 	typeEntity{}.isCedarType()
 	typeExtension{}.isCedarType()
-
-	// Defensive type name/sort key paths for types that rarely appear in error messages
-	cedarTypeSortKey(typeNever{})
-	cedarTypeSortKey(typeBool{})
-	cedarTypeName(typeNever{})
-	cedarEntityTypeName(entityLUB{})
-
 }

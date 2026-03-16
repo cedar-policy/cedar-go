@@ -167,6 +167,7 @@ func digitVal(ch rune) int {
 // grapheme extend characters (combining marks), C1 controls (0x80-0x9F), and non-printable chars.
 func EscapeString(s string) string {
 	var b []byte
+	isFirst := true
 	for _, r := range s {
 		switch r {
 		case 0:
@@ -184,12 +185,13 @@ func EscapeString(s string) string {
 		case '"':
 			b = append(b, `\"`...)
 		default:
-			if ShouldEscape(r) {
+			if ShouldEscape(r, isFirst) {
 				b = append(b, fmt.Sprintf(`\u{%x}`, r)...)
 			} else {
 				b = append(b, []byte(string(r))...)
 			}
 		}
+		isFirst = false
 	}
 	return string(b)
 }
@@ -197,14 +199,14 @@ func EscapeString(s string) string {
 // ShouldEscape returns true if a rune should be escaped as \u{xx} by
 // Rust's char::escape_debug(). This covers ASCII/C1 control chars, grapheme
 // extend characters (combining marks), and other non-printable characters.
-func ShouldEscape(r rune) bool {
+func ShouldEscape(r rune, firstChar bool) bool {
 	if r < 0x20 || r == 0x7f {
 		return true
 	}
 	if r >= 0x80 && r <= 0x9f {
 		return true
 	}
-	if unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Me, r) || unicode.Is(unicode.Mc, r) {
+	if firstChar && (unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Me, r)) {
 		return true
 	}
 	if !unicode.IsPrint(r) {

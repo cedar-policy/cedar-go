@@ -1,0 +1,30 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, wrong number of arguments in extension function application. Expected 1, got 2",
+      "for policy `policy0`, extension constructors may not be called with non-literal expressions"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, wrong number of arguments in extension function application. Expected 1, got 2"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, extension constructors may not be called with non-literal expressions",
+          "for policy `policy0`, wrong number of arguments in extension function application. Expected 1, got 2"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, wrong number of arguments in extension function application. Expected 1, got 2"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

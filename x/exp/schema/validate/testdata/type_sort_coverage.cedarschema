@@ -1,0 +1,11 @@
+entity User = {
+    a: Bool,
+    b: Bool,
+};
+entity Document;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

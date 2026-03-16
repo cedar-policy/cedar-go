@@ -1,0 +1,30 @@
+entity User = {
+    x: Long,
+};
+entity Admin = {
+    x: String,
+};
+entity Document;
+
+// Many actions with User principal (count=1 for the error) to ensure
+// at least one comes before the Admin action (count=2)
+action "a1" appliesTo { principal: User, resource: Document, context: {} };
+action "a2" appliesTo { principal: User, resource: Document, context: {} };
+action "a3" appliesTo { principal: User, resource: Document, context: {} };
+action "a4" appliesTo { principal: User, resource: Document, context: {} };
+action "a5" appliesTo { principal: User, resource: Document, context: {} };
+action "a6" appliesTo { principal: User, resource: Document, context: {} };
+action "a7" appliesTo { principal: User, resource: Document, context: {} };
+action "a8" appliesTo { principal: User, resource: Document, context: {} };
+action "a9" appliesTo { principal: User, resource: Document, context: {} };
+action "a10" appliesTo { principal: User, resource: Document, context: {} };
+action "b1" appliesTo { principal: Admin, resource: Document, context: {} };
+action "b2" appliesTo { principal: Admin, resource: Document, context: {} };
+action "b3" appliesTo { principal: Admin, resource: Document, context: {} };
+action "b4" appliesTo { principal: Admin, resource: Document, context: {} };
+action "b5" appliesTo { principal: Admin, resource: Document, context: {} };
+action "b6" appliesTo { principal: Admin, resource: Document, context: {} };
+action "b7" appliesTo { principal: Admin, resource: Document, context: {} };
+action "b8" appliesTo { principal: Admin, resource: Document, context: {} };
+action "b9" appliesTo { principal: Admin, resource: Document, context: {} };
+action "b10" appliesTo { principal: Admin, resource: Document, context: {} };

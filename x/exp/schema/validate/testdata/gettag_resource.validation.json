@@ -1,0 +1,28 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unable to guarantee safety of access to tag `resource.name` on entity type `User`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unable to guarantee safety of access to tag `resource.name` on entity type `User`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unable to guarantee safety of access to tag `resource.name` on entity type `User`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unable to guarantee safety of access to tag `resource.name` on entity type `User`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

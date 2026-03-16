@@ -39,23 +39,25 @@ func (v *Validator) Policy(policyID string, policy *ast.Policy) error {
 	}
 
 	// Check action application
-	if err := v.validateActionApplication(principalTypes, resourceTypes, actionUIDs); err != nil {
-		errs = append(errs, err)
+	actionAppErr := v.validateActionApplication(principalTypes, resourceTypes, actionUIDs)
+	if actionAppErr != nil {
+		errs = append(errs, actionAppErr)
 	}
 
 	// Expression type checking
 	allEnvs := v.generateRequestEnvs()
 	envs := v.filterEnvsForPolicy(allEnvs, principalTypes, resourceTypes, actionUIDs)
 
-	if len(envs) > 0 {
-		// Check for empty action set literal in strict mode. This matches Rust
-		// where the scope is part of the typechecked condition — the empty set
-		// check only fires when prior scope constraints don't short-circuit.
-		if v.strict {
-			if sc, ok := policy.Action.(ast.ScopeTypeInSet); ok && len(sc.Entities) == 0 {
-				errs = append(errs, fmt.Errorf("empty set literals are forbidden in policies"))
-			}
+	// Check for empty action set literal in strict mode.
+	// This check is independent of environment matching (matches Rust behavior).
+	if v.strict {
+		if sc, ok := policy.Action.(ast.ScopeTypeInSet); ok && len(sc.Entities) == 0 {
+			errs = append(errs, fmt.Errorf("empty set literals are forbidden in policies"))
 		}
+	}
+
+	// In permissive mode, skip condition checking when action application fails (matches Rust)
+	if len(envs) > 0 && (v.strict || actionAppErr == nil) {
 		if len(policy.Conditions) > 0 {
 			if err := v.typecheckConditions(envs, policy.Conditions); err != nil {
 				errs = append(errs, flattenErrors(err)...)
@@ -335,17 +337,21 @@ func (v *Validator) getEntityTypesIn(target types.EntityType) []types.EntityType
 }
 
 func (v *Validator) typecheckConditions(envs []requestEnv, conditions []ast.ConditionType) error {
+	type dedupKey struct {
+		msg    string
+		lubKey string
+	}
 	var allErrs []error
 	for _, cond := range conditions {
-		// Collect error multisets per environment and merge (element-wise max count).
-		// This deduplicates identical errors across environments while preserving
-		// duplicates from different expression positions within the same environment.
+		// Collect errors from each environment, then merge.
+		// Use element-wise max count across envs for each unique key,
+		// matching Rust's HashSet<ValidationError> structural dedup.
 		type errEntry struct {
 			err   error
 			count int
 		}
-		merged := map[string]*errEntry{}
-		var mergedOrder []string
+		merged := map[dedupKey]*errEntry{}
+		var mergedOrder []dedupKey
 		for _, env := range envs {
 			caps := newCapabilitySet()
 			t, _, err := v.typeOfExpr(&env, cond.Body, caps)
@@ -356,33 +362,50 @@ func (v *Validator) typecheckConditions(envs []requestEnv, conditions []ast.Cond
 			if t != nil && !isBoolType(t) {
 				envErrors = append(envErrors, fmt.Errorf("unexpected type: expected Bool but saw %s", cedarTypeName(t)))
 			}
-			// Count occurrences of each error message in this environment
-			type envErr struct {
-				err   error
-				count int
-			}
-			envCounts := map[string]*envErr{}
+			// Count occurrences of each error key in this environment
+			envCounts := map[dedupKey]int{}
+			var envOrder []dedupKey
 			for _, e := range envErrors {
 				msg := e.Error()
-				if ee, ok := envCounts[msg]; ok {
-					ee.count++
-				} else {
-					envCounts[msg] = &envErr{err: e, count: 1}
+				var lubKey string
+				if se, ok := e.(*scopedError); ok {
+					lubKey = se.lubKey
 				}
+				key := dedupKey{msg: msg, lubKey: lubKey}
+				if _, ok := envCounts[key]; !ok {
+					envOrder = append(envOrder, key)
+				}
+				envCounts[key]++
 			}
-			// Merge: deduplicate across environments, preserving per-environment counts.
-			// The same expression evaluated in different type contexts produces the same
-			// count for any shared error message, so first-seen count is sufficient.
-			for msg, ee := range envCounts {
-				if _, ok := merged[msg]; !ok {
-					mergedOrder = append(mergedOrder, msg)
-					merged[msg] = &errEntry{err: ee.err, count: ee.count}
+			// Merge: take max count across environments for each unique key
+			for _, key := range envOrder {
+				count := envCounts[key]
+				if existing, ok := merged[key]; ok {
+					if count > existing.count {
+						existing.count = count
+					}
+				} else {
+					// Find the first error with this key to preserve the error type
+					var errForKey error
+					for _, e := range envErrors {
+						msg := e.Error()
+						var lk string
+						if se, ok := e.(*scopedError); ok {
+							lk = se.lubKey
+						}
+						if (dedupKey{msg: msg, lubKey: lk}) == key {
+							errForKey = e
+							break
+						}
+					}
+					mergedOrder = append(mergedOrder, key)
+					merged[key] = &errEntry{err: errForKey, count: count}
 				}
 			}
 		}
-		// Emit merged errors preserving first-seen order and original error types
-		for _, msg := range mergedOrder {
-			me := merged[msg]
+		// Emit merged errors
+		for _, key := range mergedOrder {
+			me := merged[key]
 			for range me.count {
 				allErrs = append(allErrs, me.err)
 			}

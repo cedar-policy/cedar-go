@@ -14,8 +14,8 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy0`, unexpected type: expected Long but saw String",
-          "the types Set<Long> and Set<String> are not compatible"
+          "the types Set<Long> and Set<String> are not compatible",
+          "for policy `policy0`, unexpected type: expected Long but saw String"
         ],
         "permissiveErrors": [
           "for policy `policy0`, unexpected type: expected Long but saw String"

@@ -215,9 +215,11 @@ func TestEscapeString(t *testing.T) {
 		{"c1_control", string(rune(0x80)), `\u{80}`},
 		{"c1_control_end", string(rune(0x9f)), `\u{9f}`},
 		{"non_printable_0xa0", string(rune(0xa0)), `\u{a0}`}, // 0xa0 is not printable in Go
-		{"combining_mark", "\u0300", `\u{300}`},              // combining grave accent (Mn)
-		{"enclosing_mark", "\u20DD", `\u{20dd}`},             // combining enclosing circle (Me)
-		{"spacing_mark", "\u0903", `\u{903}`},                // devanagari visarga (Mc)
+		{"combining_mark_first", "\u0300", `\u{300}`},        // combining grave accent (Mn) at position 0
+		{"combining_mark_nonfirst", "a\u0300", "a\u0300"},    // combining grave accent (Mn) at non-zero position
+		{"enclosing_mark_first", "\u20DD", `\u{20dd}`},       // combining enclosing circle (Me) at position 0
+		{"enclosing_mark_nonfirst", "a\u20DD", "a\u20DD"},    // combining enclosing circle (Me) at non-zero position
+		{"spacing_mark", "\u0903", "\u0903"},                 // devanagari visarga (Mc) - not Grapheme_Extend
 		{"normal_unicode", "\u00e9", "\u00e9"},               // é is printable
 		{"emoji", "\U0001F600", "\U0001F600"},                // emoji is printable
 		{"non_printable_high", "\uFFFE", `\u{fffe}`},         // non-printable
@@ -235,26 +237,30 @@ func TestEscapeString(t *testing.T) {
 func TestShouldEscape(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name string
-		in   rune
-		out  bool
+		name      string
+		in        rune
+		firstChar bool
+		out       bool
 	}{
-		{"ascii_control_start", 0x01, true},
-		{"ascii_control_end", 0x1f, true},
-		{"space", ' ', false},
-		{"del", 0x7f, true},
-		{"c1_start", 0x80, true},
-		{"c1_end", 0x9f, true},
-		{"non_printable_0xa0", 0xa0, true}, // 0xa0 is not printable in Go
-		{"letter", 'A', false},
-		{"combining_mark", 0x0300, true},
-		{"printable_unicode", 0x00e9, false},
+		{"ascii_control_start", 0x01, false, true},
+		{"ascii_control_end", 0x1f, false, true},
+		{"space", ' ', false, false},
+		{"del", 0x7f, false, true},
+		{"c1_start", 0x80, false, true},
+		{"c1_end", 0x9f, false, true},
+		{"non_printable_0xa0", 0xa0, false, true}, // 0xa0 is not printable in Go
+		{"letter", 'A', false, false},
+		{"combining_mark_mn_first", 0x0300, true, true},
+		{"combining_mark_mn_nonfirst", 0x0300, false, false},
+		{"enclosing_mark_me_first", 0x20DD, true, true},
+		{"enclosing_mark_me_nonfirst", 0x20DD, false, false},
+		{"printable_unicode", 0x00e9, false, false},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			out := ShouldEscape(tt.in)
+			out := ShouldEscape(tt.in, tt.firstChar)
 			testutil.Equals(t, out, tt.out)
 		})
 	}

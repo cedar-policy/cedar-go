@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/error_dedup_max_count.cedarschema",
+    "policies": "testdata/error_dedup_max_count.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/error_dedup_max_count.entities.json",
+    "requests": []
+}

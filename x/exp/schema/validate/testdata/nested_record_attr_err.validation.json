@@ -3,13 +3,13 @@
     "strict": false,
     "permissive": false,
     "strictErrors": [
-      "for policy `policy0`, attribute `profile.nonexistent` on entity type `Admin` not found",
       "for policy `policy0`, attribute `profile.nonexistent` on entity type `User` not found",
+      "for policy `policy0`, attribute `profile.nonexistent` on entity type `Admin` not found",
       "the types Document and User are not compatible"
     ],
     "permissiveErrors": [
-      "for policy `policy0`, attribute `profile.nonexistent` on entity type `Admin` not found",
       "for policy `policy0`, attribute `profile.nonexistent` on entity type `User` not found",
+      "for policy `policy0`, attribute `profile.nonexistent` on entity type `Admin` not found",
       "for policy `policy1`, attribute `profile.nonexistent` on entity types `Document`, `User` not found"
     ],
     "perPolicy": {
@@ -17,8 +17,8 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy0`, attribute `profile.nonexistent` on entity type `Admin` not found",
-          "for policy `policy0`, attribute `profile.nonexistent` on entity type `User` not found"
+          "for policy `policy0`, attribute `profile.nonexistent` on entity type `User` not found",
+          "for policy `policy0`, attribute `profile.nonexistent` on entity type `Admin` not found"
         ],
         "permissiveErrors": [
           "for policy `policy0`, attribute `profile.nonexistent` on entity type `User` not found",

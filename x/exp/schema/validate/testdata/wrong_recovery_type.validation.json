@@ -7,24 +7,24 @@
       "for policy `policy0`, unexpected type: expected Set<__cedar::internal::Any> but saw Long",
       "for policy `policy1`, unexpected type: expected Long but saw String",
       "for policy `policy1`, unexpected type: expected String but saw Long",
-      "for policy `policy2`, unexpected type: expected __cedar::internal::AnyEntity but saw Long",
       "for policy `policy2`, unexpected type: expected Long but saw String",
+      "for policy `policy2`, unexpected type: expected __cedar::internal::AnyEntity but saw Long",
       "for policy `policy3`, unexpected type: expected Long but saw String",
       "for policy `policy3`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw Long",
-      "for policy `policy4`, unexpected type: expected Long but saw String",
-      "for policy `policy4`, unexpected type: expected Bool but saw Long"
+      "for policy `policy4`, unexpected type: expected Bool but saw Long",
+      "for policy `policy4`, unexpected type: expected Long but saw String"
     ],
     "permissiveErrors": [
-      "for policy `policy0`, unexpected type: expected Long but saw String",
       "for policy `policy0`, unexpected type: expected Set<__cedar::internal::Any> but saw Long",
+      "for policy `policy0`, unexpected type: expected Long but saw String",
       "for policy `policy1`, unexpected type: expected Long but saw String",
       "for policy `policy1`, unexpected type: expected String but saw Long",
       "for policy `policy2`, unexpected type: expected Long but saw String",
       "for policy `policy2`, unexpected type: expected __cedar::internal::AnyEntity but saw Long",
-      "for policy `policy3`, unexpected type: expected Long but saw String",
       "for policy `policy3`, unexpected type: expected __cedar::internal::AnyEntity, or __cedar::internal::OpenRecord{} but saw Long",
-      "for policy `policy4`, unexpected type: expected Long but saw String",
-      "for policy `policy4`, unexpected type: expected Bool but saw Long"
+      "for policy `policy3`, unexpected type: expected Long but saw String",
+      "for policy `policy4`, unexpected type: expected Bool but saw Long",
+      "for policy `policy4`, unexpected type: expected Long but saw String"
     ],
     "perPolicy": {
       "policy0": {
@@ -35,8 +35,8 @@
           "for policy `policy0`, unexpected type: expected Long but saw String"
         ],
         "permissiveErrors": [
-          "for policy `policy0`, unexpected type: expected Long but saw String",
-          "for policy `policy0`, unexpected type: expected Set<__cedar::internal::Any> but saw Long"
+          "for policy `policy0`, unexpected type: expected Set<__cedar::internal::Any> but saw Long",
+          "for policy `policy0`, unexpected type: expected Long but saw String"
         ]
       },
       "policy1": {
@@ -47,8 +47,8 @@
           "for policy `policy1`, unexpected type: expected String but saw Long"
         ],
         "permissiveErrors": [
-          "for policy `policy1`, unexpected type: expected Long but saw String",
-          "for policy `policy1`, unexpected type: expected String but saw Long"
+          "for policy `policy1`, unexpected type: expected String but saw Long",
+          "for policy `policy1`, unexpected type: expected Long but saw String"
         ]
       },
       "policy2": {
@@ -59,8 +59,8 @@
           "for policy `policy2`, unexpected type: expected __cedar::internal::AnyEntity but saw Long"
         ],
         "permissiveErrors": [
-          "for policy `policy2`, unexpected type: expected Long but saw String",
-          "for policy `policy2`, unexpected type: expected __cedar::internal::AnyEntity but saw Long"
+          "for policy `policy2`, unexpected type: expected __cedar::internal::AnyEntity but saw Long",
+          "for policy `policy2`, unexpected type: expected Long but saw String"
         ]
       },
       "policy3": {
@@ -79,12 +79,12 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy4`, unexpected type: expected Long but saw String",
-          "for policy `policy4`, unexpected type: expected Bool but saw Long"
+          "for policy `policy4`, unexpected type: expected Bool but saw Long",
+          "for policy `policy4`, unexpected type: expected Long but saw String"
         ],
         "permissiveErrors": [
-          "for policy `policy4`, unexpected type: expected Long but saw String",
-          "for policy `policy4`, unexpected type: expected Bool but saw Long"
+          "for policy `policy4`, unexpected type: expected Bool but saw Long",
+          "for policy `policy4`, unexpected type: expected Long but saw String"
         ]
       }
     }
