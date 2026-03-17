@@ -1,0 +1,4 @@
+{
+  "schema": "simple.cedarschema",
+  "entities": "missing-required-attr.entities.json"
+}

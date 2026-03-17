@@ -1,0 +1,21 @@
+entity Manager;
+
+entity User in [Manager] = {
+  name: String,
+  age: Long,
+  active: Bool,
+  manager: Manager,
+  ip: ipaddr,
+  score: decimal,
+  created: datetime,
+  ttl: duration,
+  friends: Set<Manager>,
+  labels: Set<String>,
+  metadata: { key: String, owner: Manager },
+  settings: { verbose: Bool },
+};
+
+action view appliesTo {
+  principal: [User],
+  resource: [User],
+};

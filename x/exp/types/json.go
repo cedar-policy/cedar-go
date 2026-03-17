@@ -35,9 +35,6 @@ func coerceEntityUID(v types.Value) types.Value {
 	if !ok {
 		return v
 	}
-	if rec.Len() != 2 {
-		return v
-	}
 	typeVal, ok := rec.Get("type")
 	if !ok {
 		return v

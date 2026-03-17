@@ -1,0 +1,10 @@
+{
+  "allEntities": {
+    "success": false
+  },
+  "perEntity": {
+    "Unknown::x": {
+      "success": false
+    }
+  }
+}

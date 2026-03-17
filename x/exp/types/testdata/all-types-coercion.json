@@ -1,0 +1,4 @@
+{
+  "schema": "rich.cedarschema",
+  "entities": "all-types-coercion.entities.json"
+}

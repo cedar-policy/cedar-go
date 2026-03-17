@@ -1,0 +1,4 @@
+{
+  "schema": "rich.cedarschema",
+  "entities": "bad-entity-ref-non-string-id.entities.json"
+}

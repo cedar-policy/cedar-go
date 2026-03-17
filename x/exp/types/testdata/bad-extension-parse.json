@@ -1,0 +1,4 @@
+{
+  "schema": "rich.cedarschema",
+  "entities": "bad-extension-parse.entities.json"
+}

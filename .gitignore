@@ -3,6 +3,7 @@ tmp/
 .DS_Store
 coverage.out
 test/cedar-validation-tool/target/
+test/cedar-entity-parsing-tool/target/
 corpus-tests/
 corpus-tests-json-schemas/
 corpus-tests-validation/

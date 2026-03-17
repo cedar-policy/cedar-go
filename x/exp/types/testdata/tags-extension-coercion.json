@@ -1,0 +1,4 @@
+{
+  "schema": "tags-extension.cedarschema",
+  "entities": "tags-extension-coercion.entities.json"
+}

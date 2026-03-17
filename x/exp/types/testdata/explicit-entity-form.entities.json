@@ -1,0 +1,25 @@
+[
+  {
+    "uid": {"type": "Manager", "id": "boss"},
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {"type": "User", "id": "alice"},
+    "attrs": {
+      "name": "Alice",
+      "age": 30,
+      "active": true,
+      "manager": {"__entity": {"type": "Manager", "id": "boss"}},
+      "ip": {"__extn": {"fn": "ip", "arg": "10.0.0.1"}},
+      "score": {"__extn": {"fn": "decimal", "arg": "1.23"}},
+      "created": {"__extn": {"fn": "datetime", "arg": "2024-01-01"}},
+      "ttl": {"__extn": {"fn": "duration", "arg": "1h30m"}},
+      "friends": [{"__entity": {"type": "Manager", "id": "boss"}}],
+      "labels": ["admin"],
+      "metadata": {"key": "value", "owner": {"__entity": {"type": "Manager", "id": "boss"}}},
+      "settings": {"verbose": true}
+    },
+    "parents": [{"__entity": {"type": "Manager", "id": "boss"}}]
+  }
+]

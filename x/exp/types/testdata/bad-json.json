@@ -1,0 +1,4 @@
+{
+  "schema": "simple.cedarschema",
+  "entities": "bad-json.entities.json"
+}

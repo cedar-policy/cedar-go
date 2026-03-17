@@ -1,0 +1,8 @@
+entity User = {
+  name: String,
+} tags ipaddr;
+
+action view appliesTo {
+  principal: [User],
+  resource: [User],
+};

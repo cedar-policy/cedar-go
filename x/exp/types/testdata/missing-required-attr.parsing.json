@@ -1,0 +1,10 @@
+{
+  "allEntities": {
+    "success": false
+  },
+  "perEntity": {
+    "User::alice": {
+      "success": false
+    }
+  }
+}

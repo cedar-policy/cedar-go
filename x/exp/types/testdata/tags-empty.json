@@ -1,0 +1,4 @@
+{
+  "schema": "tags-extension.cedarschema",
+  "entities": "tags-empty.entities.json"
+}

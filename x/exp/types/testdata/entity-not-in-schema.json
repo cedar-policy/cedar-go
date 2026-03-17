@@ -1,0 +1,4 @@
+{
+  "schema": "simple.cedarschema",
+  "entities": "entity-not-in-schema.entities.json"
+}
