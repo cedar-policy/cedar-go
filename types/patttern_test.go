@@ -28,7 +28,24 @@ func TestPattern(t *testing.T) {
 	})
 	t.Run("MarshalCedar", func(t *testing.T) {
 		t.Parallel()
-		testutil.Equals(t, string(NewPattern(String("*foo"), Wildcard{}).MarshalCedar()), `"\*foo*"`)
+		tests := []struct {
+			name    string
+			pattern Pattern
+			want    string
+		}{
+			{"escaped_wildcard", NewPattern(String("*foo"), Wildcard{}), `"\*foo*"`},
+			{"bell_char", NewPattern(String("\a")), `"\u{7}"`},
+			{"backspace", NewPattern(String("\b")), `"\u{8}"`},
+			{"formfeed", NewPattern(String("\f")), `"\u{c}"`},
+			{"vtab", NewPattern(String("\v")), `"\u{b}"`},
+			{"combining_mark", NewPattern(String("a\u0300")), `"a\u{300}"`},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				testutil.Equals(t, string(tt.pattern.MarshalCedar()), tt.want)
+			})
+		}
 	})
 }
 
