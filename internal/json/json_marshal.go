@@ -259,7 +259,8 @@ func (n *nodeJSON) FromNode(src ast.IsNode) {
 	// Set
 	// Set arrayJSON `json:"Set"`
 	case ast.NodeTypeSet:
-		arrayToJSON(&n.Set, t.Elements)
+		n.Set = &arrayJSON{}
+		arrayToJSON(n.Set, t.Elements)
 		return
 
 	// Record

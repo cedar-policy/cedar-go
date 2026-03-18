@@ -131,7 +131,7 @@ type nodeJSON struct {
 	IfThenElse *ifThenElseJSON `json:"if-then-else,omitempty"`
 
 	// Set
-	Set arrayJSON `json:"Set,omitempty"`
+	Set *arrayJSON `json:"Set,omitempty"`
 
 	// Record
 	Record recordJSON `json:"Record,omitempty"`
