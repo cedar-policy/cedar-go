@@ -22,5 +22,8 @@ func ParsePattern(v string) (types.Pattern, error) {
 		}
 		comps = append(comps, types.String(literal))
 	}
+	if len(comps) == 0 {
+		comps = append(comps, types.String(""))
+	}
 	return types.NewPattern(comps...), nil
 }

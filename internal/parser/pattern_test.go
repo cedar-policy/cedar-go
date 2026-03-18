@@ -16,7 +16,7 @@ func TestParsePattern(t *testing.T) {
 		want    types.Pattern
 		wantErr string
 	}{
-		{"", true, types.NewPattern(), ""},
+		{"", true, types.NewPattern(""), ""},
 		{"a", true, types.NewPattern(a), ""},
 		{"*", true, types.NewPattern(types.Wildcard{}), ""},
 		{"*a", true, types.NewPattern(types.Wildcard{}, a), ""},

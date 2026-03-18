@@ -205,6 +205,27 @@ func TestPatternJSON(t *testing.T) {
 			Pattern{},
 			false,
 		},
+		{
+			"empty string literal",
+			`[{"Literal":""}]`,
+			testutil.OK,
+			NewPattern(String("")),
+			true,
+		},
+		{
+			"wildcard then empty string literal",
+			`["Wildcard", {"Literal":""}]`,
+			testutil.OK,
+			NewPattern(Wildcard{}),
+			false,
+		},
+		{
+			"literal with null byte",
+			`[{"Literal":"\u0000"}]`,
+			testutil.OK,
+			NewPattern(String("\x00")),
+			true,
+		},
 	}
 
 	for _, tt := range tests {
