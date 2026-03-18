@@ -25,6 +25,14 @@ func TestEntity(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(t, types.EntityUID{Type: "type", ID: "id"}.String(), `type::"id"`)
 		testutil.Equals(t, types.EntityUID{Type: "namespace::type", ID: "id"}.String(), `namespace::type::"id"`)
+		// Bell char must be escaped as \u{7}, not Go's \a
+		testutil.Equals(t, types.EntityUID{Type: "T", ID: "\a"}.String(), `T::"\u{7}"`)
+		// Backspace must be escaped as \u{8}, not Go's \b
+		testutil.Equals(t, types.EntityUID{Type: "T", ID: "\b"}.String(), `T::"\u{8}"`)
+		// Form feed must be escaped as \u{c}, not Go's \f
+		testutil.Equals(t, types.EntityUID{Type: "T", ID: "\f"}.String(), `T::"\u{c}"`)
+		// Vertical tab must be escaped as \u{b}, not Go's \v
+		testutil.Equals(t, types.EntityUID{Type: "T", ID: "\v"}.String(), `T::"\u{b}"`)
 	})
 
 	t.Run("Marshal EntityUID round trip", func(t *testing.T) {
