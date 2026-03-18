@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"hash/fnv"
-	"strconv"
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/internal/mapset"
@@ -42,7 +41,9 @@ func (e EntityUID) Equal(bi Value) bool {
 }
 
 // String produces a string representation of the EntityUID, e.g. `Type::"id"`.
-func (e EntityUID) String() string { return string(e.Type) + "::" + strconv.Quote(string(e.ID)) }
+func (e EntityUID) String() string {
+	return string(e.Type) + "::\"" + rust.EscapeString(string(e.ID)) + "\""
+}
 
 // MarshalCedar produces a valid MarshalCedar language representation of the EntityUID, e.g. `Type::"id"`.
 func (e EntityUID) MarshalCedar() []byte {
