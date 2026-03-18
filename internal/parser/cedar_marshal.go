@@ -168,6 +168,9 @@ func (n NodeTypeNegate) marshalCedar(buf *bytes.Buffer) {
 }
 
 func canMarshalAsIdent(s string) bool {
+	if len(s) == 0 || IsReservedKeyword(s) {
+		return false
+	}
 	for i, r := range s {
 		if !isIdentRune(r, i == 0) {
 			return false
