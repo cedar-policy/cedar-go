@@ -119,6 +119,53 @@ func TestEntity(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("UnmarshalJSON", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{"explicit", `{ "__entity": { "type": "Type", "id": "id" } }`},
+			{"implicit", `{ "type": "Type", "id": "id" }`},
+			{"explicit - extra keys in inner", `{ "__entity": { "type": "Type", "id": "id", "floob": "blah" } }`},
+			{"implicit - extra keys", `{ "type": "Type", "id": "id", "floob": "blah" }`},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				var got types.EntityUID
+				err := got.UnmarshalJSON([]byte(tt.input))
+				testutil.OK(t, err)
+				testutil.Equals(t, got, types.NewEntityUID("Type", "id"))
+			})
+		}
+	})
+
+	t.Run("UnmarshalJSON invalid", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{"non-object", `"floob"`},
+			{"explicit - wrong type", `{ "__entity": "wrong type"`},
+			{"implicit - type wrong", `{ "type": 123, "id": "123" }`},
+			{"implicit - id wrong type", `{ "type": "Type", "id": 123 }`},
+			{"implicit - only type", `{ "type": "Type" }`},
+			{"implicit - only id", `{ "id": 123 }`},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				var got types.EntityUID
+				err := got.UnmarshalJSON([]byte(tt.input))
+				testutil.Error(t, err)
+			})
+		}
+	})
 }
 
 func TestEntityUIDSet(t *testing.T) {

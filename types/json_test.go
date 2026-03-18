@@ -30,6 +30,7 @@ func TestJSON_Value(t *testing.T) {
 	}{
 		{"entity-likeRecord", `{ "type": "User", "id": "alice" }`, NewRecord(RecordMap{"type": String("User"), "id": String("alice")}), nil},
 		{"explicitEntity", `{ "__entity": { "type": "User", "id": "alice" } }`, EntityUID{Type: "User", ID: "alice"}, nil},
+		{"explicitEntityExtraField", `{ "__entity": { "type": "User", "id": "alice" }, "extra": "stuff" }`, EntityUID{Type: "User", ID: "alice"}, nil},
 		{"explicitLongEntity", `{ "__entity": { "type": "User::External", "id": "alice" } }`, EntityUID{Type: "User::External", ID: "alice"}, nil},
 		{"invalidJSON", `!@#$`, zeroValue(), errJSONDecode},
 		{"numericOverflow", "12341234123412341234", zeroValue(), errJSONLongOutOfRange},
