@@ -3,6 +3,9 @@ tmp/
 .DS_Store
 coverage.out
 test/cedar-validation-tool/target/
+corpus-tests/
+corpus-tests-json-schemas/
+corpus-tests-validation/
 *.out
 .ai/
 ideas/
