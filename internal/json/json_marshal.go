@@ -103,7 +103,7 @@ func likeToJSON(dest **likeJSON, src ast.NodeTypeLike) {
 func recordToJSON(dest *recordJSON, src ast.NodeTypeRecord) {
 	res := recordJSON{}
 	for _, kv := range src.Elements {
-		var nn nodeJSON
+		nn := &nodeJSON{}
 		nn.FromNode(kv.Value)
 		res[string(kv.Key)] = nn
 	}
@@ -266,7 +266,8 @@ func (n *nodeJSON) FromNode(src ast.IsNode) {
 	// Record
 	// Record recordJSON `json:"Record"`
 	case ast.NodeTypeRecord:
-		recordToJSON(&n.Record, t)
+		n.Record = &recordJSON{}
+		recordToJSON(n.Record, t)
 		return
 
 	// Any other method: ip, decimal, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange

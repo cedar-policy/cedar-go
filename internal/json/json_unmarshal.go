@@ -263,7 +263,7 @@ func (n nodeJSON) ToNode() (ast.Node, error) {
 
 	// Record
 	case n.Record != nil:
-		return n.Record.ToNode()
+		return (*n.Record).ToNode()
 
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
 	default:

@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/json"
 	"maps"
 	"slices"
 	"testing"
@@ -335,6 +336,14 @@ func TestRecord(t *testing.T) {
 		delete(m, "foo")
 		m["bar"] = types.True
 		testutil.Equals(t, r, types.NewRecord(types.RecordMap{"foo": types.True, "bar": types.False}))
+	})
+
+	t.Run("UnmarshalJSON_empty", func(t *testing.T) {
+		t.Parallel()
+		var r types.Record
+		err := json.Unmarshal([]byte(`{}`), &r)
+		testutil.OK(t, err)
+		testutil.Equals(t, r, types.Record{})
 	})
 
 	// This test is intended to show that NewMap() makes a copy of the values from the input map

@@ -67,7 +67,7 @@ type ifThenElseJSON struct {
 
 type arrayJSON []nodeJSON
 
-type recordJSON map[string]nodeJSON
+type recordJSON map[string]*nodeJSON
 
 type extensionJSON map[string]arrayJSON
 
@@ -134,7 +134,7 @@ type nodeJSON struct {
 	Set *arrayJSON `json:"Set,omitempty"`
 
 	// Record
-	Record recordJSON `json:"Record,omitempty"`
+	Record *recordJSON `json:"Record,omitempty"`
 
 	// Any other method: decimal, datetime, duration, ip, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange, toDate, toTime, toDays, toHours, toMinutes, toSeconds, toMilliseconds, offset, durationSince
 	ExtensionCall extensionJSON `json:"-"`
