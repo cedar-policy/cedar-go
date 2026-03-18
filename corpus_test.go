@@ -276,86 +276,123 @@ func TestCorpus(t *testing.T) {
 			testvalidate.RunEntityChecks(t, rs, entities, cv)
 			testvalidate.RunRequestChecks(t, rs, cv, requests)
 
-			for _, request := range tt.Requests {
-				if len(request.Reasons) == 0 && request.Reasons != nil {
-					request.Reasons = nil
-				}
-				if len(request.Errors) == 0 && request.Errors != nil {
-					request.Errors = nil
-				}
+			// Round-trip the policy set through cedar marshal/unmarshal
+			cedarRTBytes := policySet.MarshalCedar()
+			cedarRTPolicySet, err := cedar.NewPolicySetFromBytes("policy.cedar", cedarRTBytes)
+			testutil.OK(t, wrapErr("parsing cedar round-tripped policy set", err))
 
-				t.Run(request.Desc, func(t *testing.T) {
-					t.Parallel()
-					ok, diag := policySet.IsAuthorized(
-						entities,
-						cedar.Request{
-							Principal: cedar.EntityUID(request.Principal),
-							Action:    cedar.EntityUID(request.Action),
-							Resource:  cedar.EntityUID(request.Resource),
-							Context:   request.Context,
-						})
+			// Round-trip the policy set through JSON marshal/unmarshal
+			jsonRTBytes, err := policySet.MarshalJSON()
+			testutil.OK(t, wrapErr("marshalling policy set to JSON", err))
+			var jsonRTPolicySet cedar.PolicySet
+			err = jsonRTPolicySet.UnmarshalJSON(jsonRTBytes)
+			testutil.OK(t, wrapErr("unmarshalling JSON round-tripped policy set", err))
 
-					testutil.Equals(t, ok, request.Decision)
-					var errors []cedar.PolicyID
-					for _, n := range diag.Errors {
-						errors = append(errors, n.PolicyID)
+			// Round-trip the entities through JSON and assert equality
+			entitiesJSONBytes, err := entities.MarshalJSON()
+			testutil.OK(t, wrapErr("marshalling entities to JSON", err))
+			var rtEntities cedar.EntityMap
+			err = json.Unmarshal(entitiesJSONBytes, &rtEntities)
+			testutil.OK(t, wrapErr("unmarshalling JSON round-tripped entities", err))
+			testutil.Equals(t, rtEntities, entities)
+
+			policySets := map[string]*cedar.PolicySet{
+				"":                 policySet,
+				"/policy-cedar-rt": cedarRTPolicySet,
+				"/policy-json-rt":  &jsonRTPolicySet,
+			}
+
+			for suffix, ps := range policySets {
+				ps := ps
+				suffix := suffix
+				for _, request := range tt.Requests {
+					if len(request.Reasons) == 0 && request.Reasons != nil {
+						request.Reasons = nil
 					}
-					testutil.Equals(t, errors, request.Errors)
-					var reasons []cedar.PolicyID
-					for _, n := range diag.Reasons {
-						reasons = append(reasons, n.PolicyID)
+					if len(request.Errors) == 0 && request.Errors != nil {
+						request.Errors = nil
 					}
-					testutil.Equals(t, reasons, request.Reasons)
-				})
 
-				t.Run(request.Desc+"/batch", func(t *testing.T) {
-					t.Parallel()
-					ctx := context.Background()
-					var res batch.Result
-					var total int
-					principal := cedar.EntityUID(request.Principal)
-					action := cedar.EntityUID(request.Action)
-					resource := cedar.EntityUID(request.Resource)
-					context := request.Context
-					err := batch.Authorize(ctx, policySet, entities, batch.Request{
-						Principal: batch.Variable("principal"),
-						Action:    batch.Variable("action"),
-						Resource:  batch.Variable("resource"),
-						Context:   batch.Variable("context"),
-						Variables: batch.Variables{
-							"principal": []cedar.Value{principal},
-							"action":    []cedar.Value{action},
-							"resource":  []cedar.Value{resource},
-							"context":   []cedar.Value{context},
-						},
-					}, func(r batch.Result) error {
-						res = r
-						total++
-						return nil
+					t.Run(request.Desc+suffix, func(t *testing.T) {
+						t.Parallel()
+						ok, diag := ps.IsAuthorized(
+							entities,
+							cedar.Request{
+								Principal: cedar.EntityUID(request.Principal),
+								Action:    cedar.EntityUID(request.Action),
+								Resource:  cedar.EntityUID(request.Resource),
+								Context:   request.Context,
+							})
+
+						testutil.Equals(t, ok, request.Decision)
+						var errors []cedar.PolicyID
+						for _, n := range diag.Errors {
+							errors = append(errors, n.PolicyID)
+						}
+						testutil.Equals(t, errors, request.Errors)
+						var reasons []cedar.PolicyID
+						for _, n := range diag.Reasons {
+							reasons = append(reasons, n.PolicyID)
+						}
+						testutil.Equals(t, reasons, request.Reasons)
 					})
-					testutil.OK(t, err)
-					testutil.Equals(t, total, 1)
-					testutil.Equals(t, res.Request.Principal, principal)
-					testutil.Equals(t, res.Request.Action, action)
-					testutil.Equals(t, res.Request.Resource, resource)
-					testutil.Equals(t, res.Request.Context, context)
 
-					ok, diag := res.Decision, res.Diagnostic
-					testutil.Equals(t, ok, request.Decision)
-					var errors []cedar.PolicyID
-					for _, n := range diag.Errors {
-						errors = append(errors, n.PolicyID)
-					}
-					testutil.Equals(t, errors, request.Errors)
-					var reasons []cedar.PolicyID
-					for _, n := range diag.Reasons {
-						reasons = append(reasons, n.PolicyID)
-					}
-					testutil.Equals(t, reasons, request.Reasons)
-				})
+					t.Run(request.Desc+"/batch"+suffix, func(t *testing.T) {
+						t.Parallel()
+						ctx := context.Background()
+						var res batch.Result
+						var total int
+						principal := cedar.EntityUID(request.Principal)
+						action := cedar.EntityUID(request.Action)
+						resource := cedar.EntityUID(request.Resource)
+						context := request.Context
+						err := batch.Authorize(ctx, ps, entities, batch.Request{
+							Principal: batch.Variable("principal"),
+							Action:    batch.Variable("action"),
+							Resource:  batch.Variable("resource"),
+							Context:   batch.Variable("context"),
+							Variables: batch.Variables{
+								"principal": []cedar.Value{principal},
+								"action":    []cedar.Value{action},
+								"resource":  []cedar.Value{resource},
+								"context":   []cedar.Value{context},
+							},
+						}, func(r batch.Result) error {
+							res = r
+							total++
+							return nil
+						})
+						testutil.OK(t, err)
+						testutil.Equals(t, total, 1)
+						testutil.Equals(t, res.Request.Principal, principal)
+						testutil.Equals(t, res.Request.Action, action)
+						testutil.Equals(t, res.Request.Resource, resource)
+						testutil.Equals(t, res.Request.Context, context)
+
+						ok, diag := res.Decision, res.Diagnostic
+						testutil.Equals(t, ok, request.Decision)
+						var errors []cedar.PolicyID
+						for _, n := range diag.Errors {
+							errors = append(errors, n.PolicyID)
+						}
+						testutil.Equals(t, errors, request.Errors)
+						var reasons []cedar.PolicyID
+						for _, n := range diag.Reasons {
+							reasons = append(reasons, n.PolicyID)
+						}
+						testutil.Equals(t, reasons, request.Reasons)
+					})
+				}
 			}
 		})
 	}
+}
+
+func wrapErr(msg string, err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("%s: %w", msg, err)
 }
 
 func normalizeJSON(t *testing.T, in []byte) []byte {
