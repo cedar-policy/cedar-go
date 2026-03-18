@@ -5,17 +5,17 @@
     "strictErrors": [
       "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
       "the types Document and User are not compatible",
-      "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found",
-      "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
-      "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
-      "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
-    ],
-    "permissiveErrors": [
-      "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found",
       "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found",
       "for policy `policy3`, attribute `nonexistent` on entity type `User` not found"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy2`, attribute `nonexistent` on entity type `Document` not found",
+      "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
     ],
     "perPolicy": {
       "policy0": {
@@ -55,8 +55,8 @@
           "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
         ],
         "permissiveErrors": [
-          "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
-          "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found"
+          "for policy `policy3`, attribute `nonexistent` on entity type `Document` not found",
+          "for policy `policy3`, attribute `nonexistent` on entity type `User` not found"
         ]
       }
     }

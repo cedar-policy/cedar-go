@@ -1,0 +1,28 @@
+{
+  "schema": "testdata/policy_env_error_merge.cedarschema",
+  "policies": "testdata/policy_env_error_merge.cedar",
+  "shouldValidate": false,
+  "entities": "testdata/policy_env_error_merge.entities.json",
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "A",
+        "id": "p0"
+      },
+      "action": {
+        "type": "Action",
+        "id": "act"
+      },
+      "resource": {
+        "type": "R",
+        "id": "r0"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/type_order_coverage.cedarschema",
+    "policies": "testdata/type_order_coverage.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/type_order_coverage.entities.json",
+    "requests": []
+}

@@ -1,0 +1,28 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, empty set literals are forbidden in policies"
+    ],
+    "permissiveErrors": [
+      "the types __cedar::internal::True, __cedar::internal::False, Bool, Long, String, Set<__cedar::internal::Never>, Set<Long>, {a: Long,}, {a: Long,b: String,}, Document, User, datetime, and ipaddr are not compatible"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, empty set literals are forbidden in policies"
+        ],
+        "permissiveErrors": [
+          "the types __cedar::internal::True, __cedar::internal::False, Bool, Long, String, Set<__cedar::internal::Never>, Set<Long>, {a: Long,}, {a: Long,b: String,}, Document, User, datetime, and ipaddr are not compatible"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

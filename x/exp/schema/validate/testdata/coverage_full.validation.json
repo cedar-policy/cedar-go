@@ -1,0 +1,326 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, empty set literals are forbidden in policies",
+      "the types {a: Long,} and {b: Long,} are not compatible",
+      "the types {a: Long,} and {b: Long,} are not compatible",
+      "the types {a: Long,} and {a: String,} are not compatible",
+      "the types Long and C are not compatible",
+      "the types Long and D are not compatible",
+      "the types Long, B, and D are not compatible",
+      "the types Long, C, and D are not compatible",
+      "the types Long and B are not compatible",
+      "the types Long and A are not compatible",
+      "the types A and D are not compatible",
+      "the types A and C are not compatible",
+      "the types A and B are not compatible",
+      "the types Long, A, and C are not compatible",
+      "the types Long, A, and D are not compatible",
+      "the types Long, A, and B are not compatible",
+      "the types Long, B, and C are not compatible",
+      "for policy `policy5`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+      "for policy `policy5`, unexpected type: expected Bool but saw decimal",
+      "for policy `policy6`, unexpected type: expected Bool but saw Long",
+      "for policy `policy7`, unrecognized entity type `NoSuchType`",
+      "for policy `policy8`, unrecognized entity type `NoSuchType`",
+      "for policy `policy9`, unrecognized entity type `NoSuchType`",
+      "the types Long and String are not compatible",
+      "the types A and C are not compatible",
+      "the types B and C are not compatible",
+      "the types A and D are not compatible",
+      "the types B and D are not compatible",
+      "the types C and D are not compatible",
+      "the types A and B are not compatible",
+      "for policy `policy12`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+      "the types Long and decimal are not compatible",
+      "for policy `policy13`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+      "the types Long, String, and decimal are not compatible",
+      "for policy `policy14`, extension constructors may not be called with non-literal expressions",
+      "for policy `policy14`, wrong number of arguments in extension function application. Expected 1, got 2",
+      "for policy `policy15`, extension constructors may not be called with non-literal expressions",
+      "for policy `policy16`, unexpected type: expected String but saw Long",
+      "for policy `policy17`, error during extension function argument validation: Failed to parse as IP address: `\"bad\"`",
+      "for policy `policy18`, wrong number of arguments in extension function application. Expected 1, got 2",
+      "for policy `policy18`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+      "for policy `policy18`, extension constructors may not be called with non-literal expressions"
+    ],
+    "permissiveErrors": [
+      "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, C, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, C, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, B, D, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, C, D, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, D, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, B, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, B, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Bool, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, D, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Bool, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, B, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Bool, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, C, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, B, C, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, D, datetime, and ipaddr are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, Bool, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, datetime, and ipaddr are not compatible",
+      "the types Long, C, and D are not compatible",
+      "the types Long and A are not compatible",
+      "the types Long, A, __cedar::internal::Union<A, B>, and B are not compatible",
+      "the types Long, A, __cedar::internal::Union<A, D>, and D are not compatible",
+      "the types Long, A, and C are not compatible",
+      "the types Long and B are not compatible",
+      "the types Long and C are not compatible",
+      "the types Long, A, and D are not compatible",
+      "the types Long and D are not compatible",
+      "the types Long, B, and D are not compatible",
+      "the types Long, A, __cedar::internal::Union<A, C>, and C are not compatible",
+      "the types Long, B, and C are not compatible",
+      "the types Long, A, and B are not compatible",
+      "for policy `policy5`, unexpected type: expected Bool but saw decimal",
+      "for policy `policy5`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+      "for policy `policy6`, unexpected type: expected Bool but saw Long",
+      "for policy `policy7`, unrecognized entity type `NoSuchType`",
+      "for policy `policy8`, unrecognized entity type `NoSuchType`",
+      "for policy `policy9`, unrecognized entity type `NoSuchType`",
+      "the types Long and String are not compatible",
+      "for policy `policy12`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+      "the types Long and decimal are not compatible",
+      "for policy `policy13`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+      "the types Long, String, and decimal are not compatible",
+      "for policy `policy14`, wrong number of arguments in extension function application. Expected 1, got 2",
+      "for policy `policy16`, unexpected type: expected String but saw Long",
+      "for policy `policy17`, error during extension function argument validation: Failed to parse as IP address: `\"bad\"`",
+      "for policy `policy18`, wrong number of arguments in extension function application. Expected 1, got 2",
+      "for policy `policy18`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, empty set literals are forbidden in policies"
+        ],
+        "permissiveErrors": [
+          "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, B, C, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Bool, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, C, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, B, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Bool, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Bool, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, D, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, D, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, B, D, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, C, D, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, B, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, C, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, D, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, C, datetime, and ipaddr are not compatible",
+          "the types __cedar::internal::True, __cedar::internal::False, Bool, Long, String, Set<__cedar::internal::Never>, Set<Long>, {}, {a: Long,}, {a: Long,b: String,}, A, B, datetime, and ipaddr are not compatible"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {a: Long,} and {b: Long,} are not compatible"
+        ]
+      },
+      "policy10": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types Long and String are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types Long and String are not compatible"
+        ]
+      },
+      "policy11": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types B and D are not compatible",
+          "the types A and D are not compatible",
+          "the types A and B are not compatible",
+          "the types A and C are not compatible",
+          "the types C and D are not compatible",
+          "the types B and C are not compatible"
+        ]
+      },
+      "policy12": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types Long and decimal are not compatible",
+          "for policy `policy12`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`"
+        ],
+        "permissiveErrors": [
+          "the types Long and decimal are not compatible",
+          "for policy `policy12`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`"
+        ]
+      },
+      "policy13": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy13`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+          "the types Long, String, and decimal are not compatible"
+        ],
+        "permissiveErrors": [
+          "for policy `policy13`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+          "the types Long, String, and decimal are not compatible"
+        ]
+      },
+      "policy14": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy14`, wrong number of arguments in extension function application. Expected 1, got 2",
+          "for policy `policy14`, extension constructors may not be called with non-literal expressions"
+        ],
+        "permissiveErrors": [
+          "for policy `policy14`, wrong number of arguments in extension function application. Expected 1, got 2"
+        ]
+      },
+      "policy15": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "for policy `policy15`, extension constructors may not be called with non-literal expressions"
+        ]
+      },
+      "policy16": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy16`, unexpected type: expected String but saw Long"
+        ],
+        "permissiveErrors": [
+          "for policy `policy16`, unexpected type: expected String but saw Long"
+        ]
+      },
+      "policy17": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy17`, error during extension function argument validation: Failed to parse as IP address: `\"bad\"`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy17`, error during extension function argument validation: Failed to parse as IP address: `\"bad\"`"
+        ]
+      },
+      "policy18": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy18`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+          "for policy `policy18`, wrong number of arguments in extension function application. Expected 1, got 2",
+          "for policy `policy18`, extension constructors may not be called with non-literal expressions"
+        ],
+        "permissiveErrors": [
+          "for policy `policy18`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+          "for policy `policy18`, wrong number of arguments in extension function application. Expected 1, got 2"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {a: Long,} and {b: Long,} are not compatible"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {a: Long,} and {a: String,} are not compatible"
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types A and C are not compatible",
+          "the types Long and C are not compatible",
+          "the types Long and B are not compatible",
+          "the types Long and D are not compatible",
+          "the types Long, A, and C are not compatible",
+          "the types Long, B, and C are not compatible",
+          "the types Long, B, and D are not compatible",
+          "the types Long, A, and B are not compatible",
+          "the types A and D are not compatible",
+          "the types Long, C, and D are not compatible",
+          "the types A and B are not compatible",
+          "the types Long, A, and D are not compatible",
+          "the types Long and A are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types Long, A, __cedar::internal::Union<A, C>, and C are not compatible",
+          "the types Long and B are not compatible",
+          "the types Long and A are not compatible",
+          "the types Long and C are not compatible",
+          "the types Long, B, and C are not compatible",
+          "the types Long, A, and B are not compatible",
+          "the types Long, A, and D are not compatible",
+          "the types Long, A, __cedar::internal::Union<A, B>, and B are not compatible",
+          "the types Long, B, and D are not compatible",
+          "the types Long, C, and D are not compatible",
+          "the types Long and D are not compatible",
+          "the types Long, A, and C are not compatible",
+          "the types Long, A, __cedar::internal::Union<A, D>, and D are not compatible"
+        ]
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy5`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+          "for policy `policy5`, unexpected type: expected Bool but saw decimal"
+        ],
+        "permissiveErrors": [
+          "for policy `policy5`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+          "for policy `policy5`, unexpected type: expected Bool but saw decimal"
+        ]
+      },
+      "policy6": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy6`, unexpected type: expected Bool but saw Long"
+        ],
+        "permissiveErrors": [
+          "for policy `policy6`, unexpected type: expected Bool but saw Long"
+        ]
+      },
+      "policy7": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy7`, unrecognized entity type `NoSuchType`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy7`, unrecognized entity type `NoSuchType`"
+        ]
+      },
+      "policy8": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy8`, unrecognized entity type `NoSuchType`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy8`, unrecognized entity type `NoSuchType`"
+        ]
+      },
+      "policy9": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy9`, unrecognized entity type `NoSuchType`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy9`, unrecognized entity type `NoSuchType`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

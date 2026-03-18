@@ -1,0 +1,52 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "the types Long, {a?: Long,r: Long,}, and {a: Long,r: Long,} are not compatible",
+      "the types Long and {z: Long,} are not compatible",
+      "for policy `policy2`, unrecognized entity type `NoSuchType`"
+    ],
+    "permissiveErrors": [
+      "the types Long, {a?: Long,r: Long,}, and {a: Long,r: Long,} are not compatible",
+      "the types Long and {z: Long,} are not compatible",
+      "for policy `policy2`, unrecognized entity type `NoSuchType`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types Long, {a?: Long,r: Long,}, and {a: Long,r: Long,} are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types Long, {a?: Long,r: Long,}, and {a: Long,r: Long,} are not compatible"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types Long and {z: Long,} are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types Long and {z: Long,} are not compatible"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unrecognized entity type `NoSuchType`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unrecognized entity type `NoSuchType`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

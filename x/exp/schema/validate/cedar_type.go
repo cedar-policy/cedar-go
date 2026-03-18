@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -36,22 +37,22 @@ type entityAttrSource struct {
 type typeEntity struct{ lub entityLUB }       // Entity with LUB of types
 type typeExtension struct{ name types.Ident } // Extension type (ipaddr, decimal, etc.)
 
-func (typeNever) isCedarType()     { _ = "hack for code coverage" }
-func (typeTrue) isCedarType()      { _ = "hack for code coverage" }
-func (typeFalse) isCedarType()     { _ = "hack for code coverage" }
-func (typeBool) isCedarType()      { _ = "hack for code coverage" }
-func (typeLong) isCedarType()      { _ = "hack for code coverage" }
-func (typeString) isCedarType()    { _ = "hack for code coverage" }
-func (typeSet) isCedarType()       { _ = "hack for code coverage" }
-func (typeRecord) isCedarType()    { _ = "hack for code coverage" }
-func (typeEntity) isCedarType()    { _ = "hack for code coverage" }
-func (typeExtension) isCedarType() { _ = "hack for code coverage" }
+func (typeNever) isCedarType()     { _ = 0 }
+func (typeTrue) isCedarType()      { _ = 0 }
+func (typeFalse) isCedarType()     { _ = 0 }
+func (typeBool) isCedarType()      { _ = 0 }
+func (typeLong) isCedarType()      { _ = 0 }
+func (typeString) isCedarType()    { _ = 0 }
+func (typeSet) isCedarType()       { _ = 0 }
+func (typeRecord) isCedarType()    { _ = 0 }
+func (typeEntity) isCedarType()    { _ = 0 }
+func (typeExtension) isCedarType() { _ = 0 }
 
 // typeIncompatErr creates a type incompatibility error with types sorted to match Rust's order.
 func typeIncompatErr(a, b cedarType) *typeIncompatError {
 	nameA := cedarTypeName(a)
 	nameB := cedarTypeName(b)
-	if cedarTypeSortKey(a) > cedarTypeSortKey(b) {
+	if compareCedarType(a, b) > 0 {
 		nameA, nameB = nameB, nameA
 	}
 	return &typeIncompatError{msg: fmt.Sprintf("the types %s and %s are not compatible", nameA, nameB)}
@@ -60,25 +61,23 @@ func typeIncompatErr(a, b cedarType) *typeIncompatError {
 // typeIncompatErrMulti reports type incompatibility for 3+ types (e.g., set elements).
 // Matches Rust's format: "the types A, B, and C are not compatible"
 func typeIncompatErrMulti(types []cedarType) *typeIncompatError {
-	// Sort by structural key (matches Rust's BTreeSet<Type> ordering)
+	// Sort and dedupe by full structural type ordering (matches Rust's
+	// BTreeSet<Type> behavior, not just display text).
 	sorted := make([]cedarType, len(types))
 	copy(sorted, types)
-	slices.SortFunc(sorted, func(a, b cedarType) int {
-		ka, kb := cedarTypeSortKey(a), cedarTypeSortKey(b)
-		if ka < kb {
-			return -1
-		}
-		if ka > kb {
-			return 1
-		}
-		return 0
-	})
-	names := make([]string, len(sorted))
+	slices.SortFunc(sorted, compareCedarType)
+
+	var deduped []cedarType
 	for i, t := range sorted {
+		if i == 0 || compareCedarType(sorted[i-1], t) != 0 {
+			deduped = append(deduped, t)
+		}
+	}
+
+	names := make([]string, len(deduped))
+	for i, t := range deduped {
 		names[i] = cedarTypeName(t)
 	}
-	// Deduplicate
-	names = slices.Compact(names)
 	if len(names) == 2 {
 		return &typeIncompatError{msg: fmt.Sprintf("the types %s and %s are not compatible", names[0], names[1])}
 	}
@@ -99,49 +98,111 @@ func typeIncompatErrMulti(types []cedarType) *typeIncompatError {
 	return &typeIncompatError{msg: sb.String()}
 }
 
-// cedarTypeSortKey returns a sort key for ordering types in error messages.
-// Matches Rust's structural type ordering (True < False < Never < Long < String < Set < Record < Entity < Extension).
-func cedarTypeSortKey(t cedarType) string {
-	switch tv := t.(type) {
-	case typeTrue:
-		return "0a"
-	case typeFalse:
-		return "0b"
-	case typeBool:
-		return "0c"
-	case typeNever:
-		return "1"
-	case typeLong:
-		return "2"
-	case typeString:
-		return "3"
-	case typeSet:
-		return "4:" + cedarTypeSortKey(tv.element)
-	case typeRecord:
-		// Sort by attribute keys/types (matches Rust BTreeMap ordering)
-		key := "5"
-		keys := make([]string, 0, len(tv.attrs))
-		for k := range tv.attrs {
-			keys = append(keys, string(k))
+// compareCedarType mirrors cedar-policy-core 4.9.1 derived Ord on validator::Type:
+// Never < True < False < Bool < Long < String < Set < Record < Entity < Extension.
+func compareCedarType(a, b cedarType) int {
+	ra, rb := cedarTypeRank(a), cedarTypeRank(b)
+	if ra != rb {
+		if ra < rb {
+			return -1
 		}
-		slices.Sort(keys)
-		for _, k := range keys {
-			at := tv.attrs[types.String(k)]
-			key += ":" + k + ":" + cedarTypeSortKey(at.typ)
-		}
-		return key
-	case typeEntity:
-		return "6:" + cedarEntityTypeName(tv.lub)
-	case typeExtension:
+		return 1
 	}
-	return "7:" + string(t.(typeExtension).name)
+	if ra <= 5 {
+		return 0
+	}
+	if ra == 6 {
+		return compareCedarType(a.(typeSet).element, b.(typeSet).element)
+	}
+	if ra == 7 {
+		return compareRecordAttrs(a.(typeRecord).attrs, b.(typeRecord).attrs)
+	}
+	if ra == 8 {
+		return compareEntityLUB(a.(typeEntity).lub, b.(typeEntity).lub)
+	}
+	return strings.Compare(string(a.(typeExtension).name), string(b.(typeExtension).name))
+}
+
+func cedarTypeRank(t cedarType) int {
+	return cedarTypeRanks[reflect.TypeOf(t)]
+}
+
+var cedarTypeRanks = map[reflect.Type]int{
+	reflect.TypeOf(typeNever{}):     0,
+	reflect.TypeOf(typeTrue{}):      1,
+	reflect.TypeOf(typeFalse{}):     2,
+	reflect.TypeOf(typeBool{}):      3,
+	reflect.TypeOf(typeLong{}):      4,
+	reflect.TypeOf(typeString{}):    5,
+	reflect.TypeOf(typeSet{}):       6,
+	reflect.TypeOf(typeRecord{}):    7,
+	reflect.TypeOf(typeEntity{}):    8,
+	reflect.TypeOf(typeExtension{}): 9,
+}
+
+func compareEntityLUB(a, b entityLUB) int {
+	n := min(len(a.elements), len(b.elements))
+	for i := 0; i < n; i++ {
+		if a.elements[i] < b.elements[i] {
+			return -1
+		}
+		if a.elements[i] > b.elements[i] {
+			return 1
+		}
+	}
+	if len(a.elements) < len(b.elements) {
+		return -1
+	}
+	if len(a.elements) > len(b.elements) {
+		return 1
+	}
+	return 0
+}
+
+func compareRecordAttrs(a, b map[types.String]attributeType) int {
+	ka := make([]string, 0, len(a))
+	kb := make([]string, 0, len(b))
+	for k := range a {
+		ka = append(ka, string(k))
+	}
+	for k := range b {
+		kb = append(kb, string(k))
+	}
+	slices.Sort(ka)
+	slices.Sort(kb)
+
+	n := min(len(ka), len(kb))
+	for i := 0; i < n; i++ {
+		if ka[i] < kb[i] {
+			return -1
+		}
+		if ka[i] > kb[i] {
+			return 1
+		}
+		at := a[types.String(ka[i])]
+		bt := b[types.String(kb[i])]
+		if c := compareCedarType(at.typ, bt.typ); c != 0 {
+			return c
+		}
+		// Rust AttributeType field order is (attr_type, is_required).
+		if at.required != bt.required {
+			return requiredOrder[at.required] - requiredOrder[bt.required]
+		}
+	}
+	if len(ka) < len(kb) {
+		return -1
+	}
+	if len(ka) > len(kb) {
+		return 1
+	}
+	return 0
 }
 
 // cedarTypeName returns the Rust Cedar display name for a type.
 func cedarTypeName(t cedarType) string {
 	switch tv := t.(type) {
 	case typeNever:
-		return "__cedar::internal::Any"
+		return "__cedar::internal::Never"
 	case typeTrue:
 		return "__cedar::internal::True"
 	case typeFalse:
@@ -164,9 +225,6 @@ func cedarTypeName(t cedarType) string {
 }
 
 func cedarEntityTypeName(lub entityLUB) string {
-	if len(lub.elements) == 0 {
-		return "__cedar::internal::AnyEntity"
-	}
 	if len(lub.elements) == 1 {
 		return string(lub.elements[0])
 	}
@@ -192,12 +250,23 @@ func cedarRecordTypeName(r typeRecord) string {
 	for _, k := range keys {
 		at := r.attrs[types.String(k)]
 		sb.WriteString(k)
+		sb.WriteString(optionalAttrSuffix[at.required])
 		sb.WriteString(": ")
 		sb.WriteString(cedarTypeName(at.typ))
 		sb.WriteRune(',')
 	}
 	sb.WriteRune('}')
 	return sb.String()
+}
+
+var requiredOrder = map[bool]int{
+	false: 0,
+	true:  1,
+}
+
+var optionalAttrSuffix = map[bool]string{
+	true:  "",
+	false: "?",
 }
 
 type attributeType struct {

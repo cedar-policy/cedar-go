@@ -10,7 +10,7 @@ linters:
 	go run github.com/alecthomas/go-check-sumtype/cmd/go-check-sumtype@latest -default-signifies-exhaustive=false ./...
 	go test -coverprofile=coverage.out ./...
 	sed -i '' '/^github.com\/cedar-policy\/cedar-go\/internal\/schema\/parser\/cedarschema.go/d' coverage.out
-	go tool cover -func=coverage.out | sed 's/%$$//' | awk '$$2 == "isCedarType" { next } $$2 == "Entity" && $$1 ~ /entity\.go/ { next } $$2 == "typeOfExtensionCall" { next } { if ($$3 < 100.0) { printf "Insufficient code coverage for %s\n", $$0; failed=1 } } END { exit failed }'
+	go tool cover -func=coverage.out | sed 's/%$$//' | awk '$$1 == "total:" { next } { if ($$3 < 100.0) { printf "Insufficient code coverage for %s\n", $$0; failed=1 } } END { exit failed }'
 
 # Download the latest corpus tests tarball and overwrite corpus-tests.tar.gz if changed
 .PHONY: check-upstream-corpus
@@ -29,7 +29,7 @@ corpus-tests-json-schemas.tar.gz: corpus-tests.tar.gz
 	@echo "Generating JSON schemas from Cedar schemas..."
 	@rm -rf /tmp/corpus-tests /tmp/corpus-tests-json-schemas
 	@mkdir -p /tmp/corpus-tests-json-schemas
-	@tar -xzf corpus-tests.tar.gz -C /tmp/
+	@tar -xzmf corpus-tests.tar.gz -C /tmp/
 	@for schema in /tmp/corpus-tests/*.cedarschema; do \
 		basename=$$(basename $$schema .cedarschema); \
 		echo "Converting $$basename.cedarschema..."; \
@@ -48,7 +48,7 @@ corpus-tests-validation.tar.gz: corpus-tests.tar.gz test/cedar-validation-tool/t
 	@echo "Generating validation results from Rust Cedar..."
 	@rm -rf /tmp/corpus-tests /tmp/corpus-tests-validation
 	@mkdir -p /tmp/corpus-tests-validation
-	@tar -xzf corpus-tests.tar.gz -C /tmp/
+	@tar -xzmf corpus-tests.tar.gz -C /tmp/
 	@for testjson in /tmp/corpus-tests/*.json; do \
 		case "$$testjson" in *.entities.json) continue ;; esac; \
 		basename=$$(basename $$testjson .json); \

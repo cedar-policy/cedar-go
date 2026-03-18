@@ -1,0 +1,38 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+      "for policy `policy0`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+      "for policy `policy0`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+          "for policy `policy0`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`",
+          "for policy `policy0`, error during extension function argument validation: Failed to parse as a decimal value: `\"bad\"`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": [
+    {
+      "description": "Request 0",
+      "strict": true,
+      "permissive": true
+    }
+  ]
+}

@@ -9,8 +9,8 @@
       "for policy `policy2`, unrecognized entity type `Bar`",
       "for policy `policy2`, unrecognized entity type `Foo`",
       "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
-      "for policy `policy4`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy4`, unable to guarantee safety of access to tag `principal.nonexistent` on entity type `User`",
+      "for policy `policy4`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`",
       "for policy `policy5`, unexpected type: expected String but saw Long",
       "for policy `policy6`, unrecognized entity type `Bar`",
@@ -79,8 +79,8 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy4`, attribute `nonexistent` on entity type `User` not found",
-          "for policy `policy4`, unable to guarantee safety of access to tag `principal.nonexistent` on entity type `User`"
+          "for policy `policy4`, unable to guarantee safety of access to tag `principal.nonexistent` on entity type `User`",
+          "for policy `policy4`, attribute `nonexistent` on entity type `User` not found"
         ],
         "permissiveErrors": [
           "for policy `policy4`, attribute `nonexistent` on entity type `User` not found",
@@ -91,12 +91,12 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy5`, unexpected type: expected String but saw Long",
-          "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`"
+          "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`",
+          "for policy `policy5`, unexpected type: expected String but saw Long"
         ],
         "permissiveErrors": [
-          "for policy `policy5`, unexpected type: expected String but saw Long",
-          "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`"
+          "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`",
+          "for policy `policy5`, unexpected type: expected String but saw Long"
         ]
       },
       "policy6": {

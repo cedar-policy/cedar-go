@@ -217,7 +217,7 @@ func TestEscapeString(t *testing.T) {
 		{"non_printable_0xa0", string(rune(0xa0)), `\u{a0}`}, // 0xa0 is not printable in Go
 		{"combining_mark", "\u0300", `\u{300}`},              // combining grave accent (Mn)
 		{"enclosing_mark", "\u20DD", `\u{20dd}`},             // combining enclosing circle (Me)
-		{"spacing_mark", "\u0903", `\u{903}`},                // devanagari visarga (Mc)
+		{"spacing_mark", "\u0903", "\u0903"},                 // printable, not escaped by Rust debug
 		{"normal_unicode", "\u00e9", "\u00e9"},               // é is printable
 		{"emoji", "\U0001F600", "\U0001F600"},                // emoji is printable
 		{"non_printable_high", "\uFFFE", `\u{fffe}`},         // non-printable
@@ -227,6 +227,28 @@ func TestEscapeString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			out := EscapeString(tt.in)
+			testutil.Equals(t, out, tt.out)
+		})
+	}
+}
+
+func TestEscapeStringDisplay(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		in   string
+		out  string
+	}{
+		{"combining_mark_preserved", "\u0300", "\u0300"},
+		{"spacing_mark_preserved", "\u0903", "\u0903"},
+		{"ascii_control_escaped", "\x01", `\u{1}`},
+		{"quoted", `"`, `\"`},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out := EscapeStringDisplay(tt.in)
 			testutil.Equals(t, out, tt.out)
 		})
 	}
@@ -247,7 +269,8 @@ func TestShouldEscape(t *testing.T) {
 		{"c1_end", 0x9f, true},
 		{"non_printable_0xa0", 0xa0, true}, // 0xa0 is not printable in Go
 		{"letter", 'A', false},
-		{"combining_mark", 0x0300, true},
+		{"combining_mark", 0x0300, true}, // rust escapes this one
+		{"devanagari_vowel_sign_o", 0x094a, false},
 		{"printable_unicode", 0x00e9, false},
 	}
 	for _, tt := range tests {

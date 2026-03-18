@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/compare_ifset_coverage.cedarschema",
+    "policies": "testdata/compare_ifset_coverage.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/compare_ifset_coverage.entities.json",
+    "requests": []
+}

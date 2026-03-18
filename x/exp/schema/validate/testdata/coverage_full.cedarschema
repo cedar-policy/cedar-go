@@ -1,0 +1,19 @@
+entity A = {
+    opt?: String,
+    s: String,
+    n: Long,
+};
+
+entity B = {
+    s: String,
+    n: Long,
+};
+
+entity C;
+entity D;
+
+action "act" appliesTo {
+    principal: [A, B, C, D],
+    resource: [A, B, C, D],
+    context: {},
+};

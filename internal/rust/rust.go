@@ -161,11 +161,24 @@ func digitVal(ch rune) int {
 	return 16 // larger than any legal digit val
 }
 
-// EscapeString escapes a string using Rust's char::escape_debug() format,
-// matching Rust Cedar's error message formatting for extension function arguments.
-// Rust's escape_debug escapes: named controls (\0,\t,\n,\r), backslash, single/double quotes,
-// grapheme extend characters (combining marks), C1 controls (0x80-0x9F), and non-printable chars.
+// EscapeStringDebug escapes a string using Rust's debug-style escaping.
+func EscapeStringDebug(s string) string {
+	return escapeStringMode(s, true)
+}
+
+// EscapeStringDisplay escapes a string using Rust's display-style escaping.
+// This keeps printable unicode (including combining marks) intact while
+// escaping control and non-printable runes.
+func EscapeStringDisplay(s string) string {
+	return escapeStringMode(s, false)
+}
+
+// EscapeString is kept as a compatibility alias for debug-style escaping.
 func EscapeString(s string) string {
+	return EscapeStringDebug(s)
+}
+
+func escapeStringMode(s string, debug bool) string {
 	var b []byte
 	for _, r := range s {
 		switch r {
@@ -184,7 +197,7 @@ func EscapeString(s string) string {
 		case '"':
 			b = append(b, `\"`...)
 		default:
-			if ShouldEscape(r) {
+			if shouldEscapeByMode(r, debug) {
 				b = append(b, fmt.Sprintf(`\u{%x}`, r)...)
 			} else {
 				b = append(b, []byte(string(r))...)
@@ -194,17 +207,22 @@ func EscapeString(s string) string {
 	return string(b)
 }
 
-// ShouldEscape returns true if a rune should be escaped as \u{xx} by
-// Rust's char::escape_debug(). This covers ASCII/C1 control chars, grapheme
-// extend characters (combining marks), and other non-printable characters.
+// ShouldEscape returns true if a rune should be escaped as \u{xx} in
+// debug-style escaping. This includes combining marks.
 func ShouldEscape(r rune) bool {
+	return shouldEscapeByMode(r, true)
+}
+
+func shouldEscapeByMode(r rune, debug bool) bool {
 	if r < 0x20 || r == 0x7f {
 		return true
 	}
 	if r >= 0x80 && r <= 0x9f {
 		return true
 	}
-	if unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Me, r) || unicode.Is(unicode.Mc, r) {
+	// Rust debug escaping escapes nonspacing/enclosing marks; display escaping
+	// keeps them when otherwise printable.
+	if debug && (unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Me, r)) {
 		return true
 	}
 	if !unicode.IsPrint(r) {

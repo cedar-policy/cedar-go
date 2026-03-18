@@ -3,10 +3,10 @@
     "strict": false,
     "permissive": false,
     "strictErrors": [
-      "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy0`, unexpected type: expected Bool but saw Long",
-      "for policy `policy1`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy1`, unexpected type: expected Bool but saw Long",
+      "for policy `policy1`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy2`, unexpected type: expected Bool but saw Long",
       "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
@@ -24,12 +24,12 @@
       "for policy `policy14`, unexpected type: expected Bool but saw Long"
     ],
     "permissiveErrors": [
-      "for policy `policy0`, unexpected type: expected Bool but saw Long",
       "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy0`, unexpected type: expected Bool but saw Long",
       "for policy `policy1`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy1`, unexpected type: expected Bool but saw Long",
-      "for policy `policy2`, unexpected type: expected Bool but saw Long",
       "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
+      "for policy `policy2`, unexpected type: expected Bool but saw Long",
       "for policy `policy3`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy4`, attribute `nonexistent` on entity type `User` not found",
       "for policy `policy5`, attribute `nonexistent` on entity type `User` not found",
@@ -49,12 +49,12 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy0`, unexpected type: expected Bool but saw Long",
-          "for policy `policy0`, attribute `nonexistent` on entity type `User` not found"
+          "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
+          "for policy `policy0`, unexpected type: expected Bool but saw Long"
         ],
         "permissiveErrors": [
-          "for policy `policy0`, unexpected type: expected Bool but saw Long",
-          "for policy `policy0`, attribute `nonexistent` on entity type `User` not found"
+          "for policy `policy0`, attribute `nonexistent` on entity type `User` not found",
+          "for policy `policy0`, unexpected type: expected Bool but saw Long"
         ]
       },
       "policy1": {
@@ -65,8 +65,8 @@
           "for policy `policy1`, attribute `nonexistent` on entity type `User` not found"
         ],
         "permissiveErrors": [
-          "for policy `policy1`, unexpected type: expected Bool but saw Long",
-          "for policy `policy1`, attribute `nonexistent` on entity type `User` not found"
+          "for policy `policy1`, attribute `nonexistent` on entity type `User` not found",
+          "for policy `policy1`, unexpected type: expected Bool but saw Long"
         ]
       },
       "policy10": {
@@ -113,20 +113,20 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy14`, attribute `nonexistent` on entity type `User` not found",
-          "for policy `policy14`, unexpected type: expected Bool but saw Long"
+          "for policy `policy14`, unexpected type: expected Bool but saw Long",
+          "for policy `policy14`, attribute `nonexistent` on entity type `User` not found"
         ],
         "permissiveErrors": [
-          "for policy `policy14`, attribute `nonexistent` on entity type `User` not found",
-          "for policy `policy14`, unexpected type: expected Bool but saw Long"
+          "for policy `policy14`, unexpected type: expected Bool but saw Long",
+          "for policy `policy14`, attribute `nonexistent` on entity type `User` not found"
         ]
       },
       "policy2": {
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",
-          "for policy `policy2`, unexpected type: expected Bool but saw Long"
+          "for policy `policy2`, unexpected type: expected Bool but saw Long",
+          "for policy `policy2`, attribute `nonexistent` on entity type `User` not found"
         ],
         "permissiveErrors": [
           "for policy `policy2`, attribute `nonexistent` on entity type `User` not found",

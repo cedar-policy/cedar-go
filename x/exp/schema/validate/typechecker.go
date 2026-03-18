@@ -251,7 +251,10 @@ func (v *Validator) typeOfOr(env *requestEnv, n ast.NodeTypeOr, caps capabilityS
 
 	rt, rCaps, err := v.typeOfExpr(env, n.Right, caps)
 	if err != nil {
-		return nil, caps, err
+		// Keep a stable 2-branch error shape for `||` so cross-environment
+		// dedupe can align right-branch diagnostics even when the left branch
+		// had no diagnostics in some environments.
+		return nil, caps, newBinaryBranchError(nil, err)
 	}
 	if !isBoolType(rt) {
 		return nil, caps, unexpectedTypeErr("Bool", rt)
@@ -293,61 +296,50 @@ func (v *Validator) typeOfNot(env *requestEnv, n ast.NodeTypeNot, caps capabilit
 
 func (v *Validator) typeOfIfThenElse(env *requestEnv, n ast.NodeTypeIfThenElse, caps capabilitySet) (cedarType, capabilitySet, error) {
 	condType, condCaps, condErr := v.typeOfExpr(env, n.If, caps)
-
-	// If condition failed or has wrong type, still typecheck both branches for error collection
-	if condErr != nil || (condType != nil && !isBoolType(condType)) {
-		var errs []error
-		if condErr != nil {
-			collectErrors(&errs, condErr)
-		}
-		if condType != nil && !isBoolType(condType) {
-			errs = append(errs, unexpectedTypeErr("Bool", condType))
-		}
-		if condType == nil || !isBoolType(condType) {
-			// Condition has hard failure or wrong type — typecheck branches for errors
-			thenType, _, thenErr := v.typeOfExpr(env, n.Then, caps)
-			if thenErr != nil {
-				collectErrors(&errs, thenErr)
-			}
-			elseType, _, elseErr := v.typeOfExpr(env, n.Else, caps)
-			if elseErr != nil {
-				collectErrors(&errs, elseErr)
-			}
-			// Return recovery type from branches if available (for parent type checks)
-			var resultType cedarType
-			if thenType != nil && elseType != nil {
-				if lub, err := v.leastUpperBound(thenType, elseType); err == nil {
-					resultType = lub
-				}
-			}
-			return resultType, caps, errors.Join(errs...)
-		}
-		// condType is Bool with soft errors — fall through to evaluate branches properly
-	}
-
-	thenCaps := caps.merge(condCaps)
-
-	// Only do constant folding when condition had no errors
-	if condErr == nil {
-		if _, ok := condType.(typeFalse); ok {
-			if err := v.validateEntityRefs(n.Then); err != nil {
-				return nil, caps, err
-			}
-			return v.typeOfExpr(env, n.Else, caps)
-		}
-		if _, ok := condType.(typeTrue); ok {
-			if err := v.validateEntityRefs(n.Else); err != nil {
-				return nil, caps, err
-			}
-			return v.typeOfExpr(env, n.Then, thenCaps)
-		}
-	}
-
-	// Evaluate both branches
 	var errs []error
 	if condErr != nil {
 		collectErrors(&errs, condErr)
 	}
+	if condType != nil && !isBoolType(condType) {
+		errs = append(errs, unexpectedTypeErr("Bool", condType))
+		// Expect-type failure semantics: keep errors, but do not use this type for
+		// short-circuit decisions.
+		condType = nil
+	}
+
+	thenCaps := caps.merge(condCaps)
+
+	// Rust short-circuits on singleton test type even when there are other test
+	// diagnostics. Dead branch is not typechecked.
+	if _, ok := condType.(typeFalse); ok {
+		if err := v.validateEntityRefs(n.Then); err != nil {
+			collectErrors(&errs, err)
+		}
+		elseType, elseResultCaps, elseErr := v.typeOfExpr(env, n.Else, caps)
+		if elseErr != nil {
+			collectErrors(&errs, elseErr)
+		}
+		if len(errs) > 0 {
+			return elseType, elseResultCaps, errors.Join(errs...)
+		}
+		return elseType, elseResultCaps, nil
+	}
+	if _, ok := condType.(typeTrue); ok {
+		if err := v.validateEntityRefs(n.Else); err != nil {
+			collectErrors(&errs, err)
+		}
+		thenType, thenResultCaps, thenErr := v.typeOfExpr(env, n.Then, thenCaps)
+		if thenErr != nil {
+			collectErrors(&errs, thenErr)
+		}
+		if len(errs) > 0 {
+			return thenType, thenResultCaps, errors.Join(errs...)
+		}
+		return thenType, thenResultCaps, nil
+	}
+
+	// No short-circuit: evaluate both branches and compute branch LUB even when
+	// the test had diagnostics.
 	thenType, thenResultCaps, thenErr := v.typeOfExpr(env, n.Then, thenCaps)
 	if thenErr != nil {
 		collectErrors(&errs, thenErr)
@@ -356,16 +348,20 @@ func (v *Validator) typeOfIfThenElse(env *requestEnv, n ast.NodeTypeIfThenElse, 
 	if elseErr != nil {
 		collectErrors(&errs, elseErr)
 	}
-	if len(errs) > 0 {
-		return nil, caps, errors.Join(errs...)
+
+	var result cedarType
+	if thenType != nil && elseType != nil {
+		if err := v.checkStrictEntityLUB(thenType, elseType); err != nil {
+			errs = append(errs, typeIncompatErr(thenType, elseType))
+		} else if lub, err := v.leastUpperBound(thenType, elseType); err != nil {
+			errs = append(errs, typeIncompatErr(thenType, elseType))
+		} else {
+			result = lub
+		}
 	}
 
-	if err := v.checkStrictEntityLUB(thenType, elseType); err != nil {
-		return nil, caps, typeIncompatErr(thenType, elseType)
-	}
-	result, err := v.leastUpperBound(thenType, elseType)
-	if err != nil {
-		return nil, caps, typeIncompatErr(thenType, elseType)
+	if len(errs) > 0 {
+		return result, thenResultCaps.intersect(elseResultCaps), errors.Join(errs...)
 	}
 	return result, thenResultCaps.intersect(elseResultCaps), nil
 }
@@ -388,32 +384,55 @@ func (v *Validator) typeOfEquality(env *requestEnv, left, right ast.IsNode, nega
 			errs = append(errs, err)
 		}
 	}
-	if len(errs) == 0 {
-		if result, ok := evalLiteralEquality(left, right); ok {
-			if negated {
-				result = !result
-			}
-			if result {
-				return typeTrue{}, caps, nil
-			}
-			return typeFalse{}, caps, nil
+
+	typeOfEq := cedarType(typeBool{})
+	if result, ok := v.evalEqualityLiteralOrAction(env, left, right); ok {
+		if negated {
+			result = !result
 		}
-		if areTypesDisjoint(lt, rt) {
-			if negated {
-				return typeTrue{}, caps, nil
-			}
-			return typeFalse{}, caps, nil
+		if result {
+			typeOfEq = typeTrue{}
+		} else {
+			typeOfEq = typeFalse{}
+		}
+	} else if areTypesDisjoint(lt, rt) {
+		// Equality on disjoint entity types is always false (or true for !=).
+		if negated {
+			typeOfEq = typeTrue{}
+		} else {
+			typeOfEq = typeFalse{}
 		}
 	}
-	if v.strict && lt != nil && rt != nil && !areTypesDisjoint(lt, rt) {
-		if _, err := v.leastUpperBound(lt, rt); err != nil {
-			errs = append(errs, typeIncompatErr(lt, rt))
+
+	// Rust skips strict compatibility errors when equality is already a singleton
+	// result (`True`/`False`), and otherwise enforces compatible operand types.
+	if v.strict && lt != nil && rt != nil {
+		if _, isTrue := typeOfEq.(typeTrue); !isTrue {
+			if _, isFalse := typeOfEq.(typeFalse); !isFalse {
+				if _, err := v.leastUpperBound(lt, rt); err != nil {
+					errs = append(errs, typeIncompatErr(lt, rt))
+				}
+			}
 		}
 	}
 	if len(errs) > 0 {
-		return typeBool{}, caps, errors.Join(errs...)
+		return typeOfEq, caps, errors.Join(errs...)
 	}
-	return typeBool{}, caps, nil
+	return typeOfEq, caps, nil
+}
+
+// evalEqualityLiteralOrAction evaluates literal equality including Rust's
+// action-variable rewrite (replacing `action` with the request action EUID).
+func (v *Validator) evalEqualityLiteralOrAction(env *requestEnv, left, right ast.IsNode) (bool, bool) {
+	l := left
+	r := right
+	if le := v.exprToActionEUID(env, left); le != nil {
+		l = ast.NodeValue{Value: *le}
+	}
+	if re := v.exprToActionEUID(env, right); re != nil {
+		r = ast.NodeValue{Value: *re}
+	}
+	return evalLiteralEquality(l, r)
 }
 
 type typeExpectation func(cedarType) error
@@ -701,21 +720,22 @@ func (v *Validator) typeOfIsIn(env *requestEnv, n ast.NodeTypeIsIn, caps capabil
 	var errs []error
 
 	lt, _, leftErr := v.typeOfExpr(env, n.Left, caps)
-
+	// `x is T in y` is checked as both `x is T` and `x in y`.
+	// At the string level this can surface two identical unexpected-type
+	// messages for the left operand (matching Rust output behavior).
+	// When left has no recovery type, Rust can also surface duplicate
+	// underlying left-hand errors across the two checks.
 	if lt != nil && !isEntityType(lt) {
 		errs = append(errs, unexpectedTypeErr("__cedar::internal::AnyEntity", lt))
-	} else if leftErr != nil {
+	}
+	if leftErr != nil {
 		errs = append(errs, leftErr)
 	}
-
-	if leftErr != nil && lt != nil && !isEntityType(lt) {
+	if leftErr != nil && lt == nil {
 		errs = append(errs, leftErr)
 	}
-
 	if lt != nil && !isEntityType(lt) {
 		errs = append(errs, unexpectedTypeErr("__cedar::internal::AnyEntity", lt))
-	} else if leftErr != nil {
-		errs = append(errs, leftErr)
 	}
 
 	rt, _, rightErr := v.typeOfExpr(env, n.Entity, caps)
@@ -900,14 +920,14 @@ func formatEntityAttrPath(parent, child types.String) string {
 	if isValidCedarIdent(ps) {
 		sb.WriteString(ps)
 	} else {
-		fmt.Fprintf(&sb, `["%s"]`, rust.EscapeString(ps))
+		fmt.Fprintf(&sb, `["%s"]`, rust.EscapeStringDebug(ps))
 	}
 	cs := string(child)
 	if isValidCedarIdent(cs) {
 		sb.WriteByte('.')
 		sb.WriteString(cs)
 	} else {
-		fmt.Fprintf(&sb, `["%s"]`, rust.EscapeString(cs))
+		fmt.Fprintf(&sb, `["%s"]`, rust.EscapeStringDebug(cs))
 	}
 	return sb.String()
 }
@@ -1038,7 +1058,11 @@ func (v *Validator) typeOfGetTag(env *requestEnv, n ast.NodeTypeGetTag, caps cap
 			}
 		}
 
-		errs = append(errs, fmt.Errorf("unable to guarantee safety of access to tag `%s`%s", tagExpr, entityTypeMsg))
+		unsafeTagErr := fmt.Errorf("unable to guarantee safety of access to tag `%s`%s", tagExpr, entityTypeMsg)
+		if mk := unsafeTagMergeEnvKey(env, n.Left, n.Right); mk != "" {
+			unsafeTagErr = withMergeKey(unsafeTagErr, "unsafe-tag:"+mk)
+		}
+		errs = append(errs, unsafeTagErr)
 	}
 	if len(errs) > 0 {
 		return nil, caps, errors.Join(errs...)
@@ -1127,7 +1151,11 @@ func (v *Validator) typeOfSet(env *requestEnv, n ast.NodeTypeSet, caps capabilit
 		for _, et := range elemTypes {
 			lub, err := v.leastUpperBound(elemType, et)
 			if err != nil {
-				errs = append(errs, typeIncompatErr(elemType, et))
+				if len(elemTypes) > 2 {
+					errs = append(errs, typeIncompatErrMulti(elemTypes))
+				} else if len(elemTypes) == 2 {
+					errs = append(errs, typeIncompatErr(elemTypes[0], elemTypes[1]))
+				}
 				break
 			}
 			elemType = lub
@@ -1164,6 +1192,14 @@ func (v *Validator) typeOfExtensionCall(env *requestEnv, n ast.NodeTypeExtension
 		for _, arg := range n.Args {
 			if _, _, err := v.typeOfExpr(env, arg, caps); err != nil {
 				collectErrors(&errs, err)
+			}
+		}
+		if sig.isConstructor && v.strict {
+			for _, arg := range n.Args {
+				if _, ok := arg.(ast.NodeValue); !ok {
+					errs = append(errs, fmt.Errorf("extension constructors may not be called with non-literal expressions"))
+					break
+				}
 			}
 		}
 		errs = append(errs, fmt.Errorf("wrong number of arguments in extension function application. Expected %d, got %d", len(sig.argTypes), len(n.Args)))
@@ -1215,10 +1251,25 @@ func (v *Validator) typeOfExtensionCall(env *requestEnv, n ast.NodeTypeExtension
 
 // collectErrors unwraps joined errors and appends them individually.
 func collectErrors(errs *[]error, err error) {
-	if ue, ok := err.(interface{ Unwrap() []error }); ok {
-		*errs = append(*errs, ue.Unwrap()...)
-	} else {
-		*errs = append(*errs, err)
+	*errs = append(*errs, err)
+}
+
+// binaryBranchError preserves left/right branch positions in error unwrapping.
+// This lets dedupe logic distinguish branch sites while still handling
+// short-circuit environments where one side has no diagnostics.
+type binaryBranchError struct {
+	error
+	left  error
+	right error
+}
+
+func (e binaryBranchError) Unwrap() []error { return []error{e.left, e.right} }
+
+func newBinaryBranchError(left, right error) error {
+	return binaryBranchError{
+		error: errors.Join(left, right),
+		left:  left,
+		right: right,
 	}
 }
 
@@ -1235,19 +1286,19 @@ func validateExtensionValue(funcName types.Path, value string) error {
 	switch funcName {
 	case "ip":
 		if _, err := types.ParseIPAddr(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as IP address: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: Failed to parse as IP address: `\"%s\"`", rust.EscapeStringDisplay(value))
 		}
 	case "decimal":
 		if _, err := types.ParseDecimal(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as a decimal value: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: Failed to parse as a decimal value: `\"%s\"`", rust.EscapeStringDisplay(value))
 		}
 	case "datetime":
 		if _, err := types.ParseDatetime(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as a datetime value: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: Failed to parse as a datetime value: `\"%s\"`", rust.EscapeStringDisplay(value))
 		}
 	case "duration":
 		if _, err := types.ParseDuration(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as a duration value: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: Failed to parse as a duration value: `\"%s\"`", rust.EscapeStringDisplay(value))
 		}
 	}
 	return nil
@@ -1303,6 +1354,41 @@ func exprVarName(n ast.IsNode) types.String {
 		}
 	}
 	return ""
+}
+
+func unsafeTagMergeEnvKey(env *requestEnv, left, right ast.IsNode) string {
+	usesPrincipal := nodeUsesVariable(left, "principal") || nodeUsesVariable(right, "principal")
+	usesResource := nodeUsesVariable(left, "resource") || nodeUsesVariable(right, "resource")
+	usesAction := nodeUsesVariable(left, "action") || nodeUsesVariable(right, "action")
+	usesContext := nodeUsesVariable(left, "context") || nodeUsesVariable(right, "context")
+
+	parts := make([]string, 0, 3)
+	if usesPrincipal {
+		parts = append(parts, "p="+string(env.principalType))
+	}
+	if usesResource {
+		parts = append(parts, "r="+string(env.resourceType))
+	}
+	if usesAction || usesContext {
+		parts = append(parts, "a="+env.actionUID.String())
+	}
+	return strings.Join(parts, "|")
+}
+
+func nodeUsesVariable(n ast.IsNode, varName types.String) bool {
+	uses := false
+	ast.Inspect(ast.NewNode(n), func(cur ast.IsNode) bool {
+		v, ok := cur.(ast.NodeTypeVariable)
+		if !ok {
+			return true
+		}
+		if v.Name == varName {
+			uses = true
+			return false
+		}
+		return true
+	})
+	return uses
 }
 
 func (v *Validator) validateEntityRefs(n ast.IsNode) error {

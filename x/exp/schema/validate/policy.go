@@ -46,16 +46,29 @@ func (v *Validator) Policy(policyID string, policy *ast.Policy) error {
 	// Expression type checking
 	allEnvs := v.generateRequestEnvs()
 	envs := v.filterEnvsForPolicy(allEnvs, principalTypes, resourceTypes, actionUIDs)
+	actionScopeEmptySet := false
+	if sc, ok := policy.Action.(ast.ScopeTypeInSet); ok && len(sc.Entities) == 0 {
+		actionScopeEmptySet = true
+	}
+
+	// `action in []` has mode-dependent behavior in Rust:
+	// permissive: conditions are unreachable (skip condition typechecking)
+	// strict: still typecheck conditions (plus emit empty-set-literal error)
+	if actionScopeEmptySet {
+		if v.strict {
+			envs = v.filterEnvsForPolicy(allEnvs, principalTypes, resourceTypes, nil)
+		} else {
+			envs = nil
+		}
+	}
+
+	// Rust reports empty action set literals in strict mode even when no request
+	// environment is applicable for the scoped policy.
+	if v.strict && actionScopeEmptySet {
+		errs = append(errs, fmt.Errorf("empty set literals are forbidden in policies"))
+	}
 
 	if len(envs) > 0 {
-		// Check for empty action set literal in strict mode. This matches Rust
-		// where the scope is part of the typechecked condition — the empty set
-		// check only fires when prior scope constraints don't short-circuit.
-		if v.strict {
-			if sc, ok := policy.Action.(ast.ScopeTypeInSet); ok && len(sc.Entities) == 0 {
-				errs = append(errs, fmt.Errorf("empty set literals are forbidden in policies"))
-			}
-		}
 		if len(policy.Conditions) > 0 {
 			if err := v.typecheckConditions(envs, policy.Conditions); err != nil {
 				errs = append(errs, flattenErrors(err)...)
@@ -337,56 +350,58 @@ func (v *Validator) getEntityTypesIn(target types.EntityType) []types.EntityType
 func (v *Validator) typecheckConditions(envs []requestEnv, conditions []ast.ConditionType) error {
 	var allErrs []error
 	for _, cond := range conditions {
-		// Collect error multisets per environment and merge (element-wise max count).
-		// This deduplicates identical errors across environments while preserving
-		// duplicates from different expression positions within the same environment.
-		type errEntry struct {
-			err   error
-			count int
-		}
-		merged := map[string]*errEntry{}
+		// Rust deduplicates ValidationError values across request environments
+		// using HashSet semantics (identity includes source location). We
+		// approximate identity using the leaf's unwrap-path plus rendered message:
+		// this preserves same-text diagnostics from distinct AST sites while
+		// collapsing repeats of the same site across environments.
+		merged := map[string]error{}
 		var mergedOrder []string
 		for _, env := range envs {
 			caps := newCapabilitySet()
 			t, _, err := v.typeOfExpr(&env, cond.Body, caps)
-			var envErrors []error
+			var envErrors []keyedError
 			if err != nil {
-				envErrors = flattenErrors(err)
+				envErrors = append(envErrors, flattenErrorsWithPath(err, "e")...)
 			}
 			if t != nil && !isBoolType(t) {
-				envErrors = append(envErrors, fmt.Errorf("unexpected type: expected Bool but saw %s", cedarTypeName(t)))
+				te := fmt.Errorf("unexpected type: expected Bool but saw %s", cedarTypeName(t))
+				envErrors = append(envErrors, keyedError{key: "t", err: te})
 			}
-			// Count occurrences of each error message in this environment
-			type envErr struct {
-				err   error
-				count int
-			}
-			envCounts := map[string]*envErr{}
-			for _, e := range envErrors {
-				msg := e.Error()
-				if ee, ok := envCounts[msg]; ok {
-					ee.count++
-				} else {
-					envCounts[msg] = &envErr{err: e, count: 1}
-				}
-			}
-			// Merge: deduplicate across environments, preserving per-environment counts.
-			// The same expression evaluated in different type contexts produces the same
-			// count for any shared error message, so first-seen count is sufficient.
-			for msg, ee := range envCounts {
-				if _, ok := merged[msg]; !ok {
-					mergedOrder = append(mergedOrder, msg)
-					merged[msg] = &errEntry{err: ee.err, count: ee.count}
+			for _, ke := range envErrors {
+				key := ke.key + "\x00" + ke.err.Error()
+				if _, ok := merged[key]; !ok {
+					merged[key] = ke.err
+					mergedOrder = append(mergedOrder, key)
 				}
 			}
 		}
-		// Emit merged errors preserving first-seen order and original error types
-		for _, msg := range mergedOrder {
-			me := merged[msg]
-			for range me.count {
-				allErrs = append(allErrs, me.err)
-			}
+		for _, key := range mergedOrder {
+			allErrs = append(allErrs, merged[key])
 		}
 	}
 	return errors.Join(allErrs...)
+}
+
+type keyedError struct {
+	key string
+	err error
+}
+
+func flattenErrorsWithPath(err error, path string) []keyedError {
+	if ue, ok := err.(interface{ Unwrap() []error }); ok {
+		var out []keyedError
+		for i, child := range ue.Unwrap() {
+			if child == nil {
+				continue
+			}
+			childPath := fmt.Sprintf("%s.%d", path, i)
+			out = append(out, flattenErrorsWithPath(child, childPath)...)
+		}
+		return out
+	}
+	if mk, ok := mergeIdentityKey(err); ok {
+		return []keyedError{{key: path + "\x1f" + mk, err: err}}
+	}
+	return []keyedError{{key: path, err: err}}
 }
