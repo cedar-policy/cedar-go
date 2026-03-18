@@ -140,13 +140,14 @@ func (p Pattern) MarshalJSON() ([]byte, error) {
 			buf.WriteString(`"Wildcard"`)
 		}
 
-		if comp.Literal != "" {
+		if !comp.Wildcard || comp.Literal != "" {
 			if comp.Wildcard {
 				buf.WriteString(", ")
 			}
-			buf.WriteString(`{"Literal":"`)
-			buf.WriteString(comp.Literal)
-			buf.WriteString(`"}`)
+			kb, _ := json.Marshal(comp.Literal)
+			buf.WriteString(`{"Literal":`)
+			buf.Write(kb)
+			buf.WriteByte('}')
 		}
 
 		if i < len(p.comps)-1 {
