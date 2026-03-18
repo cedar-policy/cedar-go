@@ -3,7 +3,6 @@ package rust
 import (
 	"fmt"
 	"strings"
-	"unicode"
 	"unicode/utf8"
 )
 
@@ -161,54 +160,58 @@ func digitVal(ch rune) int {
 	return 16 // larger than any legal digit val
 }
 
-// EscapeString escapes a string using Rust's char::escape_debug() format,
-// matching Rust Cedar's error message formatting for extension function arguments.
-// Rust's escape_debug escapes: named controls (\0,\t,\n,\r), backslash, single/double quotes,
-// grapheme extend characters (combining marks), C1 controls (0x80-0x9F), and non-printable chars.
+// escapeRune escapes a single rune using Rust's char::escape_debug_ext() logic.
+// When escapeGraphemeExtend is true, grapheme extend characters are escaped as \u{...}.
+// When false, they are passed through (matching Rust's str continuation behavior).
+func escapeRune(r rune, escapeGraphemeExtend bool) string {
+	switch r {
+	case '\x00':
+		return `\0`
+	case '\t':
+		return `\t`
+	case '\r':
+		return `\r`
+	case '\n':
+		return `\n`
+	case '\\':
+		return `\\`
+	case '"':
+		return `\"`
+	case '\'':
+		return `\'`
+	default:
+		if escapeGraphemeExtend && isGraphemeExtended(r) {
+			return fmt.Sprintf(`\u{%x}`, r)
+		}
+		if isPrintable(r) {
+			return string(r)
+		}
+		return fmt.Sprintf(`\u{%x}`, r)
+	}
+}
+
+// EscapeString escapes a string using Rust's str::escape_debug() semantics.
+// The first character uses ESCAPE_ALL (grapheme extend chars are escaped).
+// Continuation characters do NOT escape grapheme extend chars, matching Rust's
+// CharEscapeDebugContinue { escape_grapheme_extended: false, ... }.
 func EscapeString(s string) string {
 	var b []byte
+	first := true
 	for _, r := range s {
-		switch r {
-		case 0:
-			b = append(b, `\0`...)
-		case '\t':
-			b = append(b, `\t`...)
-		case '\n':
-			b = append(b, `\n`...)
-		case '\r':
-			b = append(b, `\r`...)
-		case '\\':
-			b = append(b, `\\`...)
-		case '\'':
-			b = append(b, `\'`...)
-		case '"':
-			b = append(b, `\"`...)
-		default:
-			if ShouldEscape(r) {
-				b = append(b, fmt.Sprintf(`\u{%x}`, r)...)
-			} else {
-				b = append(b, []byte(string(r))...)
-			}
-		}
+		b = append(b, escapeRune(r, first)...)
+		first = false
 	}
 	return string(b)
 }
 
-// ShouldEscape returns true if a rune should be escaped as \u{xx} by
-// Rust's char::escape_debug(). This covers ASCII/C1 control chars, grapheme
-// extend characters (combining marks), and other non-printable characters.
-func ShouldEscape(r rune) bool {
-	if r < 0x20 || r == 0x7f {
-		return true
+// EscapeCharAll escapes each character in a string using Rust's
+// char::escape_debug() with ESCAPE_ALL (grapheme extend always escaped).
+// This is used for Pattern literals, where Rust calls c.escape_debug()
+// per-character rather than str::escape_debug().
+func EscapeCharAll(s string) string {
+	var b []byte
+	for _, r := range s {
+		b = append(b, escapeRune(r, true)...)
 	}
-	if r >= 0x80 && r <= 0x9f {
-		return true
-	}
-	if unicode.Is(unicode.Mn, r) || unicode.Is(unicode.Me, r) || unicode.Is(unicode.Mc, r) {
-		return true
-	}
-	if !unicode.IsPrint(r) {
-		return true
-	}
-	return false
+	return string(b)
 }
