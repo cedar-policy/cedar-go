@@ -132,6 +132,10 @@ func (r *Record) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
+	if len(res) == 0 {
+		*r = Record{}
+		return nil
+	}
 	m := make(RecordMap, len(res))
 	for kk, vv := range res {
 		m[String(kk)] = vv.Value

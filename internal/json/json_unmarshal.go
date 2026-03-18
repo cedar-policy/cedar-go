@@ -259,7 +259,7 @@ func (n nodeJSON) ToNode() (ast.Node, error) {
 
 	// Set
 	case n.Set != nil:
-		return n.Set.ToNode()
+		return (*n.Set).ToNode()
 
 	// Record
 	case n.Record != nil:
