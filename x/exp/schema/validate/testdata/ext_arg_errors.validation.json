@@ -28,9 +28,9 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
+          "for policy `policy1`, extension constructors may not be called with non-literal expressions",
           "for policy `policy1`, unexpected type: expected datetime, or duration, or Long but saw decimal",
-          "for policy `policy1`, unexpected type: expected datetime, or duration, or Long but saw decimal",
-          "for policy `policy1`, extension constructors may not be called with non-literal expressions"
+          "for policy `policy1`, unexpected type: expected datetime, or duration, or Long but saw decimal"
         ],
         "permissiveErrors": [
           "for policy `policy1`, unexpected type: expected datetime, or duration, or Long but saw decimal",

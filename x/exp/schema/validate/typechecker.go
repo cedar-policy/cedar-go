@@ -327,20 +327,41 @@ func (v *Validator) typeOfIfThenElse(env *requestEnv, n ast.NodeTypeIfThenElse, 
 
 	thenCaps := caps.merge(condCaps)
 
-	// Only do constant folding when condition had no errors
-	if condErr == nil {
-		if _, ok := condType.(typeFalse); ok {
-			if err := v.validateEntityRefs(n.Then); err != nil {
-				return nil, caps, err
-			}
-			return v.typeOfExpr(env, n.Else, caps)
+	// Match Rust behavior: short-circuit on singleton-boolean test types even
+	// when the test expression already has errors.
+	if _, ok := condType.(typeFalse); ok {
+		if err := v.validateEntityRefs(n.Then); err != nil {
+			return nil, caps, err
 		}
-		if _, ok := condType.(typeTrue); ok {
-			if err := v.validateEntityRefs(n.Else); err != nil {
-				return nil, caps, err
+		elseType, elseCaps, elseErr := v.typeOfExpr(env, n.Else, caps)
+		if condErr != nil || elseErr != nil {
+			var errs []error
+			if condErr != nil {
+				collectErrors(&errs, condErr)
 			}
-			return v.typeOfExpr(env, n.Then, thenCaps)
+			if elseErr != nil {
+				collectErrors(&errs, elseErr)
+			}
+			return elseType, elseCaps, errors.Join(errs...)
 		}
+		return elseType, elseCaps, nil
+	}
+	if _, ok := condType.(typeTrue); ok {
+		if err := v.validateEntityRefs(n.Else); err != nil {
+			return nil, caps, err
+		}
+		thenType, thenResultCaps, thenErr := v.typeOfExpr(env, n.Then, thenCaps)
+		if condErr != nil || thenErr != nil {
+			var errs []error
+			if condErr != nil {
+				collectErrors(&errs, condErr)
+			}
+			if thenErr != nil {
+				collectErrors(&errs, thenErr)
+			}
+			return thenType, thenResultCaps, errors.Join(errs...)
+		}
+		return thenType, thenResultCaps, nil
 	}
 
 	// Evaluate both branches
@@ -357,7 +378,15 @@ func (v *Validator) typeOfIfThenElse(env *requestEnv, n ast.NodeTypeIfThenElse, 
 		collectErrors(&errs, elseErr)
 	}
 	if len(errs) > 0 {
-		return nil, caps, errors.Join(errs...)
+		// Preserve a recovery type when both branches typecheck, so parent
+		// expressions can still short-circuit on singleton booleans.
+		var resultType cedarType
+		if thenType != nil && elseType != nil {
+			if lub, err := v.leastUpperBound(thenType, elseType); err == nil {
+				resultType = lub
+			}
+		}
+		return resultType, caps, errors.Join(errs...)
 	}
 
 	if err := v.checkStrictEntityLUB(thenType, elseType); err != nil {
@@ -389,6 +418,14 @@ func (v *Validator) typeOfEquality(env *requestEnv, left, right ast.IsNode, nega
 		}
 	}
 	if len(errs) == 0 {
+		if lvar, ok := left.(ast.NodeTypeVariable); ok {
+			if rvar, ok := right.(ast.NodeTypeVariable); ok && lvar.Name == rvar.Name {
+				if negated {
+					return typeFalse{}, caps, nil
+				}
+				return typeTrue{}, caps, nil
+			}
+		}
 		if result, ok := evalLiteralEquality(left, right); ok {
 			if negated {
 				result = !result
@@ -1029,7 +1066,8 @@ func (v *Validator) typeOfGetTag(env *requestEnv, n ast.NodeTypeGetTag, caps cap
 	if hasCapability {
 		// Capability is only set by hasTag when entity supports tags
 	} else {
-		tagExpr := parser.MarshalExpr(rewriteConstITE(n.Right))
+		rewrittenTagExpr := rewriteConstITE(n.Right)
+		tagExpr := parser.MarshalExpr(rewrittenTagExpr)
 
 		var entityTypeMsg string
 		if ok {
@@ -1038,7 +1076,11 @@ func (v *Validator) typeOfGetTag(env *requestEnv, n ast.NodeTypeGetTag, caps cap
 			}
 		}
 
-		errs = append(errs, fmt.Errorf("unable to guarantee safety of access to tag `%s`%s", tagExpr, entityTypeMsg))
+		errs = append(errs, &unsafeTagAccessError{
+			msg:           fmt.Sprintf("unable to guarantee safety of access to tag `%s`%s", tagExpr, entityTypeMsg),
+			usesPrincipal: exprContainsVariable(rewrittenTagExpr, "principal"),
+			usesResource:  exprContainsVariable(rewrittenTagExpr, "resource"),
+		})
 	}
 	if len(errs) > 0 {
 		return nil, caps, errors.Join(errs...)
@@ -1125,9 +1167,21 @@ func (v *Validator) typeOfSet(env *requestEnv, n ast.NodeTypeSet, caps capabilit
 		}
 		var elemType cedarType = typeNever{}
 		for _, et := range elemTypes {
+			if err := v.checkStrictEntityLUB(elemType, et); err != nil {
+				if len(elemTypes) > 2 {
+					errs = append(errs, typeIncompatErrMulti(elemTypes))
+				} else {
+					errs = append(errs, typeIncompatErr(elemType, et))
+				}
+				break
+			}
 			lub, err := v.leastUpperBound(elemType, et)
 			if err != nil {
-				errs = append(errs, typeIncompatErr(elemType, et))
+				if len(elemTypes) > 2 {
+					errs = append(errs, typeIncompatErrMulti(elemTypes))
+				} else {
+					errs = append(errs, typeIncompatErr(elemType, et))
+				}
 				break
 			}
 			elemType = lub
@@ -1166,8 +1220,13 @@ func (v *Validator) typeOfExtensionCall(env *requestEnv, n ast.NodeTypeExtension
 				collectErrors(&errs, err)
 			}
 		}
+		if sig.isConstructor && v.strict && len(n.Args) > 0 {
+			if _, ok := n.Args[0].(ast.NodeValue); !ok {
+				errs = append(errs, fmt.Errorf("extension constructors may not be called with non-literal expressions"))
+			}
+		}
 		errs = append(errs, fmt.Errorf("wrong number of arguments in extension function application. Expected %d, got %d", len(sig.argTypes), len(n.Args)))
-		return nil, caps, errors.Join(errs...)
+		return sig.returnType, caps, errors.Join(errs...)
 	}
 
 	// Extension constructors: check literal requirement BEFORE type check
@@ -1303,6 +1362,21 @@ func exprVarName(n ast.IsNode) types.String {
 		}
 	}
 	return ""
+}
+
+func exprContainsVariable(n ast.IsNode, target types.String) bool {
+	found := false
+	ast.Inspect(ast.NewNode(n), func(node ast.IsNode) bool {
+		if found {
+			return false
+		}
+		if nd, ok := node.(ast.NodeTypeVariable); ok && nd.Name == target {
+			found = true
+			return false
+		}
+		return true
+	})
+	return found
 }
 
 func (v *Validator) validateEntityRefs(n ast.IsNode) error {

@@ -1,0 +1,199 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy11`, unexpected type: expected Bool but saw Long",
+      "for policy `policy12`, empty set literals are forbidden in policies",
+      "for policy `policy14`, empty set literals are forbidden in policies",
+      "for policy `policy14`, empty set literals are forbidden in policies",
+      "for policy `policy1`, empty set literals are forbidden in policies",
+      "for policy `policy1`, empty set literals are forbidden in policies",
+      "for policy `policy2`, empty set literals are forbidden in policies",
+      "for policy `policy2`, empty set literals are forbidden in policies",
+      "for policy `policy2`, unexpected type: expected Long but saw String",
+      "for policy `policy3`, unexpected type: expected Long but saw String",
+      "for policy `policy4`, empty set literals are forbidden in policies",
+      "for policy `policy4`, empty set literals are forbidden in policies",
+      "for policy `policy5`, extension constructors may not be called with non-literal expressions",
+      "for policy `policy5`, extension constructors may not be called with non-literal expressions",
+      "for policy `policy5`, wrong number of arguments in extension function application. Expected 1, got 2",
+      "for policy `policy5`, wrong number of arguments in extension function application. Expected 1, got 2",
+      "for policy `policy7`, unable to guarantee safety of access to tag `resource.r` on entity type `P`",
+      "for policy `policy8`, empty set literals are forbidden in policies",
+      "for policy `policy8`, empty set literals are forbidden in policies",
+      "the types Bool and Long are not compatible",
+      "the types P and Q are not compatible",
+      "the types P and R are not compatible",
+      "the types P and R are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, and Long are not compatible",
+      "the types {a: Long,} and {a: Long,b?: String,} are not compatible"
+    ],
+    "permissiveErrors": [
+      "for policy `policy11`, unexpected type: expected Bool but saw Long",
+      "for policy `policy12`, unexpected type: expected Bool but saw Set<__cedar::internal::Never>",
+      "for policy `policy2`, unexpected type: expected Long but saw String",
+      "for policy `policy3`, unexpected type: expected Long but saw String",
+      "for policy `policy5`, wrong number of arguments in extension function application. Expected 1, got 2",
+      "for policy `policy5`, wrong number of arguments in extension function application. Expected 1, got 2",
+      "for policy `policy7`, unable to guarantee safety of access to tag `resource.r` on entity type `P`",
+      "the types Bool and Long are not compatible",
+      "the types Set<__cedar::internal::Never>, Set<Long>, and Set<String> are not compatible",
+      "the types __cedar::internal::True, __cedar::internal::False, and Long are not compatible"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "for policy `policy1`, empty set literals are forbidden in policies",
+          "for policy `policy1`, empty set literals are forbidden in policies"
+        ]
+      },
+      "policy10": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types P and R are not compatible"
+        ]
+      },
+      "policy11": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy11`, unexpected type: expected Bool but saw Long",
+          "the types P and Q are not compatible"
+        ],
+        "permissiveErrors": [
+          "for policy `policy11`, unexpected type: expected Bool but saw Long"
+        ]
+      },
+      "policy12": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy12`, empty set literals are forbidden in policies"
+        ],
+        "permissiveErrors": [
+          "for policy `policy12`, unexpected type: expected Bool but saw Set<__cedar::internal::Never>"
+        ]
+      },
+      "policy13": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "the types Bool and Long are not compatible"
+        ],
+        "permissiveErrors": [
+          "the types Bool and Long are not compatible"
+        ]
+      },
+      "policy14": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy14`, empty set literals are forbidden in policies",
+          "for policy `policy14`, empty set literals are forbidden in policies"
+        ],
+        "permissiveErrors": [
+          "the types Set<__cedar::internal::Never>, Set<Long>, and Set<String> are not compatible"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, empty set literals are forbidden in policies",
+          "for policy `policy2`, empty set literals are forbidden in policies",
+          "for policy `policy2`, unexpected type: expected Long but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unexpected type: expected Long but saw String"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, unexpected type: expected Long but saw String",
+          "the types __cedar::internal::True, __cedar::internal::False, and Long are not compatible"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, unexpected type: expected Long but saw String",
+          "the types __cedar::internal::True, __cedar::internal::False, and Long are not compatible"
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "for policy `policy4`, empty set literals are forbidden in policies",
+          "for policy `policy4`, empty set literals are forbidden in policies",
+          "the types P and R are not compatible"
+        ]
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy5`, extension constructors may not be called with non-literal expressions",
+          "for policy `policy5`, extension constructors may not be called with non-literal expressions",
+          "for policy `policy5`, wrong number of arguments in extension function application. Expected 1, got 2",
+          "for policy `policy5`, wrong number of arguments in extension function application. Expected 1, got 2"
+        ],
+        "permissiveErrors": [
+          "for policy `policy5`, wrong number of arguments in extension function application. Expected 1, got 2",
+          "for policy `policy5`, wrong number of arguments in extension function application. Expected 1, got 2"
+        ]
+      },
+      "policy6": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {a: Long,} and {a: Long,b?: String,} are not compatible"
+        ]
+      },
+      "policy7": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy7`, unable to guarantee safety of access to tag `resource.r` on entity type `P`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy7`, unable to guarantee safety of access to tag `resource.r` on entity type `P`"
+        ]
+      },
+      "policy8": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "for policy `policy8`, empty set literals are forbidden in policies",
+          "for policy `policy8`, empty set literals are forbidden in policies"
+        ]
+      },
+      "policy9": {
+        "strict": true,
+        "permissive": true
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "Action::act": {},
+      "P::p1": {},
+      "Q::q1": {},
+      "R::r1": {}
+    }
+  },
+  "requestValidation": [
+    {
+      "description": "coverage",
+      "strict": true,
+      "permissive": true
+    }
+  ]
+}

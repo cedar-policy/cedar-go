@@ -21,8 +21,8 @@
           "for policy `policy0`, attribute `profile.nonexistent` on entity type `User` not found"
         ],
         "permissiveErrors": [
-          "for policy `policy0`, attribute `profile.nonexistent` on entity type `User` not found",
-          "for policy `policy0`, attribute `profile.nonexistent` on entity type `Admin` not found"
+          "for policy `policy0`, attribute `profile.nonexistent` on entity type `Admin` not found",
+          "for policy `policy0`, attribute `profile.nonexistent` on entity type `User` not found"
         ]
       },
       "policy1": {

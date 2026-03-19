@@ -1,0 +1,41 @@
+[
+  {
+    "uid": {
+      "type": "P",
+      "id": "p1"
+    },
+    "attrs": {
+      "p": "v"
+    },
+    "parents": [],
+    "tags": {
+      "k": "v"
+    }
+  },
+  {
+    "uid": {
+      "type": "R",
+      "id": "r1"
+    },
+    "attrs": {
+      "r": "k"
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": "act"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Q",
+      "id": "q1"
+    },
+    "attrs": {},
+    "parents": []
+  }
+]
