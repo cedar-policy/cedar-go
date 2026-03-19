@@ -1,0 +1,12 @@
+entity Manager;
+
+entity User = {
+  name: String,
+  manager: Manager,
+  backup?: Manager,
+};
+
+action view appliesTo {
+  principal: [User],
+  resource: [User],
+};

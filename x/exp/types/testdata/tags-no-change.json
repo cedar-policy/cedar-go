@@ -1,0 +1,4 @@
+{
+  "schema": "tags-primitive.cedarschema",
+  "entities": "tags-no-change.entities.json"
+}

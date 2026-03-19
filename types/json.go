@@ -44,14 +44,6 @@ type explicitValue struct {
 func UnmarshalJSON(b []byte, v *Value) error {
 	// TODO: make this faster if it matters
 	{
-		var res EntityUID
-		ptr := &res
-		if err := ptr.UnmarshalJSON(b); err == nil {
-			*v = res
-			return nil
-		}
-	}
-	{
 		var res extValueJSON
 		if err := json.Unmarshal(b, &res); err == nil && res.Extn != nil {
 			switch res.Extn.Fn {
@@ -97,9 +89,21 @@ func UnmarshalJSON(b []byte, v *Value) error {
 			*v = res
 			return err
 		case '{':
-			res := Record{}
-			err := json.Unmarshal(b, &res)
-			*v = res
+			// Try explicit EntityUID form {"__entity": {...}} before Record.
+			// Only the explicit escape is attempted here; the implicit form
+			// {"type":"X","id":"Y"} parses as a Record and requires
+			// schema-guided coercion (see x/exp/types.EntityMap.UnmarshalJSONWithSchema).
+			var ej entityValueJSON
+			if err := json.Unmarshal(b, &ej); err == nil && ej.Entity != nil {
+				*v = EntityUID{
+					Type: EntityType(ej.Entity.Type),
+					ID:   String(ej.Entity.ID),
+				}
+				return nil
+			}
+			rec := Record{}
+			err := json.Unmarshal(b, &rec)
+			*v = rec
 			return err
 		}
 	}

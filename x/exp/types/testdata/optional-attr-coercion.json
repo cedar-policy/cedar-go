@@ -1,0 +1,4 @@
+{
+  "schema": "optional-attr-coercion.cedarschema",
+  "entities": "optional-attr-coercion.entities.json"
+}

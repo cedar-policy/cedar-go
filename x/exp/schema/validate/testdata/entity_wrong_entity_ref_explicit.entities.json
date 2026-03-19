@@ -1,0 +1,9 @@
+[
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": {
+            "manager": { "__entity": { "type": "Group", "id": "admins" } }
+        },
+        "parents": []
+    }
+]

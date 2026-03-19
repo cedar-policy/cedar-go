@@ -1,0 +1,13 @@
+{
+  "allEntities": {
+    "success": false
+  },
+  "perEntity": {
+    "Manager::boss": {
+      "success": true
+    },
+    "User::alice": {
+      "success": false
+    }
+  }
+}

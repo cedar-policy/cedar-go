@@ -1,0 +1,4 @@
+{
+  "schema": "rich.cedarschema",
+  "entities": "non-string-extension.entities.json"
+}

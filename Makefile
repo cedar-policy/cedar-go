@@ -1,4 +1,4 @@
-.PHONY: test linters corpus-update check-upstream-corpus testdata-validation
+.PHONY: test linters corpus-update check-upstream-corpus testdata-validation testdata-entity-parsing
 
 # Run all tests
 test:
@@ -77,5 +77,22 @@ testdata-validation: test/cedar-validation-tool/target/release/cedar-validation-
 	done
 	@echo "Done! Regenerated testdata validation files."
 
+# Build cedar-entity-parsing-tool and generate entity parsing results
+test/cedar-entity-parsing-tool/target/release/cedar-entity-parsing-tool: test/cedar-entity-parsing-tool/src/main.rs test/cedar-entity-parsing-tool/Cargo.toml
+	@echo "Building cedar-entity-parsing-tool..."
+	@cd test/cedar-entity-parsing-tool && cargo build --release
+
+# Regenerate entity parsing data for x/exp/types/testdata
+testdata-entity-parsing: test/cedar-entity-parsing-tool/target/release/cedar-entity-parsing-tool
+	@echo "Regenerating entity parsing test files..."
+	@for testjson in x/exp/types/testdata/*.json; do \
+		case "$$testjson" in *.entities.json|*.parsing.json) continue ;; esac; \
+		basename=$$(basename $$testjson .json); \
+		echo "  Parsing $$basename..."; \
+		test/cedar-entity-parsing-tool/target/release/cedar-entity-parsing-tool \
+			"$$testjson" "x/exp/types/testdata/$${basename}.parsing.json"; \
+	done
+	@echo "Done! Regenerated entity parsing test files."
+
 # Download, convert, and validate
-corpus-update: corpus-tests-json-schemas.tar.gz corpus-tests-validation.tar.gz testdata-validation
+corpus-update: corpus-tests-json-schemas.tar.gz corpus-tests-validation.tar.gz testdata-validation testdata-entity-parsing

@@ -82,7 +82,6 @@ func (e *EntityUID) UnmarshalCedar(data []byte) error {
 }
 
 func (e *EntityUID) UnmarshalJSON(b []byte) error {
-	// TODO: review after adding support for schemas
 	var res entityValueJSON
 	if err := json.Unmarshal(b, &res); err != nil {
 		return err

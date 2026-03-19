@@ -10,7 +10,7 @@
             "balance": { "__extn": { "fn": "decimal", "arg": "100.50" } },
             "joined": { "__extn": { "fn": "datetime", "arg": "2024-01-15" } },
             "session": { "__extn": { "fn": "duration", "arg": "1h30m" } },
-            "buddy": { "type": "User", "id": "bob" },
+            "buddy": { "__entity": { "type": "User", "id": "bob" } },
             "profile": { "bio": "Hello" }
         },
         "parents": []
@@ -26,7 +26,7 @@
             "balance": { "__extn": { "fn": "decimal", "arg": "50.00" } },
             "joined": { "__extn": { "fn": "datetime", "arg": "2024-06-01" } },
             "session": { "__extn": { "fn": "duration", "arg": "30m" } },
-            "buddy": { "type": "User", "id": "alice" },
+            "buddy": { "__entity": { "type": "User", "id": "alice" } },
             "profile": { "bio": "World" }
         },
         "parents": []

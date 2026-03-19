@@ -1,0 +1,25 @@
+[
+  {
+    "uid": {"type": "Manager", "id": "boss"},
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {"type": "User", "id": "alice"},
+    "attrs": {
+      "name": "Alice",
+      "age": 30,
+      "active": true,
+      "manager": {"type": "Manager", "id": "boss"},
+      "ip": "not-an-ip",
+      "score": "1.23",
+      "created": "2024-01-01",
+      "ttl": "1h30m",
+      "friends": [],
+      "labels": [],
+      "metadata": {"key": "v", "owner": {"type": "Manager", "id": "boss"}},
+      "settings": {"verbose": true}
+    },
+    "parents": []
+  }
+]
