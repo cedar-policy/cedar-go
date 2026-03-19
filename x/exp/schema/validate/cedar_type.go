@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"cmp"
 	"fmt"
 	"slices"
 	"strings"
@@ -51,7 +52,7 @@ func (typeExtension) isCedarType() { _ = "hack for code coverage" }
 func typeIncompatErr(a, b cedarType) *typeIncompatError {
 	nameA := cedarTypeName(a)
 	nameB := cedarTypeName(b)
-	if cedarTypeSortKey(a) > cedarTypeSortKey(b) {
+	if compareCedarType(a, b) > 0 {
 		nameA, nameB = nameB, nameA
 	}
 	return &typeIncompatError{msg: fmt.Sprintf("the types %s and %s are not compatible", nameA, nameB)}
@@ -64,14 +65,7 @@ func typeIncompatErrMulti(types []cedarType) *typeIncompatError {
 	sorted := make([]cedarType, len(types))
 	copy(sorted, types)
 	slices.SortFunc(sorted, func(a, b cedarType) int {
-		ka, kb := cedarTypeSortKey(a), cedarTypeSortKey(b)
-		if ka < kb {
-			return -1
-		}
-		if ka > kb {
-			return 1
-		}
-		return 0
+		return compareCedarType(a, b)
 	})
 	names := make([]string, len(sorted))
 	for i, t := range sorted {
@@ -99,57 +93,104 @@ func typeIncompatErrMulti(types []cedarType) *typeIncompatError {
 	return &typeIncompatError{msg: sb.String()}
 }
 
-// cedarTypeSortKey returns a sort key for ordering types in error messages.
-// Matches Rust's structural type ordering (True < False < Never < Long < String < Set < Record < Entity < Extension).
-func cedarTypeSortKey(t cedarType) string {
-	switch tv := t.(type) {
-	case typeTrue:
-		return "0a"
-	case typeFalse:
-		return "0b"
-	case typeBool:
-		return "0c"
-	case typeNever:
-		return "1"
-	case typeLong:
-		return "2"
-	case typeString:
-		return "3"
-	case typeSet:
-		return "4:" + cedarTypeSortKey(tv.element)
-	case typeRecord:
-		// Sort by attribute keys/types (matches Rust BTreeMap ordering)
-		key := "5"
-		keys := make([]string, 0, len(tv.attrs))
-		for k := range tv.attrs {
-			keys = append(keys, string(k))
-		}
-		slices.Sort(keys)
-		for _, k := range keys {
-			at := tv.attrs[types.String(k)]
-			key += ":" + k + ":" + cedarTypeSortKey(at.typ)
-		}
-		return key
-	case typeEntity:
-		return "6:" + cedarEntityTypeName(tv.lub)
-	case typeExtension:
+func compareCedarType(a, b cedarType) int {
+	ak, bk := cedarTypeKindRank(a), cedarTypeKindRank(b)
+	if ak != bk {
+		return ak - bk
 	}
-	return "7:" + string(t.(typeExtension).name)
+
+	if av, ok := a.(typeSet); ok {
+		return compareCedarType(av.element, b.(typeSet).element)
+	}
+	if av, ok := a.(typeRecord); ok {
+		return compareRecordTypes(av, b.(typeRecord))
+	}
+	if av, ok := a.(typeEntity); ok {
+		return compareEntityLUB(av.lub, b.(typeEntity).lub)
+	}
+	return strings.Compare(cedarTypeName(a), cedarTypeName(b))
+}
+
+func cedarTypeKindRank(t cedarType) int {
+	switch t.(type) {
+	case typeTrue:
+		return 0
+	case typeFalse:
+		return 1
+	case typeBool:
+		return 2
+	case typeLong:
+		return 4
+	case typeNever:
+		return 3
+	case typeString:
+		return 5
+	case typeSet:
+		return 6
+	case typeRecord:
+		return 7
+	case typeEntity:
+		return 8
+	case typeExtension:
+		return 9
+	default:
+		return -1
+	}
+}
+
+func compareRecordTypes(a, b typeRecord) int {
+	ak := make([]string, 0, len(a.attrs))
+	for k := range a.attrs {
+		ak = append(ak, string(k))
+	}
+	bk := make([]string, 0, len(b.attrs))
+	for k := range b.attrs {
+		bk = append(bk, string(k))
+	}
+	slices.Sort(ak)
+	slices.Sort(bk)
+
+	n := len(ak)
+	if len(bk) < n {
+		n = len(bk)
+	}
+	for i := 0; i < n; i++ {
+		if c := strings.Compare(ak[i], bk[i]); c != 0 {
+			return c
+		}
+		aat := a.attrs[types.String(ak[i])]
+		bat := b.attrs[types.String(bk[i])]
+		if c := compareCedarType(aat.typ, bat.typ); c != 0 {
+			return c
+		}
+	}
+	return cmp.Compare(len(ak), len(bk))
+}
+
+func compareEntityLUB(a, b entityLUB) int {
+	n := min(len(a.elements), len(b.elements))
+	for i := 0; i < n; i++ {
+		as, bs := string(a.elements[i]), string(b.elements[i])
+		if c := strings.Compare(as, bs); c != 0 {
+			return c
+		}
+	}
+	return cmp.Compare(len(a.elements), len(b.elements))
 }
 
 // cedarTypeName returns the Rust Cedar display name for a type.
 func cedarTypeName(t cedarType) string {
 	switch tv := t.(type) {
 	case typeNever:
-		return "__cedar::internal::Any"
+		return "__cedar::internal::Never"
+	case typeLong:
+		return "Long"
 	case typeTrue:
 		return "__cedar::internal::True"
 	case typeFalse:
 		return "__cedar::internal::False"
 	case typeBool:
 		return "Bool"
-	case typeLong:
-		return "Long"
 	case typeString:
 		return "String"
 	case typeSet:
@@ -159,14 +200,13 @@ func cedarTypeName(t cedarType) string {
 	case typeEntity:
 		return cedarEntityTypeName(tv.lub)
 	case typeExtension:
+		return string(tv.name)
+	default:
+		return "?"
 	}
-	return string(t.(typeExtension).name)
 }
 
 func cedarEntityTypeName(lub entityLUB) string {
-	if len(lub.elements) == 0 {
-		return "__cedar::internal::AnyEntity"
-	}
 	if len(lub.elements) == 1 {
 		return string(lub.elements[0])
 	}
@@ -192,6 +232,9 @@ func cedarRecordTypeName(r typeRecord) string {
 	for _, k := range keys {
 		at := r.attrs[types.String(k)]
 		sb.WriteString(k)
+		if !at.required {
+			sb.WriteRune('?')
+		}
 		sb.WriteString(": ")
 		sb.WriteString(cedarTypeName(at.typ))
 		sb.WriteRune(',')
@@ -254,14 +297,13 @@ func (v *Validator) isSubtype(a, b cedarType) bool {
 
 // leastUpperBound computes the LUB of two types.
 func (v *Validator) leastUpperBound(a, b cedarType) (cedarType, error) {
-	if _, ok := a.(typeNever); ok {
-		return b, nil
-	}
 	if _, ok := b.(typeNever); ok {
 		return a, nil
 	}
 
 	switch av := a.(type) {
+	case typeNever:
+		return b, nil
 	case typeTrue:
 		switch b.(type) {
 		case typeTrue:
@@ -279,10 +321,8 @@ func (v *Validator) leastUpperBound(a, b cedarType) (cedarType, error) {
 		case typeNever, typeLong, typeString, typeSet, typeRecord, typeEntity, typeExtension:
 		}
 	case typeBool:
-		switch b.(type) {
-		case typeTrue, typeFalse, typeBool:
+		if isBoolType(b) {
 			return typeBool{}, nil
-		case typeNever, typeLong, typeString, typeSet, typeRecord, typeEntity, typeExtension:
 		}
 	case typeLong:
 		if _, ok := b.(typeLong); ok {
@@ -312,8 +352,6 @@ func (v *Validator) leastUpperBound(a, b cedarType) (cedarType, error) {
 		if bv, ok := b.(typeExtension); ok && av.name == bv.name {
 			return av, nil
 		}
-	case typeNever:
-		// Already handled above; unreachable.
 	}
 
 	return nil, fmt.Errorf("incompatible types for least upper bound")

@@ -91,12 +91,12 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy5`, unexpected type: expected String but saw Long",
-          "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`"
+          "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`",
+          "for policy `policy5`, unexpected type: expected String but saw Long"
         ],
         "permissiveErrors": [
-          "for policy `policy5`, unexpected type: expected String but saw Long",
-          "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`"
+          "for policy `policy5`, unable to guarantee safety of access to tag `1` on entity type `User`",
+          "for policy `policy5`, unexpected type: expected String but saw Long"
         ]
       },
       "policy6": {

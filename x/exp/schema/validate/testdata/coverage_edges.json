@@ -1,0 +1,22 @@
+{
+  "schema": "testdata/coverage_edges.cedarschema",
+  "policies": "testdata/coverage_edges.cedar",
+  "shouldValidate": false,
+  "entities": "testdata/coverage_edges.entities.json",
+  "requests": [
+    {
+      "description": "coverage",
+      "principal": { "type": "P", "id": "p1" },
+      "action": { "type": "Action", "id": "act" },
+      "resource": { "type": "R", "id": "r1" },
+      "context": {
+        "flag": true,
+        "rec": { "a": 1, "b": "x" }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

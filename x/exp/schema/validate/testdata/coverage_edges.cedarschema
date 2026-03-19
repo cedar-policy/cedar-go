@@ -1,0 +1,21 @@
+entity P = {
+  p: String
+} tags String;
+
+entity R = {
+  r: String
+};
+
+entity Q;
+
+action "act" appliesTo {
+  principal: [P],
+  resource: [R],
+  context: {
+    flag: Bool,
+    rec: {
+      a: Long,
+      b?: String
+    }
+  }
+};

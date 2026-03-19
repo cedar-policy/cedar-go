@@ -3,8 +3,8 @@
     "strict": false,
     "permissive": true,
     "strictErrors": [
-      "the types {a: Long,} and {b: Long,} are not compatible",
-      "the types {a: Long,c: Long,} and {a: Long,d: Long,} are not compatible"
+      "the types {a: Long,c: Long,} and {a: Long,d: Long,} are not compatible",
+      "the types {a: Long,} and {b: Long,} are not compatible"
     ],
     "perPolicy": {
       "policy0": {

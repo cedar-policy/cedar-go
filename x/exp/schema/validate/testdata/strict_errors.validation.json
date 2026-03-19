@@ -4,9 +4,9 @@
     "permissive": true,
     "strictErrors": [
       "for policy `policy0`, empty set literals are forbidden in policies",
-      "the types Long and String are not compatible",
       "for policy `policy2`, extension constructors may not be called with non-literal expressions",
       "the types Document and User are not compatible",
+      "the types Long and String are not compatible",
       "the types Long and String are not compatible",
       "the types Set<Long> and Set<String> are not compatible"
     ],

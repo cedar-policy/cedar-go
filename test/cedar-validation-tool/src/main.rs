@@ -96,6 +96,10 @@ fn make_entity_uid(r: &EntityRef) -> EntityUid {
     )
 }
 
+fn sort_errors(errors: &mut Vec<String>) {
+    errors.sort();
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
@@ -136,14 +140,16 @@ fn main() {
     let permissive_policy = validator.validate(&policy_set, ValidationMode::Permissive);
 
     // Aggregate results
-    let strict_all_errors: Vec<String> = strict_policy
+    let mut strict_all_errors: Vec<String> = strict_policy
         .validation_errors()
         .map(|e| format!("{e}"))
         .collect();
-    let permissive_all_errors: Vec<String> = permissive_policy
+    let mut permissive_all_errors: Vec<String> = permissive_policy
         .validation_errors()
         .map(|e| format!("{e}"))
         .collect();
+    sort_errors(&mut strict_all_errors);
+    sort_errors(&mut permissive_all_errors);
 
     // Per-policy breakdown
     let mut per_policy = BTreeMap::new();
@@ -158,16 +164,18 @@ fn main() {
     let permissive_errors_all: Vec<_> = permissive_result2.validation_errors().collect();
 
     for pid_str in &policy_ids {
-        let strict_for_policy: Vec<String> = strict_errors_all
+        let mut strict_for_policy: Vec<String> = strict_errors_all
             .iter()
             .filter(|e| e.policy_id().to_string() == *pid_str)
             .map(|e| format!("{e}"))
             .collect();
-        let permissive_for_policy: Vec<String> = permissive_errors_all
+        let mut permissive_for_policy: Vec<String> = permissive_errors_all
             .iter()
             .filter(|e| e.policy_id().to_string() == *pid_str)
             .map(|e| format!("{e}"))
             .collect();
+        sort_errors(&mut strict_for_policy);
+        sort_errors(&mut permissive_for_policy);
         per_policy.insert(
             pid_str.clone(),
             PerPolicyResult {

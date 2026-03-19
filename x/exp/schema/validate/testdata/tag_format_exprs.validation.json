@@ -3,22 +3,22 @@
     "strict": false,
     "permissive": false,
     "strictErrors": [
-      "for policy `policy0`, unable to guarantee safety of access to tag `if true then (context.foo) else (context.foo)` on entity type `User`",
       "for policy `policy0`, attribute `foo` in context for Action::\"view\" not found",
+      "for policy `policy0`, unable to guarantee safety of access to tag `if true then (context.foo) else (context.foo)` on entity type `User`",
       "for policy `policy1`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`",
       "for policy `policy1`, unable to guarantee safety of access to tag `if true then (principal.getTag(\"x\")) else (principal.getTag(\"x\"))` on entity type `User`",
-      "for policy `policy2`, unexpected type: expected Bool but saw Long",
       "for policy `policy2`, unable to guarantee safety of access to tag `if (1 + 2) then \"x\" else \"y\"` on entity type `User`",
-      "for policy `policy3`, unexpected type: expected String but saw User",
-      "for policy `policy3`, unable to guarantee safety of access to tag `if true then User::\"alice\" else User::\"alice\"` on entity type `User`"
+      "for policy `policy2`, unexpected type: expected Bool but saw Long",
+      "for policy `policy3`, unable to guarantee safety of access to tag `if true then User::\"alice\" else User::\"alice\"` on entity type `User`",
+      "for policy `policy3`, unexpected type: expected String but saw User"
     ],
     "permissiveErrors": [
       "for policy `policy0`, attribute `foo` in context for Action::\"view\" not found",
       "for policy `policy0`, unable to guarantee safety of access to tag `if true then (context.foo) else (context.foo)` on entity type `User`",
-      "for policy `policy1`, unable to guarantee safety of access to tag `if true then (principal.getTag(\"x\")) else (principal.getTag(\"x\"))` on entity type `User`",
       "for policy `policy1`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`",
-      "for policy `policy2`, unexpected type: expected Bool but saw Long",
+      "for policy `policy1`, unable to guarantee safety of access to tag `if true then (principal.getTag(\"x\")) else (principal.getTag(\"x\"))` on entity type `User`",
       "for policy `policy2`, unable to guarantee safety of access to tag `if (1 + 2) then \"x\" else \"y\"` on entity type `User`",
+      "for policy `policy2`, unexpected type: expected Bool but saw Long",
       "for policy `policy3`, unable to guarantee safety of access to tag `if true then User::\"alice\" else User::\"alice\"` on entity type `User`",
       "for policy `policy3`, unexpected type: expected String but saw User"
     ],
@@ -27,8 +27,8 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy0`, unable to guarantee safety of access to tag `if true then (context.foo) else (context.foo)` on entity type `User`",
-          "for policy `policy0`, attribute `foo` in context for Action::\"view\" not found"
+          "for policy `policy0`, attribute `foo` in context for Action::\"view\" not found",
+          "for policy `policy0`, unable to guarantee safety of access to tag `if true then (context.foo) else (context.foo)` on entity type `User`"
         ],
         "permissiveErrors": [
           "for policy `policy0`, attribute `foo` in context for Action::\"view\" not found",
@@ -39,20 +39,20 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy1`, unable to guarantee safety of access to tag `if true then (principal.getTag(\"x\")) else (principal.getTag(\"x\"))` on entity type `User`",
-          "for policy `policy1`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`"
+          "for policy `policy1`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`",
+          "for policy `policy1`, unable to guarantee safety of access to tag `if true then (principal.getTag(\"x\")) else (principal.getTag(\"x\"))` on entity type `User`"
         ],
         "permissiveErrors": [
-          "for policy `policy1`, unable to guarantee safety of access to tag `if true then (principal.getTag(\"x\")) else (principal.getTag(\"x\"))` on entity type `User`",
-          "for policy `policy1`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`"
+          "for policy `policy1`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`",
+          "for policy `policy1`, unable to guarantee safety of access to tag `if true then (principal.getTag(\"x\")) else (principal.getTag(\"x\"))` on entity type `User`"
         ]
       },
       "policy2": {
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy2`, unexpected type: expected Bool but saw Long",
-          "for policy `policy2`, unable to guarantee safety of access to tag `if (1 + 2) then \"x\" else \"y\"` on entity type `User`"
+          "for policy `policy2`, unable to guarantee safety of access to tag `if (1 + 2) then \"x\" else \"y\"` on entity type `User`",
+          "for policy `policy2`, unexpected type: expected Bool but saw Long"
         ],
         "permissiveErrors": [
           "for policy `policy2`, unable to guarantee safety of access to tag `if (1 + 2) then \"x\" else \"y\"` on entity type `User`",
@@ -63,12 +63,12 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy3`, unexpected type: expected String but saw User",
-          "for policy `policy3`, unable to guarantee safety of access to tag `if true then User::\"alice\" else User::\"alice\"` on entity type `User`"
+          "for policy `policy3`, unable to guarantee safety of access to tag `if true then User::\"alice\" else User::\"alice\"` on entity type `User`",
+          "for policy `policy3`, unexpected type: expected String but saw User"
         ],
         "permissiveErrors": [
-          "for policy `policy3`, unexpected type: expected String but saw User",
-          "for policy `policy3`, unable to guarantee safety of access to tag `if true then User::\"alice\" else User::\"alice\"` on entity type `User`"
+          "for policy `policy3`, unable to guarantee safety of access to tag `if true then User::\"alice\" else User::\"alice\"` on entity type `User`",
+          "for policy `policy3`, unexpected type: expected String but saw User"
         ]
       }
     }

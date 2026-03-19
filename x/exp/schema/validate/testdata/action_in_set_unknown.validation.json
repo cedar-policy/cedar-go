@@ -3,24 +3,24 @@
     "strict": false,
     "permissive": false,
     "strictErrors": [
-      "for policy `policy0`, unrecognized action `Action::\"nonexistent\"`",
-      "for policy `policy0`, unable to find an applicable action given the policy scope constraints"
+      "for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+      "for policy `policy0`, unrecognized action `Action::\"nonexistent\"`"
     ],
     "permissiveErrors": [
-      "for policy `policy0`, unrecognized action `Action::\"nonexistent\"`",
-      "for policy `policy0`, unable to find an applicable action given the policy scope constraints"
+      "for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+      "for policy `policy0`, unrecognized action `Action::\"nonexistent\"`"
     ],
     "perPolicy": {
       "policy0": {
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy0`, unrecognized action `Action::\"nonexistent\"`",
-          "for policy `policy0`, unable to find an applicable action given the policy scope constraints"
+          "for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+          "for policy `policy0`, unrecognized action `Action::\"nonexistent\"`"
         ],
         "permissiveErrors": [
-          "for policy `policy0`, unrecognized action `Action::\"nonexistent\"`",
-          "for policy `policy0`, unable to find an applicable action given the policy scope constraints"
+          "for policy `policy0`, unable to find an applicable action given the policy scope constraints",
+          "for policy `policy0`, unrecognized action `Action::\"nonexistent\"`"
         ]
       }
     }

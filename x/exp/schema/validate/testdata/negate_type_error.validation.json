@@ -3,24 +3,24 @@
     "strict": false,
     "permissive": false,
     "strictErrors": [
-      "for policy `policy0`, unrecognized entity type `Unknown`",
-      "for policy `policy0`, unexpected type: expected Long but saw Bool"
+      "for policy `policy0`, unexpected type: expected Long but saw Bool",
+      "for policy `policy0`, unrecognized entity type `Unknown`"
     ],
     "permissiveErrors": [
-      "for policy `policy0`, unrecognized entity type `Unknown`",
-      "for policy `policy0`, unexpected type: expected Long but saw Bool"
+      "for policy `policy0`, unexpected type: expected Long but saw Bool",
+      "for policy `policy0`, unrecognized entity type `Unknown`"
     ],
     "perPolicy": {
       "policy0": {
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy0`, unrecognized entity type `Unknown`",
-          "for policy `policy0`, unexpected type: expected Long but saw Bool"
+          "for policy `policy0`, unexpected type: expected Long but saw Bool",
+          "for policy `policy0`, unrecognized entity type `Unknown`"
         ],
         "permissiveErrors": [
-          "for policy `policy0`, unrecognized entity type `Unknown`",
-          "for policy `policy0`, unexpected type: expected Long but saw Bool"
+          "for policy `policy0`, unexpected type: expected Long but saw Bool",
+          "for policy `policy0`, unrecognized entity type `Unknown`"
         ]
       }
     }
