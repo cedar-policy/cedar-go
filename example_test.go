@@ -52,8 +52,14 @@ func Example() {
 		}),
 	}
 
-	ok, _ := ps.IsAuthorized(entities, req)
-	fmt.Println(ok)
+	ok, diag := cedar.Authorize(ps, entities, req)
+	fmt.Println("Decision:", ok)
+	fmt.Println("Permitted by:")
+	for _, d := range diag.Reasons {
+		fmt.Println(" *", d.PolicyID)
+	}
 	// Output:
-	// allow
+	// Decision: allow
+	// Permitted by:
+	//  * policy0
 }
