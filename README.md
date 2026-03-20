@@ -41,7 +41,7 @@ The Go implementation includes:
 The Go implementation does not yet include:
 
 - CLI applications
-- the schema [validator](https://docs.cedarpolicy.com/policies/validation.html)
+- the schema [validator](https://docs.cedarpolicy.com/policies/validation.html) (experimental support is provided in x/exp/schema - please give us feedback!)
 - the formatter
 - partial evaluation
 - support for [policy templates](https://docs.cedarpolicy.com/policies/templates.html)
@@ -125,6 +125,7 @@ The cedar-go module houses the following public packages:
  * [ast](ast/) - Programmatic construction of Cedar ASTs
  * [types](types/) - Basic types common to multiple packages. For convenience, most of these are also projected through the cedar package.
  * [x/exp/batch](x/exp/batch/) - An experimental batch authorization API supporting high-performance variable substitution via partial evaluation.
+ * [x/exp/schema](x/exp/schema) - Experimental support for Cedar schema, including parsing the Cedar and JSON formats, programmatic Schema construction, and validation
 
 ## Documentation
 
@@ -140,130 +141,6 @@ If you're looking to integrate Cedar into a production system, please be sure th
 - Variadics may be added to functions that do not have them to expand the arguments of a function or method.
 - Concrete types may be replaced with compatible interfaces to expand the variety of arguments a function or method can take.
 - Backwards compatibility is maintained for all Go minor versions released within 6 months of a release of cedar-go.
-
-## Change log
-
-### 1.4.0
-#### New Features
-- Add an `UnmarshalCedar` method on `types.EntityUID`s
-- Implement the `encoding.BinaryMarshaler` and `encoding.BinaryUnmarshaler` interfaces for `types.EntityUID`s
-
-### 1.2.5
-#### New Features
-- Adds experimental support for parsing Cedar schema in both Cedar and JSON formats
-
-### 1.2.4
-#### New Features
-- Adds experimental access to evaluation of AST nodes
-
-### 1.2.3
-#### New Features
-- Adds Entity.Equal()
-
-### 1.2.2
-#### New Features
-- Adds experimental support for inspecting Cedar policy AST
-
-### 1.2.1
-#### New Features
-- Fixes the name of `AuthorizationPolicySet` and receiver types for `PolicySet.Get()` and `PolicySet.IsAuthorized()`
-- Retracts 1.2.0
-
-### 1.2.0
-#### New Features
-- Support for the .isEmpty() operator.
-- A new top-level Authorize() function, which allows authorization against a generic policy iterator (`PolicyIterator`) instead of requiring a `PolicySet`. Like the `EntityGetter` interface does for entities, using a generic iterator enables policy to be retrieved from external sources or for policy to be selected dynamically by the iterator implementation without having to clone an entire `PolicySet`.
-- batch.Authorize() likewise now also accepts a `PolicyIterator`.
-- First class iterator support for EntityUIDSet, Record, Set, and PolicySet container types.
-
-#### Upgrading from 1.1.0
-- cedar-go now requires Go 1.23
-
-### 1.1.0
-#### New features
-- Support for entity tags via the .getTag() and .hasTag() operators.
-
-### 1.0.0
-### New features
-- AST builder methods for Cedar datetime and duration literals and their extension methods have been added
-- AST builder methods for adding extension function calls with uninterpreted strings
-- Small improvement in evaluation runtime performance for large, shallow entity graphs.
-
-#### Upgrading from 0.4.x to 1.0.0
-
-- The `Parents` field on `types.Entity` has been changed to an immutable set type with an interface similar to `types.Set`
-- The `UnsafeDecimal()` constructor for the `types.Decimal` type has been removed and replaced with the following safe constructors, which return error on overflow:
-  - `NewDecimal(int64 i, int exponent) (Decimal, error)`
-  - `NewDecimalFromInt[T constraints.Signed](i T) (Decimal, error)`
-  - `NewDecimalFromFloat[T constraints.Float](f T) (Decimal, error)`
-- The `Value` field on `types.Decimal` has been made private. Instances of `Decimal` can be compared with one another via the new `Compare` method.
-- `types.DecimalPrecision` has been made private
-- The following error types have been made private: `types.ErrDateitme`, `types.ErrDecimal`, `types.ErrDuration`, `types.ErrIP`, `types.ErrNotComparable`
-- The following datetime and duration-related constructors have been renamed:
-  - `types.FromStdTime()` has been renamed to `types.NewDatetime()`
-  - `types.DatetimeFromMillis()` has been renamed to `types.NewDatetimeFromMillis()`
-  - `types.FromStdDuration()` has been renamed to `types.NewDuration()`
-  - `types.DurationFromMillis()` has been renamed to `types.NewDurationFromMillis()`
-- `types.Entities` has been renamed to `types.EntityMap`
-- Because `types.Entity` is now immutable, `types.EntityMap` now stores items by value rather than by pointer
-- `PolicySet.Store()` has been renamed to `PolicySet.Add()`
-- `PolicySet.Delete()` has been renamed to `PolicySet.Remove()`
-- `types.Set()` now takes variadic arguments of type `types.Value` instead of a single `[]types.Value` argument
-
-### 0.4.0
-#### New features
-
-- `types.Set` is now implemented as a hash set, turning `Set.Contains()` into an O(1) operation, on average. This mitigates a worst case quadratic runtime for the evaluation of the `containsAny()` operator.
-- For convenience, public types, constructors, and constants from the `types` package are now exported via the `cedar` package as well.
-
-#### Upgrading from 0.3.x to 0.4.x
-
-- `types.Set` is now an immutable type which must be constructed via `types.NewSet()`
-  - To iterate the values, use `Set.Iterate()`, which takes an iterator callback.
-  - Duplicates are now removed from `Set`s, so they won't be rendered when calling `Set.MarshalCedar()` or `Set.MarshalJSON`.
-  - All implementations of `types.Value` are now safe to copy shallowly, so `Set.DeepClone()` has been removed.
-- `types.Record` is now an immutable type which must be constructed via `types.NewRecord()`
-  - To iterate the keys and values, use `Record.Iterate()`, which takes an iterator callback.
-  - All implementations of `types.Value` are now safe to copy shallowly, so `Record.DeepClone()` has been removed.
-
-### 0.3.2
-#### New features
-
-- An implementation of the `datetime` and `duration` extension types specified in [RFC 80](https://github.com/cedar-policy/rfcs/blob/main/text/0080-datetime-extension.md).
-  - Note: While these types have been accepted into the language, they have not yet been formally analyzed in the [specification](https://github.com/cedar-policy/cedar-spec/).
-
-### 0.3.1
-#### New features
-
-- General performance improvements to the evaluator
-- An experimental batch evaluator has been added to `x/exp/batch`
-- Reserved keywords are now rejected in all appropriate places when parsing Cedar text
-- A parsing ambiguity between variables, entity UIDs, and extension functions has been resolved
-
-#### Upgrading from 0.2.x to 0.3.x
-
-- The JSON marshaling of the Position struct now uses canonical lower-case keys for its fields
-
-### 0.2.0
-#### New features
-
-- A programmatic AST is now available in the `ast` package.
-- Policy sets can be marshaled and unmarshaled from JSON.
-- Policies can also be marshaled to Cedar text.
-
-#### Upgrading from 0.1.x to 0.2.x
-
-- The Cedar value types have moved from the `cedar` package to the `types` package.
-- The PolicyIDs are now `strings`, previously they were numeric.
-- Errors and reasons use the new `PolicyID` form.
-- Combining multiple parsed Cedar files now involves coming up with IDs for each
-statement in those files.  It's best to create an empty `NewPolicySet` then
-parse individual files using `NewPolicyListFromBytes` and subsequently use
-`PolicySet.Store` to add each of the policy statements.
-- The Cedar `Entity` and `Entities` types have moved from the `cedar` package to the `types` package.
-- Stronger typing is being used in many places.
-- The `Value` method `Cedar() string` was changed to `MarshalCedar() []byte`
-
 
 ## Security
 
