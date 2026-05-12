@@ -234,9 +234,12 @@ func TestUnmarshalBadNamespace(t *testing.T) {
 	testutil.Error(t, s.UnmarshalJSON([]byte(`{"NS": "bad"}`)))
 }
 
-func TestUnmarshalBadType(t *testing.T) {
+func TestUnmarshalShorthandCommonTypeRef(t *testing.T) {
+	// Per the Cedar JSON schema spec, the "type" field may directly hold a
+	// common-type or entity-type name. The parser must accept this form;
+	// undefined-name validation happens at resolve time.
 	var s schemajson.Schema
-	testutil.Error(t, s.UnmarshalJSON([]byte(`{"": {"entityTypes": {"Foo": {"tags": {"type": "Unknown"}}}, "actions": {}}}`)))
+	testutil.OK(t, s.UnmarshalJSON([]byte(`{"": {"entityTypes": {"Foo": {"tags": {"type": "Unknown"}}}, "actions": {}}}`)))
 }
 
 func TestUnmarshalSetMissingElement(t *testing.T) {
