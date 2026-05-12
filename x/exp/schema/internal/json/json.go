@@ -418,7 +418,11 @@ func unmarshalType(jt *jsonType) (ast.IsType, error) {
 	case "EntityOrCommon":
 		return ast.TypeRef(jt.Name), nil
 	default:
-		return nil, fmt.Errorf("unknown type %q", jt.Type)
+		// Per the Cedar JSON schema spec, the "type" field may directly contain
+		// the name of a common type or entity type (e.g. {"type": "PersonType"}).
+		// Treat any unrecognized identifier as an EntityOrCommon reference; the
+		// resolver disambiguates and reports undefined names.
+		return ast.TypeRef(jt.Type), nil
 	}
 }
 
