@@ -19,7 +19,7 @@ func (s *Schema) MarshalJSON() ([]byte, error) {
 
 	// Bare declarations go under the empty string key.
 	if hasBareDecls((*ast.Schema)(s)) {
-		ns, err := marshalNamespace("", ast.Namespace{
+		ns, err := marshalNamespace(ast.Namespace{
 			Entities:    s.Entities,
 			Enums:       s.Enums,
 			Actions:     s.Actions,
@@ -32,7 +32,7 @@ func (s *Schema) MarshalJSON() ([]byte, error) {
 	}
 
 	for name, ns := range s.Namespaces {
-		jns, err := marshalNamespace(name, ns)
+		jns, err := marshalNamespace(ns)
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +67,7 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 			if result.Namespaces == nil {
 				result.Namespaces = ast.Namespaces{}
 			}
-			result.Namespaces[types.Path(name)] = ns
+			result.Namespaces[types.Namespace(name)] = ns
 		}
 	}
 	*s = Schema(result)
@@ -131,7 +131,7 @@ type jsonAttr struct {
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
-func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) {
+func marshalNamespace(ns ast.Namespace) (jsonNamespace, error) {
 	jns := jsonNamespace{
 		EntityTypes: make(map[string]jsonEntityType),
 		Actions:     make(map[string]jsonAction),

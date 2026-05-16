@@ -469,7 +469,7 @@ var wantAST = &ast.Schema{
 // wantResolved is the expected resolved schema structure.
 // All type references have been fully qualified and common types inlined.
 var wantResolved = &resolved.Schema{
-	Namespaces: map[types.Path]resolved.Namespace{
+	Namespaces: map[types.Namespace]resolved.Namespace{
 		"MyApp": {
 			Name: "MyApp",
 			Annotations: resolved.Annotations{
