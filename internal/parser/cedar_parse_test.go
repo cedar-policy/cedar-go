@@ -82,6 +82,19 @@ func TestParse(t *testing.T) {
 				action,
 				resource
 			  );`, false},
+		{"bareAnnotation", `@bare
+			  permit(
+				principal,
+				action,
+				resource
+			  );`, false},
+		{"bareAndValuedAnnotations", `@bare
+			  @valued("v")
+			  permit(
+				principal,
+				action,
+				resource
+			  );`, false},
 
 		// Additional success cases
 		{"primaryInt", `permit(principal, action, resource) when { 1234 };`, false},
@@ -312,6 +325,8 @@ func TestParse(t *testing.T) {
 		{"invalidIs", `permit (principal is 1, action, resource);`, true},
 		{"invalidIsLong", `permit (principal is X::1, action, resource);`, true},
 		{"duplicateAnnotations", `@key("value") @key("value") permit (principal, action, resource);`, true},
+		{"duplicateBareAnnotations", `@key @key permit (principal, action, resource);`, true},
+		{"duplicateBareAndValuedAnnotations", `@key @key("value") permit (principal, action, resource);`, true},
 
 		{"very-negative-long-bad", `permit(principal,action,resource) when { -9223372036823454775808 < -9224323372036854775807 };`, true},
 		{"very-positive-long-bad", `permit(principal,action,resource) when { 9223372036823454775808 < 9224323372036854775807 };`, true},
