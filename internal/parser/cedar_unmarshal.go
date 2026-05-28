@@ -187,7 +187,6 @@ func (p *parser) annotations() (ast.Annotations, error) {
 }
 
 func (p *parser) annotation(a *ast.Annotations, known *mapset.MapSet[string]) error {
-	var err error
 	t := p.advance()
 	// As of 2024-09-13, the ability to use reserved keywords for annotation keys is not documented in the Cedar schema.
 	// This ability was added to the Rust implementation in this commit:
@@ -196,23 +195,28 @@ func (p *parser) annotation(a *ast.Annotations, known *mapset.MapSet[string]) er
 		return p.errorf("expected ident or reserved keyword")
 	}
 	name := t.Text
-	if err = p.exact("("); err != nil {
-		return err
-	}
 	if known.Contains(name) {
 		return p.errorf("duplicate annotation: @%s", name)
 	}
 	known.Add(name)
-	t = p.advance()
-	if !t.isString() {
-		return p.errorf("expected string")
-	}
-	value, err := t.stringValue()
-	if err != nil {
-		return err
-	}
-	if err = p.exact(")"); err != nil {
-		return err
+
+	// The annotation value is optional: a bare `@name` is shorthand for
+	// `@name("")`. This matches the Cedar grammar, which made the value
+	// optional in cedar-policy/cedar 4.2.0 (resolving cedar-policy/cedar#1031).
+	var value string
+	if p.peek().Text == "(" {
+		p.advance() // consume "("
+		t = p.advance()
+		if !t.isString() {
+			return p.errorf("expected string")
+		}
+		var err error
+		if value, err = t.stringValue(); err != nil {
+			return err
+		}
+		if err = p.exact(")"); err != nil {
+			return err
+		}
 	}
 
 	a.Annotation(types.Ident(name), types.String(value))

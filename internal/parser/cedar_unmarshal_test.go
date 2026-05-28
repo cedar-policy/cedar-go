@@ -491,6 +491,77 @@ when { (if true then 2 else 3) * 4 == 8 };`,
 	}
 }
 
+func TestParseValuelessAnnotation(t *testing.T) {
+	t.Parallel()
+
+	// A bare `@name` annotation is shorthand for `@name("")`. The parser
+	// accepts both forms and produces an identical AST; see cedar-policy/cedar
+	// 4.2.0 (resolving cedar-policy/cedar#1031).
+	parseTests := []struct {
+		Name           string
+		Text           string
+		ExpectedPolicy *ast.Policy
+	}{
+		{
+			"bare annotation",
+			`@foo
+permit ( principal, action, resource );`,
+			ast.Annotation("foo", "").Permit(),
+		},
+		{
+			"bare reserved keyword annotation key",
+			`@is
+permit ( principal, action, resource );`,
+			ast.Annotation("is", "").Permit(),
+		},
+		{
+			"bare annotation preceding a valued one",
+			`@foo
+@baz("quux")
+permit ( principal, action, resource );`,
+			ast.Annotation("foo", "").Annotation("baz", "quux").Permit(),
+		},
+		{
+			"two distinct bare annotations",
+			`@foo
+@bar
+permit ( principal, action, resource );`,
+			ast.Annotation("foo", "").Annotation("bar", "").Permit(),
+		},
+	}
+
+	for _, tt := range parseTests {
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
+
+			var policy parser.Policy
+			testutil.OK(t, policy.UnmarshalCedar([]byte(tt.Text)))
+			policy.Position = ast.Position{}
+			testutil.Equals(t, &policy, (*parser.Policy)(tt.ExpectedPolicy))
+		})
+	}
+}
+
+func TestValuelessAnnotationEquivalentToEmptyString(t *testing.T) {
+	t.Parallel()
+
+	var bare, explicit parser.Policy
+	testutil.OK(t, bare.UnmarshalCedar([]byte(`@foo
+permit ( principal, action, resource );`)))
+	testutil.OK(t, explicit.UnmarshalCedar([]byte(`@foo("")
+permit ( principal, action, resource );`)))
+	bare.Position = ast.Position{}
+	explicit.Position = ast.Position{}
+	testutil.Equals(t, &bare, &explicit)
+
+	// Marshaling normalizes the empty value back to the explicit `@foo("")`
+	// form, which parses on every Cedar version.
+	var buf bytes.Buffer
+	bare.MarshalCedar(&buf)
+	testutil.Equals(t, buf.String(), `@foo("")
+permit ( principal, action, resource );`)
+}
+
 func TestParseTrailingCommas(t *testing.T) {
 	t.Parallel()
 	parseTests := []struct {
