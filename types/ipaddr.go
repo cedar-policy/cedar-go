@@ -24,6 +24,9 @@ func ParseIPAddr(s string) (IPAddr, error) {
 	} else if net, err := netip.ParsePrefix(s); err == nil {
 		return IPAddr(net), nil
 	} else if addr, err := netip.ParseAddr(s); err == nil {
+		if addr.Zone() != "" {
+			return IPAddr{}, fmt.Errorf("%w: IPv6 zone identifiers are not supported", errIP)
+		}
 		return IPAddr(netip.PrefixFrom(addr, addr.BitLen())), nil
 	}
 	return IPAddr{}, fmt.Errorf("%w: error parsing IP address %s", errIP, s)
