@@ -73,6 +73,15 @@ func (i IPAddr) IsLoopback() bool {
 	// 		The reason for IpV4 is that provided the truncated ip address is a
 	// 		loopback address, its prefix cannot be less than 8 because
 	// 		otherwise its more significant byte cannot be 127
+	if i.Addr().Is4In6() {
+		// The Rust standard library, and therefore Cedar Rust, does not unwrap
+		// IPv4-mapped IPv6 addresses, so an address such as ::ffff:127.0.0.1
+		// is treated as a plain IPv6 address and not loopback.
+		// Since the Go's standard library behaves differently and unwraps such
+		// addresses, explicitly check for that case to match Cedar Rust.
+		// No IPv4-mapped IPv6 address can be the IPv6 loopback address (::1).
+		return false
+	}
 	return i.Prefix().Masked().Addr().IsLoopback()
 }
 
@@ -93,6 +102,15 @@ func (i IPAddr) IsMulticast() bool {
 	// 		The implementation uses the property that if `ip1/prefix1` is in
 	// 		range `ip2/prefix2`, then `ip1` is in `ip2/prefix2` and `prefix1 >=
 	// 		prefix2`
+	if i.Addr().Is4In6() {
+		// The Rust standard library, and therefore Cedar Rust, does not unwrap
+		// IPv4-mapped IPv6 addresses, so an address such as ::ffff:224.0.0.0 is
+		// treated as a plain IPv6 address and not multicast.
+		// Since the Go's standard library behaves differently and unwraps such
+		// addresses, explicitly check for that case to match Cedar Rust.
+		// No IPv4-mapped IPv6 address falls in the IPv6 multicast range (ff00::/8).
+		return false
+	}
 	var minPrefixLen int
 	if i.IsIPv4() {
 		minPrefixLen = 4

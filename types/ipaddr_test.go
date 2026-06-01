@@ -179,6 +179,8 @@ func TestIP(t *testing.T) {
 			{"::/128", false},
 			{"::1/128", true},
 			{"::1/127", false},
+			{"::ffff:7f00:0001", false},
+			{"::ffff:7f00:0001/128", false},
 			{"::ffff:8000:0001", false},
 			{"::ffff:8000:0002", false},
 			{"::ffff:8000:0001/128", false},
@@ -225,6 +227,8 @@ func TestIP(t *testing.T) {
 			{"ff00::/7", false},
 			{"224.0.0.0/4", true},
 			{"224.0.0.0/3", false},
+			{"::ffff:e000:0000", false},
+			{"::ffff:e000:0000/128", false},
 		}
 		for _, tt := range tests {
 			tt := tt
