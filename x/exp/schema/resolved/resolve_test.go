@@ -645,7 +645,7 @@ func TestResolveNamespaceOutput(t *testing.T) {
 	result, err := resolved.Resolve(s)
 	testutil.OK(t, err)
 	ns := result.Namespaces["NS"]
-	testutil.Equals(t, ns.Name, types.Path("NS"))
+	testutil.Equals(t, ns.Name, "NS")
 	testutil.Equals(t, types.String(ns.Annotations["doc"]), types.String("test"))
 }
 
@@ -1097,7 +1097,7 @@ func TestResolveUndefinedParents(t *testing.T) {
 }
 
 func TestResolveCedarBuiltinInTypePath(t *testing.T) {
-	// Exercise resolveTypeRefPath line 462-464: __cedar:: prefix in cycle detection.
+	// Exercise resolveCommonTypeRefPath line 462-464: __cedar:: prefix in cycle detection.
 	s := &ast.Schema{
 		CommonTypes: ast.CommonTypes{
 			"A": ast.CommonType{Type: ast.TypeRef("__cedar::String")},
@@ -1109,7 +1109,7 @@ func TestResolveCedarBuiltinInTypePath(t *testing.T) {
 }
 
 func TestResolveQualifiedTypePath(t *testing.T) {
-	// Exercise resolveTypeRefPath line 465-467: qualified path with :: in cycle detection.
+	// Exercise resolveCommonTypeRefPath line 465-467: qualified path with :: in cycle detection.
 	s := &ast.Schema{
 		Namespaces: ast.Namespaces{
 			"NS": ast.Namespace{
@@ -1126,7 +1126,7 @@ func TestResolveQualifiedTypePath(t *testing.T) {
 }
 
 func TestResolveNamespacedCommonTypePath(t *testing.T) {
-	// Exercise resolveTypeRefPath line 470-472: namespaced common type ref in cycle detection.
+	// Exercise resolveCommonTypeRefPath line 470-472: namespaced common type ref in cycle detection.
 	s := &ast.Schema{
 		Namespaces: ast.Namespaces{
 			"NS": ast.Namespace{

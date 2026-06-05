@@ -141,7 +141,7 @@ func (p *parser) parseSchema() (*ast.Schema, error) {
 }
 
 type parsedNamespace struct {
-	name types.Path
+	name types.Namespace
 	ns   ast.Namespace
 }
 
@@ -150,7 +150,8 @@ func (p *parser) parseNamespace(annotations ast.Annotations) (parsedNamespace, e
 	if err != nil {
 		return parsedNamespace{}, err
 	}
-	if slices.Contains(strings.Split(string(path), "::"), "__cedar") {
+	nsName := types.Namespace(path)
+	if slices.Contains(strings.Split(string(nsName), "::"), "__cedar") {
 		return parsedNamespace{}, fmt.Errorf("%s: the name %q contains \"__cedar\", which is reserved", p.tok.Pos, path)
 	}
 	if err := p.expect(tokenLBrace); err != nil {
@@ -177,7 +178,7 @@ func (p *parser) parseNamespace(annotations ast.Annotations) (parsedNamespace, e
 	ns.Enums = innerSchema.Enums
 	ns.Actions = innerSchema.Actions
 	ns.CommonTypes = innerSchema.CommonTypes
-	return parsedNamespace{name: path, ns: ns}, nil
+	return parsedNamespace{name: nsName, ns: ns}, nil
 }
 
 func (p *parser) parseDecl(annotations ast.Annotations, schema *ast.Schema) error {

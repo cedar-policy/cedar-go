@@ -21,7 +21,7 @@ type Actions map[types.String]Action
 type CommonTypes map[types.Ident]CommonType
 
 // Namespaces maps namespace paths to their definitions.
-type Namespaces map[types.Path]Namespace
+type Namespaces map[types.Namespace]Namespace
 
 // Schema is the top-level Cedar schema AST.
 // The Entities, Enums, Actions, and CommonTypes are for the top-level namespace.
