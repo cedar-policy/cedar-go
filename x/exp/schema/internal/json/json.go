@@ -3,9 +3,11 @@ package json
 
 import (
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"fmt"
 	"sort"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 )
@@ -51,7 +53,7 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 	result := ast.Schema{}
 	for name, data := range raw {
 		var jns jsonNamespace
-		if err := json.Unmarshal(data, &jns); err != nil {
+		if err := jsonv2.Unmarshal(data, &jns, internal.JSONOptions); err != nil {
 			return fmt.Errorf("namespace %q: %w", name, err)
 		}
 		ns, err := unmarshalNamespace(jns)

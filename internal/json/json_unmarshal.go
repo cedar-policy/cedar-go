@@ -1,11 +1,12 @@
 package json
 
 import (
-	"bytes"
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"fmt"
 	"strings"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/types"
@@ -272,11 +273,10 @@ func (n nodeJSON) ToNode() (ast.Node, error) {
 }
 
 func (n *nodeJSON) UnmarshalJSON(b []byte) error {
-	decoder := json.NewDecoder(bytes.NewReader(b))
-	decoder.DisallowUnknownFields()
-
+	// Keys are case-sensitive: the spec uses the capitalized "Value", "Var", "Set", and "Record"
+	// to tell them apart from operators, so e.g. "value" is an extension function name.
 	type nodeJSONAlias nodeJSON
-	if err := decoder.Decode((*nodeJSONAlias)(n)); err == nil {
+	if err := jsonv2.Unmarshal(b, (*nodeJSONAlias)(n), internal.JSONOptions, jsonv2.RejectUnknownMembers(true)); err == nil {
 		return nil
 	} else if !strings.HasPrefix(err.Error(), "json: unknown field") {
 		return err
@@ -292,7 +292,8 @@ func (n *nodeJSON) UnmarshalJSON(b []byte) error {
 
 func (p *Policy) UnmarshalJSON(b []byte) error {
 	var j policyJSON
-	if err := json.Unmarshal(b, &j); err != nil {
+	// As in the Rust implementation, keys that are not part of the policy format are rejected.
+	if err := jsonv2.Unmarshal(b, &j, internal.JSONOptions, jsonv2.RejectUnknownMembers(true)); err != nil {
 		return fmt.Errorf("error unmarshalling json: %w", err)
 	}
 	switch j.Effect {

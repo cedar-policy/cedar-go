@@ -762,3 +762,106 @@ func TestMarshalExtensions(t *testing.T) {
 		})
 	}
 }
+
+// TestUnmarshalCaseSensitive checks that keys are matched case-sensitively and that unknown keys
+// are rejected, as in the Rust implementation. encoding/json (v1) bound each of these miscased keys
+// to a field, so every input below used to parse successfully.
+func TestUnmarshalCaseSensitive(t *testing.T) {
+	t.Parallel()
+	const all = `"principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}`
+	withScope := func(principal string) string {
+		return `{"effect":"permit","principal":` + principal + `,"action":{"op":"All"},"resource":{"op":"All"}}`
+	}
+	withBody := func(body string) string {
+		return `{"effect":"permit",` + all + `,"conditions":[{"kind":"when","body":` + body + `}]}`
+	}
+	const user = `{"type":"User","id":"alice"}`
+	tests := []struct {
+		name  string
+		input string
+	}{
+		// Policy structure
+		{"effect", `{"Effect":"permit",` + all + `}`},
+		{"principal", `{"effect":"permit","Principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`},
+		{"annotations", `{"Annotations":{"key":"value"},"effect":"permit",` + all + `}`},
+		{"conditions", `{"effect":"permit",` + all + `,"CONDITIONS":[{"kind":"when","body":{"Value":true}}]}`},
+		{"conditionKind", `{"effect":"permit",` + all + `,"conditions":[{"Kind":"when","body":{"Value":true}}]}`},
+		{"conditionBody", `{"effect":"permit",` + all + `,"conditions":[{"kind":"when","Body":{"Value":true}}]}`},
+
+		// Scope constraints
+		{"scopeOp", withScope(`{"OP":"All"}`)},
+		{"scopeEntity", withScope(`{"op":"==","Entity":` + user + `}`)},
+		{"scopeEntityType", withScope(`{"op":"==","entity":{"TYPE":"User","id":"alice"}}`)},
+		{"scopeEntityID", withScope(`{"op":"==","entity":{"type":"User","ID":"alice"}}`)},
+		{"scopeIsEntityType", withScope(`{"op":"is","Entity_Type":"User"}`)},
+		{"scopeIsIn", withScope(`{"op":"is","entity_type":"User","In":{"entity":` + user + `}}`)},
+		{"scopeIsInEntity", withScope(`{"op":"is","entity_type":"User","in":{"ENTITY":` + user + `}}`)},
+		{"actionEntities", `{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","Entities":[` + user + `]},"resource":{"op":"All"}}`},
+
+		// Expression markers, which the spec distinguishes from operators by case, and operators.
+		// These fall through to the extension-function path, which rejects them.
+		{"value", withBody(`{"value":true}`)},
+		{"var", withBody(`{"var":"principal"}`)},
+		{"set", withBody(`{"set":[{"Value":1}]}`)},
+		{"record", withBody(`{"record":{"key":{"Value":1}}}`)},
+		{"neg", withBody(`{"Neg":{"arg":{"Value":1}}}`)},
+		{"isEmpty", withBody(`{"isempty":{"arg":{"Set":[]}}}`)},
+		{"in", withBody(`{"IN":{"left":{"Var":"principal"},"right":{"Var":"resource"}}}`)},
+		{"contains", withBody(`{"Contains":{"left":{"Set":[]},"right":{"Value":1}}}`)},
+		{"containsAll", withBody(`{"containsall":{"left":{"Set":[]},"right":{"Set":[]}}}`)},
+		{"containsAny", withBody(`{"CONTAINSANY":{"left":{"Set":[]},"right":{"Set":[]}}}`)},
+		{"getTag", withBody(`{"gettag":{"left":{"Var":"principal"},"right":{"Value":"t"}}}`)},
+		{"hasTag", withBody(`{"HasTag":{"left":{"Var":"principal"},"right":{"Value":"t"}}}`)},
+		{"has", withBody(`{"HAS":{"left":{"Var":"principal"},"attr":"a"}}`)},
+		{"is", withBody(`{"Is":{"left":{"Var":"principal"},"entity_type":"User"}}`)},
+		{"like", withBody(`{"LIKE":{"left":{"Value":"a"},"pattern":["Wildcard"]}}`)},
+		{"ifThenElse", withBody(`{"If-Then-Else":{"if":{"Value":true},"then":{"Value":1},"else":{"Value":2}}}`)},
+
+		// Operator operands
+		{"binaryLeft", withBody(`{"==":{"Left":{"Value":1},"right":{"Value":1}}}`)},
+		{"binaryRight", withBody(`{"==":{"left":{"Value":1},"RIGHT":{"Value":1}}}`)},
+		{"unaryArg", withBody(`{"!":{"Arg":{"Value":true}}}`)},
+		{"accessAttr", withBody(`{".":{"left":{"Var":"principal"},"Attr":"a"}}`)},
+		{"likePattern", withBody(`{"like":{"left":{"Value":"a"},"Pattern":["Wildcard"]}}`)},
+		{"isEntityType", withBody(`{"is":{"left":{"Var":"principal"},"ENTITY_TYPE":"User"}}`)},
+		{"isIn", withBody(`{"is":{"left":{"Var":"principal"},"entity_type":"User","IN":{"Var":"resource"}}}`)},
+		{"if", withBody(`{"if-then-else":{"If":{"Value":true},"then":{"Value":1},"else":{"Value":2}}}`)},
+		{"then", withBody(`{"if-then-else":{"if":{"Value":true},"Then":{"Value":1},"else":{"Value":2}}}`)},
+		{"else", withBody(`{"if-then-else":{"if":{"Value":true},"then":{"Value":1},"Else":{"Value":2}}}`)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var p Policy
+			err := json.Unmarshal([]byte(tt.input), &p)
+			testutil.Error(t, err)
+		})
+	}
+}
+
+func TestUnmarshalMiscasedEntityEscapeIsRecord(t *testing.T) {
+	t.Parallel()
+	var p Policy
+	err := json.Unmarshal([]byte(`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+		"conditions":[{"kind":"when","body":{"==":{"left":{"Var":"principal"},"right":{"Value":{"__entity":{"Type":"User","Id":"alice"}}}}}}]}`), &p)
+	testutil.OK(t, err)
+	testutil.Equals(t, p.unwrap(), ast.Permit().When(ast.Principal().Equal(ast.Value(types.NewRecord(types.RecordMap{
+		"__entity": types.NewRecord(types.RecordMap{"Type": types.String("User"), "Id": types.String("alice")}),
+	})))))
+}
+
+func TestUnmarshalExplicitScopeEntity(t *testing.T) {
+	t.Parallel()
+	// Like the Rust implementation, scope constraints accept the explicit entity escape as well as
+	// the implicit {"type":..,"id":..} form.
+	var p Policy
+	err := json.Unmarshal([]byte(`{"effect":"permit",
+		"principal":{"op":"==","entity":{"__entity":{"type":"User","id":"alice"}}},
+		"action":{"op":"in","entities":[{"__entity":{"type":"Action","id":"view"}}]},
+		"resource":{"op":"is","entity_type":"Photo","in":{"entity":{"__entity":{"type":"Album","id":"a"}}}}}`), &p)
+	testutil.OK(t, err)
+	testutil.Equals(t, p.unwrap(), ast.Permit().
+		PrincipalEq(types.NewEntityUID("User", "alice")).
+		ActionInSet(types.NewEntityUID("Action", "view")).
+		ResourceIsIn("Photo", types.NewEntityUID("Album", "a")))
+}

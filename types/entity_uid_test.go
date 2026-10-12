@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go"
@@ -155,6 +156,11 @@ func TestEntity(t *testing.T) {
 			{"implicit - id wrong type", `{ "type": "Type", "id": 123 }`},
 			{"implicit - only type", `{ "type": "Type" }`},
 			{"implicit - only id", `{ "id": 123 }`},
+			{"explicit - miscased escape", `{ "__Entity": { "type": "Type", "id": "id" } }`},
+			{"explicit - miscased type", `{ "__entity": { "Type": "Type", "id": "id" } }`},
+			{"explicit - miscased id", `{ "__entity": { "type": "Type", "ID": "id" } }`},
+			{"implicit - miscased type", `{ "TYPE": "Type", "id": "id" }`},
+			{"implicit - miscased id", `{ "type": "Type", "iD": "id" }`},
 		}
 
 		for _, tt := range tests {
@@ -166,6 +172,34 @@ func TestEntity(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestImplicitlyMarshaledEntityUIDUnmarshalJSON(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{"implicit", `{ "type": "Type", "id": "id" }`, false},
+		{"explicit", `{ "__entity": { "type": "Type", "id": "id" } }`, false},
+		{"implicit - miscased", `{ "Type": "Type", "Id": "id" }`, true},
+		{"explicit - miscased", `{ "__entity": { "TYPE": "Type", "ID": "id" } }`, true},
+		{"empty", `{}`, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var got types.ImplicitlyMarshaledEntityUID
+			err := json.Unmarshal([]byte(tt.input), &got)
+			if tt.wantErr {
+				testutil.Error(t, err)
+				return
+			}
+			testutil.OK(t, err)
+			testutil.Equals(t, got, types.ImplicitlyMarshaledEntityUID(types.NewEntityUID("Type", "id")))
+		})
+	}
 }
 
 func TestEntityUIDSet(t *testing.T) {

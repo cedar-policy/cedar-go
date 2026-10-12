@@ -2,6 +2,7 @@ package mapset
 
 import (
 	"encoding/json"
+	"errors"
 	"slices"
 	"testing"
 
@@ -179,8 +180,9 @@ func TestImmutableMapSet(t *testing.T) {
 	t.Run("decode mixed types in array", func(t *testing.T) {
 		var s1 ImmutableMapSet[int]
 		err := s1.UnmarshalJSON([]byte(`[2,3,1,"2"]`))
-		testutil.Error(t, err)
-		testutil.Equals(t, err.Error(), "json: cannot unmarshal string into Go value of type int")
+		var typeErr *json.UnmarshalTypeError
+		testutil.FatalIf(t, !errors.As(err, &typeErr), "got %v, want a *json.UnmarshalTypeError", err)
+		testutil.Equals(t, typeErr.Value, "string")
 		testutil.Equals(t, s1.Len(), 0)
 	})
 

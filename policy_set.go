@@ -4,11 +4,13 @@ package cedar
 import (
 	"bytes"
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"fmt"
 	"iter"
 	"maps"
 	"slices"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	internaljson "github.com/cedar-policy/cedar-go/internal/json"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
@@ -124,7 +126,7 @@ func (p *PolicySet) MarshalJSON() ([]byte, error) {
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
 func (p *PolicySet) UnmarshalJSON(b []byte) error {
 	var jsonPolicySet internaljson.PolicySetJSON
-	if err := json.Unmarshal(b, &jsonPolicySet); err != nil {
+	if err := jsonv2.Unmarshal(b, &jsonPolicySet, internal.JSONOptions); err != nil {
 		return err
 	}
 	*p = PolicySet{

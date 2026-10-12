@@ -102,3 +102,25 @@ func TestError(t *testing.T) {
 	e := DiagnosticError{PolicyID: "policy42", Message: "bad error"}
 	testutil.Equals(t, e.String(), "while evaluating policy `policy42`: bad error")
 }
+
+func TestRequestUnmarshalJSON(t *testing.T) {
+	t.Parallel()
+	const input = `{
+		"principal": {"type": "User", "id": "alice"},
+		"action": {"type": "Action", "id": "view"},
+		"resource": {"type": "Photo", "id": "1"},
+		"context": {"a": 1},
+		"Principal": {"type": "User", "id": "mallory"}
+	}`
+	// Keys are case-sensitive, so the miscased "Principal" is ignored.
+	var got Request
+	testutil.OK(t, json.Unmarshal([]byte(input), &got))
+	testutil.Equals(t, got, Request{
+		Principal: NewEntityUID("User", "alice"),
+		Action:    NewEntityUID("Action", "view"),
+		Resource:  NewEntityUID("Photo", "1"),
+		Context:   NewRecord(RecordMap{"a": Long(1)}),
+	})
+
+	testutil.Error(t, json.Unmarshal([]byte(`{"principal": 1}`), &got))
+}

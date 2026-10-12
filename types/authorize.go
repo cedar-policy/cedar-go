@@ -1,6 +1,11 @@
 package types
 
-import "fmt"
+import (
+	jsonv2 "encoding/json/v2"
+	"fmt"
+
+	"github.com/cedar-policy/cedar-go/internal"
+)
 
 // A Request is the Principal, Action, Resource, and Context portion of an
 // authorization request.
@@ -9,6 +14,12 @@ type Request struct {
 	Action    EntityUID `json:"action"`
 	Resource  EntityUID `json:"resource"`
 	Context   Record    `json:"context"`
+}
+
+// UnmarshalJSON deserializes a Request from JSON. Keys are case-sensitive, as in the Rust SDK.
+func (r *Request) UnmarshalJSON(b []byte) error {
+	type request Request
+	return jsonv2.Unmarshal(b, (*request)(r), internal.JSONOptions)
 }
 
 // Equal comapres two requests for sameness

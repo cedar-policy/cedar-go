@@ -2,10 +2,12 @@ package types
 
 import (
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"hash/fnv"
 	"strings"
 
+	"github.com/cedar-policy/cedar-go/internal"
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/internal/rust"
 )
@@ -83,7 +85,7 @@ func (e *EntityUID) UnmarshalCedar(data []byte) error {
 
 func (e *EntityUID) UnmarshalJSON(b []byte) error {
 	var res entityValueJSON
-	if err := json.Unmarshal(b, &res); err != nil {
+	if err := jsonv2.Unmarshal(b, &res, internal.JSONOptions); err != nil {
 		return err
 	}
 	if res.Entity != nil {
@@ -134,6 +136,11 @@ func (i ImplicitlyMarshaledEntityUID) MarshalJSON() ([]byte, error) {
 		ID   String     `json:"id"`
 	}{i.Type, i.ID}
 	return json.Marshal(s)
+}
+
+// UnmarshalJSON accepts the same implicit and explicit forms as EntityUID.UnmarshalJSON.
+func (i *ImplicitlyMarshaledEntityUID) UnmarshalJSON(b []byte) error {
+	return (*EntityUID)(i).UnmarshalJSON(b)
 }
 
 type EntityUIDSet = mapset.ImmutableMapSet[EntityUID]

@@ -3,8 +3,11 @@ package types
 import (
 	"bytes"
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
+
+	"github.com/cedar-policy/cedar-go/internal"
 )
 
 var (
@@ -37,6 +40,39 @@ type entityValueJSON struct {
 	Entity *extEntity `json:"__entity,omitempty"`
 }
 
+// The escapes require all of their members, as in the Rust implementation, so that an object with
+// a missing or miscased member (e.g. {"__entity": {"TYPE": "T", "id": "1"}}) is not an escape.
+
+func (e *extn) UnmarshalJSON(b []byte) error {
+	var v struct {
+		Fn  *string `json:"fn"`
+		Arg *string `json:"arg"`
+	}
+	if err := jsonv2.Unmarshal(b, &v, internal.JSONOptions); err != nil {
+		return err
+	}
+	if v.Fn == nil || v.Arg == nil {
+		return errJSONExtNotFound
+	}
+	*e = extn{Fn: *v.Fn, Arg: *v.Arg}
+	return nil
+}
+
+func (e *extEntity) UnmarshalJSON(b []byte) error {
+	var v struct {
+		Type *string `json:"type"`
+		ID   *string `json:"id"`
+	}
+	if err := jsonv2.Unmarshal(b, &v, internal.JSONOptions); err != nil {
+		return err
+	}
+	if v.Type == nil || v.ID == nil {
+		return errJSONEntityNotFound
+	}
+	*e = extEntity{Type: *v.Type, ID: *v.ID}
+	return nil
+}
+
 type explicitValue struct {
 	Value Value
 }
@@ -45,7 +81,7 @@ func UnmarshalJSON(b []byte, v *Value) error {
 	// TODO: make this faster if it matters
 	{
 		var res extValueJSON
-		if err := json.Unmarshal(b, &res); err == nil && res.Extn != nil {
+		if err := jsonv2.Unmarshal(b, &res, internal.JSONOptions); err == nil && res.Extn != nil {
 			switch res.Extn.Fn {
 			case "ip":
 				val, err := ParseIPAddr(res.Extn.Arg)
@@ -94,7 +130,7 @@ func UnmarshalJSON(b []byte, v *Value) error {
 			// {"type":"X","id":"Y"} parses as a Record and requires
 			// schema-guided coercion (see x/exp/types.EntityMap.UnmarshalJSONWithSchema).
 			var ej entityValueJSON
-			if err := json.Unmarshal(b, &ej); err == nil && ej.Entity != nil {
+			if err := jsonv2.Unmarshal(b, &ej, internal.JSONOptions); err == nil && ej.Entity != nil {
 				*v = EntityUID{
 					Type: EntityType(ej.Entity.Type),
 					ID:   String(ej.Entity.ID),
@@ -140,14 +176,14 @@ func unmarshalExtensionValue[T any](b []byte, extName string, parse func(string)
 		}
 	} else {
 		var res extValueJSON
-		if err := json.Unmarshal(b, &res); err != nil {
+		if err := jsonv2.Unmarshal(b, &res, internal.JSONOptions); err != nil {
 			return zeroT, errors.Join(errJSONDecode, err)
 		}
 		if res.Extn == nil {
 			// If we didn't find an Extn, maybe it's just an extn.
 			var res2 extn
 
-			if err := json.Unmarshal(b, &res2); err != nil {
+			if err := jsonv2.Unmarshal(b, &res2, internal.JSONOptions); err != nil {
 				return zeroT, errors.Join(errJSONDecode, err)
 			}
 

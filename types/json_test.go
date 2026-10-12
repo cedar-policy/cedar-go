@@ -45,6 +45,15 @@ func TestJSON_Value(t *testing.T) {
 		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), errDecimal},
 		{"badDatetime", `{ "__extn": { "fn": "datetime", "arg": "bad" } }`, zeroValue(), errDatetime},
 		{"badDuration", `{ "__extn": { "fn": "duration", "arg": "bad" } }`, zeroValue(), errDuration},
+		// Escape keys are case-sensitive: as in the Rust implementation, a miscased escape is a Record.
+		{"miscasedEntityEscape", `{ "__ENTITY": { "type": "User", "id": "alice" } }`, NewRecord(RecordMap{"__ENTITY": NewRecord(RecordMap{"type": String("User"), "id": String("alice")})}), nil},
+		{"miscasedEntityType", `{ "__entity": { "TYPE": "User", "id": "alice" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"TYPE": String("User"), "id": String("alice")})}), nil},
+		{"miscasedEntityID", `{ "__entity": { "type": "User", "Id": "alice" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": String("User"), "Id": String("alice")})}), nil},
+		{"miscasedExtnEscape", `{ "__Extn": { "fn": "ip", "arg": "222.222.222.7" } }`, NewRecord(RecordMap{"__Extn": NewRecord(RecordMap{"fn": String("ip"), "arg": String("222.222.222.7")})}), nil},
+		{"miscasedExtnFn", `{ "__extn": { "FN": "ip", "arg": "222.222.222.7" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"FN": String("ip"), "arg": String("222.222.222.7")})}), nil},
+		{"miscasedExtnArg", `{ "__extn": { "fn": "ip", "Arg": "222.222.222.7" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"fn": String("ip"), "Arg": String("222.222.222.7")})}), nil},
+		// As in the Rust implementation, an escape whose members are not strings is a Record.
+		{"entityEscapeNonStringType", `{ "__entity": { "type": 1, "id": "alice" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": Long(1), "id": String("alice")})}), nil},
 		{"set", `[42]`, NewSet(Long(42)), nil},
 		{"record", `{"a":"b"}`, NewRecord(RecordMap{"a": String("b")}), nil},
 		{"bool", `false`, Boolean(false), nil},
@@ -168,6 +177,38 @@ func Test_unmarshalExtensionValue(t *testing.T) {
 			wantErr:   errJSONExtFnMatch,
 		},
 		{
+			name:      "explicit/miscasedExtn",
+			in:        `{ "__EXTN": { "fn": "extType", "arg": "value" } }`,
+			extName:   "extType",
+			parse:     parseExtValue,
+			wantValue: extType{},
+			wantErr:   errJSONDecode,
+		},
+		{
+			name:      "explicit/miscasedFn",
+			in:        `{ "__extn": { "Fn": "extType", "arg": "value" } }`,
+			extName:   "extType",
+			parse:     parseExtValue,
+			wantValue: extType{},
+			wantErr:   errJSONDecode,
+		},
+		{
+			name:      "implicit/emptyFn",
+			in:        `{ "fn": "", "arg": "value" }`,
+			extName:   "extType",
+			parse:     parseExtValue,
+			wantValue: extType{},
+			wantErr:   errJSONExtNotFound,
+		},
+		{
+			name:      "implicit/miscasedArg",
+			in:        `{ "fn": "extType", "ARG": "value" }`,
+			extName:   "extType",
+			parse:     parseExtValue,
+			wantValue: extType{},
+			wantErr:   errJSONDecode,
+		},
+		{
 			name:      "extNotFound",
 			in:        "{ }",
 			extName:   "extType",
@@ -259,7 +300,7 @@ func TestJSONSet(t *testing.T) {
 	t.Run("UnmarshalErr", func(t *testing.T) {
 		t.Parallel()
 		var s Set
-		err := json.Unmarshal([]byte(`[{"__extn":{"fn":"err"}}]`), &s)
+		err := json.Unmarshal([]byte(`[{"__extn":{"fn":"err","arg":""}}]`), &s)
 		testutil.Error(t, err)
 	})
 	t.Run("MarshalErr", func(t *testing.T) {
@@ -275,7 +316,7 @@ func TestJSONRecord(t *testing.T) {
 	t.Run("UnmarshalErr", func(t *testing.T) {
 		t.Parallel()
 		var r Record
-		err := json.Unmarshal([]byte(`{"key":{"__extn":{"fn":"err"}}}`), &r)
+		err := json.Unmarshal([]byte(`{"key":{"__extn":{"fn":"err","arg":""}}}`), &r)
 		testutil.Error(t, err)
 	})
 	t.Run("MarshalKeyErrImpossible", func(t *testing.T) {
@@ -285,7 +326,7 @@ func TestJSONRecord(t *testing.T) {
 		r := NewRecord(m)
 		v, err := json.Marshal(r)
 		// this demonstrates that invalid keys will still result in json
-		testutil.Equals(t, string(v), `{"\ufffd\u0001":false}`)
+		testutil.Equals(t, string(v), "{\"\ufffd\\u0001\":false}")
 		testutil.OK(t, err)
 	})
 	t.Run("MarshalValueErr", func(t *testing.T) {

@@ -161,6 +161,22 @@ func TestPolicySetJSON(t *testing.T) {
 		testutil.OK(t, err)
 		testutil.Equals(t, len(ps.Map()), 1)
 	})
+	t.Run("UnmarshalRustPolicySet", func(t *testing.T) {
+		t.Parallel()
+		// The Rust implementation always writes templates and templateLinks.
+		var ps cedar.PolicySet
+		err := ps.UnmarshalJSON([]byte(`{"templates":{},"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}},"templateLinks":[]}`))
+		testutil.OK(t, err)
+		testutil.Equals(t, len(ps.Map()), 1)
+	})
+	t.Run("UnmarshalMiscasedKey", func(t *testing.T) {
+		t.Parallel()
+		// Keys are case-sensitive, so "StaticPolicies" is not "staticPolicies".
+		var ps cedar.PolicySet
+		err := ps.UnmarshalJSON([]byte(`{"StaticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}}}`))
+		testutil.OK(t, err)
+		testutil.Equals(t, len(ps.Map()), 0)
+	})
 
 	t.Run("MarshalOK", func(t *testing.T) {
 		t.Parallel()

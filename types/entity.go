@@ -2,8 +2,11 @@ package types
 
 import (
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"slices"
 	"strings"
+
+	"github.com/cedar-policy/cedar-go/internal"
 )
 
 // An Entity defines the parents and attributes for an EntityUID.
@@ -41,6 +44,12 @@ func (e Entity) MarshalJSON() ([]byte, error) {
 		e.Tags,
 	}
 	return json.Marshal(m)
+}
+
+// UnmarshalJSON deserializes an Entity from JSON. Keys are case-sensitive, as in the Rust SDK.
+func (e *Entity) UnmarshalJSON(b []byte) error {
+	type entity Entity
+	return jsonv2.Unmarshal(b, (*entity)(e), internal.JSONOptions)
 }
 
 func (e Entity) Equal(other Entity) bool {
