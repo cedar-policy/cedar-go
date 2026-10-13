@@ -13,7 +13,7 @@ jobs:
       - uses: jdx/mise-action@v5
 
       - name: Build
-        run: go build -v ./...
+        run: mise run build
 
       - name: Test and check coverage
         run: mise run test:cover
@@ -22,4 +22,4 @@ jobs:
         run: mise run lint
 
       - name: Fuzz
-        run: mkdir -p testdata && go test -fuzz=FuzzParse -fuzztime 60s && go test -fuzz=FuzzTokenize -fuzztime 60s
+        run: mise run test:fuzz

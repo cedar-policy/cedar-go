@@ -1,5 +1,13 @@
 # Common Workflows
 
+Development tasks are defined in `mise.toml` and run with [mise](https://mise.jdx.dev/), which also installs the pinned tools they need. Run `mise tasks` to list them.
+
+To run everything CI runs:
+
+```bash
+mise run ci
+```
+
 ## Running Tests
 
 ```bash
