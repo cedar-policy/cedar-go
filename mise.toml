@@ -1,5 +1,6 @@
 [tools]
 go = "1.23.0"
+"go:github.com/matryer/moq" = "0.8.0"
 golangci-lint = "2.14.0"
 
 [tasks.test]
@@ -18,13 +19,17 @@ go tool cover -func=coverage.out | sed 's/%$//' | awk '
 '
 '''
 
+[tasks.generate]
+description = "Run all code generators"
+run = "go generate ./..."
+
 [tasks.lint]
 description = "Run all linters"
-depends = ["lint:golangci", "lint:tidy"]
+depends = ["lint:golangci", "lint:codegen", "lint:tidy"]
 
 [tasks."lint:fix"]
 description = "Auto-fix lint violations"
-depends = ["lint:golangci:fix", "lint:tidy:fix"]
+depends = ["lint:golangci:fix", "generate", "lint:tidy:fix"]
 
 [tasks."lint:golangci"]
 description = "Run golangci-lint"
@@ -33,6 +38,10 @@ run = "golangci-lint run ./..."
 [tasks."lint:golangci:fix"]
 description = "Run golangci-lint --fix"
 run = "golangci-lint run --fix ./..."
+
+[tasks."lint:codegen"]
+description = "Verify all generated code matches committed output"
+run = "scripts/lint-codegen.sh"
 
 [tasks."lint:tidy"]
 description = "Verify go.mod and go.sum are tidy"
