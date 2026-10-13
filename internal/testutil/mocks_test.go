@@ -17,6 +17,9 @@ var _ TB = &TBMock{}
 //
 //		// make and configure a mocked TB
 //		mockedTB := &TBMock{
+//			ErrorfFunc: func(format string, args ...any)  {
+//				panic("mock out the Errorf method")
+//			},
 //			FatalfFunc: func(format string, args ...any)  {
 //				panic("mock out the Fatalf method")
 //			},
