@@ -44,14 +44,38 @@ func TestResolveTypePath(t *testing.T) {
 }
 
 func TestResolveActionParentRef(t *testing.T) {
-	// Exercise both branches of resolveActionParentRef.
+	r := &resolverState{
+		actions: map[types.EntityUID]bool{
+			types.NewEntityUID("NS::Action", "view"): true,
+			types.NewEntityUID("Action", "view"):     true,
+			types.NewEntityUID("Action", "global"):   true,
+		},
+	}
 
 	// Bare reference
-	uid := resolveActionParentRef("NS", ast.ParentRef{ID: "view"})
+	uid := r.resolveActionParentRef("NS", ast.ParentRef{ID: "view"})
 	testutil.Equals(t, uid, types.NewEntityUID("NS::Action", "view"))
 
-	// Typed reference
-	uid = resolveActionParentRef("NS", ast.ParentRef{Type: "Other::Action", ID: "edit"})
+	// Unqualified Action type prefers the current namespace
+	uid = r.resolveActionParentRef("NS", ast.NewParentRef("Action", "view"))
+	testutil.Equals(t, uid, types.NewEntityUID("NS::Action", "view"))
+
+	// Falls back to the empty namespace when the current namespace lacks the action
+	uid = r.resolveActionParentRef("NS", ast.ParentRefFromID("global"))
+	testutil.Equals(t, uid, types.NewEntityUID("Action", "global"))
+	uid = r.resolveActionParentRef("NS", ast.NewParentRef("Action", "global"))
+	testutil.Equals(t, uid, types.NewEntityUID("Action", "global"))
+
+	// Undefined everywhere stays in the current namespace
+	uid = r.resolveActionParentRef("NS", ast.NewParentRef("Action", "missing"))
+	testutil.Equals(t, uid, types.NewEntityUID("NS::Action", "missing"))
+
+	// Empty namespace
+	uid = r.resolveActionParentRef("", ast.NewParentRef("Action", "global"))
+	testutil.Equals(t, uid, types.NewEntityUID("Action", "global"))
+
+	// Qualified reference is used as written
+	uid = r.resolveActionParentRef("NS", ast.ParentRef{Type: "Other::Action", ID: "edit"})
 	testutil.Equals(t, uid, types.NewEntityUID("Other::Action", "edit"))
 }
 
