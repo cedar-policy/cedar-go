@@ -1,5 +1,6 @@
 [tools]
 go = "1.23.0"
+golangci-lint = "2.14.0"
 
 [tasks.test]
 description = "Run tests (e.g. mise run test ./internal/json)"
@@ -16,3 +17,27 @@ go tool cover -func=coverage.out | sed 's/%$//' | awk '
 	END { exit failed }
 '
 '''
+
+[tasks.lint]
+description = "Run all linters"
+depends = ["lint:golangci", "lint:tidy"]
+
+[tasks."lint:fix"]
+description = "Auto-fix lint violations"
+depends = ["lint:golangci:fix", "lint:tidy:fix"]
+
+[tasks."lint:golangci"]
+description = "Run golangci-lint"
+run = "golangci-lint run ./..."
+
+[tasks."lint:golangci:fix"]
+description = "Run golangci-lint --fix"
+run = "golangci-lint run --fix ./..."
+
+[tasks."lint:tidy"]
+description = "Verify go.mod and go.sum are tidy"
+run = "go mod tidy -diff"
+
+[tasks."lint:tidy:fix"]
+description = "Tidy go.mod and go.sum"
+run = "go mod tidy"

@@ -1,9 +1,4 @@
-.PHONY: linters corpus-update check-upstream-corpus testdata-validation testdata-entity-parsing
-
-# Run linters
-linters:
-	golangci-lint run
-	go run github.com/alecthomas/go-check-sumtype/cmd/go-check-sumtype@latest -default-signifies-exhaustive=false ./...
+.PHONY: corpus-update check-upstream-corpus testdata-validation testdata-entity-parsing
 
 # Download the latest corpus tests tarball and overwrite corpus-tests.tar.gz if changed
 check-upstream-corpus:

@@ -17,7 +17,13 @@ Both tasks take an optional package path, e.g. `mise run test:cover ./internal/j
 ## Running Linters
 
 ```bash
-make linters
+mise run lint
+```
+
+Many violations can be fixed automatically with:
+
+```bash
+mise run lint:fix
 ```
 
 ## Updating the Corpus Tests
