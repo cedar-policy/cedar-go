@@ -6,6 +6,14 @@
 mise run test
 ```
 
+CI requires 100% statement coverage. To run the tests and check coverage the same way:
+
+```bash
+mise run test:cover
+```
+
+Both tasks take an optional package path, e.g. `mise run test:cover ./internal/json`.
+
 ## Running Linters
 
 ```bash

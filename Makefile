@@ -1,11 +1,9 @@
 .PHONY: linters corpus-update check-upstream-corpus testdata-validation testdata-entity-parsing
 
-# Run linters and coverage checks
+# Run linters
 linters:
 	golangci-lint run
 	go run github.com/alecthomas/go-check-sumtype/cmd/go-check-sumtype@latest -default-signifies-exhaustive=false ./...
-	go test -coverprofile=coverage.out ./...
-	go tool cover -func=coverage.out | sed 's/%$$//' | awk '{ if ($$3 < 100.0) { printf "Insufficient code coverage for %s\n", $$0; failed=1 } } END { exit failed }'
 
 # Download the latest corpus tests tarball and overwrite corpus-tests.tar.gz if changed
 check-upstream-corpus:

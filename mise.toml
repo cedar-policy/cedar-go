@@ -5,3 +5,14 @@ go = "1.23.0"
 description = "Run tests (e.g. mise run test ./internal/json)"
 usage = 'arg "<package>" help="Go package path to test" default="./..."'
 run = 'go test -shuffle=on ${usage_package}'
+
+[tasks."test:cover"]
+description = "Run tests and require 100% statement coverage (e.g. mise run test:cover ./internal/json)"
+usage = 'arg "<package>" help="Go package path to test" default="./..."'
+run = '''
+go test -shuffle on -coverprofile=coverage.out ${usage_package}
+go tool cover -func=coverage.out | sed 's/%$//' | awk '
+	$3 < 100.0 { printf "Insufficient code coverage for %s\n", $0; failed = 1 }
+	END { exit failed }
+'
+'''
