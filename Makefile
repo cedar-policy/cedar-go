@@ -1,8 +1,4 @@
-.PHONY: test linters corpus-update check-upstream-corpus testdata-validation testdata-entity-parsing
-
-# Run all tests
-test:
-	go test -count 1 -cover ./...
+.PHONY: linters corpus-update check-upstream-corpus testdata-validation testdata-entity-parsing
 
 # Run linters and coverage checks
 linters:

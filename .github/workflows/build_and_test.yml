@@ -16,7 +16,7 @@ jobs:
         run: go build -v ./...
 
       - name: Test
-        run: go test -coverprofile=coverage.out ./...
+        run: mise run test
 
       - name: Lint
         uses: golangci/golangci-lint-action@v7

@@ -1,2 +1,7 @@
 [tools]
 go = "1.23.0"
+
+[tasks.test]
+description = "Run tests (e.g. mise run test ./internal/json)"
+usage = 'arg "<package>" help="Go package path to test" default="./..."'
+run = 'go test -shuffle=on ${usage_package}'

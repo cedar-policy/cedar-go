@@ -3,7 +3,7 @@
 ## Running Tests
 
 ```bash
-make test
+mise run test
 ```
 
 ## Running Linters
@@ -29,7 +29,7 @@ This runs `make corpus-tests.tar.gz` (fetches the latest tarball) followed by `m
 Then, run the tests and fix any that may be broken:
 
 ```bash
-make test
+mise run test
 ```
 
 ## DCO (Developer Certificate of Origin)
