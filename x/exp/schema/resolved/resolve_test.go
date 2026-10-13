@@ -485,6 +485,54 @@ func TestResolveActionQualifiedParent(t *testing.T) {
 	testutil.Equals(t, view.Entity.Parents, types.NewEntityUIDSet(types.NewEntityUID("NS::Action", "readOnly")))
 }
 
+func TestResolveActionUnqualifiedActionParent(t *testing.T) {
+	// Inside a namespace, Action::"readOnly" refers to NS::Action::"readOnly".
+	s := &ast.Schema{
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Actions: ast.Actions{
+					"view": ast.Action{
+						Parents: []ast.ParentRef{
+							ast.NewParentRef("Action", "readOnly"),
+						},
+					},
+					"readOnly": ast.Action{},
+				},
+			},
+		},
+	}
+	result, err := resolved.Resolve(s)
+	testutil.OK(t, err)
+	view := result.Actions[types.NewEntityUID("NS::Action", "view")]
+	testutil.Equals(t, view.Entity.Parents, types.NewEntityUIDSet(types.NewEntityUID("NS::Action", "readOnly")))
+}
+
+func TestResolveActionParentFallsBackToEmptyNamespace(t *testing.T) {
+	// When the current namespace has no such action, an unqualified
+	// reference resolves to the action in the empty namespace.
+	s := &ast.Schema{
+		Actions: ast.Actions{
+			"readOnly": ast.Action{},
+		},
+		Namespaces: ast.Namespaces{
+			"NS": ast.Namespace{
+				Actions: ast.Actions{
+					"view": ast.Action{
+						Parents: []ast.ParentRef{
+							ast.NewParentRef("Action", "readOnly"),
+							ast.ParentRefFromID("readOnly"),
+						},
+					},
+				},
+			},
+		},
+	}
+	result, err := resolved.Resolve(s)
+	testutil.OK(t, err)
+	view := result.Actions[types.NewEntityUID("NS::Action", "view")]
+	testutil.Equals(t, view.Entity.Parents, types.NewEntityUIDSet(types.NewEntityUID("Action", "readOnly")))
+}
+
 func TestResolveActionContextNull(t *testing.T) {
 	s := &ast.Schema{
 		Actions: ast.Actions{

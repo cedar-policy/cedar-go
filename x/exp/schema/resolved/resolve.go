@@ -60,14 +60,15 @@ func Resolve(s *ast.Schema) (*Schema, error) {
 		entityTypes: make(map[types.EntityType]bool),
 		enumTypes:   make(map[types.EntityType]bool),
 		commonTypes: make(map[types.Path]ast.IsType),
+		actions:     make(map[types.EntityUID]bool),
 	}
 
 	// Phase 1: Register all declarations
-	if err := r.registerDecls("", s.Entities, s.Enums, s.CommonTypes); err != nil {
+	if err := r.registerDecls("", s.Entities, s.Enums, s.CommonTypes, s.Actions); err != nil {
 		return nil, err
 	}
 	for nsName, ns := range s.Namespaces {
-		if err := r.registerDecls(nsName, ns.Entities, ns.Enums, ns.CommonTypes); err != nil {
+		if err := r.registerDecls(nsName, ns.Entities, ns.Enums, ns.CommonTypes, ns.Actions); err != nil {
 			return nil, err
 		}
 	}
@@ -126,9 +127,10 @@ type resolverState struct {
 	entityTypes map[types.EntityType]bool
 	enumTypes   map[types.EntityType]bool
 	commonTypes map[types.Path]ast.IsType
+	actions     map[types.EntityUID]bool
 }
 
-func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, enums ast.Enums, commonTypes ast.CommonTypes) error {
+func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, enums ast.Enums, commonTypes ast.CommonTypes, actions ast.Actions) error {
 	for name := range entities {
 		if _, ok := enums[name]; ok {
 			return fmt.Errorf("%q is declared twice", qualifyEntityType(nsName, name))
@@ -140,6 +142,9 @@ func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, 
 	}
 	for name, ct := range commonTypes {
 		r.commonTypes[qualifyPath(nsName, name)] = ct.Type
+	}
+	for name := range actions {
+		r.actions[types.NewEntityUID(qualifyActionType(nsName), name)] = true
 	}
 	return nil
 }
@@ -308,7 +313,7 @@ func (r *resolverState) resolveActions(nsName types.Path, actions ast.Actions, r
 		uid := types.NewEntityUID(actionTypeName, types.String(name))
 		var parents []types.EntityUID
 		for _, ref := range action.Parents {
-			parents = append(parents, resolveActionParentRef(nsName, ref))
+			parents = append(parents, r.resolveActionParentRef(nsName, ref))
 		}
 		resolved := Action{
 			Entity: types.Entity{
@@ -508,13 +513,22 @@ func (r *resolverState) resolveTypeRefPath(ns types.Path, ref ast.TypeRef) types
 	return types.Path(ref)
 }
 
-func resolveActionParentRef(ns types.Path, ref ast.ParentRef) types.EntityUID {
-	if types.EntityType(ref.Type) == "" {
-		// Bare reference: action in same namespace
-		actionType := qualifyActionType(ns)
-		return types.NewEntityUID(actionType, ref.ID)
+// resolveActionParentRef resolves an action parent reference the way the Rust
+// implementation does: a bare reference ("view") or one typed with the
+// unqualified "Action" type refers to the action in the current namespace if it
+// exists, otherwise to the action in the empty namespace. A fully qualified
+// type ("NS::Action") is used as written.
+func (r *resolverState) resolveActionParentRef(ns types.Path, ref ast.ParentRef) types.EntityUID {
+	if ref.Type != "" && ref.Type != "Action" {
+		return types.NewEntityUID(types.EntityType(ref.Type), ref.ID)
 	}
-	return types.NewEntityUID(types.EntityType(ref.Type), ref.ID)
+	uid := types.NewEntityUID(qualifyActionType(ns), ref.ID)
+	if ns != "" && !r.actions[uid] {
+		if root := types.NewEntityUID("Action", ref.ID); r.actions[root] {
+			return root
+		}
+	}
+	return uid
 }
 
 func (r *resolverState) validateActionMembership(result *Schema) error {
