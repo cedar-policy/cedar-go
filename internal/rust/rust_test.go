@@ -90,6 +90,13 @@ func TestRustUnquote(t *testing.T) {
 			{`a\u{e000}b`, true, "a\ue000b", ""},
 			{`a\u{10ffff}b`, true, "a\U0010ffffb", ""},
 			{`a\u{110000}b`, false, "", "bad unicode escape sequence"},
+			{`a\u{4_1}b`, true, "aAb", ""},
+			{`a\u{1_0_F_F_F_F}b`, true, "a\U0010ffffb", ""},
+			{`a\u{0_0_0_0_4_1}b`, true, "aAb", ""},
+			{`a\u{41__}b`, true, "aAb", ""},
+			{`a\u{_41}b`, false, "", "bad unicode escape sequence"},
+			{`a\u{_}b`, false, "", "bad unicode escape sequence"},
+			{`a\u{0_0_0_0_0_0_0}b`, false, "", "bad unicode escape sequence"},
 
 			{`\`, false, "", "bad unicode rune"},
 			{`\a`, false, "", "bad char escape"},
@@ -157,6 +164,8 @@ func TestRustUnquote(t *testing.T) {
 			{`a\u{e000}b`, true, "a\ue000b", "", ""},
 			{`a\u{10ffff}b`, true, "a\U0010ffffb", "", ""},
 			{`a\u{110000}b`, false, "", "", "bad unicode escape sequence"},
+			{`a\u{4_1}b`, true, "aAb", "", ""},
+			{`a\u{_41}b`, false, "", "", "bad unicode escape sequence"},
 
 			{`*`, true, "", "*", ""},
 			{`*hello*how*are*you`, true, "", "*hello*how*are*you", ""},

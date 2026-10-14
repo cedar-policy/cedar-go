@@ -320,8 +320,20 @@ func (s *scanner) scanEscape() rune {
 			s.error("invalid char escape")
 			return ch
 		}
-		ch = s.scanHexDigits(s.next(), 1, 6)
-		if ch != '}' {
+		ch = s.next()
+		if !rust.IsHexadecimal(ch) {
+			s.error("invalid char escape")
+			return ch
+		}
+		// Underscores may separate digits, but not lead (as in Rust).
+		n := 0
+		for rust.IsHexadecimal(ch) || ch == '_' {
+			if ch != '_' {
+				n++
+			}
+			ch = s.next()
+		}
+		if n > 6 || ch != '}' {
 			s.error("invalid char escape")
 			return ch
 		}
