@@ -1,6 +1,6 @@
 [tools]
-go = "1.23.0"
-"go:github.com/matryer/moq" = "0.8.0"
+go = "1.26.10"
+"go:github.com/matryer/moq" = "0.8.1"
 golangci-lint = "2.14.0"
 
 [tasks.ci]
