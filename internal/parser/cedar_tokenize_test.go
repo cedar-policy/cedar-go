@@ -133,6 +133,9 @@ func TestTokenizeErrors(t *testing.T) {
 		{`"okay" "\u{}"`, "invalid char escape", Position{Line: 1, Column: 8}},
 		{`"okay" "\u{0000000}"`, "invalid char escape", Position{Line: 1, Column: 8}},
 		{`"okay" "\u{z"`, "invalid char escape", Position{Line: 1, Column: 8}},
+		{`"okay" "\u{_41}"`, "invalid char escape", Position{Line: 1, Column: 8}},
+		{`"okay" "\u{0_0_0_0_0_0_0}"`, "invalid char escape", Position{Line: 1, Column: 8}},
+		{`"okay" "\u{4_1"`, "invalid char escape", Position{Line: 1, Column: 8}},
 	}
 	for i, tt := range tests {
 		tt := tt
@@ -210,6 +213,8 @@ func TestStringTokenValues(t *testing.T) {
 		{`"a\u{e000}b"`, true, "a\ue000b", ""},
 		{`"a\u{10ffff}b"`, true, "a\U0010ffffb", ""},
 		{`"a\u{110000}b"`, false, "", "bad unicode escape sequence"},
+		{`"a\u{4_1}b"`, true, "aAb", ""},
+		{`"a\u{1_0_F_F_F_F}b"`, true, "a\U0010ffffb", ""},
 	}
 	for _, tt := range tests {
 		tt := tt

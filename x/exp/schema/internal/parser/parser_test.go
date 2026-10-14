@@ -364,6 +364,13 @@ func TestParseUnicodeString(t *testing.T) {
 	testutil.Equals(t, schema.Enums["User"].Values, []types.String{"\U0001F600"})
 }
 
+func TestParseUnicodeStringUnderscores(t *testing.T) {
+	src := `entity User enum ["\u{1_F_6_0_0}", "\u{4_1}"];`
+	schema, err := parser.ParseSchema("", []byte(src))
+	testutil.OK(t, err)
+	testutil.Equals(t, schema.Enums["User"].Values, []types.String{"\U0001F600", "A"})
+}
+
 func TestParseTrailingCommaInRecord(t *testing.T) {
 	src := `entity User { name: String, age: Long, };`
 	schema, err := parser.ParseSchema("", []byte(src))

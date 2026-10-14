@@ -61,6 +61,10 @@ func parseUnicodeEscape(b []byte, i int) (rune, int, error) {
 		if ch == '}' {
 			break
 		}
+		// Underscores may separate digits, but not lead (as in Rust).
+		if ch == '_' && digits > 0 {
+			continue
+		}
 		if !IsHexadecimal(ch) {
 			return 0, i, fmt.Errorf("bad unicode escape sequence")
 		}
