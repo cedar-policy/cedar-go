@@ -13,7 +13,7 @@ import (
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
-//go:generate moq -pkg parser -fmt goimports -out tokenize_mocks_test.go . reader
+//go:generate moq -pkg parser -fmt goimports -out cedar_tokenize_mocks_test.go . reader
 
 // This type alias is for test purposes only.
 type reader = io.Reader

@@ -10,25 +10,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
+      - uses: jdx/mise-action@v5
 
       - name: Build
-        run: go build -v ./...
+        run: mise run build
 
-      - name: Test
-        run: go test -coverprofile=coverage.out ./...
+      - name: Test and check coverage
+        run: mise run test:cover
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v7
-
-      - name: Sum type linter
-        run: go install github.com/alecthomas/go-check-sumtype/cmd/go-check-sumtype@latest && go-check-sumtype -default-signifies-exhaustive=false ./...
+        run: mise run lint
 
       - name: Fuzz
-        run: mkdir -p testdata && go test -fuzz=FuzzParse -fuzztime 60s && go test -fuzz=FuzzTokenize -fuzztime 60s
-
-      - name: Coverage check
-        run: go tool cover -func=coverage.out | sed 's/%$//' | awk '{ if ($3 < 100.0) { printf "Insufficient code coverage for %s\n", $0; failed=1 } } END { exit failed }'
+        run: mise run test:fuzz

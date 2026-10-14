@@ -1,16 +1,48 @@
 # Common Workflows
 
+Development tasks are defined in `mise.toml` and run with [mise](https://mise.jdx.dev/), which also installs the pinned tools they need. Run `mise tasks` to list them.
+
+To run everything CI runs:
+
+```bash
+mise run ci
+```
+
 ## Running Tests
 
 ```bash
-make test
+mise run test
 ```
+
+CI requires 100% statement coverage. To run the tests and check coverage the same way:
+
+```bash
+mise run test:cover
+```
+
+Both tasks take an optional package path, e.g. `mise run test:cover ./internal/json`.
 
 ## Running Linters
 
 ```bash
-make linters
+mise run lint
 ```
+
+Many violations can be fixed automatically with:
+
+```bash
+mise run lint:fix
+```
+
+## Generating Code
+
+Mocks are generated with [moq](https://github.com/matryer/moq) via `go:generate` directives. After changing a mocked interface, regenerate them with:
+
+```bash
+mise run generate
+```
+
+`mise run lint` fails if the committed generated code is out of date.
 
 ## Updating the Corpus Tests
 
@@ -18,18 +50,20 @@ A periodic Github action checks to make sure that the local copy of the Cedar co
 
 This action opens a Github Issue when it detects that a change has occurred ([example](https://github.com/cedar-policy/cedar-go/issues/52)) that should be resolved by updating the corpus test tarball in the cedar-go repository and ensuring that they still pass with the new version. The Cedar team does occasionally make breaking changes to the format of the tests, so bringing them up to date may be a non-trivial amount of work.
 
-To download the latest corpus tests and regenerate JSON schemas:
+To download the latest corpus tests and regenerate everything derived from them:
 
 ```bash
-make corpus-update
+mise run corpus:update
 ```
 
-This runs `make corpus-tests.tar.gz` (fetches the latest tarball) followed by `make corpus-tests-json-schemas.tar.gz` (regenerates JSON schemas). These can also be run individually.
+This runs `corpus:fetch` to download the latest tarball, then regenerates the JSON schemas (`corpus:json-schemas`) and the expected validation results (`corpus:validation`) from it, along with the Rust-generated testdata (`testdata:validation`, `testdata:entity-parsing`). These can also be run individually; `mise tasks` lists them. Derived tarballs are only rebuilt when their inputs change, so pass `--force` to rebuild them anyway.
+
+The generators need a Rust toolchain (`cargo`). mise installs the pinned Cedar CLI the first time it's needed.
 
 Then, run the tests and fix any that may be broken:
 
 ```bash
-make test
+mise run test
 ```
 
 ## DCO (Developer Certificate of Origin)

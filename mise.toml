@@ -1,0 +1,162 @@
+[tools]
+go = "1.23.0"
+"go:github.com/matryer/moq" = "0.8.0"
+golangci-lint = "2.14.0"
+
+[tasks.ci]
+description = "Run the full CI pipeline"
+depends = ["build", "lint", "test:cover", "test:fuzz"]
+
+[tasks.build]
+description = "Verify all packages compile"
+run = "go build ./..."
+
+[tasks.test]
+description = "Run tests (e.g. mise run test ./internal/json)"
+usage = 'arg "<package>" help="Go package path to test" default="./..."'
+run = 'go test -shuffle=on ${usage_package}'
+
+[tasks."test:cover"]
+description = "Run tests and require 100% statement coverage (e.g. mise run test:cover ./internal/json)"
+usage = 'arg "<package>" help="Go package path to test" default="./..."'
+run = '''
+go test -shuffle=on -coverprofile=coverage.out ${usage_package}
+go tool cover -func=coverage.out | sed 's/%$//' | awk '
+	$3 < 100.0 { printf "Insufficient code coverage for %s\n", $0; failed = 1 }
+	END { exit failed }
+'
+'''
+
+[tasks."test:fuzz"]
+description = "Run each fuzz test for <fuzztime> (e.g. mise run test:fuzz 10s)"
+usage = 'arg "<fuzztime>" help="How long to run each fuzz test" default="60s"'
+# go test can only fuzz one target at a time.
+run = [
+  "go test -run '^$' -fuzz '^FuzzTokenize$' -fuzztime ${usage_fuzztime} ./internal/parser",
+  "go test -run '^$' -fuzz '^FuzzParse$' -fuzztime ${usage_fuzztime} ./internal/parser",
+]
+
+[tasks.generate]
+description = "Run all code generators"
+run = "go generate ./..."
+
+[tasks.lint]
+description = "Run all linters"
+depends = ["lint:golangci", "lint:codegen", "lint:tidy"]
+
+[tasks."lint:fix"]
+description = "Auto-fix lint violations"
+depends = ["lint:golangci:fix", "generate", "lint:tidy:fix"]
+
+[tasks."lint:golangci"]
+description = "Run golangci-lint"
+run = "golangci-lint run ./..."
+
+[tasks."lint:golangci:fix"]
+description = "Run golangci-lint --fix"
+run = "golangci-lint run --fix ./..."
+
+[tasks."lint:codegen"]
+description = "Verify all generated code matches committed output"
+run = "scripts/lint-codegen.sh"
+
+[tasks."lint:tidy"]
+description = "Verify go.mod and go.sum are tidy"
+run = "go mod tidy -diff"
+
+[tasks."lint:tidy:fix"]
+description = "Tidy go.mod and go.sum"
+run = "go mod tidy"
+
+[tasks."corpus:update"]
+description = "Download the latest upstream corpus tests and regenerate everything derived from them"
+depends = ["corpus:json-schemas", "corpus:validation", "testdata:validation", "testdata:entity-parsing"]
+
+[tasks."corpus:fetch"]
+description = "Download the latest upstream corpus tests, replacing corpus-tests.tar.gz if it changed"
+run = '''
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+curl -fL -o "$tmpdir/corpus-tests.tar.gz" https://raw.githubusercontent.com/cedar-policy/cedar-integration-tests/main/corpus-tests.tar.gz
+if cmp -s "$tmpdir/corpus-tests.tar.gz" corpus-tests.tar.gz; then
+	echo "corpus-tests.tar.gz is up to date."
+else
+	mv "$tmpdir/corpus-tests.tar.gz" corpus-tests.tar.gz
+	echo "corpus-tests.tar.gz updated."
+fi
+'''
+
+[tasks."corpus:json-schemas"]
+description = "Convert the corpus tests' Cedar schemas to JSON schemas"
+depends = ["corpus:fetch"]
+tools = { "cargo:cedar-policy-cli" = "4.9.1" }
+# The tarballs aren't byte-for-byte reproducible, so only regenerate when the
+# corpus changes.
+sources = ["corpus-tests.tar.gz"]
+outputs = ["corpus-tests-json-schemas.tar.gz"]
+run = '''
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+tar -xzf corpus-tests.tar.gz -C "$tmpdir"
+mkdir -p "$tmpdir/corpus-tests-json-schemas"
+for schema in "$tmpdir"/corpus-tests/*.cedarschema; do
+	basename=$(basename "$schema" .cedarschema)
+	echo "  Converting $basename.cedarschema..."
+	cedar translate-schema --direction cedar-to-json --schema "$schema" \
+		> "$tmpdir/corpus-tests-json-schemas/$basename.cedarschema.json" 2>&1
+done
+tar -czf corpus-tests-json-schemas.tar.gz -C "$tmpdir" corpus-tests-json-schemas
+'''
+
+[tasks."corpus:validation"]
+description = "Generate the corpus tests' expected validation results with Rust Cedar"
+depends = ["corpus:fetch", "build:validation-tool"]
+sources = ["corpus-tests.tar.gz", "test/cedar-validation-tool/src/**", "test/cedar-validation-tool/Cargo.*"]
+outputs = ["corpus-tests-validation.tar.gz"]
+run = '''
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+tar -xzf corpus-tests.tar.gz -C "$tmpdir"
+mkdir -p "$tmpdir/corpus-tests-validation"
+for testjson in "$tmpdir"/corpus-tests/*.json; do
+	case "$testjson" in *.entities.json) continue ;; esac
+	basename=$(basename "$testjson" .json)
+	test/cedar-validation-tool/target/release/cedar-validation-tool \
+		"$testjson" "$tmpdir/corpus-tests-validation/$basename.validation.json"
+done
+tar -czf corpus-tests-validation.tar.gz -C "$tmpdir" corpus-tests-validation
+'''
+
+[tasks."testdata:validation"]
+description = "Regenerate x/exp/schema/validate/testdata validation results with Rust Cedar"
+depends = ["build:validation-tool"]
+run = '''
+for testjson in x/exp/schema/validate/testdata/*.json; do
+	case "$testjson" in *.entities.json|*.validation.json) continue ;; esac
+	basename=$(basename "$testjson" .json)
+	echo "  Validating $basename..."
+	test/cedar-validation-tool/target/release/cedar-validation-tool \
+		"$testjson" "x/exp/schema/validate/testdata/$basename.validation.json"
+done
+'''
+
+[tasks."testdata:entity-parsing"]
+description = "Regenerate x/exp/types/testdata entity parsing results with Rust Cedar"
+depends = ["build:entity-parsing-tool"]
+run = '''
+for testjson in x/exp/types/testdata/*.json; do
+	case "$testjson" in *.entities.json|*.parsing.json) continue ;; esac
+	basename=$(basename "$testjson" .json)
+	echo "  Parsing $basename..."
+	test/cedar-entity-parsing-tool/target/release/cedar-entity-parsing-tool \
+		"$testjson" "x/exp/types/testdata/$basename.parsing.json"
+done
+'''
+
+[tasks."build:validation-tool"]
+description = "Build cedar-validation-tool"
+run = "cargo build --release --manifest-path test/cedar-validation-tool/Cargo.toml"
+
+[tasks."build:entity-parsing-tool"]
+description = "Build cedar-entity-parsing-tool"
+run = "cargo build --release --manifest-path test/cedar-entity-parsing-tool/Cargo.toml"
