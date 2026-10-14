@@ -1,9 +1,10 @@
 package mapset
 
 import (
-	"encoding/json"
 	"slices"
 	"testing"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
@@ -180,7 +181,7 @@ func TestImmutableMapSet(t *testing.T) {
 		var s1 ImmutableMapSet[int]
 		err := s1.UnmarshalJSON([]byte(`[2,3,1,"2"]`))
 		testutil.Error(t, err)
-		testutil.Equals(t, err.Error(), "json: cannot unmarshal string into Go value of type int")
+		assertUnmarshalTypeError[int](t, err, "/3")
 		testutil.Equals(t, s1.Len(), 0)
 	})
 
@@ -188,7 +189,7 @@ func TestImmutableMapSet(t *testing.T) {
 		var s1 ImmutableMapSet[int]
 		err := s1.UnmarshalJSON([]byte(`"1,2,3"`))
 		testutil.Error(t, err)
-		testutil.Equals(t, err.Error(), "json: cannot unmarshal string into Go value of type []int")
+		assertUnmarshalTypeError[[]int](t, err, "")
 		testutil.Equals(t, s1.Len(), 0)
 	})
 }

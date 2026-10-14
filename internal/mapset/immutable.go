@@ -1,8 +1,9 @@
 package mapset
 
 import (
-	"encoding/json"
 	"iter"
+
+	"github.com/go-json-experiment/json"
 )
 
 type ImmutableMapSet[T comparable] MapSet[T]

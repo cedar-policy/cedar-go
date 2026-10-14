@@ -1,15 +1,32 @@
 package mapset
 
 import (
-	"encoding/json"
+	"errors"
+	"reflect"
 	"slices"
 	"testing"
+
+	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
 func hashSetMustNotContain[T comparable](t *testing.T, s *MapSet[T], item T) {
 	testutil.FatalIf(t, s.Contains(item), "set %v unexpectedly contained item %v", s, 1)
+}
+
+// assertUnmarshalTypeError checks that err is a v2 error for a JSON string that
+// can't be unmarshaled into a T at the given JSON pointer. It checks the
+// error's fields rather than its message, since encoding/json/v2 deliberately
+// varies the wording of its error messages between processes.
+func assertUnmarshalTypeError[T any](t *testing.T, err error, pointer jsontext.Pointer) {
+	t.Helper()
+	var serr *json.SemanticError
+	testutil.FatalIf(t, !errors.As(err, &serr), "got %T (%v), want *json.SemanticError", err, err)
+	testutil.Equals(t, serr.JSONKind, jsontext.KindString)
+	testutil.Equals(t, serr.GoType, reflect.TypeFor[T]())
+	testutil.Equals(t, serr.JSONPointer, pointer)
 }
 
 func TestMapSet(t *testing.T) {
@@ -228,7 +245,7 @@ func TestMapSet(t *testing.T) {
 		var s1 MapSet[int]
 		err := s1.UnmarshalJSON([]byte(`[2,3,1,"2"]`))
 		testutil.Error(t, err)
-		testutil.Equals(t, err.Error(), "json: cannot unmarshal string into Go value of type int")
+		assertUnmarshalTypeError[int](t, err, "/3")
 		testutil.Equals(t, s1.Len(), 0)
 	})
 
@@ -236,7 +253,7 @@ func TestMapSet(t *testing.T) {
 		var s1 MapSet[int]
 		err := s1.UnmarshalJSON([]byte(`"1,2,3"`))
 		testutil.Error(t, err)
-		testutil.Equals(t, err.Error(), "json: cannot unmarshal string into Go value of type []int")
+		assertUnmarshalTypeError[[]int](t, err, "")
 		testutil.Equals(t, s1.Len(), 0)
 	})
 
