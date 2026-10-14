@@ -156,6 +156,10 @@ func TestEntity(t *testing.T) {
 			{"implicit - id wrong type", `{ "type": "Type", "id": 123 }`},
 			{"implicit - only type", `{ "type": "Type" }`},
 			{"implicit - only id", `{ "id": 123 }`},
+			{"implicit - miscased", `{ "Type": "Type", "ID": "id" }`},
+			{"explicit - miscased", `{ "__ENTITY": { "type": "Type", "id": "id" } }`},
+			{"duplicate key", `{ "type": "Type", "type": "Type", "id": "id" }`},
+			{"invalid UTF-8", "{ \"type\": \"Type\", \"id\": \"\xff\" }"},
 		}
 
 		for _, tt := range tests {
@@ -228,6 +232,10 @@ func TestImplicitlyMarshaledEntityUID(t *testing.T) {
 			{"implicit - id wrong type", `{ "type": "Type", "id": 123 }`},
 			{"implicit - only type", `{ "type": "Type" }`},
 			{"implicit - only id", `{ "id": "id" }`},
+			{"implicit - miscased", `{ "Type": "Type", "ID": "id" }`},
+			{"explicit - miscased", `{ "__ENTITY": { "type": "Type", "id": "id" } }`},
+			{"duplicate key", `{ "type": "Type", "type": "Type", "id": "id" }`},
+			{"invalid UTF-8", "{ \"type\": \"Type\", \"id\": \"\xff\" }"},
 		}
 
 		for _, tt := range tests {

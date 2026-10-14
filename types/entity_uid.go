@@ -1,10 +1,11 @@
 package types
 
 import (
-	"encoding/json"
 	"errors"
 	"hash/fnv"
 	"strings"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/internal/rust"
