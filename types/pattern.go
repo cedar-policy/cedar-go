@@ -2,10 +2,11 @@ package types
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/internal/rust"
 )
@@ -158,7 +159,10 @@ func (p Pattern) MarshalJSON() ([]byte, error) {
 			if comp.Wildcard {
 				buf.WriteString(", ")
 			}
-			kb, _ := json.Marshal(comp.Literal)
+			kb, err := json.Marshal(comp.Literal)
+			if err != nil {
+				return nil, err
+			}
 			buf.WriteString(`{"Literal":`)
 			buf.Write(kb)
 			buf.WriteByte('}')
@@ -173,9 +177,8 @@ func (p Pattern) MarshalJSON() ([]byte, error) {
 }
 
 func (p *Pattern) UnmarshalJSON(b []byte) error {
-	dec := json.NewDecoder(bytes.NewReader(b))
 	var objs []any
-	if err := dec.Decode(&objs); err != nil {
+	if err := json.Unmarshal(b, &objs); err != nil {
 		return err
 	}
 
