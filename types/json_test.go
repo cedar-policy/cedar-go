@@ -30,11 +30,13 @@ func TestJSON_Value(t *testing.T) {
 	}{
 		{"entity-likeRecord", `{ "type": "User", "id": "alice" }`, NewRecord(RecordMap{"type": String("User"), "id": String("alice")}), nil},
 		{"explicitEntity", `{ "__entity": { "type": "User", "id": "alice" } }`, EntityUID{Type: "User", ID: "alice"}, nil},
-		{"explicitEntityExtraField", `{ "__entity": { "type": "User", "id": "alice" }, "extra": "stuff" }`, EntityUID{Type: "User", ID: "alice"}, nil},
+		{"explicitEntityExtraField", `{ "__entity": { "type": "User", "id": "alice" }, "extra": "stuff" }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": String("User"), "id": String("alice")}), "extra": String("stuff")}), nil},
 		{"explicitLongEntity", `{ "__entity": { "type": "User::External", "id": "alice" } }`, EntityUID{Type: "User::External", ID: "alice"}, nil},
 		{"invalidJSON", `!@#$`, zeroValue(), errJSONDecode},
 		{"numericOverflow", "12341234123412341234", zeroValue(), errJSONLongOutOfRange},
 		{"unsupportedNull", "null", zeroValue(), errJSONUnsupportedType},
+		{"unsupportedNullInSet", "[1, null]", zeroValue(), errJSONUnsupportedType},
+		{"unsupportedNullInRecord", `{"a": null}`, zeroValue(), errJSONUnsupportedType},
 		{"explicitIP", `{ "__extn": { "fn": "ip", "arg": "222.222.222.7" } }`, testutil.Must(ParseIPAddr("222.222.222.7")), nil},
 		{"explicitSubnet", `{ "__extn": { "fn": "ip", "arg": "192.168.0.0/16" } }`, testutil.Must(ParseIPAddr("192.168.0.0/16")), nil},
 		{"explicitDecimal", `{ "__extn": { "fn": "decimal", "arg": "33.57" } }`, testutil.Must(ParseDecimal("33.57")), nil},
@@ -45,9 +47,30 @@ func TestJSON_Value(t *testing.T) {
 		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), errDecimal},
 		{"badDatetime", `{ "__extn": { "fn": "datetime", "arg": "bad" } }`, zeroValue(), errDatetime},
 		{"badDuration", `{ "__extn": { "fn": "duration", "arg": "bad" } }`, zeroValue(), errDuration},
+		{"extnArgNotString", `{ "__extn": { "fn": "ip", "arg": 1 } }`, zeroValue(), errJSONInvalidExtn},
+		{"extnArgExtn", `{ "__extn": { "fn": "ip", "arg": { "__extn": { "fn": "ip", "arg": "1.2.3.4" } } } }`, zeroValue(), errJSONInvalidExtn},
+		{"invalidExtensionArgNotString", `{ "__extn": { "fn": "asdf", "arg": 1 } }`, zeroValue(), errJSONInvalidExtn},
+		{"extnFnNotString", `{ "__extn": { "fn": 1, "arg": "1.2.3.4" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"fn": Long(1), "arg": String("1.2.3.4")})}), nil},
+		{"entityNotRecord", `{ "__entity": 1 }`, NewRecord(RecordMap{"__entity": Long(1)}), nil},
+		{"entityMissingType", `{ "__entity": { "id": "alice" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"id": String("alice")})}), nil},
+		{"entityMissingID", `{ "__entity": { "type": "User" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": String("User")})}), nil},
+		{"entityTypeNotString", `{ "__entity": { "type": 1, "id": "alice" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": Long(1), "id": String("alice")})}), nil},
+		{"entityIDNotString", `{ "__entity": { "type": "User", "id": 1 } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": String("User"), "id": Long(1)})}), nil},
+		{"entityExtraInnerKey", `{ "__entity": { "type": "User", "id": "alice", "x": 1 } }`, EntityUID{Type: "User", ID: "alice"}, nil},
+		{"extnNotRecord", `{ "__extn": 1 }`, NewRecord(RecordMap{"__extn": Long(1)}), nil},
+		{"extnMissingFn", `{ "__extn": { "arg": "1.2.3.4" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"arg": String("1.2.3.4")})}), nil},
+		{"extnMissingArg", `{ "__extn": { "fn": "ip" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"fn": String("ip")})}), nil},
 		{"set", `[42]`, NewSet(Long(42)), nil},
 		{"record", `{"a":"b"}`, NewRecord(RecordMap{"a": String("b")}), nil},
 		{"bool", `false`, Boolean(false), nil},
+		{"surroundingWhitespace", " [42] ", NewSet(Long(42)), nil},
+		{"trailingData", `[42] 43`, zeroValue(), errJSONDecode},
+		{"duplicateKey", `{"a":"b","a":"c"}`, zeroValue(), errJSONDecode},
+		{"nestedDuplicateKey", `{"a":{"b":1,"b":2}}`, zeroValue(), errJSONDecode},
+		{"invalidUTF8", "\"\xff\"", zeroValue(), errJSONDecode},
+		{"invalidUTF8Key", "{\"\xff\":1}", zeroValue(), errJSONDecode},
+		{"nonIntegerNumber", "1.5", zeroValue(), errJSONLongOutOfRange},
+		{"negativeZero", "-0", zeroValue(), errJSONLongOutOfRange},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -288,10 +311,17 @@ func (j *jsonErr) hash() uint64                 { return 0 }
 
 func TestJSONSet(t *testing.T) {
 	t.Parallel()
+	t.Run("Unmarshal", func(t *testing.T) {
+		t.Parallel()
+		var s Set
+		err := json.Unmarshal([]byte(`[1, "a", {"__entity": {"type": "User", "id": "alice"}}, 1]`), &s)
+		testutil.OK(t, err)
+		testutil.Equals(t, s, NewSet(Long(1), String("a"), EntityUID{Type: "User", ID: "alice"}))
+	})
 	t.Run("UnmarshalErr", func(t *testing.T) {
 		t.Parallel()
 		var s Set
-		err := json.Unmarshal([]byte(`[{"__extn":{"fn":"err"}}]`), &s)
+		err := json.Unmarshal([]byte(`{"not":["a","set"]}`), &s)
 		testutil.Error(t, err)
 	})
 	t.Run("UnmarshalDuplicateKeyErr", func(t *testing.T) {
@@ -319,7 +349,7 @@ func TestJSONRecord(t *testing.T) {
 	t.Run("UnmarshalErr", func(t *testing.T) {
 		t.Parallel()
 		var r Record
-		err := json.Unmarshal([]byte(`{"key":{"__extn":{"fn":"err"}}}`), &r)
+		err := json.Unmarshal([]byte(`["not", "a", "record"]`), &r)
 		testutil.Error(t, err)
 	})
 	t.Run("UnmarshalDuplicateKeyErr", func(t *testing.T) {

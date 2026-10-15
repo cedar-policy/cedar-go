@@ -1,12 +1,11 @@
 package types
 
 import (
-	"bytes"
-	jsonv1 "encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 )
 
 var (
@@ -43,98 +42,173 @@ type explicitValue struct {
 	Value Value
 }
 
-func (v *explicitValue) UnmarshalJSON(b []byte) error {
-	return UnmarshalJSON(b, &v.Value)
-}
-
-func UnmarshalJSON(b []byte, v *Value) error {
-	// TODO: make this faster if it matters
-	{
-		var res extValueJSON
-		if err := jsonv1.Unmarshal(b, &res); err == nil && res.Extn != nil {
-			switch res.Extn.Fn {
-			case "ip":
-				val, err := ParseIPAddr(res.Extn.Arg)
-				if err != nil {
-					return err
-				}
-				*v = val
-				return nil
-			case "decimal":
-				val, err := ParseDecimal(res.Extn.Arg)
-				if err != nil {
-					return err
-				}
-				*v = val
-				return nil
-			case "datetime":
-				val, err := ParseDatetime(res.Extn.Arg)
-				if err != nil {
-					return err
-				}
-				*v = val
-				return nil
-			case "duration":
-				val, err := ParseDuration(res.Extn.Arg)
-				if err != nil {
-					return err
-				}
-				*v = val
-				return nil
-			default:
-				return errJSONInvalidExtn
-			}
-		}
-	}
-
-	if len(b) > 0 {
-		switch b[0] {
-		case '[':
-			var res Set
-			err := jsonv1.Unmarshal(b, &res)
-			*v = res
-			return err
-		case '{':
-			// Try explicit EntityUID form {"__entity": {...}} before Record.
-			// Only the explicit escape is attempted here; the implicit form
-			// {"type":"X","id":"Y"} parses as a Record and requires
-			// schema-guided coercion (see x/exp/types.EntityMap.UnmarshalJSONWithSchema).
-			var ej entityValueJSON
-			if err := jsonv1.Unmarshal(b, &ej); err == nil && ej.Entity != nil && ej.Entity.Type != nil && ej.Entity.ID != nil {
-				*v = EntityUID{
-					Type: EntityType(*ej.Entity.Type),
-					ID:   String(*ej.Entity.ID),
-				}
-				return nil
-			}
-			rec := Record{}
-			err := jsonv1.Unmarshal(b, &rec)
-			*v = rec
-			return err
-		}
-	}
-
-	var res interface{}
-	dec := jsonv1.NewDecoder(bytes.NewBuffer(b))
-	dec.UseNumber()
-	if err := dec.Decode(&res); err != nil {
-		return fmt.Errorf("%w: %w", errJSONDecode, err)
-	}
-	switch vv := res.(type) {
-	case string:
-		*v = String(vv)
-	case bool:
-		*v = Boolean(vv)
-	case jsonv1.Number:
-		l, err := vv.Int64()
+func (v *explicitValue) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	switch dec.PeekKind() {
+	case jsontext.KindString, jsontext.KindFalse, jsontext.KindTrue, jsontext.KindNumber:
+		tok, err := dec.ReadToken()
 		if err != nil {
-			return fmt.Errorf("%w: %w", errJSONLongOutOfRange, err)
+			return fmt.Errorf("%w: %w", errJSONDecode, err)
 		}
-		*v = Long(l)
+		switch tok.Kind() {
+		case jsontext.KindString:
+			v.Value = String(tok.String())
+		case jsontext.KindFalse, jsontext.KindTrue:
+			v.Value = Boolean(tok.Bool())
+		case jsontext.KindNumber:
+			// Match Rust behavior for -0
+			if tok.String() == "-0" {
+				return fmt.Errorf("%w: -0 is not a valid Long", errJSONLongOutOfRange)
+			}
+			l, err := tok.Int()
+			if err != nil {
+				return fmt.Errorf("%w: %w", errJSONLongOutOfRange, err)
+			}
+			v.Value = Long(l)
+		}
+	case jsontext.KindBeginArray:
+		var ev []explicitValue
+		if err := json.UnmarshalDecode(dec, &ev); err != nil {
+			return err
+		}
+		vals := make([]Value, len(ev))
+		for i := range ev {
+			vals[i] = ev[i].Value
+		}
+		v.Value = NewSet(vals...)
+	case jsontext.KindBeginObject:
+		var m map[string]explicitValue
+		if err := json.UnmarshalDecode(dec, &m); err != nil {
+			return err
+		}
+		// Check to see if the Record is _actually_ an escaped entity UID or
+		// extension function. Records that don't precisely fit the shape of
+		// the escaped types are kept as Records. This matches Rust's behavior.
+		if len(m) == 1 {
+			if entity, ok := m["__entity"]; ok {
+				if uid, ok := coerceValueToEntityUID(entity.Value); ok {
+					v.Value = uid
+					return nil
+				}
+			} else if extn, ok := m["__extn"]; ok {
+				val, ok, err := coerceValueToExtensionFunction(extn.Value)
+				if err != nil {
+					return err
+				}
+				if ok {
+					v.Value = val
+					return nil
+				}
+			}
+		}
+		recMap := make(RecordMap, len(m))
+		for k, val := range m {
+			recMap[String(k)] = val.Value
+		}
+		v.Value = NewRecord(recMap)
 	default:
 		return errJSONUnsupportedType
 	}
 	return nil
+}
+
+// UnmarshalJSON parses a single JSON value into a Cedar Value without the aid
+// of a schema, following the same rules as Rust Cedar's schemaless parsing:
+//
+//   - A JSON string becomes a String
+//   - A JSON boolean becomes a Boolean
+//   - A JSON number shaped like a 64-bit signed integer becomes a Long. Other
+//     numbers return an error.
+//   - A JSON array becomes a Set; duplicate elements are removed.
+//   - A JSON object with exactly one member, "__entity", whose value is an
+//     object with String "type" and "id" members, becomes an EntityUID.
+//   - A JSON object with exactly one member, "__extn", whose value is an
+//     object with a String "fn" member and an "arg" member, becomes the
+//     extension value produced by calling that function on "arg", which must
+//     be a String. Unknown functions and invalid arguments are errors.
+//   - Any other JSON object becomes a Record. In particular, the implicit
+//     entity form {"type": ..., "id": ...} is a Record, since only a schema
+//     can tell it apart from an ordinary record.
+//   - JSON null is an error.
+//
+// To match Rust Cedar's behavior, extra members inside "__entity" and
+// "__extn" objects are ignored.
+//
+// Unlike Rust Cedar, UnmarshalJSON doesn't currently validate entity type
+// names.
+func UnmarshalJSON(b []byte, v *Value) error {
+	var val explicitValue
+	if err := json.Unmarshal(b, &val); err != nil {
+		return fmt.Errorf("%w: %w", errJSONDecode, err)
+	}
+	*v = val.Value
+	return nil
+}
+
+func coerceValueToEntityUID(v Value) (EntityUID, bool) {
+	rec, ok := v.(Record)
+	if !ok {
+		return EntityUID{}, false
+	}
+	typ, ok := rec.Get("type")
+	if !ok {
+		return EntityUID{}, false
+	}
+	id, ok := rec.Get("id")
+	if !ok {
+		return EntityUID{}, false
+	}
+	typStr, ok := typ.(String)
+	if !ok {
+		return EntityUID{}, false
+	}
+	idStr, ok := id.(String)
+	if !ok {
+		return EntityUID{}, false
+	}
+	return NewEntityUID(EntityType(typStr), idStr), true
+}
+
+func coerceValueToExtensionFunction(v Value) (Value, bool, error) {
+	// First, check to see if this Value is a Record of the right shape.
+	rec, ok := v.(Record)
+	if !ok {
+		return nil, false, nil
+	}
+	fnVal, ok := rec.Get("fn")
+	if !ok {
+		return nil, false, nil
+	}
+	arg, ok := rec.Get("arg")
+	if !ok {
+		return nil, false, nil
+	}
+	fn, ok := fnVal.(String)
+	if !ok {
+		return nil, false, nil
+	}
+
+	// At this point, we treat the Record as an extension function and validate
+	// its values
+	parsers := map[string]func(string) (Value, error){
+		"ip":       func(s string) (Value, error) { return ParseIPAddr(s) },
+		"decimal":  func(s string) (Value, error) { return ParseDecimal(s) },
+		"datetime": func(s string) (Value, error) { return ParseDatetime(s) },
+		"duration": func(s string) (Value, error) { return ParseDuration(s) },
+	}
+	parse, ok := parsers[string(fn)]
+	if !ok {
+		return nil, false, errJSONInvalidExtn
+	}
+
+	argStr, ok := arg.(String)
+	if !ok {
+		return nil, false, fmt.Errorf("%w: argument to %s must be a string", errJSONInvalidExtn, fn)
+	}
+	val, err := parse(string(argStr))
+	if err != nil {
+		return nil, false, err
+	}
+	return val, true, nil
 }
 
 func unmarshalExtensionValue[T any](b []byte, extName string, parse func(string) (T, error)) (T, error) {

@@ -134,30 +134,52 @@ func coerceValue(v types.Value, typ resolved.IsType) (val types.Value) {
 	return
 }
 
-// coerceEntityUID attempts to convert a Record with exactly keys "type" and
-// "id" (both String values) into an EntityUID. Returns v unchanged otherwise.
+// coerceEntityUID attempts to convert a Record into an EntityUID, accepting
+// either the explicit form {"__entity": {"type": ..., "id": ...}}, which
+// unguided parsing leaves as a Record when it has other keys, or the implicit
+// form {"type": ..., "id": ...}. As in Rust Cedar's schema-based parsing, extra
+// keys are ignored and the explicit form takes precedence. Returns v unchanged
+// otherwise.
 func coerceEntityUID(v types.Value) types.Value {
 	rec, ok := v.(types.Record)
 	if !ok {
 		return v
 	}
-	typeVal, ok := rec.Get("type")
-	if !ok {
-		return v
+	if entity, ok := rec.Get("__entity"); ok {
+		if uid, ok := coerceValueToEntityUID(entity); ok {
+			return uid
+		}
 	}
-	idVal, ok := rec.Get("id")
-	if !ok {
-		return v
+	if uid, ok := coerceValueToEntityUID(rec); ok {
+		return uid
 	}
-	typeStr, ok := typeVal.(types.String)
+	return v
+}
+
+// This is a copy of the unexported function of the same name in the types
+// package, so keep the two in sync.
+func coerceValueToEntityUID(v types.Value) (types.EntityUID, bool) {
+	rec, ok := v.(types.Record)
 	if !ok {
-		return v
+		return types.EntityUID{}, false
 	}
-	idStr, ok := idVal.(types.String)
+	typ, ok := rec.Get("type")
 	if !ok {
-		return v
+		return types.EntityUID{}, false
 	}
-	return types.NewEntityUID(types.EntityType(typeStr), idStr)
+	id, ok := rec.Get("id")
+	if !ok {
+		return types.EntityUID{}, false
+	}
+	typStr, ok := typ.(types.String)
+	if !ok {
+		return types.EntityUID{}, false
+	}
+	idStr, ok := id.(types.String)
+	if !ok {
+		return types.EntityUID{}, false
+	}
+	return types.NewEntityUID(types.EntityType(typStr), idStr), true
 }
 
 // coerceExtension attempts to parse a String value as the given extension type.
