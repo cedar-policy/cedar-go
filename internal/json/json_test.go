@@ -141,6 +141,12 @@ func TestUnmarshalJSON(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			"actionInEmptySet",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[]},"resource":{"op":"All"}}`,
+			ast.Permit().ActionInSet([]types.EntityUID{}...),
+			testutil.OK,
+		},
+		{
 			"actionInSet",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"T","id":"42"},{"type":"T","id":"43"}]},"resource":{"op":"All"}}`,
 			ast.Permit().ActionInSet(types.NewEntityUID("T", "42"), types.NewEntityUID("T", "43")),
@@ -504,6 +510,47 @@ func TestUnmarshalJSON(t *testing.T) {
 	}
 }
 
+// TestUnmarshalJSONNonCanonical covers inputs that decode successfully but
+// aren't in the form that cedar-go writes, so they don't round-trip.
+func TestUnmarshalJSONNonCanonical(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		input string
+		want  *ast.Policy
+	}{
+		{
+			"explicitScopeEntity",
+			`{"effect":"permit","principal":{"op":"==","entity":{"__entity":{"type":"T","id":"42"}}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			ast.Permit().PrincipalEq(types.NewEntityUID("T", "42")),
+		},
+		{
+			"explicitScopeIsInEntity",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"__entity":{"type":"P","id":"42"}}}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			ast.Permit().PrincipalIsIn(types.EntityType("T"), types.NewEntityUID("P", "42")),
+		},
+		{
+			"explicitActionInSetEntities",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"__entity":{"type":"T","id":"42"}}]},"resource":{"op":"All"}}`,
+			ast.Permit().ActionInSet(types.NewEntityUID("T", "42")),
+		},
+		{
+			// cedar-go previously wrote "action in []" without "entities".
+			"actionInWithoutEntities",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in"},"resource":{"op":"All"}}`,
+			ast.Permit().ActionInSet([]types.EntityUID{}...),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var p Policy
+			testutil.OK(t, json.Unmarshal([]byte(tt.input), &p))
+			testutil.Equals(t, p.unwrap(), tt.want)
+		})
+	}
+}
+
 func TestMarshalJSON(t *testing.T) {
 	// most cases are covered in the TestUnmarshalJSON round-trip.
 	// this covers some cases that aren't 1:1 round-tripppable, such as hard-coded IP/Decimal values.
@@ -607,7 +654,34 @@ func TestUnmarshalErrors(t *testing.T) {
 		},
 		{
 			"actionScopeEqMissingEntity",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"action":{"op":"=="}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"}}`,
+		},
+		{
+			"duplicateMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"}}`,
+		},
+		{
+			"miscasedMember",
+			`{"effect":"permit","PRINCIPAL":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"miscasedScopeEntityMember",
+			`{"effect":"permit","principal":{"op":"==","entity":{"TYPE":"T","ID":"42"}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"miscasedNodeMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"value":true}}]}`,
+		},
+		{
+			"duplicateNodeMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"==":{"left":{"Value":1},"right":{"Value":1},"left":{"Value":2}}}}]}`,
+		},
+		{
+			"duplicateRecordKey",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Record":{"a":{"Value":1},"a":{"Value":2}}}}]}`,
 		},
 		{
 			"principalScopeIsMissingEntityType",

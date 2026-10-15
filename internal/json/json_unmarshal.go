@@ -1,10 +1,10 @@
 package json
 
 import (
-	"bytes"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"strings"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
@@ -281,13 +281,10 @@ func (n nodeJSON) ToNode() (ast.Node, error) {
 }
 
 func (n *nodeJSON) UnmarshalJSON(b []byte) error {
-	decoder := json.NewDecoder(bytes.NewReader(b))
-	decoder.DisallowUnknownFields()
-
 	type nodeJSONAlias nodeJSON
-	if err := decoder.Decode((*nodeJSONAlias)(n)); err == nil {
+	if err := json.Unmarshal(b, (*nodeJSONAlias)(n), json.RejectUnknownMembers(true)); err == nil {
 		return nil
-	} else if !strings.HasPrefix(err.Error(), "json: unknown field") {
+	} else if !errors.Is(err, json.ErrUnknownName) {
 		return err
 	}
 

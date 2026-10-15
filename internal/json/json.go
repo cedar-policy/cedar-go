@@ -1,7 +1,7 @@
 package json
 
 import (
-	"encoding/json"
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -23,10 +23,10 @@ type scopeInJSON struct {
 // scopeJSON uses the implicit form of EntityUID JSON serialization to match the Rust SDK
 type scopeJSON struct {
 	Op         string                               `json:"op"`
-	Entity     *types.ImplicitlyMarshaledEntityUID  `json:"entity,omitempty"`
-	Entities   []types.ImplicitlyMarshaledEntityUID `json:"entities,omitempty"`
+	Entity     *types.ImplicitlyMarshaledEntityUID  `json:"entity,omitzero"`
+	Entities   []types.ImplicitlyMarshaledEntityUID `json:"entities,omitzero"`
 	EntityType string                               `json:"entity_type,omitempty"`
-	In         *scopeInJSON                         `json:"in,omitempty"`
+	In         *scopeInJSON                         `json:"in,omitzero"`
 }
 
 type conditionJSON struct {
@@ -56,7 +56,7 @@ type likeJSON struct {
 type isJSON struct {
 	Left       nodeJSON  `json:"left"`
 	EntityType string    `json:"entity_type"`
-	In         *nodeJSON `json:"in,omitempty"`
+	In         *nodeJSON `json:"in,omitzero"`
 }
 
 type ifThenElseJSON struct {
@@ -85,56 +85,56 @@ func (e *valueJSON) UnmarshalJSON(b []byte) error {
 
 type nodeJSON struct {
 	// Value
-	Value *valueJSON `json:"Value,omitempty"` // could be any
+	Value *valueJSON `json:"Value,omitzero"` // could be any
 
 	// Var
-	Var *string `json:"Var,omitempty"`
+	Var *string `json:"Var,omitzero"`
 
 	// Slot
 	// Unknown
 
 	// !, neg, and isEmpty operators
-	Not     *unaryJSON `json:"!,omitempty"`
-	Negate  *unaryJSON `json:"neg,omitempty"`
-	IsEmpty *unaryJSON `json:"isEmpty,omitempty"`
+	Not     *unaryJSON `json:"!,omitzero"`
+	Negate  *unaryJSON `json:"neg,omitzero"`
+	IsEmpty *unaryJSON `json:"isEmpty,omitzero"`
 
 	// Binary operators: ==, !=, in, <, <=, >, >=, &&, ||, +, -, *, contains, containsAll, containsAny, getTag, hasTag
-	Equals             *binaryJSON `json:"==,omitempty"`
-	NotEquals          *binaryJSON `json:"!=,omitempty"`
-	In                 *binaryJSON `json:"in,omitempty"`
-	LessThan           *binaryJSON `json:"<,omitempty"`
-	LessThanOrEqual    *binaryJSON `json:"<=,omitempty"`
-	GreaterThan        *binaryJSON `json:">,omitempty"`
-	GreaterThanOrEqual *binaryJSON `json:">=,omitempty"`
-	And                *binaryJSON `json:"&&,omitempty"`
-	Or                 *binaryJSON `json:"||,omitempty"`
-	Add                *binaryJSON `json:"+,omitempty"`
-	Subtract           *binaryJSON `json:"-,omitempty"` //nolint:staticcheck // "-,omitempty" means field name is "-" with omitempty, not skip
-	Multiply           *binaryJSON `json:"*,omitempty"`
-	Contains           *binaryJSON `json:"contains,omitempty"`
-	ContainsAll        *binaryJSON `json:"containsAll,omitempty"`
-	ContainsAny        *binaryJSON `json:"containsAny,omitempty"`
-	GetTag             *binaryJSON `json:"getTag,omitempty"`
-	HasTag             *binaryJSON `json:"hasTag,omitempty"`
+	Equals             *binaryJSON `json:"==,omitzero"`
+	NotEquals          *binaryJSON `json:"!=,omitzero"`
+	In                 *binaryJSON `json:"in,omitzero"`
+	LessThan           *binaryJSON `json:"<,omitzero"`
+	LessThanOrEqual    *binaryJSON `json:"<=,omitzero"`
+	GreaterThan        *binaryJSON `json:">,omitzero"`
+	GreaterThanOrEqual *binaryJSON `json:">=,omitzero"`
+	And                *binaryJSON `json:"&&,omitzero"`
+	Or                 *binaryJSON `json:"||,omitzero"`
+	Add                *binaryJSON `json:"+,omitzero"`
+	Subtract           *binaryJSON `json:"-,omitzero"` //nolint:staticcheck // "-,omitempty" means field name is "-" with omitempty, not skip
+	Multiply           *binaryJSON `json:"*,omitzero"`
+	Contains           *binaryJSON `json:"contains,omitzero"`
+	ContainsAll        *binaryJSON `json:"containsAll,omitzero"`
+	ContainsAny        *binaryJSON `json:"containsAny,omitzero"`
+	GetTag             *binaryJSON `json:"getTag,omitzero"`
+	HasTag             *binaryJSON `json:"hasTag,omitzero"`
 
 	// ., has
-	Access *strJSON `json:".,omitempty"`
-	Has    *strJSON `json:"has,omitempty"`
+	Access *strJSON `json:".,omitzero"`
+	Has    *strJSON `json:"has,omitzero"`
 
 	// is
-	Is *isJSON `json:"is,omitempty"`
+	Is *isJSON `json:"is,omitzero"`
 
 	// like
-	Like *likeJSON `json:"like,omitempty"`
+	Like *likeJSON `json:"like,omitzero"`
 
 	// if-then-else
-	IfThenElse *ifThenElseJSON `json:"if-then-else,omitempty"`
+	IfThenElse *ifThenElseJSON `json:"if-then-else,omitzero"`
 
 	// Set
-	Set *arrayJSON `json:"Set,omitempty"`
+	Set *arrayJSON `json:"Set,omitzero"`
 
 	// Record
-	Record *recordJSON `json:"Record,omitempty"`
+	Record *recordJSON `json:"Record,omitzero"`
 
 	// Any other method: decimal, datetime, duration, ip, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange, toDate, toTime, toDays, toHours, toMinutes, toSeconds, toMilliseconds, offset, durationSince
 	ExtensionCall extensionJSON `json:"-"`

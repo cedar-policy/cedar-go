@@ -1,8 +1,9 @@
 package json
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
@@ -289,7 +290,8 @@ func (n *nodeJSON) MarshalJSON() ([]byte, error) {
 	}
 
 	type nodeJSONAlias nodeJSON
-	return json.Marshal((*nodeJSONAlias)(n))
+	// Deterministic for the map in a Record node.
+	return json.Marshal((*nodeJSONAlias)(n), json.Deterministic(true))
 }
 
 type Policy ast.Policy
@@ -326,5 +328,6 @@ func (p *Policy) MarshalJSON() ([]byte, error) {
 		cond.Body.FromNode(c.Body)
 		j.Conditions = append(j.Conditions, cond)
 	}
-	return json.Marshal(j)
+	// Deterministic for the annotations map.
+	return json.Marshal(j, json.Deterministic(true))
 }
