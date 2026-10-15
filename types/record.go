@@ -3,11 +3,12 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"hash/fnv"
 	"iter"
 	"maps"
 	"slices"
+
+	"github.com/go-json-experiment/json"
 )
 
 type RecordMap = map[String]Value
@@ -144,28 +145,10 @@ func (r *Record) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON marshals the Record into JSON, the marshaller uses the explicit
-// JSON form for all the values in the Record.
+// JSON form for all the values in the Record. Keys are written in a bytewise
+// sorted order.
 func (r Record) MarshalJSON() ([]byte, error) {
-	w := &bytes.Buffer{}
-	w.WriteByte('{')
-	keys := slices.Collect(maps.Keys(r.m))
-	slices.Sort(keys)
-	for i, kk := range keys {
-		if i > 0 {
-			w.WriteByte(',')
-		}
-		kb, _ := json.Marshal(kk) // json.Marshal cannot error on strings
-		w.Write(kb)
-		w.WriteByte(':')
-		vv := r.m[kk]
-		vb, err := json.Marshal(vv)
-		if err != nil {
-			return nil, err
-		}
-		w.Write(vb)
-	}
-	w.WriteByte('}')
-	return w.Bytes(), nil
+	return json.Marshal(r.m, json.Deterministic(true))
 }
 
 // String produces a string representation of the Record, e.g. `{"a":1,"b":2,"c":3}`.

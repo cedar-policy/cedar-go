@@ -322,15 +322,25 @@ func TestJSONRecord(t *testing.T) {
 		err := json.Unmarshal([]byte(`{"key":{"__extn":{"fn":"err"}}}`), &r)
 		testutil.Error(t, err)
 	})
-	t.Run("MarshalKeyErrImpossible", func(t *testing.T) {
+	t.Run("UnmarshalDuplicateKeyErr", func(t *testing.T) {
+		t.Parallel()
+		var r Record
+		err := json.Unmarshal([]byte(`{"a":1,"a":2}`), &r)
+		testutil.Error(t, err)
+	})
+	t.Run("UnmarshalInvalidUTF8KeyErr", func(t *testing.T) {
+		t.Parallel()
+		var r Record
+		err := json.Unmarshal([]byte("{\"\xff\":1}"), &r)
+		testutil.Error(t, err)
+	})
+	t.Run("MarshalKeyErr", func(t *testing.T) {
 		t.Parallel()
 		k := []byte{0xde, 0x01}
 		m := RecordMap{String(k): Boolean(false)}
 		r := NewRecord(m)
-		v, err := json.Marshal(r)
-		// this demonstrates that invalid keys will still result in json
-		testutil.Equals(t, string(v), `{"\ufffd\u0001":false}`)
-		testutil.OK(t, err)
+		_, err := json.Marshal(r)
+		testutil.Error(t, err)
 	})
 	t.Run("MarshalValueErr", func(t *testing.T) {
 		t.Parallel()
