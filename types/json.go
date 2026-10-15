@@ -2,9 +2,11 @@ package types
 
 import (
 	"bytes"
-	"encoding/json"
+	jsonv1 "encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/go-json-experiment/json"
 )
 
 var (
@@ -45,7 +47,7 @@ func UnmarshalJSON(b []byte, v *Value) error {
 	// TODO: make this faster if it matters
 	{
 		var res extValueJSON
-		if err := json.Unmarshal(b, &res); err == nil && res.Extn != nil {
+		if err := jsonv1.Unmarshal(b, &res); err == nil && res.Extn != nil {
 			switch res.Extn.Fn {
 			case "ip":
 				val, err := ParseIPAddr(res.Extn.Arg)
@@ -85,7 +87,7 @@ func UnmarshalJSON(b []byte, v *Value) error {
 		switch b[0] {
 		case '[':
 			var res Set
-			err := json.Unmarshal(b, &res)
+			err := jsonv1.Unmarshal(b, &res)
 			*v = res
 			return err
 		case '{':
@@ -94,7 +96,7 @@ func UnmarshalJSON(b []byte, v *Value) error {
 			// {"type":"X","id":"Y"} parses as a Record and requires
 			// schema-guided coercion (see x/exp/types.EntityMap.UnmarshalJSONWithSchema).
 			var ej entityValueJSON
-			if err := json.Unmarshal(b, &ej); err == nil && ej.Entity != nil {
+			if err := jsonv1.Unmarshal(b, &ej); err == nil && ej.Entity != nil {
 				*v = EntityUID{
 					Type: EntityType(ej.Entity.Type),
 					ID:   String(ej.Entity.ID),
@@ -102,14 +104,14 @@ func UnmarshalJSON(b []byte, v *Value) error {
 				return nil
 			}
 			rec := Record{}
-			err := json.Unmarshal(b, &rec)
+			err := jsonv1.Unmarshal(b, &rec)
 			*v = rec
 			return err
 		}
 	}
 
 	var res interface{}
-	dec := json.NewDecoder(bytes.NewBuffer(b))
+	dec := jsonv1.NewDecoder(bytes.NewBuffer(b))
 	dec.UseNumber()
 	if err := dec.Decode(&res); err != nil {
 		return fmt.Errorf("%w: %w", errJSONDecode, err)
@@ -119,7 +121,7 @@ func UnmarshalJSON(b []byte, v *Value) error {
 		*v = String(vv)
 	case bool:
 		*v = Boolean(vv)
-	case json.Number:
+	case jsonv1.Number:
 		l, err := vv.Int64()
 		if err != nil {
 			return fmt.Errorf("%w: %w", errJSONLongOutOfRange, err)
