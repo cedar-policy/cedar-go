@@ -218,9 +218,9 @@ func TestPatternJSON(t *testing.T) {
 		{
 			"empty pattern",
 			`[]`,
-			testutil.Error,
-			Pattern{},
-			false,
+			testutil.OK,
+			NewPattern(),
+			true,
 		},
 		{
 			"empty string literal",
