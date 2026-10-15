@@ -1,10 +1,15 @@
 package types
 
 import (
-	"encoding/json"
+	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 )
+
+var errJSONInvalidEntity = fmt.Errorf("invalid entity")
 
 // An Entity defines the parents and attributes for an EntityUID.
 type Entity struct {
@@ -41,6 +46,45 @@ func (e Entity) MarshalJSON() ([]byte, error) {
 		e.Tags,
 	}
 	return json.Marshal(m)
+}
+
+// entityJSON is the JSON form of an Entity. Its members are pointers so that
+// missing and null members can be detected. Tags is kept as raw JSON because
+// it's optional but, unlike a missing member, may not be null.
+type entityJSON struct {
+	UID        *EntityUID     `json:"uid"`
+	Parents    *EntityUIDSet  `json:"parents"`
+	Attributes *Record        `json:"attrs"`
+	Tags       jsontext.Value `json:"tags"`
+}
+
+// UnmarshalJSON parses an Entity from JSON. As in Rust Cedar, "uid", "parents",
+// and "attrs" are required, "tags" is optional, none of them may be null, and
+// unknown members are ignored.
+func (e *Entity) UnmarshalJSON(b []byte) error {
+	var ej entityJSON
+	if err := json.Unmarshal(b, &ej); err != nil {
+		return err
+	}
+	switch {
+	case ej.UID == nil:
+		return fmt.Errorf(`%w: "uid" is missing or null`, errJSONInvalidEntity)
+	case ej.Parents == nil:
+		return fmt.Errorf(`%w: "parents" is missing or null`, errJSONInvalidEntity)
+	case ej.Attributes == nil:
+		return fmt.Errorf(`%w: "attrs" is missing or null`, errJSONInvalidEntity)
+	case ej.Tags.Kind() == jsontext.KindNull:
+		return fmt.Errorf(`%w: "tags" is null`, errJSONInvalidEntity)
+	}
+
+	res := Entity{UID: *ej.UID, Parents: *ej.Parents, Attributes: *ej.Attributes}
+	if ej.Tags != nil {
+		if err := json.Unmarshal(ej.Tags, &res.Tags); err != nil {
+			return err
+		}
+	}
+	*e = res
+	return nil
 }
 
 func (e Entity) Equal(other Entity) bool {
