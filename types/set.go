@@ -2,10 +2,11 @@ package types
 
 import (
 	"bytes"
-	"encoding/json"
 	"iter"
 	"maps"
 	"slices"
+
+	"github.com/go-json-experiment/json"
 )
 
 // A Set is an immutable collection of elements that can be of the same or different types.
@@ -119,10 +120,6 @@ func (s Set) Equal(bi Value) bool {
 		}
 	}
 	return true
-}
-
-func (v *explicitValue) UnmarshalJSON(b []byte) error {
-	return UnmarshalJSON(b, &v.Value)
 }
 
 // UnmarshalJSON parses a JSON-encoded Cedar set literal into a Set

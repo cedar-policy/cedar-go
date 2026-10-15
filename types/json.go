@@ -43,6 +43,10 @@ type explicitValue struct {
 	Value Value
 }
 
+func (v *explicitValue) UnmarshalJSON(b []byte) error {
+	return UnmarshalJSON(b, &v.Value)
+}
+
 func UnmarshalJSON(b []byte, v *Value) error {
 	// TODO: make this faster if it matters
 	{

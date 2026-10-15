@@ -294,6 +294,18 @@ func TestJSONSet(t *testing.T) {
 		err := json.Unmarshal([]byte(`[{"__extn":{"fn":"err"}}]`), &s)
 		testutil.Error(t, err)
 	})
+	t.Run("UnmarshalDuplicateKeyErr", func(t *testing.T) {
+		t.Parallel()
+		var s Set
+		err := json.Unmarshal([]byte(`[{"a":1,"a":2}]`), &s)
+		testutil.Error(t, err)
+	})
+	t.Run("UnmarshalInvalidUTF8Err", func(t *testing.T) {
+		t.Parallel()
+		var s Set
+		err := json.Unmarshal([]byte("[\"\xff\"]"), &s)
+		testutil.Error(t, err)
+	})
 	t.Run("MarshalErr", func(t *testing.T) {
 		t.Parallel()
 		s := NewSet(&jsonErr{})
