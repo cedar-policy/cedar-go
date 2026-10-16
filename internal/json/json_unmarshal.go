@@ -158,25 +158,20 @@ func (j recordJSON) ToNode() (ast.Node, error) {
 	return ast.Record(nodes), nil
 }
 
-func (e extensionJSON) ToNode() (ast.Node, error) {
-	var k string
-	var v arrayJSON
-	for k, v = range e {
-		_, _ = k, v
-	}
-	_, ok := extensions.ExtMap[types.Path(k)]
+func (e *extensionJSON) ToNode() (ast.Node, error) {
+	_, ok := extensions.ExtMap[types.Path(e.Name)]
 	if !ok {
-		return ast.Node{}, fmt.Errorf("`%v` is not a known extension function or method", k)
+		return ast.Node{}, fmt.Errorf("`%v` is not a known extension function or method", e.Name)
 	}
 	var argNodes []ast.Node
-	for _, n := range v {
+	for _, n := range e.Args {
 		node, err := n.ToNode()
 		if err != nil {
 			return ast.Node{}, fmt.Errorf("error in extension arg: %w", err)
 		}
 		argNodes = append(argNodes, node)
 	}
-	return ast.NewExtensionCall(types.Path(k), argNodes...), nil
+	return ast.NewExtensionCall(types.Path(e.Name), argNodes...), nil
 }
 
 func (n nodeJSON) ToNode() (ast.Node, error) {
@@ -273,8 +268,11 @@ func (n nodeJSON) ToNode() (ast.Node, error) {
 		return (*n.Record).ToNode()
 
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	default:
+	case n.ExtensionCall != nil:
 		return n.ExtensionCall.ToNode()
+
+	default:
+		return ast.Node{}, errors.New("missing expression")
 	}
 }
 
@@ -343,7 +341,7 @@ func (n *nodeJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 		// function or method call.
 		var args arrayJSON
 		err = json.UnmarshalDecode(dec, &args, json.RejectUnknownMembers(true))
-		newNode.ExtensionCall = extensionJSON{name: args}
+		newNode.ExtensionCall = &extensionJSON{Name: name, Args: args}
 	}
 	if err != nil {
 		return err

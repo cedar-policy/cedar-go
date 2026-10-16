@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-json-experiment/json/jsontext"
 
@@ -468,6 +469,53 @@ func TestUnmarshalJSON(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			"decimalValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"decimal","arg":"42.24"}}}}]}`,
+			ast.Permit().When(ast.Value(mustParseDecimal("42.24"))),
+			testutil.OK,
+		},
+		{
+			"ipValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"ip","arg":"10.0.0.42/8"}}}}]}`,
+			ast.Permit().When(ast.IPAddr(mustParseIPAddr("10.0.0.42/8"))),
+			testutil.OK,
+		},
+		{
+			"datetimeValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"datetime","arg":"1970-01-01T00:00:01.000Z"}}}}]}`,
+			ast.Permit().When(ast.Datetime(time.UnixMilli(1000))),
+			testutil.OK,
+		},
+		{
+			"durationValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"duration","arg":"1s"}}}}]}`,
+			ast.Permit().When(ast.Duration(time.Second)),
+			testutil.OK,
+		},
+		{
+			"extensionValuesInSetAndRecord",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"ips":[{"__extn":{"fn":"ip","arg":"10.0.0.42/8"}}]}}}]}`,
+			ast.Permit().When(ast.Value(types.NewRecord(types.RecordMap{
+				"ips": types.NewSet(types.IPAddr(mustParseIPAddr("10.0.0.42/8"))),
+			}))),
+			testutil.OK,
+		},
+		{
+			"isInRangeValues",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"isInRange":[
+				{"Value":{"__extn":{"fn":"ip","arg":"10.0.0.43"}}},
+				{"Value":{"__extn":{"fn":"ip","arg":"10.0.0.42/8"}}}
+			]}}]}`,
+			ast.Permit().When(ast.IPAddr(mustParseIPAddr("10.0.0.43")).IsInRange(ast.IPAddr(mustParseIPAddr("10.0.0.42/8")))),
+			testutil.OK,
+		},
+		{
 			"decimal",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.24"}]}}]}`,
@@ -554,59 +602,6 @@ func TestUnmarshalJSONNonCanonical(t *testing.T) {
 	}
 }
 
-func TestMarshalJSON(t *testing.T) {
-	// most cases are covered in the TestUnmarshalJSON round-trip.
-	// this covers some cases that aren't 1:1 round-tripppable, such as hard-coded IP/Decimal values.
-
-	t.Parallel()
-	tests := []struct {
-		name    string
-		input   *ast.Policy
-		want    string
-		errFunc func(testutil.TB, error)
-	}{
-		{
-			"decimal",
-			ast.Permit().When(ast.Value(mustParseDecimal("42.24"))),
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.24"}]}}]}`,
-			testutil.OK,
-		},
-		{
-			"ip",
-			ast.Permit().When(ast.IPAddr(mustParseIPAddr("10.0.0.42/8"))),
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"ip":[{"Value":"10.0.0.42/8"}]}}]}`,
-			testutil.OK,
-		},
-		{
-			"isInRange",
-			ast.Permit().When(ast.IPAddr(mustParseIPAddr("10.0.0.43")).IsInRange(ast.IPAddr(mustParseIPAddr("10.0.0.42/8")))),
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"isInRange":[
-				{"ip":[{"Value":"10.0.0.43"}]},
-				{"ip":[{"Value":"10.0.0.42/8"}]}
-			]}}]}`,
-			testutil.OK,
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			pp := wrapPolicy(tt.input)
-			b, err := json.Marshal(pp)
-			tt.errFunc(t, err)
-			if err != nil {
-				return
-			}
-			normGot := testNormalizeJSON(t, string(b))
-			normWant := testNormalizeJSON(t, tt.want)
-			testutil.Equals(t, normGot, normWant)
-		})
-	}
-}
-
 func testNormalizeJSON(t testutil.TB, in string) string {
 	var x any
 	err := json.Unmarshal([]byte(in), &x)
@@ -685,6 +680,11 @@ func TestUnmarshalErrors(t *testing.T) {
 			"expressionWithNoMembers",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{}}]}`,
+		},
+		{
+			"conditionMissingBody",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when"}]}`,
 		},
 		{
 			"expressionWithTwoMembers",
@@ -880,7 +880,7 @@ func TestMarshalExtensions(t *testing.T) {
 		{
 			"decimalType",
 			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42)))),
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.0"}]}}]}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"decimal","arg":"42.0"}}}}]}`,
 		},
 		{
 			"decimalExtension",
@@ -890,7 +890,7 @@ func TestMarshalExtensions(t *testing.T) {
 		{
 			"ipType",
 			ast.Permit().When(ast.Value(types.IPAddr(netip.MustParsePrefix("127.0.0.1/16")))),
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"ip":[{"Value":"127.0.0.1/16"}]}}]}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"ip","arg":"127.0.0.1/16"}}}}]}`,
 		},
 		{
 			"ipExtension",

@@ -69,22 +69,10 @@ func arrayToJSON(dest *arrayJSON, args []ast.IsNode) {
 	*dest = res
 }
 
-func extToJSON(dest *extensionJSON, name string, src types.Value) {
-	res := arrayJSON{}
-	str := src.String()
-	val := valueJSON{v: types.String(str)}
-	res = append(res, nodeJSON{
-		Value: &val,
-	})
-	*dest = extensionJSON{
-		name: res,
-	}
-}
-
-func extCallToJSON(dest extensionJSON, src ast.NodeTypeExtensionCall) {
-	jsonArgs := arrayJSON{}
-	arrayToJSON(&jsonArgs, src.Args)
-	dest[string(src.Name)] = jsonArgs
+func extCallToJSON(dest **extensionJSON, src ast.NodeTypeExtensionCall) {
+	res := &extensionJSON{Name: string(src.Name), Args: arrayJSON{}}
+	arrayToJSON(&res.Args, src.Args)
+	*dest = res
 }
 
 func strToJSON(dest **strJSON, src ast.StrOpNode) {
@@ -140,17 +128,6 @@ func (n *nodeJSON) FromNode(src ast.IsNode) {
 	// Value
 	// Value *json.RawMessage `json:"Value"` // could be any
 	case ast.NodeValue:
-		// Any other function: decimal, ip
-		// Decimal arrayJSON `json:"decimal"`
-		// IP      arrayJSON `json:"ip"`
-		switch tt := t.Value.(type) {
-		case types.Decimal:
-			extToJSON(&n.ExtensionCall, "decimal", tt)
-			return
-		case types.IPAddr:
-			extToJSON(&n.ExtensionCall, "ip", tt)
-			return
-		}
 		val := valueJSON{v: t.Value}
 		n.Value = &val
 		return
@@ -272,10 +249,9 @@ func (n *nodeJSON) FromNode(src ast.IsNode) {
 		return
 
 	// Any other method: ip, decimal, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	// ExtensionMethod map[string]arrayJSON `json:"-"`
+	// ExtensionCall *extensionJSON `json:"-"`
 	case ast.NodeTypeExtensionCall:
-		n.ExtensionCall = extensionJSON{}
-		extCallToJSON(n.ExtensionCall, t)
+		extCallToJSON(&n.ExtensionCall, t)
 		return
 	default:
 		panic(fmt.Sprintf("unknown node type %T", t))
@@ -285,7 +261,7 @@ func (n *nodeJSON) FromNode(src ast.IsNode) {
 }
 
 func (n *nodeJSON) MarshalJSON() ([]byte, error) {
-	if len(n.ExtensionCall) > 0 {
+	if n.ExtensionCall != nil {
 		return json.Marshal(n.ExtensionCall)
 	}
 
@@ -295,10 +271,6 @@ func (n *nodeJSON) MarshalJSON() ([]byte, error) {
 }
 
 type Policy ast.Policy
-
-func wrapPolicy(p *ast.Policy) *Policy {
-	return (*Policy)(p)
-}
 
 func (p *Policy) unwrap() *ast.Policy {
 	return (*ast.Policy)(p)

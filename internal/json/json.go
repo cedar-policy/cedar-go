@@ -69,7 +69,16 @@ type arrayJSON []nodeJSON
 
 type recordJSON map[string]*nodeJSON
 
-type extensionJSON map[string]arrayJSON
+type extensionJSON struct {
+	Name string
+	Args arrayJSON
+}
+
+// MarshalJSON encodes the extension call as a single-member object whose name
+// is the extension function or method name.
+func (e *extensionJSON) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]arrayJSON{e.Name: e.Args})
+}
 
 type valueJSON struct {
 	v types.Value
@@ -137,5 +146,5 @@ type nodeJSON struct {
 	Record *recordJSON `json:"Record,omitzero"`
 
 	// Any other method: decimal, datetime, duration, ip, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange, toDate, toTime, toDays, toHours, toMinutes, toSeconds, toMilliseconds, offset, durationSince
-	ExtensionCall extensionJSON `json:"-"`
+	ExtensionCall *extensionJSON `json:"-"`
 }
