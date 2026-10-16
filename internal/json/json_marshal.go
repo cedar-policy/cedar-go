@@ -92,7 +92,7 @@ func likeToJSON(dest **likeJSON, src ast.NodeTypeLike) {
 func recordToJSON(dest *recordJSON, src ast.NodeTypeRecord) {
 	res := recordJSON{}
 	for _, kv := range src.Elements {
-		nn := &nodeJSON{}
+		var nn nodeJSON
 		nn.FromNode(kv.Value)
 		res[string(kv.Key)] = nn
 	}

@@ -697,6 +697,11 @@ func TestUnmarshalErrors(t *testing.T) {
 			"conditions":[{"kind":"when","body":{"Value":null,"Var":"principal"}}]}`,
 		},
 		{
+			"nullRecordValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Record":{"a":null}}}]}`,
+		},
+		{
 			"duplicateRecordKey",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"Record":{"a":{"Value":1},"a":{"Value":2}}}}]}`,
@@ -896,6 +901,11 @@ func TestMarshalExtensions(t *testing.T) {
 			"ipExtension",
 			ast.Permit().When(ast.ExtensionCall("ip", ast.String("127.0.0.1/16"))),
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"ip":[{"Value":"127.0.0.1/16"}]}}]}`,
+		},
+		{
+			"extensionInRecord",
+			ast.Permit().When(ast.Record(ast.Pairs{{Key: "a", Value: ast.ExtensionCall("ip", ast.String("127.0.0.1/16"))}})),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"Record":{"a":{"ip":[{"Value":"127.0.0.1/16"}]}}}}]}`,
 		},
 	}
 	for _, tt := range tests {

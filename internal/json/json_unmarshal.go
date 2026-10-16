@@ -146,9 +146,6 @@ func (j arrayJSON) ToNode() (ast.Node, error) {
 func (j recordJSON) ToNode() (ast.Node, error) {
 	var nodes ast.Pairs
 	for k, v := range j {
-		if v == nil {
-			return ast.Node{}, fmt.Errorf("error in record: null value for %q", k)
-		}
 		n, err := v.ToNode()
 		if err != nil {
 			return ast.Node{}, fmt.Errorf("error in record: %w", err)

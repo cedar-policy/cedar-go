@@ -67,7 +67,7 @@ type ifThenElseJSON struct {
 
 type arrayJSON []nodeJSON
 
-type recordJSON map[string]*nodeJSON
+type recordJSON map[string]nodeJSON
 
 type extensionJSON struct {
 	Name string
