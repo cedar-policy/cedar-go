@@ -2,9 +2,11 @@
 package json
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
+
+	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
@@ -38,12 +40,12 @@ func (s *Schema) MarshalJSON() ([]byte, error) {
 		}
 		out[string(name)] = jns
 	}
-	return json.Marshal(out)
+	return json.Marshal(out, json.Deterministic(true))
 }
 
 // UnmarshalJSON parses a JSON schema into the AST.
 func (s *Schema) UnmarshalJSON(b []byte) error {
-	var raw map[string]json.RawMessage
+	var raw map[string]jsontext.Value
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
@@ -91,8 +93,8 @@ type jsonNamespace struct {
 type jsonEntityType struct {
 	// Standard entity fields
 	MemberOfTypes []string          `json:"memberOfTypes,omitempty"`
-	Shape         *jsonType         `json:"shape,omitempty"`
-	Tags          *jsonType         `json:"tags,omitempty"`
+	Shape         *jsonType         `json:"shape,omitzero"`
+	Tags          *jsonType         `json:"tags,omitzero"`
 	Annotations   map[string]string `json:"annotations,omitempty"`
 
 	// Enum entity field (mutually exclusive with standard fields)
@@ -125,7 +127,7 @@ func (e *enumJSON) UnmarshalJSON(b []byte) error {
 
 type jsonAction struct {
 	MemberOf    []jsonActionParent `json:"memberOf,omitempty"`
-	AppliesTo   *jsonAppliesTo     `json:"appliesTo,omitempty"`
+	AppliesTo   *jsonAppliesTo     `json:"appliesTo,omitzero"`
 	Annotations map[string]string  `json:"annotations,omitempty"`
 }
 
@@ -137,7 +139,7 @@ type jsonActionParent struct {
 type jsonAppliesTo struct {
 	PrincipalTypes []string  `json:"principalTypes"`
 	ResourceTypes  []string  `json:"resourceTypes"`
-	Context        *jsonType `json:"context,omitempty"`
+	Context        *jsonType `json:"context,omitzero"`
 }
 
 type jsonCommonType struct {
@@ -147,14 +149,14 @@ type jsonCommonType struct {
 
 type jsonType struct {
 	Type       string              `json:"type"`
-	Element    *jsonType           `json:"element,omitempty"`
+	Element    *jsonType           `json:"element,omitzero"`
 	Attributes map[string]jsonAttr `json:"attributes,omitempty"`
 	Name       string              `json:"name,omitempty"`
 }
 
 type jsonAttr struct {
 	jsonType
-	Required    *bool             `json:"required,omitempty"`
+	Required    *bool             `json:"required,omitzero"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
@@ -237,8 +239,7 @@ func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) 
 			ja.MemberOf = append(ja.MemberOf, parent)
 		}
 		if action.AppliesTo != nil {
-			// Rust Cedar requires both lists, so write them even when empty.
-			jat := &jsonAppliesTo{PrincipalTypes: []string{}, ResourceTypes: []string{}}
+			jat := &jsonAppliesTo{}
 			for _, p := range action.AppliesTo.Principals {
 				jat.PrincipalTypes = append(jat.PrincipalTypes, string(p))
 			}

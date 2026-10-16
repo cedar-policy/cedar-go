@@ -337,12 +337,10 @@ func TestMarshalEmptyAppliesTo(t *testing.T) {
 	t.Parallel()
 	// Rust Cedar requires "principalTypes" and "resourceTypes", so they're
 	// written as [] rather than null when empty.
-	jns, err := marshalNamespace("", ast.Namespace{
-		Actions: ast.Actions{"view": ast.Action{AppliesTo: &ast.AppliesTo{}}},
-	})
+	s := Schema{Actions: ast.Actions{"view": ast.Action{AppliesTo: &ast.AppliesTo{}}}}
+	b, err := s.MarshalJSON()
 	testutil.OK(t, err)
-	testutil.Equals(t, jns.Actions["view"].AppliesTo.PrincipalTypes, []string{})
-	testutil.Equals(t, jns.Actions["view"].AppliesTo.ResourceTypes, []string{})
+	testutil.Equals(t, string(b), `{"":{"entityTypes":{},"actions":{"view":{"appliesTo":{"principalTypes":[],"resourceTypes":[]}}}}}`)
 }
 
 func TestUnmarshalEnum(t *testing.T) {

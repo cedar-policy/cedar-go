@@ -356,3 +356,64 @@ func TestMarshalActionParentWithoutType(t *testing.T) {
 	testutil.OK(t, err)
 	testutil.Equals(t, string(b), `{"":{"entityTypes":{},"actions":{"view":{"memberOf":[{"id":"write"}]},"write":{}}}}`)
 }
+
+func TestMarshalSorted(t *testing.T) {
+	t.Parallel()
+	s := ast.Schema{
+		Entities: ast.Entities{
+			"b": ast.Entity{
+				Annotations: ast.Annotations{"z": "1", "y": "2"},
+				Shape: ast.RecordType{
+					"q": ast.Attribute{Type: ast.StringType{}},
+					"p": ast.Attribute{Type: ast.LongType{}, Optional: true},
+				},
+			},
+			"a": ast.Entity{},
+		},
+		Actions: ast.Actions{
+			"view": ast.Action{AppliesTo: &ast.AppliesTo{}},
+			"edit": ast.Action{},
+		},
+		Namespaces: ast.Namespaces{
+			"NS2": ast.Namespace{},
+			"NS1": ast.Namespace{CommonTypes: ast.CommonTypes{
+				"T2": ast.CommonType{Type: ast.BoolType{}},
+				"T1": ast.CommonType{Type: ast.StringType{}},
+			}},
+		},
+	}
+	b, err := (*schemajson.Schema)(&s).MarshalJSON()
+	testutil.OK(t, err)
+	// Every map is written sorted by key.
+	testutil.Equals(t, string(b), `{"":{"entityTypes":{"a":{},"b":{"shape":{"type":"Record","attributes":{"p":{"type":"Long","required":false},"q":{"type":"String"}}},"annotations":{"y":"2","z":"1"}}},"actions":{"edit":{},"view":{"appliesTo":{"principalTypes":[],"resourceTypes":[]}}}},"NS1":{"entityTypes":{},"actions":{},"commonTypes":{"T1":{"type":"String"},"T2":{"type":"Boolean"}}},"NS2":{"entityTypes":{},"actions":{}}}`)
+}
+
+func TestUnmarshalErrors(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"duplicateNamespace", `{"NS":{"entityTypes":{},"actions":{}},"NS":{"entityTypes":{},"actions":{}}}`},
+		{"duplicateEntityType", `{"":{"entityTypes":{"A":{},"A":{}},"actions":{}}}`},
+		{"duplicateMember", `{"":{"entityTypes":{},"entityTypes":{},"actions":{}}}`},
+		{"invalidUTF8", "{\"\":{\"entityTypes\":{\"\xff\":{}},\"actions\":{}}}"},
+		{"trailingData", `{"":{"entityTypes":{},"actions":{}}} {}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var s schemajson.Schema
+			testutil.Error(t, s.UnmarshalJSON([]byte(tt.input)))
+		})
+	}
+}
+
+func TestUnmarshalMiscasedMember(t *testing.T) {
+	t.Parallel()
+	// Member names are matched case-sensitively, so a miscased member is
+	// ignored rather than matched.
+	var s schemajson.Schema
+	testutil.OK(t, s.UnmarshalJSON([]byte(`{"":{"entityTypes":{},"EntityTypes":{"A":{}},"actions":{}}}`)))
+	testutil.Equals(t, len((*ast.Schema)(&s).Entities), 0)
+}
