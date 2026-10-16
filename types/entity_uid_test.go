@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go"
@@ -165,6 +166,87 @@ func TestEntity(t *testing.T) {
 				testutil.Error(t, err)
 			})
 		}
+	})
+}
+
+func TestImplicitlyMarshaledEntityUID(t *testing.T) {
+	t.Parallel()
+
+	t.Run("MarshalJSON", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			name string
+			in   types.EntityUID
+			want string
+		}{
+			{"simple", types.NewEntityUID("Type", "id"), `{"type":"Type","id":"id"}`},
+			{"namespaced type", types.NewEntityUID("NS::Type", "id"), `{"type":"NS::Type","id":"id"}`},
+			{"empty", types.EntityUID{}, `{"type":"","id":""}`},
+			{"escaped id", types.NewEntityUID("Type", "a\"b\\c"), `{"type":"Type","id":"a\"b\\c"}`},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				testutil.JSONMarshalsTo(t, types.ImplicitlyMarshaledEntityUID(tt.in), tt.want)
+			})
+		}
+	})
+
+	t.Run("UnmarshalJSON", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{"implicit", `{ "type": "Type", "id": "id" }`},
+			{"explicit", `{ "__entity": { "type": "Type", "id": "id" } }`},
+			{"implicit - extra keys", `{ "type": "Type", "id": "id", "floob": "blah" }`},
+			{"explicit - extra keys in inner", `{ "__entity": { "type": "Type", "id": "id", "floob": "blah" } }`},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				var got types.ImplicitlyMarshaledEntityUID
+				testutil.OK(t, json.Unmarshal([]byte(tt.input), &got))
+				testutil.Equals(t, got, types.ImplicitlyMarshaledEntityUID(types.NewEntityUID("Type", "id")))
+			})
+		}
+	})
+
+	t.Run("UnmarshalJSON invalid", func(t *testing.T) {
+		t.Parallel()
+		tests := []struct {
+			name  string
+			input string
+		}{
+			{"non-object", `"floob"`},
+			{"empty object", `{}`},
+			{"explicit - wrong type", `{ "__entity": "wrong type" }`},
+			{"implicit - type wrong type", `{ "type": 123, "id": "123" }`},
+			{"implicit - id wrong type", `{ "type": "Type", "id": 123 }`},
+			{"implicit - only type", `{ "type": "Type" }`},
+			{"implicit - only id", `{ "id": "id" }`},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+				var got types.ImplicitlyMarshaledEntityUID
+				testutil.Error(t, json.Unmarshal([]byte(tt.input), &got))
+			})
+		}
+	})
+
+	t.Run("round trip", func(t *testing.T) {
+		t.Parallel()
+		want := types.ImplicitlyMarshaledEntityUID(types.NewEntityUID("NS::Type", "a\"b\\c"))
+		b, err := json.Marshal(want)
+		testutil.OK(t, err)
+		var got types.ImplicitlyMarshaledEntityUID
+		testutil.OK(t, json.Unmarshal(b, &got))
+		testutil.Equals(t, got, want)
 	})
 }
 
