@@ -123,10 +123,18 @@ func (e EntityUID) hash() uint64 {
 	return h.Sum64()
 }
 
-// ImplicitlyMarshaledEntityUID exists to allow the marshaling of the EntityUID into JSON using the implicit form. Users
-// can opt in to this form if they know that this EntityUID will be serialized to a place where its type will be
-// unambiguous.
+// ImplicitlyMarshaledEntityUID exists to allow the marshaling of the EntityUID
+// into JSON using the implicit form. Users can opt in to this form if they
+// know that this EntityUID will be serialized to a place where its type will
+// be unambiguous.
+//
+// ImplicitlyMarshaledEntityUID can be unmarshaled from either the implicit or
+// explicit form.
 type ImplicitlyMarshaledEntityUID EntityUID
+
+func (i *ImplicitlyMarshaledEntityUID) UnmarshalJSON(b []byte) error {
+	return (*EntityUID)(i).UnmarshalJSON(b)
+}
 
 func (i ImplicitlyMarshaledEntityUID) MarshalJSON() ([]byte, error) {
 	s := struct {
