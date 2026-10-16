@@ -39,7 +39,10 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 		if s.In == nil {
 			return ast.Scope{}.Is(types.EntityType(s.EntityType)), nil
 		}
-		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), types.EntityUID(s.In.Entity)), nil
+		if s.In.Entity == nil {
+			return nil, fmt.Errorf(`missing or null entity in "in"`)
+		}
+		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), types.EntityUID(*s.In.Entity)), nil
 	}
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }
@@ -89,7 +92,10 @@ func (j strJSON) ToNode(f func(a ast.Node, k types.String) ast.Node) (ast.Node, 
 	if err != nil {
 		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
-	return f(left, types.String(j.Attr)), nil
+	if j.Attr == nil {
+		return ast.Node{}, fmt.Errorf("missing or null attr")
+	}
+	return f(left, types.String(*j.Attr)), nil
 }
 func (j likeJSON) ToNode(f func(a ast.Node, k types.Pattern) ast.Node) (ast.Node, error) {
 	left, err := j.Left.ToNode()
@@ -97,7 +103,10 @@ func (j likeJSON) ToNode(f func(a ast.Node, k types.Pattern) ast.Node) (ast.Node
 		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
 
-	return f(left, j.Pattern), nil
+	if j.Pattern == nil {
+		return ast.Node{}, fmt.Errorf("missing or null pattern")
+	}
+	return f(left, *j.Pattern), nil
 }
 func (j isJSON) ToNode() (ast.Node, error) {
 	left, err := j.Left.ToNode()
@@ -350,6 +359,26 @@ func (n *nodeJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	}
 	*n = newNode
 	return nil
+}
+
+// unmarshalNonNull decodes the next value from dec into v, rejecting null.
+func unmarshalNonNull[T any](dec *jsontext.Decoder, v *T) error {
+	if dec.PeekKind() == jsontext.KindNull {
+		return errors.New("must not be null")
+	}
+	return json.UnmarshalDecode(dec, v)
+}
+
+func (a *annotationsJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNonNull(dec, (*map[string]string)(a))
+}
+
+func (c *conditionsJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNonNull(dec, (*[]conditionJSON)(c))
+}
+
+func (e *scopeEntitiesJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNonNull(dec, (*[]types.ImplicitlyMarshaledEntityUID)(e))
 }
 
 // UnmarshalJSON decodes a policy, rejecting unknown members everywhere. Rust

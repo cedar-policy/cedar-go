@@ -591,6 +591,18 @@ func TestUnmarshalJSONNonCanonical(t *testing.T) {
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in"},"resource":{"op":"All"}}`,
 			ast.Permit().ActionInSet([]types.EntityUID{}...),
 		},
+		{
+			// As in Rust Cedar, a null "in" is the same as a missing one.
+			"isScopeNullIn",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":null},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			ast.Permit().PrincipalIs(types.EntityType("T")),
+		},
+		{
+			"isNullIn",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"principal"},"entity_type":"T","in":null}}}]}`,
+			ast.Permit().When(ast.Principal().Is(types.EntityType("T"))),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -653,6 +665,26 @@ func TestUnmarshalErrors(t *testing.T) {
 		{
 			"actionScopeEqMissingEntity",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"}}`,
+		},
+		{
+			"nullAnnotations",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"annotations":null}`,
+		},
+		{
+			"nullConditions",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":null}`,
+		},
+		{
+			"actionScopeInNullEntities",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":null},"resource":{"op":"All"}}`,
+		},
+		{
+			"principalScopeIsInMissingEntity",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"principalScopeIsInNullEntity",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":null}},"action":{"op":"All"},"resource":{"op":"All"}}`,
 		},
 		{
 			"unknownPolicyMember",
@@ -796,6 +828,26 @@ func TestUnmarshalErrors(t *testing.T) {
 			"isEmptyEntityType",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"principal"},"entity_type":""}}}]}`,
+		},
+		{
+			"hasMissingAttr",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"has":{"left":{"Var":"principal"}}}}]}`,
+		},
+		{
+			"accessNullAttr",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{".":{"left":{"Var":"principal"},"attr":null}}}]}`,
+		},
+		{
+			"likeMissingPattern",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"like":{"left":{"Var":"principal"}}}}]}`,
+		},
+		{
+			"likeNullPattern",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"like":{"left":{"Var":"principal"},"pattern":null}}}]}`,
 		},
 		{
 			"isLeft",

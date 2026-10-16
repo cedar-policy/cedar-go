@@ -7,26 +7,34 @@ import (
 )
 
 type policyJSON struct {
-	Annotations map[string]string `json:"annotations,omitempty"`
-	Effect      string            `json:"effect"`
-	Principal   scopeJSON         `json:"principal"`
-	Action      scopeJSON         `json:"action"`
-	Resource    scopeJSON         `json:"resource"`
-	Conditions  []conditionJSON   `json:"conditions,omitempty"`
+	Annotations annotationsJSON `json:"annotations,omitempty"`
+	Effect      string          `json:"effect"`
+	Principal   scopeJSON       `json:"principal"`
+	Action      scopeJSON       `json:"action"`
+	Resource    scopeJSON       `json:"resource"`
+	Conditions  conditionsJSON  `json:"conditions,omitempty"`
 }
+
+// annotationsJSON, conditionsJSON, and scopeEntitiesJSON may be missing but,
+// as in Rust Cedar, not null.
+type annotationsJSON map[string]string
+
+type conditionsJSON []conditionJSON
+
+type scopeEntitiesJSON []types.ImplicitlyMarshaledEntityUID
 
 // scopeInJSON uses the implicit form of EntityUID JSON serialization to match the Rust SDK
 type scopeInJSON struct {
-	Entity types.ImplicitlyMarshaledEntityUID `json:"entity"`
+	Entity *types.ImplicitlyMarshaledEntityUID `json:"entity"`
 }
 
 // scopeJSON uses the implicit form of EntityUID JSON serialization to match the Rust SDK
 type scopeJSON struct {
-	Op         string                               `json:"op"`
-	Entity     *types.ImplicitlyMarshaledEntityUID  `json:"entity,omitzero"`
-	Entities   []types.ImplicitlyMarshaledEntityUID `json:"entities,omitzero"`
-	EntityType string                               `json:"entity_type,omitempty"`
-	In         *scopeInJSON                         `json:"in,omitzero"`
+	Op         string                              `json:"op"`
+	Entity     *types.ImplicitlyMarshaledEntityUID `json:"entity,omitzero"`
+	Entities   scopeEntitiesJSON                   `json:"entities,omitzero"`
+	EntityType string                              `json:"entity_type,omitempty"`
+	In         *scopeInJSON                        `json:"in,omitzero"`
 }
 
 type conditionJSON struct {
@@ -45,12 +53,12 @@ type unaryJSON struct {
 
 type strJSON struct {
 	Left nodeJSON `json:"left"`
-	Attr string   `json:"attr"`
+	Attr *string  `json:"attr"`
 }
 
 type likeJSON struct {
-	Left    nodeJSON      `json:"left"`
-	Pattern types.Pattern `json:"pattern"`
+	Left    nodeJSON       `json:"left"`
+	Pattern *types.Pattern `json:"pattern"`
 }
 
 type isJSON struct {

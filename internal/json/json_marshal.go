@@ -26,7 +26,7 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		return
 	case ast.ScopeTypeInSet:
 		s.Op = "in"
-		es := make([]types.ImplicitlyMarshaledEntityUID, len(t.Entities))
+		es := make(scopeEntitiesJSON, len(t.Entities))
 		for i, e := range t.Entities {
 			es[i] = types.ImplicitlyMarshaledEntityUID(e)
 		}
@@ -39,9 +39,8 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 	case ast.ScopeTypeIsIn:
 		s.Op = "is"
 		s.EntityType = string(t.Type)
-		s.In = &scopeInJSON{
-			Entity: types.ImplicitlyMarshaledEntityUID(t.Entity),
-		}
+		e := types.ImplicitlyMarshaledEntityUID(t.Entity)
+		s.In = &scopeInJSON{Entity: &e}
 		return
 	}
 }
@@ -78,14 +77,16 @@ func extCallToJSON(dest **extensionJSON, src ast.NodeTypeExtensionCall) {
 func strToJSON(dest **strJSON, src ast.StrOpNode) {
 	res := &strJSON{}
 	res.Left.FromNode(src.Arg)
-	res.Attr = string(src.Value)
+	attr := string(src.Value)
+	res.Attr = &attr
 	*dest = res
 }
 
 func likeToJSON(dest **likeJSON, src ast.NodeTypeLike) {
 	res := &likeJSON{}
 	res.Left.FromNode(src.Arg)
-	res.Pattern = src.Value
+	pattern := src.Value
+	res.Pattern = &pattern
 	*dest = res
 }
 
