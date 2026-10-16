@@ -344,3 +344,27 @@ func TestMarshalEmptyAppliesTo(t *testing.T) {
 	testutil.Equals(t, jns.Actions["view"].AppliesTo.PrincipalTypes, []string{})
 	testutil.Equals(t, jns.Actions["view"].AppliesTo.ResourceTypes, []string{})
 }
+
+func TestUnmarshalEnum(t *testing.T) {
+	t.Parallel()
+	unmarshal := func(entityType string) error {
+		var s Schema
+		return s.UnmarshalJSON([]byte(`{"":{"entityTypes":{"A":` + entityType + `},"actions":{}}}`))
+	}
+	testutil.OK(t, unmarshal(`{"enum":["x",""],"annotations":{"k":"v"}}`))
+
+	// As in Rust Cedar, an enum must be a non-empty list of strings, and may
+	// only be combined with annotations.
+	for _, entityType := range []string{
+		`{"enum":[]}`,
+		`{"enum":null}`,
+		`{"enum":[null]}`,
+		`{"enum":["x",null]}`,
+		`{"enum":[1]}`,
+		`{"enum":["x"],"memberOfTypes":[]}`,
+		`{"enum":["x"],"shape":{"type":"Record","attributes":{}}}`,
+		`{"enum":["x"],"tags":{"type":"String"}}`,
+	} {
+		testutil.Error(t, unmarshal(entityType))
+	}
+}

@@ -93,7 +93,31 @@ type jsonEntityType struct {
 	Annotations   map[string]string `json:"annotations,omitempty"`
 
 	// Enum entity field (mutually exclusive with standard fields)
-	Enum []string `json:"enum,omitempty"`
+	Enum enumJSON `json:"enum,omitempty"`
+}
+
+// enumJSON is the list of an enum entity type's values. It's nil if "enum" is
+// missing, and non-nil, possibly empty, if it's present.
+type enumJSON []string
+
+// UnmarshalJSON rejects a null list and null values, as Rust Cedar does.
+func (e *enumJSON) UnmarshalJSON(b []byte) error {
+	var values []*string
+	if err := json.Unmarshal(b, &values); err != nil {
+		return err
+	}
+	if values == nil {
+		return fmt.Errorf("enum must not be null")
+	}
+	res := make(enumJSON, 0, len(values))
+	for _, v := range values {
+		if v == nil {
+			return fmt.Errorf("enum values must not be null")
+		}
+		res = append(res, *v)
+	}
+	*e = res
+	return nil
 }
 
 type jsonAction struct {
@@ -321,7 +345,15 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 	}
 
 	for etName, jet := range jns.EntityTypes {
-		if len(jet.Enum) > 0 {
+		if jet.Enum != nil {
+			// As in Rust Cedar, an enum must have at least one value, and may
+			// not have any other members except annotations.
+			if len(jet.Enum) == 0 {
+				return ast.Namespace{}, fmt.Errorf("entity type %q: enum must have at least one value", etName)
+			}
+			if jet.MemberOfTypes != nil || jet.Shape != nil || jet.Tags != nil {
+				return ast.Namespace{}, fmt.Errorf(`entity type %q: an enum cannot have "memberOfTypes", "shape", or "tags"`, etName)
+			}
 			enum := ast.Enum{}
 			if len(jet.Annotations) > 0 {
 				enum.Annotations = unmarshalAnnotations(jet.Annotations)
