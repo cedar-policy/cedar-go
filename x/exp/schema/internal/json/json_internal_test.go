@@ -251,3 +251,50 @@ func TestUnmarshalRecordAttrError(t *testing.T) {
 	})
 	testutil.Error(t, err)
 }
+
+func TestUnmarshalTypeMembers(t *testing.T) {
+	t.Parallel()
+	ok := []jsonType{
+		{Type: "Set", Element: &jsonType{Type: "Long"}},
+		{Type: "Record", Attributes: map[string]jsonAttr{}},
+		{Type: "Entity", Name: "User"},
+		{Type: "Extension", Name: "ipaddr"},
+		{Type: "EntityOrCommon", Name: "User"},
+		{Type: "Long"},
+		{Type: "PersonType"},
+	}
+	for _, jt := range ok {
+		_, err := unmarshalType(&jt)
+		testutil.OK(t, err)
+	}
+
+	// As in Rust Cedar, a member that doesn't belong to the kind of type is
+	// an error rather than being ignored.
+	bad := []jsonType{
+		{Type: "Long", Name: "x"},
+		{Type: "String", Element: &jsonType{Type: "Long"}},
+		{Type: "Boolean", Attributes: map[string]jsonAttr{}},
+		{Type: "PersonType", Name: "x"},
+		{Type: "Set", Element: &jsonType{Type: "Long"}, Name: "x"},
+		{Type: "Set", Element: &jsonType{Type: "Long"}, Attributes: map[string]jsonAttr{}},
+		{Type: "Record", Attributes: map[string]jsonAttr{}, Element: &jsonType{Type: "Long"}},
+		{Type: "Record", Attributes: map[string]jsonAttr{}, Name: "x"},
+		{Type: "Entity", Name: "User", Element: &jsonType{Type: "Long"}},
+		{Type: "Extension", Name: "ipaddr", Attributes: map[string]jsonAttr{}},
+	}
+	for _, jt := range bad {
+		_, err := unmarshalType(&jt)
+		testutil.Error(t, err)
+	}
+}
+
+func TestUnmarshalEntityShapeMembers(t *testing.T) {
+	t.Parallel()
+	_, err := unmarshalNamespace(jsonNamespace{
+		EntityTypes: map[string]jsonEntityType{
+			"Foo": {Shape: &jsonType{Type: "Record", Attributes: map[string]jsonAttr{}, Name: "x"}},
+		},
+		Actions: map[string]jsonAction{},
+	})
+	testutil.Error(t, err)
+}

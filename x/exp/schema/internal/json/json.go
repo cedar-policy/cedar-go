@@ -334,6 +334,9 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 				entity.ParentTypes = append(entity.ParentTypes, ast.EntityTypeRef(ref))
 			}
 			if jet.Shape != nil {
+				if err := checkTypeMembers(jet.Shape); err != nil {
+					return ast.Namespace{}, fmt.Errorf("entity %q shape: %w", etName, err)
+				}
 				rec, err := unmarshalRecordType(jet.Shape)
 				if err != nil {
 					return ast.Namespace{}, fmt.Errorf("entity %q shape: %w", etName, err)
@@ -392,7 +395,39 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 	return ns, nil
 }
 
+// checkTypeMembers rejects members that don't belong to jt's kind of type, as
+// Rust Cedar does: only a Set may have "element", only a Record may have
+// "attributes", and only an Entity, Extension, or EntityOrCommon type may have
+// "name".
+func checkTypeMembers(jt *jsonType) error {
+	var allowed string
+	switch jt.Type {
+	case "Set":
+		allowed = "element"
+	case "Record":
+		allowed = "attributes"
+	case "Entity", "Extension", "EntityOrCommon":
+		allowed = "name"
+	}
+	for _, m := range []struct {
+		name    string
+		present bool
+	}{
+		{"element", jt.Element != nil},
+		{"attributes", jt.Attributes != nil},
+		{"name", jt.Name != ""},
+	} {
+		if m.present && m.name != allowed {
+			return fmt.Errorf("type %q cannot have %q", jt.Type, m.name)
+		}
+	}
+	return nil
+}
+
 func unmarshalType(jt *jsonType) (ast.IsType, error) {
+	if err := checkTypeMembers(jt); err != nil {
+		return nil, err
+	}
 	switch jt.Type {
 	case "String":
 		return ast.StringType{}, nil
