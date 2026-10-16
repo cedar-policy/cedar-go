@@ -168,7 +168,7 @@ func TestPolicySetJSON(t *testing.T) {
 		testutil.OK(t, err)
 		out, err := ps.MarshalJSON()
 		testutil.OK(t, err)
-		testutil.Equals(t, string(out), `{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}}}`)
+		testutil.Equals(t, string(out), `{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}}}`)
 	})
 }
 

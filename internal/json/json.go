@@ -12,7 +12,7 @@ type policyJSON struct {
 	Principal   scopeJSON       `json:"principal"`
 	Action      scopeJSON       `json:"action"`
 	Resource    scopeJSON       `json:"resource"`
-	Conditions  conditionsJSON  `json:"conditions,omitempty"`
+	Conditions  conditionsJSON  `json:"conditions"`
 }
 
 // annotationsJSON, conditionsJSON, and scopeEntitiesJSON may be missing but,
