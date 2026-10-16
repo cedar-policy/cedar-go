@@ -53,7 +53,7 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 	result := ast.Schema{}
 	for name, data := range raw {
 		var jns jsonNamespace
-		if err := json.Unmarshal(data, &jns); err != nil {
+		if err := json.Unmarshal(data, &jns, json.RejectUnknownMembers(true)); err != nil {
 			return fmt.Errorf("namespace %q: %w", name, err)
 		}
 		ns, err := unmarshalNamespace(jns)
@@ -449,28 +449,27 @@ func checkTypeMembers(jt *jsonType) error {
 	if jt.Type == "" {
 		return fmt.Errorf(`missing "type"`)
 	}
-	var allowed string
+	var kind string
 	switch jt.Type {
-	case "Set":
-		allowed = "element"
-	case "Record":
-		allowed = "attributes"
+	case "Set", "Record":
+		kind = jt.Type
 	case "Entity", "Extension", "EntityOrCommon":
-		allowed = "name"
+		kind = "named"
 	}
 	for _, m := range []struct {
 		name    string
+		kind    string
 		present bool
 	}{
-		{"element", jt.Element != nil},
-		{"attributes", jt.Attributes != nil},
-		{"name", jt.Name != ""},
+		{"element", "Set", jt.Element != nil},
+		{"attributes", "Record", jt.Attributes != nil},
+		{"name", "named", jt.Name != ""},
 	} {
-		if m.present && m.name != allowed {
+		if m.present && m.kind != kind {
 			return fmt.Errorf("type %q cannot have %q", jt.Type, m.name)
 		}
 	}
-	if allowed == "name" && jt.Name == "" {
+	if kind == "named" && jt.Name == "" {
 		return fmt.Errorf(`type %q requires "name"`, jt.Type)
 	}
 	return nil

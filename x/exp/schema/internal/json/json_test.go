@@ -399,6 +399,15 @@ func TestUnmarshalErrors(t *testing.T) {
 		{"duplicateMember", `{"":{"entityTypes":{},"entityTypes":{},"actions":{}}}`},
 		{"invalidUTF8", "{\"\":{\"entityTypes\":{\"\xff\":{}},\"actions\":{}}}"},
 		{"trailingData", `{"":{"entityTypes":{},"actions":{}}} {}`},
+		{"unknownNamespaceMember", `{"":{"entityTypes":{},"actions":{},"x":1}}`},
+		{"unknownEntityTypeMember", `{"":{"entityTypes":{"A":{"x":1}},"actions":{}}}`},
+		{"unknownActionMember", `{"":{"entityTypes":{},"actions":{"a":{"x":1}}}}`},
+		{"unknownActionParentMember", `{"":{"entityTypes":{},"actions":{"a":{"memberOf":[{"id":"b","x":1}]},"b":{}}}}`},
+		{"unknownAppliesToMember", `{"":{"entityTypes":{},"actions":{"a":{"appliesTo":{"principalTypes":[],"resourceTypes":[],"x":1}}}}}`},
+		{"unknownTypeMember", `{"":{"entityTypes":{"A":{"tags":{"type":"String","x":1}}},"actions":{}}}`},
+		{"unknownAttributeMember", `{"":{"entityTypes":{"A":{"shape":{"type":"Record","attributes":{"f":{"type":"String","x":1}}}}},"actions":{}}}`},
+		{"unknownCommonTypeMember", `{"":{"entityTypes":{},"actions":{},"commonTypes":{"T":{"type":"String","required":false}}}}`},
+		{"annotationsOnSetElement", `{"":{"entityTypes":{"A":{"tags":{"type":"Set","element":{"type":"String","annotations":{}}}}},"actions":{}}}`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -411,11 +420,10 @@ func TestUnmarshalErrors(t *testing.T) {
 
 func TestUnmarshalMiscasedMember(t *testing.T) {
 	t.Parallel()
-	// Member names are matched case-sensitively, so a miscased member is
-	// ignored rather than matched.
+	// Member names are matched case-sensitively, so a miscased member is an
+	// unknown member, which is rejected.
 	var s schemajson.Schema
-	testutil.OK(t, s.UnmarshalJSON([]byte(`{"":{"entityTypes":{},"EntityTypes":{"A":{}},"actions":{}}}`)))
-	testutil.Equals(t, len((*ast.Schema)(&s).Entities), 0)
+	testutil.Error(t, s.UnmarshalJSON([]byte(`{"":{"entityTypes":{},"EntityTypes":{"A":{}},"actions":{}}}`)))
 }
 
 func TestRecordAttributes(t *testing.T) {
