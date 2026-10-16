@@ -1,11 +1,12 @@
 package testutil
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"reflect"
 	"slices"
+
+	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 )
 
 type TB interface {
@@ -158,11 +159,11 @@ func findMatchingParen(b []byte, i int) int {
 // displaying an easy-to-read diff.
 func JSONMarshalsTo[T any](t TB, obj T, want string) {
 	t.Helper()
-	b, err := json.MarshalIndent(obj, "", "\t")
+	b, err := json.Marshal(obj, jsontext.WithIndent("\t"))
 	OK(t, err)
 
-	var wantBuf bytes.Buffer
-	err = json.Indent(&wantBuf, []byte(want), "", "\t")
+	wantValue := jsontext.Value(want)
+	err = wantValue.Indent(jsontext.WithIndent("\t"))
 	OK(t, err)
-	Equals(t, string(b), wantBuf.String())
+	Equals(t, string(b), string(wantValue))
 }
