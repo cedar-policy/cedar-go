@@ -194,7 +194,9 @@ func TestUnmarshalContextTypeShorthand(t *testing.T) {
 		EntityTypes: map[string]jsonEntityType{},
 		Actions: map[string]jsonAction{
 			"view": {AppliesTo: &jsonAppliesTo{
-				Context: &jsonType{Type: "ContextType"},
+				PrincipalTypes: []string{},
+				ResourceTypes:  []string{},
+				Context:        &jsonType{Type: "ContextType"},
 			}},
 		},
 	})
@@ -207,7 +209,9 @@ func TestUnmarshalContextTypeError(t *testing.T) {
 		EntityTypes: map[string]jsonEntityType{},
 		Actions: map[string]jsonAction{
 			"view": {AppliesTo: &jsonAppliesTo{
-				Context: &jsonType{Type: "Set"},
+				PrincipalTypes: []string{},
+				ResourceTypes:  []string{},
+				Context:        &jsonType{Type: "Set"},
 			}},
 		},
 	})
@@ -250,4 +254,117 @@ func TestUnmarshalRecordAttrError(t *testing.T) {
 		},
 	})
 	testutil.Error(t, err)
+}
+
+func TestUnmarshalTypeMembers(t *testing.T) {
+	t.Parallel()
+	ok := []jsonType{
+		{Type: "Set", Element: &jsonType{Type: "Long"}},
+		{Type: "Record", Attributes: map[string]jsonAttr{}},
+		{Type: "Entity", Name: "User"},
+		{Type: "Extension", Name: "ipaddr"},
+		{Type: "EntityOrCommon", Name: "User"},
+		{Type: "Long"},
+		{Type: "PersonType"},
+	}
+	for _, jt := range ok {
+		_, err := unmarshalType(&jt)
+		testutil.OK(t, err)
+	}
+
+	// As in Rust Cedar, a member that doesn't belong to the kind of type is
+	// an error rather than being ignored.
+	bad := []jsonType{
+		{},
+		{Type: "Entity"},
+		{Type: "Extension"},
+		{Type: "EntityOrCommon"},
+		{Type: "Long", Name: "x"},
+		{Type: "String", Element: &jsonType{Type: "Long"}},
+		{Type: "Boolean", Attributes: map[string]jsonAttr{}},
+		{Type: "PersonType", Name: "x"},
+		{Type: "Set", Element: &jsonType{Type: "Long"}, Name: "x"},
+		{Type: "Set", Element: &jsonType{Type: "Long"}, Attributes: map[string]jsonAttr{}},
+		{Type: "Record", Attributes: map[string]jsonAttr{}, Element: &jsonType{Type: "Long"}},
+		{Type: "Record", Attributes: map[string]jsonAttr{}, Name: "x"},
+		{Type: "Entity", Name: "User", Element: &jsonType{Type: "Long"}},
+		{Type: "Extension", Name: "ipaddr", Attributes: map[string]jsonAttr{}},
+	}
+	for _, jt := range bad {
+		_, err := unmarshalType(&jt)
+		testutil.Error(t, err)
+	}
+}
+
+func TestUnmarshalEntityShapeMembers(t *testing.T) {
+	t.Parallel()
+	_, err := unmarshalNamespace(jsonNamespace{
+		EntityTypes: map[string]jsonEntityType{
+			"Foo": {Shape: &jsonType{Type: "Record", Attributes: map[string]jsonAttr{}, Name: "x"}},
+		},
+		Actions: map[string]jsonAction{},
+	})
+	testutil.Error(t, err)
+}
+
+func TestUnmarshalNamespaceRequiredMembers(t *testing.T) {
+	t.Parallel()
+	// As in Rust Cedar, "entityTypes" and "actions" are required. A missing
+	// member and null both leave the field nil.
+	for _, jns := range []jsonNamespace{
+		{Actions: map[string]jsonAction{}},
+		{EntityTypes: map[string]jsonEntityType{}},
+	} {
+		_, err := unmarshalNamespace(jns)
+		testutil.Error(t, err)
+	}
+}
+
+func TestUnmarshalAppliesToMissingTypes(t *testing.T) {
+	t.Parallel()
+	// cedar-go previously wrote empty "principalTypes" and "resourceTypes" as
+	// null, so a missing or null list is still accepted, unlike in Rust Cedar.
+	ns, err := unmarshalNamespace(jsonNamespace{
+		EntityTypes: map[string]jsonEntityType{},
+		Actions:     map[string]jsonAction{"view": {AppliesTo: &jsonAppliesTo{}}},
+	})
+	testutil.OK(t, err)
+	testutil.Equals(t, len(ns.Actions["view"].AppliesTo.Principals), 0)
+	testutil.Equals(t, len(ns.Actions["view"].AppliesTo.Resources), 0)
+}
+
+func TestMarshalEmptyAppliesTo(t *testing.T) {
+	t.Parallel()
+	// Rust Cedar requires "principalTypes" and "resourceTypes", so they're
+	// written as [] rather than null when empty.
+	jns, err := marshalNamespace("", ast.Namespace{
+		Actions: ast.Actions{"view": ast.Action{AppliesTo: &ast.AppliesTo{}}},
+	})
+	testutil.OK(t, err)
+	testutil.Equals(t, jns.Actions["view"].AppliesTo.PrincipalTypes, []string{})
+	testutil.Equals(t, jns.Actions["view"].AppliesTo.ResourceTypes, []string{})
+}
+
+func TestUnmarshalEnum(t *testing.T) {
+	t.Parallel()
+	unmarshal := func(entityType string) error {
+		var s Schema
+		return s.UnmarshalJSON([]byte(`{"":{"entityTypes":{"A":` + entityType + `},"actions":{}}}`))
+	}
+	testutil.OK(t, unmarshal(`{"enum":["x",""],"annotations":{"k":"v"}}`))
+
+	// As in Rust Cedar, an enum must be a non-empty list of strings, and may
+	// only be combined with annotations.
+	for _, entityType := range []string{
+		`{"enum":[]}`,
+		`{"enum":null}`,
+		`{"enum":[null]}`,
+		`{"enum":["x",null]}`,
+		`{"enum":[1]}`,
+		`{"enum":["x"],"memberOfTypes":[]}`,
+		`{"enum":["x"],"shape":{"type":"Record","attributes":{}}}`,
+		`{"enum":["x"],"tags":{"type":"String"}}`,
+	} {
+		testutil.Error(t, unmarshal(entityType))
+	}
 }
