@@ -1,7 +1,7 @@
 package exptypes
 
 import (
-	"encoding/json"
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/resolved"
