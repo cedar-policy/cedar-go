@@ -210,7 +210,8 @@ func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) 
 			ja.MemberOf = append(ja.MemberOf, parent)
 		}
 		if action.AppliesTo != nil {
-			jat := &jsonAppliesTo{}
+			// Rust Cedar requires both lists, so write them even when empty.
+			jat := &jsonAppliesTo{PrincipalTypes: []string{}, ResourceTypes: []string{}}
 			for _, p := range action.AppliesTo.Principals {
 				jat.PrincipalTypes = append(jat.PrincipalTypes, string(p))
 			}
@@ -291,6 +292,13 @@ func marshalAnnotations(annotations ast.Annotations) map[string]string {
 }
 
 func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
+	// As in Rust Cedar, "entityTypes" and "actions" are required.
+	if jns.EntityTypes == nil {
+		return ast.Namespace{}, fmt.Errorf(`"entityTypes" is missing or null`)
+	}
+	if jns.Actions == nil {
+		return ast.Namespace{}, fmt.Errorf(`"actions" is missing or null`)
+	}
 	ns := ast.Namespace{}
 
 	if len(jns.Annotations) > 0 {
@@ -370,6 +378,9 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 			}
 		}
 		if ja.AppliesTo != nil {
+			// Rust Cedar requires "principalTypes" and "resourceTypes", but
+			// they may be missing or null here, because cedar-go previously
+			// wrote empty ones as null.
 			at := &ast.AppliesTo{}
 			for _, p := range ja.AppliesTo.PrincipalTypes {
 				at.Principals = append(at.Principals, ast.EntityTypeRef(p))
@@ -395,11 +406,13 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 	return ns, nil
 }
 
-// checkTypeMembers rejects members that don't belong to jt's kind of type, as
-// Rust Cedar does: only a Set may have "element", only a Record may have
-// "attributes", and only an Entity, Extension, or EntityOrCommon type may have
-// "name".
+// checkTypeMembers checks jt's members as Rust Cedar does: "type" is required,
+// only a Set may have "element", only a Record may have "attributes", and an
+// Entity, Extension, or EntityOrCommon type must have "name" and nothing else.
 func checkTypeMembers(jt *jsonType) error {
+	if jt.Type == "" {
+		return fmt.Errorf(`missing "type"`)
+	}
 	var allowed string
 	switch jt.Type {
 	case "Set":
@@ -420,6 +433,9 @@ func checkTypeMembers(jt *jsonType) error {
 		if m.present && m.name != allowed {
 			return fmt.Errorf("type %q cannot have %q", jt.Type, m.name)
 		}
+	}
+	if allowed == "name" && jt.Name == "" {
+		return fmt.Errorf(`type %q requires "name"`, jt.Type)
 	}
 	return nil
 }

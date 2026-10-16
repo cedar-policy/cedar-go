@@ -194,7 +194,9 @@ func TestUnmarshalContextTypeShorthand(t *testing.T) {
 		EntityTypes: map[string]jsonEntityType{},
 		Actions: map[string]jsonAction{
 			"view": {AppliesTo: &jsonAppliesTo{
-				Context: &jsonType{Type: "ContextType"},
+				PrincipalTypes: []string{},
+				ResourceTypes:  []string{},
+				Context:        &jsonType{Type: "ContextType"},
 			}},
 		},
 	})
@@ -207,7 +209,9 @@ func TestUnmarshalContextTypeError(t *testing.T) {
 		EntityTypes: map[string]jsonEntityType{},
 		Actions: map[string]jsonAction{
 			"view": {AppliesTo: &jsonAppliesTo{
-				Context: &jsonType{Type: "Set"},
+				PrincipalTypes: []string{},
+				ResourceTypes:  []string{},
+				Context:        &jsonType{Type: "Set"},
 			}},
 		},
 	})
@@ -271,6 +275,10 @@ func TestUnmarshalTypeMembers(t *testing.T) {
 	// As in Rust Cedar, a member that doesn't belong to the kind of type is
 	// an error rather than being ignored.
 	bad := []jsonType{
+		{},
+		{Type: "Entity"},
+		{Type: "Extension"},
+		{Type: "EntityOrCommon"},
 		{Type: "Long", Name: "x"},
 		{Type: "String", Element: &jsonType{Type: "Long"}},
 		{Type: "Boolean", Attributes: map[string]jsonAttr{}},
@@ -297,4 +305,42 @@ func TestUnmarshalEntityShapeMembers(t *testing.T) {
 		Actions: map[string]jsonAction{},
 	})
 	testutil.Error(t, err)
+}
+
+func TestUnmarshalNamespaceRequiredMembers(t *testing.T) {
+	t.Parallel()
+	// As in Rust Cedar, "entityTypes" and "actions" are required. A missing
+	// member and null both leave the field nil.
+	for _, jns := range []jsonNamespace{
+		{Actions: map[string]jsonAction{}},
+		{EntityTypes: map[string]jsonEntityType{}},
+	} {
+		_, err := unmarshalNamespace(jns)
+		testutil.Error(t, err)
+	}
+}
+
+func TestUnmarshalAppliesToMissingTypes(t *testing.T) {
+	t.Parallel()
+	// cedar-go previously wrote empty "principalTypes" and "resourceTypes" as
+	// null, so a missing or null list is still accepted, unlike in Rust Cedar.
+	ns, err := unmarshalNamespace(jsonNamespace{
+		EntityTypes: map[string]jsonEntityType{},
+		Actions:     map[string]jsonAction{"view": {AppliesTo: &jsonAppliesTo{}}},
+	})
+	testutil.OK(t, err)
+	testutil.Equals(t, len(ns.Actions["view"].AppliesTo.Principals), 0)
+	testutil.Equals(t, len(ns.Actions["view"].AppliesTo.Resources), 0)
+}
+
+func TestMarshalEmptyAppliesTo(t *testing.T) {
+	t.Parallel()
+	// Rust Cedar requires "principalTypes" and "resourceTypes", so they're
+	// written as [] rather than null when empty.
+	jns, err := marshalNamespace("", ast.Namespace{
+		Actions: ast.Actions{"view": ast.Action{AppliesTo: &ast.AppliesTo{}}},
+	})
+	testutil.OK(t, err)
+	testutil.Equals(t, jns.Actions["view"].AppliesTo.PrincipalTypes, []string{})
+	testutil.Equals(t, jns.Actions["view"].AppliesTo.ResourceTypes, []string{})
 }
