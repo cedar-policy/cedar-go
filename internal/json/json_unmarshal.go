@@ -352,9 +352,15 @@ func (n *nodeJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a policy, rejecting unknown members everywhere. Rust
+// Cedar also rejects them in the policy object, its conditions, expressions,
+// and "is" scopes, but ignores them in its other scopes and in the "in" object
+// of an "is" scope, e.g. {"op":"All","x":1}. That looks like a side effect of
+// how serde applies deny_unknown_fields to enums rather than a deliberate
+// choice, so cedar-go is stricter there.
 func (p *Policy) UnmarshalJSON(b []byte) error {
 	var j policyJSON
-	if err := json.Unmarshal(b, &j); err != nil {
+	if err := json.Unmarshal(b, &j, json.RejectUnknownMembers(true)); err != nil {
 		return fmt.Errorf("error unmarshalling json: %w", err)
 	}
 	switch j.Effect {

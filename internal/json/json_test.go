@@ -655,6 +655,23 @@ func TestUnmarshalErrors(t *testing.T) {
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"}}`,
 		},
 		{
+			"unknownPolicyMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[],"x":1}`,
+		},
+		{
+			// Unlike Rust Cedar, which ignores unknown members in most scopes.
+			"unknownScopeMember",
+			`{"effect":"permit","principal":{"op":"All","x":1},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"unknownScopeIsInMember",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"},"x":1}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"unknownConditionMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"Value":true},"x":1}]}`,
+		},
+		{
 			"duplicateMember",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"}}`,
 		},
