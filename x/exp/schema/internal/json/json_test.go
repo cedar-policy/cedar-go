@@ -417,3 +417,30 @@ func TestUnmarshalMiscasedMember(t *testing.T) {
 	testutil.OK(t, s.UnmarshalJSON([]byte(`{"":{"entityTypes":{},"EntityTypes":{"A":{}},"actions":{}}}`)))
 	testutil.Equals(t, len((*ast.Schema)(&s).Entities), 0)
 }
+
+func TestRecordAttributes(t *testing.T) {
+	t.Parallel()
+	t.Run("MarshalEmpty", func(t *testing.T) {
+		t.Parallel()
+		// Rust Cedar requires "attributes" in a Record type, so it's written
+		// even when there are none.
+		s := ast.Schema{
+			Entities: ast.Entities{"A": ast.Entity{
+				Shape: ast.RecordType{},
+				Tags:  ast.RecordType{},
+			}},
+		}
+		b, err := (*schemajson.Schema)(&s).MarshalJSON()
+		testutil.OK(t, err)
+		testutil.Equals(t, string(b), `{"":{"entityTypes":{"A":{"shape":{"type":"Record","attributes":{}},"tags":{"type":"Record","attributes":{}}}},"actions":{}}}`)
+	})
+
+	t.Run("UnmarshalMissing", func(t *testing.T) {
+		t.Parallel()
+		// cedar-go previously omitted "attributes" when there were none, so a
+		// Record without it still decodes, unlike in Rust Cedar.
+		var s schemajson.Schema
+		testutil.OK(t, s.UnmarshalJSON([]byte(`{"":{"entityTypes":{"A":{"shape":{"type":"Record"},"tags":{"type":"Record"}}},"actions":{}}}`)))
+		testutil.Equals(t, (*ast.Schema)(&s).Entities["A"], ast.Entity{Shape: ast.RecordType{}, Tags: ast.RecordType{}})
+	})
+}

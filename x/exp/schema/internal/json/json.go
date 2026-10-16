@@ -150,7 +150,7 @@ type jsonCommonType struct {
 type jsonType struct {
 	Type       string              `json:"type"`
 	Element    *jsonType           `json:"element,omitzero"`
-	Attributes map[string]jsonAttr `json:"attributes,omitempty"`
+	Attributes map[string]jsonAttr `json:"attributes,omitzero"`
 	Name       string              `json:"name,omitempty"`
 }
 
@@ -513,6 +513,9 @@ func unmarshalType(jt *jsonType) (ast.IsType, error) {
 	}
 }
 
+// unmarshalRecordType decodes a Record type. Rust Cedar requires "attributes",
+// but it may be missing here, because cedar-go previously omitted it when there
+// were no attributes.
 func unmarshalRecordType(jt *jsonType) (ast.RecordType, error) {
 	rec := ast.RecordType{}
 	for name, ja := range jt.Attributes {
