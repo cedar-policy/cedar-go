@@ -603,6 +603,11 @@ func TestUnmarshalErrors(t *testing.T) {
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"action":{"op":"=="}}`,
 		},
 		{
+			"recordNullValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Record":{"a":null}}}]}`,
+		},
+		{
 			"scopeUnknownOp",
 			`{"effect":"permit","principal":{"op":"???"},"action":{"op":"All"},"resource":{"op":"All"}}`,
 		},
