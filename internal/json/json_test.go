@@ -610,6 +610,18 @@ func TestUnmarshalErrors(t *testing.T) {
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"action":{"op":"=="}}`,
 		},
 		{
+			"principalScopeIsMissingEntityType",
+			`{"effect":"permit","principal":{"op":"is"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"resourceScopeIsEmptyEntityType",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":""}}`,
+		},
+		{
+			"principalScopeIsNullEntityType",
+			`{"effect":"permit","principal":{"op":"is","entity_type":null},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
 			"recordNullValue",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"Record":{"a":null}}}]}`,
@@ -660,6 +672,16 @@ func TestUnmarshalErrors(t *testing.T) {
 			"patternWildcard",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"like":{"left":{"Value":"text"},"pattern":["invalid"]}}}]}`,
+		},
+		{
+			"isMissingEntityType",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"principal"}}}}]}`,
+		},
+		{
+			"isEmptyEntityType",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"principal"},"entity_type":""}}}]}`,
 		},
 		{
 			"isLeft",
