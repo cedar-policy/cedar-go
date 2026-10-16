@@ -168,10 +168,6 @@ func (p *Pattern) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if len(objs) == 0 {
-		return fmt.Errorf(`%w: must provide at least one pattern component`, errJSONInvalidPatternComponent)
-	}
-
 	var comps []any
 	for _, comp := range objs {
 		switch v := comp.(type) {

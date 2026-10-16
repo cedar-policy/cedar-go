@@ -445,6 +445,13 @@ func TestUnmarshalJSON(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			"like empty pattern",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"like":{"left":{"Value":"text"},"pattern":[]}}}]}`,
+			ast.Permit().When(ast.String("text").Like(types.NewPattern())),
+			testutil.OK,
+		},
+		{
 			"ifThenElse",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Value":42},"else":{"Value":24}}}}]}`,
