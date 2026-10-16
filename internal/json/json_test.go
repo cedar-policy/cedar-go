@@ -662,6 +662,10 @@ func TestUnmarshalErrors(t *testing.T) {
 			`{"effect":"unknown","principal":{"op":"=="},"action":{"op":"All"},"resource":{"op":"All"}}`,
 		},
 		{
+			"nullPolicy",
+			`null`,
+		},
+		{
 			"principalScopeEqMissingEntity",
 			`{"effect":"permit","principal":{"op":"=="},"action":{"op":"All"},"resource":{"op":"All"}}`,
 		},

@@ -168,8 +168,17 @@ func TestPolicySetJSON(t *testing.T) {
 		testutil.OK(t, err)
 		out, err := ps.MarshalJSON()
 		testutil.OK(t, err)
-		testutil.Equals(t, string(out), `{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}}}`)
+		testutil.Equals(t, string(out), `{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}},"templates":{},"templateLinks":[]}`)
 	})
+
+	t.Run("UnmarshalEmptyTemplates", func(t *testing.T) {
+		t.Parallel()
+		var ps cedar.PolicySet
+		err := ps.UnmarshalJSON([]byte(`{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}},"templates":{},"templateLinks":[]}`))
+		testutil.OK(t, err)
+		testutil.Equals(t, len(ps.Map()), 1)
+	})
+
 }
 
 func TestAll(t *testing.T) {

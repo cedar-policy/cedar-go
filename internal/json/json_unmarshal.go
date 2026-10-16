@@ -388,6 +388,9 @@ func (e *scopeEntitiesJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 // how serde applies deny_unknown_fields to enums rather than a deliberate
 // choice, so cedar-go is stricter there.
 func (p *Policy) UnmarshalJSON(b []byte) error {
+	if jsontext.Value(b).Kind() == jsontext.KindNull {
+		return errors.New("policy must not be null")
+	}
 	var j policyJSON
 	if err := json.Unmarshal(b, &j, json.RejectUnknownMembers(true)); err != nil {
 		return fmt.Errorf("error unmarshalling json: %w", err)
