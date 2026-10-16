@@ -104,7 +104,7 @@ type jsonAction struct {
 
 type jsonActionParent struct {
 	ID   string `json:"id"`
-	Type string `json:"type"`
+	Type string `json:"type,omitempty"`
 }
 
 type jsonAppliesTo struct {

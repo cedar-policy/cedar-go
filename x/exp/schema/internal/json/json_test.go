@@ -336,3 +336,17 @@ func TestRoundTripActionContext(t *testing.T) {
 	view := (*ast.Schema)(&s2).Actions["view"]
 	testutil.Equals(t, view.AppliesTo.Context != nil, true)
 }
+
+func TestMarshalActionParentWithoutType(t *testing.T) {
+	// An action parent without a type is written without "type", rather than
+	// with "type":"", which isn't a valid entity type.
+	s := ast.Schema{
+		Actions: ast.Actions{
+			"view":  ast.Action{Parents: []ast.ParentRef{ast.ParentRefFromID("write")}},
+			"write": ast.Action{},
+		},
+	}
+	b, err := (*schemajson.Schema)(&s).MarshalJSON()
+	testutil.OK(t, err)
+	testutil.Equals(t, string(b), `{"":{"entityTypes":{},"actions":{"view":{"memberOf":[{"id":"write"}]},"write":{}}}}`)
+}
