@@ -3,7 +3,10 @@ package json
 import (
 	"encoding/json"
 	"net/netip"
+	"strings"
 	"testing"
+
+	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
@@ -679,6 +682,21 @@ func TestUnmarshalErrors(t *testing.T) {
 			"conditions":[{"kind":"when","body":{"==":{"left":{"Value":1},"right":{"Value":1},"left":{"Value":2}}}}]}`,
 		},
 		{
+			"expressionWithNoMembers",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{}}]}`,
+		},
+		{
+			"expressionWithTwoMembers",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":true,"Var":"principal"}}]}`,
+		},
+		{
+			"expressionWithNullAndAnotherMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":null,"Var":"principal"}}]}`,
+		},
+		{
 			"duplicateRecordKey",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"Record":{"a":{"Value":1},"a":{"Value":2}}}}]}`,
@@ -720,27 +738,27 @@ func TestUnmarshalErrors(t *testing.T) {
 		{
 			"binaryLeft",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"&&":{"left":null,"right":{"Value":24}}}}]}`,
+			"conditions":[{"kind":"when","body":{"&&":{"left":{"Var":"unknown"},"right":{"Value":24}}}}]}`,
 		},
 		{
 			"binaryRight",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"&&":{"left":{"Value":24},"right":null}}}]}`,
+			"conditions":[{"kind":"when","body":{"&&":{"left":{"Value":24},"right":{"Var":"unknown"}}}}]}`,
 		},
 		{
 			"unaryArg",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"!":{"arg":null}}}]}`,
+			"conditions":[{"kind":"when","body":{"!":{"arg":{"Var":"unknown"}}}}]}`,
 		},
 		{
 			"accessLeft",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{".":{"left":null,"attr":"key"}}}]}`,
+			"conditions":[{"kind":"when","body":{".":{"left":{"Var":"unknown"},"attr":"key"}}}]}`,
 		},
 		{
 			"patternLeft",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"like":{"left":null,"pattern":["Wildcard"]}}}]}`,
+			"conditions":[{"kind":"when","body":{"like":{"left":{"Var":"unknown"},"pattern":["Wildcard"]}}}]}`,
 		},
 		{
 			"patternWildcard",
@@ -760,37 +778,37 @@ func TestUnmarshalErrors(t *testing.T) {
 		{
 			"isLeft",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"is":{"left":null,"entity_type":"T"}}}]}`,
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"unknown"},"entity_type":"T"}}}]}`,
 		},
 		{
 			"isIn",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"resource"},"entity_type":"T","in":{"Value":null}}}}]}`,
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"resource"},"entity_type":"T","in":{"Var":"unknown"}}}}]}`,
 		},
 		{
 			"ifErrThenElse",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":null},"then":{"Value":42},"else":{"Value":24}}}}]}`,
+			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Var":"unknown"},"then":{"Value":42},"else":{"Value":24}}}}]}`,
 		},
 		{
 			"ifThenErrElse",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Value":null},"else":{"Value":24}}}}]}`,
+			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Var":"unknown"},"else":{"Value":24}}}}]}`,
 		},
 		{
 			"ifThenElseErr",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Value":42},"else":{"Value":null}}}}]}`,
+			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Value":42},"else":{"Var":"unknown"}}}}]}`,
 		},
 		{
 			"setErr",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"Set":[{"Value":null},{"Value":"bananas"}]}}]}`,
+			"conditions":[{"kind":"when","body":{"Set":[{"Var":"unknown"},{"Value":"bananas"}]}}]}`,
 		},
 		{
 			"recordErr",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"Record":{"key":{"Value":null}}}}]}`,
+			"conditions":[{"kind":"when","body":{"Record":{"key":{"Var":"unknown"}}}}]}`,
 		},
 		{
 			"extensionTooMany",
@@ -800,7 +818,7 @@ func TestUnmarshalErrors(t *testing.T) {
 		{
 			"extensionArg",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"ip":[{"Value":null}]}}]}`,
+			"conditions":[{"kind":"when","body":{"ip":[{"Var":"unknown"}]}}]}`,
 		},
 		{
 			"var",
@@ -826,6 +844,28 @@ func TestUnmarshalErrors(t *testing.T) {
 			var p Policy
 			err := json.Unmarshal([]byte(tt.input), &p)
 			testutil.Error(t, err)
+		})
+	}
+}
+
+// TestNodeJSONSyntaxErrors calls UnmarshalJSONFrom directly, since decoding a
+// Policy checks the syntax of the whole input before any expression is read.
+func TestNodeJSONSyntaxErrors(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"invalidValue", `}`},
+		{"invalidMemberName", `{1:2}`},
+		{"trailingComma", `{"Value":true,}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var n nodeJSON
+			dec := jsontext.NewDecoder(strings.NewReader(tt.input))
+			testutil.Error(t, n.UnmarshalJSONFrom(dec))
 		})
 	}
 }
