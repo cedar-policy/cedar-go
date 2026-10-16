@@ -32,6 +32,9 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 		}
 		return ast.Scope{}.In(types.EntityUID(*s.Entity)), nil
 	case "is":
+		if s.EntityType == "" {
+			return nil, fmt.Errorf("missing entity_type")
+		}
 		if s.In == nil {
 			return ast.Scope{}.Is(types.EntityType(s.EntityType)), nil
 		}
@@ -99,6 +102,9 @@ func (j isJSON) ToNode() (ast.Node, error) {
 	left, err := j.Left.ToNode()
 	if err != nil {
 		return ast.Node{}, fmt.Errorf("error in left: %w", err)
+	}
+	if j.EntityType == "" {
+		return ast.Node{}, fmt.Errorf("missing entity_type")
 	}
 	if j.In != nil {
 		right, err := j.In.ToNode()
