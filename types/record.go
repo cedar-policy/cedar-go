@@ -2,9 +2,7 @@ package types
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
-	"hash/fnv"
 	"iter"
 	"maps"
 	"slices"
@@ -20,21 +18,37 @@ type Record struct {
 	hashVal uint64
 }
 
+// FNV-1 64-bit parameters, as used by hash/fnv.New64.
+const (
+	fnv64Offset uint64 = 14695981039346656037
+	fnv64Prime  uint64 = 1099511628211
+)
+
 // NewRecord returns an immutable Record given a Go map of Strings to Values
 func NewRecord(m RecordMap) Record {
 	// Special case hashVal for empty map to 0 so that the return value of Value.hash() of Record{} and
 	// NewRecord(RecordMap{}) are the same
 	var hashVal uint64
 	if len(m) > 0 {
-		orderedKeys := slices.Collect(maps.Keys(m))
+		orderedKeys := make([]String, 0, len(m))
+		for k := range m {
+			orderedKeys = append(orderedKeys, k)
+		}
 		slices.Sort(orderedKeys)
 
-		h := fnv.New64()
+		// FNV-1 64 over each key followed by its value's hash in little-endian
+		// order, the same bytes as hash/fnv with binary.Write, without their
+		// allocations.
+		hashVal = fnv64Offset
 		for _, k := range orderedKeys {
-			_, _ = h.Write([]byte(k))
-			_ = binary.Write(h, binary.LittleEndian, m[k].hash())
+			for i := 0; i < len(k); i++ {
+				hashVal = (hashVal * fnv64Prime) ^ uint64(k[i])
+			}
+			vh := m[k].hash()
+			for i := 0; i < 8; i++ {
+				hashVal = (hashVal * fnv64Prime) ^ (vh >> (8 * i) & 0xff)
+			}
 		}
-		hashVal = h.Sum64()
 	}
 
 	if m != nil {
