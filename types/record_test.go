@@ -367,3 +367,15 @@ func TestRecord(t *testing.T) {
 		testutil.Equals(t, got, types.RecordMap{"foo": types.Long(42), "bar": types.Long(1337)})
 	})
 }
+
+func BenchmarkNewRecord(b *testing.B) {
+	m := types.RecordMap{
+		"name":  types.String("alice"),
+		"age":   types.Long(42),
+		"owner": types.NewEntityUID("User", "bob"),
+	}
+	b.ReportAllocs()
+	for range b.N {
+		_ = types.NewRecord(m)
+	}
+}
