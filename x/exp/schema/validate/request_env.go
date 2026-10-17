@@ -14,6 +14,13 @@ type requestEnv struct {
 	contextType   typeRecord
 }
 
+// requestEnvs returns the request environments for all actions, building them
+// on first use. Callers must not modify the returned slice or its elements.
+func (v *Validator) requestEnvs() []requestEnv {
+	v.envsOnce.Do(func() { v.envs = v.generateRequestEnvs() })
+	return v.envs
+}
+
 // generateRequestEnvs builds request environments from the schema for all action/principal/resource combos.
 func (v *Validator) generateRequestEnvs() []requestEnv {
 	var envs []requestEnv

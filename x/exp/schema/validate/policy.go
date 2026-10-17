@@ -55,7 +55,7 @@ func (v *Validator) Policy(policyID string, policy *ast.Policy) error {
 	}
 
 	// Expression type checking
-	allEnvs := v.generateRequestEnvs()
+	allEnvs := v.requestEnvs()
 	envs := v.filterEnvsForPolicy(allEnvs, principalTypes, resourceTypes, actionUIDs)
 
 	// In strict mode, empty action set scopes always report this error.

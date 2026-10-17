@@ -1,6 +1,8 @@
 package validate
 
 import (
+	"sync"
+
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/resolved"
 )
@@ -9,6 +11,11 @@ import (
 type Validator struct {
 	schema *resolved.Schema
 	strict bool
+
+	// The request environments depend only on the schema, so they are built
+	// once, on the first Policy call, and shared by every call after it.
+	envsOnce sync.Once
+	envs     []requestEnv
 }
 
 // Option configures a Validator.
