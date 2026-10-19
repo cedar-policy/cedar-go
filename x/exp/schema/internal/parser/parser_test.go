@@ -899,6 +899,7 @@ func TestParseSchemaErrors(t *testing.T) {
 		{"readToken after comma in enum", `entity Foo enum ["a",$`},
 		{"readToken after bracket in enum", `entity Foo enum ["a"]$`},
 		{"expect semicolon after enum", `entity Foo enum ["a"]}`},
+		{"empty enum", `entity Foo enum [];`},
 		{"readToken after action in", `action view in $`},
 		{"readToken after appliesTo", `action view appliesTo $`},
 		{"readToken after attributes keyword", `action view attributes $`},
