@@ -364,6 +364,42 @@ func TestJSONRecord(t *testing.T) {
 		err := json.Unmarshal([]byte("{\"\xff\":1}"), &r)
 		testutil.Error(t, err)
 	})
+	// As in Rust Cedar, an object that decodes as an EntityUID or an
+	// extension value isn't a Record.
+	t.Run("UnmarshalEscapeErr", func(t *testing.T) {
+		t.Parallel()
+		for _, in := range []string{
+			`{"__entity":{"type":"User","id":"alice"}}`,
+			`{"__extn":{"fn":"ip","arg":"1.2.3.4"}}`,
+			`{"__extn":{"fn":"unknown","arg":"x"}}`,
+		} {
+			var r Record
+			testutil.Error(t, json.Unmarshal([]byte(in), &r))
+		}
+	})
+	// An object with members other than "__entity" is an ordinary Record.
+	t.Run("UnmarshalEscapeShaped", func(t *testing.T) {
+		t.Parallel()
+		var r Record
+		testutil.OK(t, json.Unmarshal([]byte(`{"__entity":{"type":"User","id":"alice"},"x":1}`), &r))
+		testutil.Equals(t, r, NewRecord(RecordMap{
+			"__entity": NewRecord(RecordMap{"type": String("User"), "id": String("alice")}),
+			"x":        Long(1),
+		}))
+	})
+	// As in Rust Cedar, null isn't a Record, e.g. for a request's context.
+	t.Run("UnmarshalNullErr", func(t *testing.T) {
+		t.Parallel()
+		var r Record
+		testutil.Error(t, json.Unmarshal([]byte(`null`), &r))
+		var req Request
+		testutil.Error(t, json.Unmarshal([]byte(`{"principal":{"type":"User","id":"a"},"action":{"type":"Action","id":"a"},"resource":{"type":"User","id":"a"},"context":null}`), &req))
+	})
+	t.Run("UnmarshalEntityAttrsEscapeErr", func(t *testing.T) {
+		t.Parallel()
+		var e Entity
+		testutil.Error(t, json.Unmarshal([]byte(`{"uid":{"type":"User","id":"alice"},"parents":[],"attrs":{"__entity":{"type":"User","id":"bob"}}}`), &e))
+	})
 	t.Run("MarshalKeyErr", func(t *testing.T) {
 		t.Parallel()
 		k := []byte{0xde, 0x01}

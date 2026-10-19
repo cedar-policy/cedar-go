@@ -43,7 +43,7 @@ type explicitValue struct {
 }
 
 func (v *explicitValue) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
-	switch dec.PeekKind() {
+	switch kind := dec.PeekKind(); kind {
 	case jsontext.KindString, jsontext.KindFalse, jsontext.KindTrue, jsontext.KindNumber:
 		tok, err := dec.ReadToken()
 		if err != nil {
@@ -106,7 +106,7 @@ func (v *explicitValue) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 		}
 		v.Value = NewRecord(recMap)
 	default:
-		return errJSONUnsupportedType
+		return fmt.Errorf("%w: %v", errJSONUnsupportedType, kind)
 	}
 	return nil
 }

@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"hash/fnv"
 	"iter"
 	"maps"
@@ -126,21 +127,24 @@ func (r Record) Equal(bi Value) bool {
 	return true
 }
 
+// UnmarshalJSON decodes a Record from a JSON object, decoding its values as
+// UnmarshalJSON does. As in Rust Cedar, an object that UnmarshalJSON would
+// decode as an EntityUID or an extension value, such as
+// {"__entity": {"type": "User", "id": "alice"}}, is an error rather than a
+// Record with a single member.
 func (r *Record) UnmarshalJSON(b []byte) error {
-	var res map[string]explicitValue
-	err := json.Unmarshal(b, &res)
-	if err != nil {
+	var v explicitValue
+	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
-	if len(res) == 0 {
-		*r = Record{}
-		return nil
+	rec, ok := v.Value.(Record)
+	if !ok {
+		return fmt.Errorf("%w: %s is not a record", errJSONDecode, v.Value.MarshalCedar())
 	}
-	m := make(RecordMap, len(res))
-	for kk, vv := range res {
-		m[String(kk)] = vv.Value
+	if rec.Len() == 0 {
+		rec = Record{}
 	}
-	*r = NewRecord(m)
+	*r = rec
 	return nil
 }
 
