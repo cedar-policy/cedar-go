@@ -1,0 +1,76 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unable to guarantee safety of access to optional attribute `meta.s` on entity type `Document`",
+      "for policy `policy1`, unable to guarantee safety of access to optional attribute `meta.inner.s` on entity type `Document`",
+      "for policy `policy2`, unable to guarantee safety of access to optional attribute `meta.s` on entity type `User`",
+      "for policy `policy3`, unable to guarantee safety of access to optional attribute `session.s` in context for Action::\"view\"",
+      "for policy `policy4`, unable to guarantee safety of access to optional attribute `s`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unable to guarantee safety of access to optional attribute `meta.s` on entity type `Document`",
+      "for policy `policy1`, unable to guarantee safety of access to optional attribute `meta.inner.s` on entity type `Document`",
+      "for policy `policy2`, unable to guarantee safety of access to optional attribute `meta.s` on entity type `User`",
+      "for policy `policy3`, unable to guarantee safety of access to optional attribute `session.s` in context for Action::\"view\"",
+      "for policy `policy4`, unable to guarantee safety of access to optional attribute `s`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unable to guarantee safety of access to optional attribute `meta.s` on entity type `Document`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unable to guarantee safety of access to optional attribute `meta.s` on entity type `Document`"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unable to guarantee safety of access to optional attribute `meta.inner.s` on entity type `Document`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unable to guarantee safety of access to optional attribute `meta.inner.s` on entity type `Document`"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unable to guarantee safety of access to optional attribute `meta.s` on entity type `User`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unable to guarantee safety of access to optional attribute `meta.s` on entity type `User`"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, unable to guarantee safety of access to optional attribute `session.s` in context for Action::\"view\""
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, unable to guarantee safety of access to optional attribute `session.s` in context for Action::\"view\""
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy4`, unable to guarantee safety of access to optional attribute `s`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy4`, unable to guarantee safety of access to optional attribute `s`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}
