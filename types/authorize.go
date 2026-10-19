@@ -37,8 +37,17 @@ func (a Decision) String() string {
 
 func (a Decision) MarshalJSON() ([]byte, error) { return []byte(`"` + a.String() + `"`), nil }
 
+// UnmarshalJSON decodes a Decision from "allow" or "deny". Anything else is an
+// error, rather than Deny.
 func (a *Decision) UnmarshalJSON(b []byte) error {
-	*a = string(b) == `"allow"`
+	switch string(b) {
+	case `"allow"`:
+		*a = Allow
+	case `"deny"`:
+		*a = Deny
+	default:
+		return fmt.Errorf(`invalid decision %s: must be "allow" or "deny"`, b)
+	}
 	return nil
 }
 
