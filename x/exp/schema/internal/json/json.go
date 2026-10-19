@@ -59,6 +59,9 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("namespace %q: %w", name, err)
 		}
 		if name == "" {
+			if len(ns.Annotations) > 0 {
+				return fmt.Errorf("annotations are not allowed on the empty namespace")
+			}
 			result.Entities = ns.Entities
 			result.Enums = ns.Enums
 			result.Actions = ns.Actions

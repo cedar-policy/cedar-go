@@ -234,6 +234,12 @@ func TestUnmarshalBadNamespace(t *testing.T) {
 	testutil.Error(t, s.UnmarshalJSON([]byte(`{"NS": "bad"}`)))
 }
 
+func TestUnmarshalEmptyNamespaceAnnotations(t *testing.T) {
+	var s schemajson.Schema
+	testutil.Error(t, s.UnmarshalJSON([]byte(`{"": {"entityTypes": {}, "actions": {}, "annotations": {"doc": "x"}}}`)))
+	testutil.OK(t, s.UnmarshalJSON([]byte(`{"": {"entityTypes": {}, "actions": {}, "annotations": {}}}`)))
+}
+
 func TestUnmarshalShorthandCommonTypeRef(t *testing.T) {
 	// Per the Cedar JSON schema spec, the "type" field may directly hold a
 	// common-type or entity-type name. The parser must accept this form;
