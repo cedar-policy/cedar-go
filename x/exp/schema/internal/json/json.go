@@ -59,6 +59,9 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("namespace %q: %w", name, err)
 		}
 		if name == "" {
+			if len(ns.Annotations) > 0 {
+				return fmt.Errorf("annotations are not allowed on the empty namespace")
+			}
 			result.Entities = ns.Entities
 			result.Enums = ns.Enums
 			result.Actions = ns.Actions
@@ -93,7 +96,31 @@ type jsonEntityType struct {
 	Annotations   map[string]string `json:"annotations,omitempty"`
 
 	// Enum entity field (mutually exclusive with standard fields)
-	Enum []string `json:"enum,omitempty"`
+	Enum enumJSON `json:"enum,omitempty"`
+}
+
+// enumJSON is the list of an enum entity type's values. It's nil if "enum" is
+// missing, and non-nil, possibly empty, if it's present.
+type enumJSON []string
+
+// UnmarshalJSON rejects a null list and null values, as Rust Cedar does.
+func (e *enumJSON) UnmarshalJSON(b []byte) error {
+	var values []*string
+	if err := json.Unmarshal(b, &values); err != nil {
+		return err
+	}
+	if values == nil {
+		return fmt.Errorf("enum must not be null")
+	}
+	res := make(enumJSON, 0, len(values))
+	for _, v := range values {
+		if v == nil {
+			return fmt.Errorf("enum values must not be null")
+		}
+		res = append(res, *v)
+	}
+	*e = res
+	return nil
 }
 
 type jsonAction struct {
@@ -210,7 +237,8 @@ func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) 
 			ja.MemberOf = append(ja.MemberOf, parent)
 		}
 		if action.AppliesTo != nil {
-			jat := &jsonAppliesTo{}
+			// Rust Cedar requires both lists, so write them even when empty.
+			jat := &jsonAppliesTo{PrincipalTypes: []string{}, ResourceTypes: []string{}}
 			for _, p := range action.AppliesTo.Principals {
 				jat.PrincipalTypes = append(jat.PrincipalTypes, string(p))
 			}
@@ -291,6 +319,13 @@ func marshalAnnotations(annotations ast.Annotations) map[string]string {
 }
 
 func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
+	// As in Rust Cedar, "entityTypes" and "actions" are required.
+	if jns.EntityTypes == nil {
+		return ast.Namespace{}, fmt.Errorf(`"entityTypes" is missing or null`)
+	}
+	if jns.Actions == nil {
+		return ast.Namespace{}, fmt.Errorf(`"actions" is missing or null`)
+	}
 	ns := ast.Namespace{}
 
 	if len(jns.Annotations) > 0 {
@@ -313,7 +348,15 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 	}
 
 	for etName, jet := range jns.EntityTypes {
-		if len(jet.Enum) > 0 {
+		if jet.Enum != nil {
+			// As in Rust Cedar, an enum must have at least one value, and may
+			// not have any other members except annotations.
+			if len(jet.Enum) == 0 {
+				return ast.Namespace{}, fmt.Errorf("entity type %q: enum must have at least one value", etName)
+			}
+			if jet.MemberOfTypes != nil || jet.Shape != nil || jet.Tags != nil {
+				return ast.Namespace{}, fmt.Errorf(`entity type %q: an enum cannot have "memberOfTypes", "shape", or "tags"`, etName)
+			}
 			enum := ast.Enum{}
 			if len(jet.Annotations) > 0 {
 				enum.Annotations = unmarshalAnnotations(jet.Annotations)
@@ -334,6 +377,9 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 				entity.ParentTypes = append(entity.ParentTypes, ast.EntityTypeRef(ref))
 			}
 			if jet.Shape != nil {
+				if err := checkTypeMembers(jet.Shape); err != nil {
+					return ast.Namespace{}, fmt.Errorf("entity %q shape: %w", etName, err)
+				}
 				rec, err := unmarshalRecordType(jet.Shape)
 				if err != nil {
 					return ast.Namespace{}, fmt.Errorf("entity %q shape: %w", etName, err)
@@ -367,6 +413,9 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 			}
 		}
 		if ja.AppliesTo != nil {
+			// Rust Cedar requires "principalTypes" and "resourceTypes", but
+			// they may be missing or null here, because cedar-go previously
+			// wrote empty ones as null.
 			at := &ast.AppliesTo{}
 			for _, p := range ja.AppliesTo.PrincipalTypes {
 				at.Principals = append(at.Principals, ast.EntityTypeRef(p))
@@ -392,7 +441,44 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 	return ns, nil
 }
 
+// checkTypeMembers checks jt's members as Rust Cedar does: "type" is required,
+// only a Set may have "element", only a Record may have "attributes", and an
+// Entity, Extension, or EntityOrCommon type must have "name" and nothing else.
+func checkTypeMembers(jt *jsonType) error {
+	if jt.Type == "" {
+		return fmt.Errorf(`missing "type"`)
+	}
+	var allowed string
+	switch jt.Type {
+	case "Set":
+		allowed = "element"
+	case "Record":
+		allowed = "attributes"
+	case "Entity", "Extension", "EntityOrCommon":
+		allowed = "name"
+	}
+	for _, m := range []struct {
+		name    string
+		present bool
+	}{
+		{"element", jt.Element != nil},
+		{"attributes", jt.Attributes != nil},
+		{"name", jt.Name != ""},
+	} {
+		if m.present && m.name != allowed {
+			return fmt.Errorf("type %q cannot have %q", jt.Type, m.name)
+		}
+	}
+	if allowed == "name" && jt.Name == "" {
+		return fmt.Errorf(`type %q requires "name"`, jt.Type)
+	}
+	return nil
+}
+
 func unmarshalType(jt *jsonType) (ast.IsType, error) {
+	if err := checkTypeMembers(jt); err != nil {
+		return nil, err
+	}
 	switch jt.Type {
 	case "String":
 		return ast.StringType{}, nil

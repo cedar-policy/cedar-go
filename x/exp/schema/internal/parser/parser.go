@@ -308,6 +308,9 @@ func (p *parser) parseEnumEntity(annotations ast.Annotations, names []types.Iden
 			return p.errorf("expected ',' or ']' in enum, got %s", tokenDesc(p.tok))
 		}
 	}
+	if len(values) == 0 {
+		return p.errorf("enum must have at least one value")
+	}
 	if err := p.readToken(); err != nil { // consume ']'
 		return err
 	}
