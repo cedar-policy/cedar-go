@@ -6,11 +6,13 @@ import (
 	"compress/gzip"
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -18,6 +20,7 @@ import (
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/batch"
 	"github.com/cedar-policy/cedar-go/x/exp/schema"
+	schemaast "github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 	exptypes "github.com/cedar-policy/cedar-go/x/exp/types"
 )
 
@@ -166,8 +169,6 @@ func TestCorpus(t *testing.T) {
 			if err != nil {
 				t.Fatal("error reading schema content", err)
 			}
-			// Rust converted JSON never contains the empty context record
-			schemaContent = bytes.ReplaceAll(schemaContent, []byte("context: {}\n"), nil)
 
 			var s schema.Schema
 			s.SetFilename("test.schema")
@@ -199,7 +200,8 @@ func TestCorpus(t *testing.T) {
 				testutil.Equals(t, string(j2), string(js))
 			})
 
-			// Validate schema matches Rust Cedar CLI output
+			// Compare cedar-go's JSON for the schema with Rust Cedar's JSON
+			// for the same Cedar schema.
 			t.Run("schema-vs-rust", func(t *testing.T) {
 				t.Parallel()
 
@@ -210,24 +212,10 @@ func TestCorpus(t *testing.T) {
 				rustJSON, err := jsonSchemasFdm.GetFileData(jsonSchemaPath)
 				testutil.OK(t, err)
 
-				// Normalize Rust JSON: appliesTo is optional - match testdata_test.go pattern
-				// Need to handle trailing comma to avoid creating invalid JSON like {,"other":...}
-				rustJSON = bytes.ReplaceAll(rustJSON, []byte(`"appliesTo":{"resourceTypes":[],"principalTypes":[]},`), nil)
-				rustJSON = bytes.ReplaceAll(rustJSON, []byte(`"appliesTo":{"resourceTypes":[],"principalTypes":[]}`), nil)
-
-				// Unmarshal Rust JSON to handle any syntax issues from replacement
-				var rustSchema schema.Schema
-				err = rustSchema.UnmarshalJSON(rustJSON)
+				goJSON, err := schema.NewSchemaFromAST(rustCLISchema(s.AST())).MarshalJSON()
 				testutil.OK(t, err)
 
-				// Marshal both schemas to JSON for comparison
-				goJSON, err := s.MarshalJSON()
-				testutil.OK(t, err)
-				rustJSON2, err := rustSchema.MarshalJSON()
-				testutil.OK(t, err)
-
-				// Normalize and compare
-				stringEquals(t, string(normalizeJSON(t, goJSON)), string(normalizeJSON(t, rustJSON2)))
+				stringEquals(t, string(normalizeJSON(t, goJSON)), string(normalizeJSON(t, rustJSON)))
 			})
 
 			policyContent, err := fdm.GetFileData(tt.Policies)
@@ -295,7 +283,7 @@ func TestCorpus(t *testing.T) {
 			entitiesJSONBytes, err := entities.MarshalJSON()
 			testutil.OK(t, wrapErr("marshalling entities to JSON", err))
 			var rtEntities cedar.EntityMap
-			err = json.Unmarshal(entitiesJSONBytes, &rtEntities)
+			err = rtEntities.UnmarshalJSON(entitiesJSONBytes)
 			testutil.OK(t, wrapErr("unmarshalling JSON round-tripped entities", err))
 			testutil.Equals(t, rtEntities, entities)
 
@@ -398,14 +386,49 @@ func wrapErr(msg string, err error) error {
 	return fmt.Errorf("%s: %w", msg, err)
 }
 
+// rustCLISchema emulates Rust Cedar's somewhat quirky behavior when converting
+// Cedar-encoded schema to JSON. We use this in a test which performs its own
+// conversion from Cedar-encoded schema to JSON and compares it to the Rust
+// CLI's output for the same operation.
+func rustCLISchema(in *schemaast.Schema) *schemaast.Schema {
+	convert := func(actions schemaast.Actions) schemaast.Actions {
+		out := make(schemaast.Actions, len(actions))
+		for name, action := range actions {
+			// The Rust Cedar CLI treats a missing appliesTo in Cedar as
+			// containing two empty lists for resourceTypes and principalTypes
+			// rather than being None. These are functionally equivalent.
+			appliesTo := schemaast.AppliesTo{}
+			if action.AppliesTo != nil {
+				appliesTo = *action.AppliesTo
+			}
+
+			// The Rust Cedar CLI treats an empty context record in Cedar as
+			// None rather than as a Record with nothing in it. Again, these
+			// are functionally equivalent.
+			if rec, ok := appliesTo.Context.(schemaast.RecordType); ok && len(rec) == 0 {
+				appliesTo.Context = nil
+			}
+			action.AppliesTo = &appliesTo
+			out[name] = action
+		}
+		return out
+	}
+	out := *in
+	out.Actions = convert(in.Actions)
+	out.Namespaces = make(schemaast.Namespaces, len(in.Namespaces))
+	for name, ns := range in.Namespaces {
+		ns.Actions = convert(ns.Actions)
+		out.Namespaces[name] = ns
+	}
+	return &out
+}
+
 func normalizeJSON(t *testing.T, in []byte) []byte {
 	t.Helper()
-	var out any
-	err := json.Unmarshal(in, &out)
-	testutil.OK(t, err)
-	b, err := json.MarshalIndent(out, "", "  ")
-	testutil.OK(t, err)
-	return b
+	v := jsontext.Value(bytes.Clone(in))
+	testutil.OK(t, v.Canonicalize())
+	testutil.OK(t, v.Indent(jsontext.WithIndent("  ")))
+	return v
 }
 
 func stringEquals(t *testing.T, got, want string) {
