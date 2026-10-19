@@ -39,6 +39,14 @@ func TestJSONDecision(t *testing.T) {
 		testutil.OK(t, err)
 		testutil.Equals(t, d, Deny)
 	})
+	t.Run("UnmarshalInvalid", func(t *testing.T) {
+		t.Parallel()
+		for _, in := range []string{`"Allow"`, `"DENY"`, `"permit"`, `""`, `true`, `null`} {
+			d := Allow
+			testutil.Error(t, json.Unmarshal([]byte(in), &d))
+			testutil.Equals(t, d, Allow)
+		}
+	})
 }
 
 func TestRequestEqual(t *testing.T) {
