@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"bytes"
 	"errors"
 	"reflect"
 	"slices"
@@ -166,4 +167,15 @@ func JSONMarshalsTo[T any](t TB, obj T, want string) {
 	err = wantValue.Indent(jsontext.WithIndent("\t"))
 	OK(t, err)
 	Equals(t, string(b), string(wantValue))
+}
+
+// CanonicalizeJSON returns b in canonical form (RFC 8785), with object members
+// sorted by name, indented so that differences are easy to read. It's for
+// comparing JSON whose member order doesn't matter.
+func CanonicalizeJSON(t TB, b []byte) string {
+	t.Helper()
+	v := jsontext.Value(bytes.Clone(b))
+	OK(t, v.Canonicalize())
+	OK(t, v.Indent(jsontext.WithIndent("\t")))
+	return string(v)
 }

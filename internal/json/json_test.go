@@ -554,9 +554,7 @@ func TestUnmarshalJSON(t *testing.T) {
 			testutil.Equals(t, p.unwrap(), tt.want)
 			b, err := json.Marshal(&p)
 			testutil.OK(t, err)
-			normInput := testNormalizeJSON(t, tt.input)
-			normOutput := testNormalizeJSON(t, string(b))
-			testutil.Equals(t, normOutput, normInput)
+			testutil.Equals(t, testutil.CanonicalizeJSON(t, b), testutil.CanonicalizeJSON(t, []byte(tt.input)))
 		})
 	}
 }
@@ -619,15 +617,6 @@ func TestUnmarshalJSONNonCanonical(t *testing.T) {
 			testutil.Equals(t, p.unwrap(), tt.want)
 		})
 	}
-}
-
-func testNormalizeJSON(t testutil.TB, in string) string {
-	var x any
-	err := json.Unmarshal([]byte(in), &x)
-	testutil.OK(t, err)
-	out, err := json.MarshalIndent(x, "", "    ")
-	testutil.OK(t, err)
-	return string(out)
 }
 
 func mustParseDecimal(v string) types.Decimal {

@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/go-json-experiment/json"
-	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -215,7 +214,7 @@ func TestCorpus(t *testing.T) {
 				goJSON, err := schema.NewSchemaFromAST(rustCLISchema(s.AST())).MarshalJSON()
 				testutil.OK(t, err)
 
-				stringEquals(t, string(normalizeJSON(t, goJSON)), string(normalizeJSON(t, rustJSON)))
+				testutil.Equals(t, testutil.CanonicalizeJSON(t, goJSON), testutil.CanonicalizeJSON(t, rustJSON))
 			})
 
 			policyContent, err := fdm.GetFileData(tt.Policies)
@@ -421,19 +420,6 @@ func rustCLISchema(in *schemaast.Schema) *schemaast.Schema {
 		out.Namespaces[name] = ns
 	}
 	return &out
-}
-
-func normalizeJSON(t *testing.T, in []byte) []byte {
-	t.Helper()
-	v := jsontext.Value(bytes.Clone(in))
-	testutil.OK(t, v.Canonicalize())
-	testutil.OK(t, v.Indent(jsontext.WithIndent("  ")))
-	return v
-}
-
-func stringEquals(t *testing.T, got, want string) {
-	t.Helper()
-	testutil.Equals(t, strings.TrimSpace(got), strings.TrimSpace(want))
 }
 
 // Specific corpus tests that have been extracted for easy regression testing purposes

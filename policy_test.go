@@ -10,17 +10,11 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 )
 
-func prettifyJSON(in []byte) []byte {
-	var buf bytes.Buffer
-	_ = json.Indent(&buf, in, "", "    ")
-	return buf.Bytes()
-}
-
 func TestPolicyJSON(t *testing.T) {
 	t.Parallel()
 
 	// Taken from https://docs.cedarpolicy.com/policies/json-format.html
-	jsonEncodedPolicy := prettifyJSON([]byte(`
+	jsonEncodedPolicy := []byte(`
 		{
 			"effect": "permit",
 			"principal": {
@@ -55,8 +49,7 @@ func TestPolicyJSON(t *testing.T) {
 					}
 				}
 			]
-		}`,
-	))
+		}`)
 
 	var policy cedar.Policy
 	testutil.OK(t, policy.UnmarshalJSON(jsonEncodedPolicy))
@@ -64,7 +57,7 @@ func TestPolicyJSON(t *testing.T) {
 	output, err := policy.MarshalJSON()
 	testutil.OK(t, err)
 
-	testutil.Equals(t, string(prettifyJSON(output)), string(jsonEncodedPolicy))
+	testutil.Equals(t, testutil.CanonicalizeJSON(t, output), testutil.CanonicalizeJSON(t, jsonEncodedPolicy))
 }
 
 func TestPolicyCedar(t *testing.T) {
