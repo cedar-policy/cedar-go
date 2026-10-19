@@ -29,8 +29,8 @@ type extValueJSON struct {
 }
 
 type extEntity struct {
-	Type string `json:"type"`
-	ID   string `json:"id"`
+	Type *string `json:"type"`
+	ID   *string `json:"id"`
 }
 
 type entityValueJSON struct {
@@ -96,10 +96,10 @@ func UnmarshalJSON(b []byte, v *Value) error {
 			// {"type":"X","id":"Y"} parses as a Record and requires
 			// schema-guided coercion (see x/exp/types.EntityMap.UnmarshalJSONWithSchema).
 			var ej entityValueJSON
-			if err := jsonv1.Unmarshal(b, &ej); err == nil && ej.Entity != nil {
+			if err := jsonv1.Unmarshal(b, &ej); err == nil && ej.Entity != nil && ej.Entity.Type != nil && ej.Entity.ID != nil {
 				*v = EntityUID{
-					Type: EntityType(ej.Entity.Type),
-					ID:   String(ej.Entity.ID),
+					Type: EntityType(*ej.Entity.Type),
+					ID:   String(*ej.Entity.ID),
 				}
 				return nil
 			}

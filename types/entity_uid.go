@@ -82,14 +82,20 @@ func (e *EntityUID) UnmarshalCedar(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes an EntityUID from its explicit form,
+// {"__entity": {"type": ..., "id": ...}}, or its implicit form,
+// {"type": ..., "id": ...}.
 func (e *EntityUID) UnmarshalJSON(b []byte) error {
 	var res entityValueJSON
 	if err := json.Unmarshal(b, &res); err != nil {
 		return err
 	}
 	if res.Entity != nil {
-		e.Type = EntityType(res.Entity.Type)
-		e.ID = String(res.Entity.ID)
+		if res.Entity.Type == nil || res.Entity.ID == nil {
+			return errJSONEntityNotFound
+		}
+		e.Type = EntityType(*res.Entity.Type)
+		e.ID = String(*res.Entity.ID)
 		return nil
 	} else if res.Type != nil && res.ID != nil { // require both Type and ID to parse "implicit" JSON
 		e.Type = EntityType(*res.Type)
@@ -101,11 +107,9 @@ func (e *EntityUID) UnmarshalJSON(b []byte) error {
 
 // MarshalJSON marshals the EntityUID into JSON using the explicit form.
 func (e EntityUID) MarshalJSON() ([]byte, error) {
+	typ, id := string(e.Type), string(e.ID)
 	return json.Marshal(entityValueJSON{
-		Entity: &extEntity{
-			Type: string(e.Type),
-			ID:   string(e.ID),
-		},
+		Entity: &extEntity{Type: &typ, ID: &id},
 	})
 }
 
