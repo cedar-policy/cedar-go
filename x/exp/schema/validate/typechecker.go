@@ -1377,6 +1377,15 @@ func exprVarName(n ast.IsNode) types.String {
 			return parent + "." + nd.Value
 		}
 	}
+	// A getTag with a literal key is named like the hasTag capability that guards it, so a `has`
+	// on its value can guard a later access to the same tag's attributes.
+	if nd, ok := n.(ast.NodeTypeGetTag); ok {
+		if parent := exprVarName(nd.Left); parent != "" {
+			if tagKey := tagCapabilityKey(nd.Right); tagKey != "" {
+				return parent + ".__tag:" + tagKey
+			}
+		}
+	}
 	return ""
 }
 

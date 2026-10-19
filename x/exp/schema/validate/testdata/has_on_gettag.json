@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/has_on_gettag.cedarschema",
+    "policies": "testdata/has_on_gettag.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/has_on_gettag.entities.json",
+    "requests": []
+}

@@ -1,0 +1,16 @@
+type Value = {
+    s?: String,
+    inner?: {
+        s?: String,
+    },
+};
+
+entity User;
+
+entity Document tags Value;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {},
+};

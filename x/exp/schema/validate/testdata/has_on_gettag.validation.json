@@ -1,0 +1,36 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy2`, unable to guarantee safety of access to optional attribute `s`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy2`, unable to guarantee safety of access to optional attribute `s`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unable to guarantee safety of access to optional attribute `s`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unable to guarantee safety of access to optional attribute `s`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}
