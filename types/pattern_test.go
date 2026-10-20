@@ -63,6 +63,32 @@ func TestPattern(t *testing.T) {
 	})
 }
 
+func TestPatternEqual(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		a, b Pattern
+		want bool
+	}{
+		{"empty", NewPattern(), NewPattern(), true},
+		{"emptyString", NewPattern(""), NewPattern(), true},
+		{"emptyStringBeforeWildcard", NewPattern("", Wildcard{}), NewPattern(Wildcard{}), true},
+		{"literal", NewPattern("foo"), NewPattern("fo", "o"), true},
+		{"differentLiteral", NewPattern("foo"), NewPattern("bar"), false},
+		{"wildcards", NewPattern("a", Wildcard{}, Wildcard{}, "b"), NewPattern("a", Wildcard{}, "b"), true},
+		{"wildcardPosition", NewPattern("a", Wildcard{}), NewPattern(Wildcard{}, "a"), false},
+		{"literalAndWildcard", NewPattern("*"), NewPattern(Wildcard{}), false},
+		{"differentLength", NewPattern("a", Wildcard{}), NewPattern("a", Wildcard{}, "b", Wildcard{}), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			testutil.Equals(t, tt.a.Equal(tt.b), tt.want)
+			testutil.Equals(t, tt.b.Equal(tt.a), tt.want)
+		})
+	}
+}
+
 func TestPatternMatch(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
