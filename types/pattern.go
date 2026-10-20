@@ -33,15 +33,9 @@ func NewPattern(components ...any) Pattern {
 	for _, c := range components {
 		switch v := c.(type) {
 		case string:
-			if len(comps) == 0 {
-				comps = []patternComponent{{Wildcard: false, Literal: ""}}
-			}
-			comps[len(comps)-1].Literal += string(v)
+			comps = appendLiteral(comps, v)
 		case String:
-			if len(comps) == 0 {
-				comps = []patternComponent{{Wildcard: false, Literal: ""}}
-			}
-			comps[len(comps)-1].Literal += string(v)
+			comps = appendLiteral(comps, string(v))
 		case Wildcard:
 			if len(comps) == 0 || comps[len(comps)-1].Literal != "" {
 				comps = append(comps, patternComponent{Wildcard: true, Literal: ""})
@@ -51,6 +45,17 @@ func NewPattern(components ...any) Pattern {
 		}
 	}
 	return Pattern{comps: comps}
+}
+
+func appendLiteral(comps []patternComponent, s string) []patternComponent {
+	if s == "" {
+		return comps
+	}
+	if len(comps) == 0 {
+		return []patternComponent{{Literal: s}}
+	}
+	comps[len(comps)-1].Literal += s
+	return comps
 }
 
 func (p Pattern) MarshalCedar() []byte {
