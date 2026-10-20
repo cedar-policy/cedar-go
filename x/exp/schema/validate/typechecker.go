@@ -855,7 +855,7 @@ func (v *Validator) typeOfAccess(env *requestEnv, n ast.NodeTypeAccess, caps cap
 	if !attrType.required {
 		varName := exprVarName(n.Arg)
 		if varName == "" || !caps.has(capability{varName: varName, attr: n.Value}) {
-			errs = append(errs, v.unsafeOptionalAccessError(env, t, n.Value, exprVarName(n.Arg)))
+			errs = append(errs, v.unsafeOptionalAccessError(env, n, t, caps))
 		}
 	}
 
@@ -906,27 +906,44 @@ func (v *Validator) attrNotFoundError(env *requestEnv, t cedarType, attr types.S
 	return fmt.Errorf("attribute `%s` on entity types %s not found", attr, joinComma(names))
 }
 
-// unsafeOptionalAccessError formats the "unsafe optional access" error matching Rust Cedar's format.
-func (v *Validator) unsafeOptionalAccessError(env *requestEnv, t cedarType, attr types.String, varName types.String) error {
-	if _, ok := t.(typeRecord); ok {
-		// Context attribute - include path and action
-		fullPath := string(attr)
-		if varName != "" && varName != "context" {
-			// nested path like context.session.token
-			fullPath = string(varName)[len("context."):] + "." + string(attr)
+// unsafeOptionalAccessError formats the "unsafe optional access" error matching
+// Rust Cedar's format. Like Rust's AttributeAccess, it follows the access back
+// through record attribute accesses to the nearest entity-typed expression or
+// to context, collecting the attribute path on the way. Any other target, such
+// as a record-typed tag, is reported by the path alone. t is the type of n.Arg.
+func (v *Validator) unsafeOptionalAccessError(env *requestEnv, n ast.NodeTypeAccess, t cedarType, caps capabilitySet) error {
+	attrs := []string{string(n.Value)}
+	expr := n.Arg
+	for {
+		if te, ok := t.(typeEntity); ok {
+			if len(te.lub.elements) == 1 {
+				return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity type `%s`", attrPath(attrs), te.lub.elements[0])
+			}
+			names := make([]string, len(te.lub.elements))
+			for i, et := range te.lub.elements {
+				names[i] = fmt.Sprintf("`%s`", et)
+			}
+			return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity types %s", attrPath(attrs), joinComma(names))
 		}
-		return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` in context for %s", fullPath, env.actionUID)
+		if nd, ok := expr.(ast.NodeTypeVariable); ok && nd.Name == "context" {
+			return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` in context for %s", attrPath(attrs), env.actionUID)
+		}
+		nd, ok := expr.(ast.NodeTypeAccess)
+		if !ok {
+			return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s`", attrPath(attrs))
+		}
+		attrs = append(attrs, string(nd.Value))
+		expr = nd.Arg
+		t, _, _ = v.typeOfExpr(env, expr, caps)
 	}
-	// Must be entity type (caller guarantees record or entity via isEntityOrRecordType check)
-	te := t.(typeEntity)
-	if len(te.lub.elements) == 1 {
-		return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity type `%s`", attr, te.lub.elements[0])
-	}
-	names := make([]string, len(te.lub.elements))
-	for i, et := range te.lub.elements {
-		names[i] = fmt.Sprintf("`%s`", et)
-	}
-	return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity types %s", attr, joinComma(names))
+}
+
+// attrPath joins attribute names, collected from the innermost access outwards,
+// into a dotted path: ["token", "session"] becomes "session.token".
+func attrPath(attrs []string) string {
+	path := slices.Clone(attrs)
+	slices.Reverse(path)
+	return strings.Join(path, ".")
 }
 
 // formatEntityAttrPath formats a nested entity attribute path.
