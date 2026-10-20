@@ -20,6 +20,20 @@ func TestPattern(t *testing.T) {
 		pattern2 := NewPattern(String("foobar"))
 		testutil.Equals(t, pattern1, pattern2)
 	})
+	t.Run("empty literal", func(t *testing.T) {
+		t.Parallel()
+		pattern := NewPattern(String(""))
+		testutil.Equals(t, pattern, NewPattern())
+		testutil.Equals(t, string(pattern.MarshalCedar()), `""`)
+		testutil.JSONMarshalsTo(t, pattern, "[]")
+	})
+	t.Run("wildcard after empty literal", func(t *testing.T) {
+		t.Parallel()
+		pattern := NewPattern(String(""), Wildcard{})
+		testutil.Equals(t, pattern, NewPattern(Wildcard{}))
+		testutil.Equals(t, string(pattern.MarshalCedar()), `"*"`)
+		testutil.JSONMarshalsTo(t, pattern, `["Wildcard"]`)
+	})
 	t.Run("panicOnNil", func(t *testing.T) {
 		t.Parallel()
 		testutil.Panic(t, func() {
@@ -226,8 +240,8 @@ func TestPatternJSON(t *testing.T) {
 			"empty string literal",
 			`[{"Literal":""}]`,
 			testutil.OK,
-			NewPattern(String("")),
-			true,
+			NewPattern(),
+			false,
 		},
 		{
 			"wildcard then empty string literal",
