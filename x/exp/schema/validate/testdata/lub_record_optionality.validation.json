@@ -1,0 +1,90 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": true,
+    "strictErrors": [
+      "the types {inner: {a?: Long,},} and {inner: {a: Long,},} are not compatible",
+      "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible",
+      "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible",
+      "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible",
+      "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible",
+      "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible",
+      "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible",
+      "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible",
+      "the types {opt?: Long,req: Long,} and {req: Long,} are not compatible"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible"
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible"
+        ]
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {inner: {a?: Long,},} and {inner: {a: Long,},} are not compatible"
+        ]
+      },
+      "policy6": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy7": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {opt?: Long,req: Long,} and {req: Long,} are not compatible"
+        ]
+      },
+      "policy8": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible"
+        ]
+      },
+      "policy9": {
+        "strict": false,
+        "permissive": true,
+        "strictErrors": [
+          "the types {opt?: Long,req: Long,} and {opt: Long,req: Long,} are not compatible"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}
