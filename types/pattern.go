@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/cedar-policy/cedar-go/internal/rust"
@@ -56,6 +57,11 @@ func appendLiteral(comps []patternComponent, s string) []patternComponent {
 	}
 	comps[len(comps)-1].Literal += s
 	return comps
+}
+
+// Equal reports whether p and other are the same pattern.
+func (p Pattern) Equal(other Pattern) bool {
+	return slices.Equal(p.comps, other.comps)
 }
 
 func (p Pattern) MarshalCedar() []byte {

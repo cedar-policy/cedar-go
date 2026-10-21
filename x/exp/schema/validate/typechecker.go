@@ -779,20 +779,11 @@ func (v *Validator) typeOfHas(env *requestEnv, n ast.NodeTypeHas, caps capabilit
 
 	resultType := v.hasResultType(t, n.Value)
 
-	if _, isBool := resultType.(typeBool); isBool {
-		if varName := exprVarName(n.Arg); varName != "" {
-			if caps.has(capability{varName: varName, attr: n.Value}) {
-				resultType = typeTrue{}
-			}
-		}
+	if _, isBool := resultType.(typeBool); isBool && caps.hasAttribute(n.Arg, n.Value) {
+		resultType = typeTrue{}
 	}
 
-	newCaps := caps
-	if varName := exprVarName(n.Arg); varName != "" {
-		newCaps = caps.add(capability{varName: varName, attr: n.Value})
-	}
-
-	return resultType, newCaps, nil
+	return resultType, caps.addAttribute(n.Arg, n.Value), nil
 }
 
 func (v *Validator) hasResultType(t cedarType, attr types.String) cedarType {
@@ -852,11 +843,8 @@ func (v *Validator) typeOfAccess(env *requestEnv, n ast.NodeTypeAccess, caps cap
 	}
 
 	// Check if the attribute is optional and requires a `has` guard
-	if !attrType.required {
-		varName := exprVarName(n.Arg)
-		if varName == "" || !caps.has(capability{varName: varName, attr: n.Value}) {
-			errs = append(errs, v.unsafeOptionalAccessError(env, t, n.Value, exprVarName(n.Arg)))
-		}
+	if !attrType.required && !caps.hasAttribute(n.Arg, n.Value) {
+		errs = append(errs, v.unsafeOptionalAccessError(env, n, t, caps))
 	}
 
 	// Tag the result with entity source when accessing entity attributes that return records
@@ -906,27 +894,44 @@ func (v *Validator) attrNotFoundError(env *requestEnv, t cedarType, attr types.S
 	return fmt.Errorf("attribute `%s` on entity types %s not found", attr, joinComma(names))
 }
 
-// unsafeOptionalAccessError formats the "unsafe optional access" error matching Rust Cedar's format.
-func (v *Validator) unsafeOptionalAccessError(env *requestEnv, t cedarType, attr types.String, varName types.String) error {
-	if _, ok := t.(typeRecord); ok {
-		// Context attribute - include path and action
-		fullPath := string(attr)
-		if varName != "" && varName != "context" {
-			// nested path like context.session.token
-			fullPath = string(varName)[len("context."):] + "." + string(attr)
+// unsafeOptionalAccessError formats the "unsafe optional access" error matching
+// Rust Cedar's format. Like Rust's AttributeAccess, it follows the access back
+// through record attribute accesses to the nearest entity-typed expression or
+// to context, collecting the attribute path on the way. Any other target, such
+// as a record-typed tag, is reported by the path alone. t is the type of n.Arg.
+func (v *Validator) unsafeOptionalAccessError(env *requestEnv, n ast.NodeTypeAccess, t cedarType, caps capabilitySet) error {
+	attrs := []string{string(n.Value)}
+	expr := n.Arg
+	for {
+		if te, ok := t.(typeEntity); ok {
+			if len(te.lub.elements) == 1 {
+				return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity type `%s`", attrPath(attrs), te.lub.elements[0])
+			}
+			names := make([]string, len(te.lub.elements))
+			for i, et := range te.lub.elements {
+				names[i] = fmt.Sprintf("`%s`", et)
+			}
+			return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity types %s", attrPath(attrs), joinComma(names))
 		}
-		return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` in context for %s", fullPath, env.actionUID)
+		if nd, ok := expr.(ast.NodeTypeVariable); ok && nd.Name == "context" {
+			return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` in context for %s", attrPath(attrs), env.actionUID)
+		}
+		nd, ok := expr.(ast.NodeTypeAccess)
+		if !ok {
+			return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s`", attrPath(attrs))
+		}
+		attrs = append(attrs, string(nd.Value))
+		expr = nd.Arg
+		t, _, _ = v.typeOfExpr(env, expr, caps)
 	}
-	// Must be entity type (caller guarantees record or entity via isEntityOrRecordType check)
-	te := t.(typeEntity)
-	if len(te.lub.elements) == 1 {
-		return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity type `%s`", attr, te.lub.elements[0])
-	}
-	names := make([]string, len(te.lub.elements))
-	for i, et := range te.lub.elements {
-		names[i] = fmt.Sprintf("`%s`", et)
-	}
-	return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity types %s", attr, joinComma(names))
+}
+
+// attrPath joins attribute names, collected from the innermost access outwards,
+// into a dotted path: ["token", "session"] becomes "session.token".
+func attrPath(attrs []string) string {
+	path := slices.Clone(attrs)
+	slices.Reverse(path)
+	return strings.Join(path, ".")
 }
 
 // formatEntityAttrPath formats a nested entity attribute path.
@@ -1008,15 +1013,7 @@ func (v *Validator) typeOfHasTag(env *requestEnv, n ast.NodeTypeHasTag, caps cap
 		}
 	}
 
-	newCaps := caps
-	if varName := exprVarName(n.Left); varName != "" {
-		tagKey := tagCapabilityKey(n.Right)
-		if tagKey != "" {
-			newCaps = caps.add(capability{varName: varName, attr: types.String("__tag:" + tagKey)})
-		}
-	}
-
-	return typeBool{}, newCaps, nil
+	return typeBool{}, caps.addTag(n.Left, n.Right), nil
 }
 
 func (v *Validator) typeOfGetTag(env *requestEnv, n ast.NodeTypeGetTag, caps capabilitySet) (cedarType, capabilitySet, error) {
@@ -1059,13 +1056,7 @@ func (v *Validator) typeOfGetTag(env *requestEnv, n ast.NodeTypeGetTag, caps cap
 		}
 	}
 
-	varName := exprVarName(n.Left)
-	tagKey := tagCapabilityKey(n.Right)
-	hasCapability := varName != "" && tagKey != "" && caps.has(capability{varName: varName, attr: types.String("__tag:" + tagKey)})
-
-	if hasCapability {
-		// Capability is only set by hasTag when entity supports tags
-	} else {
+	if !caps.hasTag(n.Left, n.Right) {
 		rewrittenTagExpr := rewriteConstITE(n.Right)
 		tagExpr := parser.MarshalExpr(rewrittenTagExpr)
 
@@ -1352,18 +1343,6 @@ func isEntityOrSetOfEntity(t cedarType) bool {
 	return false
 }
 
-func exprVarName(n ast.IsNode) types.String {
-	if nd, ok := n.(ast.NodeTypeVariable); ok {
-		return nd.Name
-	}
-	if nd, ok := n.(ast.NodeTypeAccess); ok {
-		if parent := exprVarName(nd.Arg); parent != "" {
-			return parent + "." + nd.Value
-		}
-	}
-	return ""
-}
-
 func exprContainsVariable(n ast.IsNode, target types.String) bool {
 	found := false
 	ast.Inspect(ast.NewNode(n), func(node ast.IsNode) bool {
@@ -1532,16 +1511,4 @@ func (v *Validator) exprToActionEUIDs(env *requestEnv, n ast.IsNode) []types.Ent
 func (v *Validator) isActionInSet(action types.EntityUID, targets []types.EntityUID) bool {
 	descendants := v.getActionsInSet(targets)
 	return slices.Contains(descendants, action)
-}
-
-func tagCapabilityKey(n ast.IsNode) types.String {
-	nv, ok := n.(ast.NodeValue)
-	if !ok {
-		return ""
-	}
-	s, ok := nv.Value.(types.String)
-	if !ok {
-		return ""
-	}
-	return s
 }
