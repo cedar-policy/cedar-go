@@ -1,6 +1,10 @@
 package types
 
 import (
+	"encoding/binary"
+	"hash/fnv"
+	"maps"
+	"slices"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -17,6 +21,28 @@ func TestRecordInternal(t *testing.T) {
 			m1 := NewRecord(RecordMap{"foo": Long(42), "bar": Long(1337)})
 			m2 := NewRecord(RecordMap{"bar": Long(1337), "foo": Long(42)})
 			testutil.Equals(t, m1.hash(), m2.hash())
+		})
+
+		t.Run("matches hash/fnv", func(t *testing.T) {
+			t.Parallel()
+			// The reference computation NewRecord used before it hashed inline.
+			reference := func(m RecordMap) uint64 {
+				keys := slices.Sorted(maps.Keys(m))
+				h := fnv.New64()
+				for _, k := range keys {
+					_, _ = h.Write([]byte(k))
+					_ = binary.Write(h, binary.LittleEndian, m[k].hash())
+				}
+				return h.Sum64()
+			}
+			for _, m := range []RecordMap{
+				{"a": Long(1)},
+				{"foo": Long(42), "bar": Long(1337)},
+				{"": True, "名前": String("値"), "uid": NewEntityUID("User", "bob")},
+				{"nested": NewRecord(RecordMap{"x": NewSet(Long(1), Long(-1))})},
+			} {
+				testutil.Equals(t, NewRecord(m).hash(), reference(m))
+			}
 		})
 
 		t.Run("empty record", func(t *testing.T) {
