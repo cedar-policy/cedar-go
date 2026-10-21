@@ -148,10 +148,23 @@ func (r *Record) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// MarshalJSON marshals the Record into JSON, the marshaller uses the explicit
+var reservedKeys = [...]String{"__entity", "__extn"}
+
+// MarshalJSON marshals the Record into JSON, the marshaler uses the explicit
 // JSON form for all the values in the Record. Keys are written in a bytewise
 // sorted order.
+//
+// As in Rust Cedar, it's an error to marshal a Record that has
+// "__entity" or "__extn" as a key, even alongside other keys, because a
+// Record with only one of them would be decoded as an escaped value instead.
+// Arguably, we should prevent Records like this from existing at all, but unfortunately
+// NewRecord is infallible and panicking would be a risky (albeit low-risk) change.
 func (r Record) MarshalJSON() ([]byte, error) {
+	for _, k := range reservedKeys {
+		if _, ok := r.m[k]; ok {
+			return nil, fmt.Errorf("%w %q", errJSONReservedKey, k)
+		}
+	}
 	return json.Marshal(r.m, json.Deterministic(true))
 }
 

@@ -989,3 +989,15 @@ func TestMarshalExtensions(t *testing.T) {
 		})
 	}
 }
+
+// A Record in a Value node is written as a value, so its JSON could be
+// read back as an escaped value rather than a Record.
+func TestMarshalReservedKey(t *testing.T) {
+	t.Parallel()
+	rec := types.NewRecord(types.RecordMap{"__entity": types.NewRecord(types.RecordMap{
+		"type": types.String("User"), "id": types.String("bob"),
+	})})
+	p := (*Policy)(ast.Permit().When(ast.Context().Access("s").Equal(ast.Value(rec))))
+	_, err := p.MarshalJSON()
+	testutil.Error(t, err)
+}

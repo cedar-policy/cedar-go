@@ -23,54 +23,55 @@ func AssertValue(t *testing.T, got, want Value) {
 func TestJSON_Value(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name string
-		in   string
-		want Value
-		err  error
+		name         string
+		in           string
+		want         Value
+		unmarshalErr error
+		marshalErr   error
 	}{
-		{"entity-likeRecord", `{ "type": "User", "id": "alice" }`, NewRecord(RecordMap{"type": String("User"), "id": String("alice")}), nil},
-		{"explicitEntity", `{ "__entity": { "type": "User", "id": "alice" } }`, EntityUID{Type: "User", ID: "alice"}, nil},
-		{"explicitEntityExtraField", `{ "__entity": { "type": "User", "id": "alice" }, "extra": "stuff" }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": String("User"), "id": String("alice")}), "extra": String("stuff")}), nil},
-		{"explicitLongEntity", `{ "__entity": { "type": "User::External", "id": "alice" } }`, EntityUID{Type: "User::External", ID: "alice"}, nil},
-		{"invalidJSON", `!@#$`, zeroValue(), errJSONDecode},
-		{"numericOverflow", "12341234123412341234", zeroValue(), errJSONLongOutOfRange},
-		{"unsupportedNull", "null", zeroValue(), errJSONUnsupportedType},
-		{"unsupportedNullInSet", "[1, null]", zeroValue(), errJSONUnsupportedType},
-		{"unsupportedNullInRecord", `{"a": null}`, zeroValue(), errJSONUnsupportedType},
-		{"explicitIP", `{ "__extn": { "fn": "ip", "arg": "222.222.222.7" } }`, testutil.Must(ParseIPAddr("222.222.222.7")), nil},
-		{"explicitSubnet", `{ "__extn": { "fn": "ip", "arg": "192.168.0.0/16" } }`, testutil.Must(ParseIPAddr("192.168.0.0/16")), nil},
-		{"explicitDecimal", `{ "__extn": { "fn": "decimal", "arg": "33.57" } }`, testutil.Must(ParseDecimal("33.57")), nil},
-		{"explicitDatetime", `{ "__extn": { "fn": "datetime", "arg": "1970-01-01T00:00:01Z" } }`, testutil.Must(ParseDatetime("1970-01-01T00:00:01Z")), nil},
-		{"explicitDuration", `{ "__extn": { "fn": "duration", "arg": "1d12h30m30s500ms" } }`, testutil.Must(ParseDuration("1d12h30m30s500ms")), nil},
-		{"invalidExtension", `{ "__extn": { "fn": "asdf", "arg": "blah" } }`, zeroValue(), errJSONInvalidExtn},
-		{"badIP", `{ "__extn": { "fn": "ip", "arg": "bad" } }`, zeroValue(), errIP},
-		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), errDecimal},
-		{"badDatetime", `{ "__extn": { "fn": "datetime", "arg": "bad" } }`, zeroValue(), errDatetime},
-		{"badDuration", `{ "__extn": { "fn": "duration", "arg": "bad" } }`, zeroValue(), errDuration},
-		{"extnArgNotString", `{ "__extn": { "fn": "ip", "arg": 1 } }`, zeroValue(), errJSONInvalidExtn},
-		{"extnArgExtn", `{ "__extn": { "fn": "ip", "arg": { "__extn": { "fn": "ip", "arg": "1.2.3.4" } } } }`, zeroValue(), errJSONInvalidExtn},
-		{"invalidExtensionArgNotString", `{ "__extn": { "fn": "asdf", "arg": 1 } }`, zeroValue(), errJSONInvalidExtn},
-		{"extnFnNotString", `{ "__extn": { "fn": 1, "arg": "1.2.3.4" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"fn": Long(1), "arg": String("1.2.3.4")})}), nil},
-		{"entityNotRecord", `{ "__entity": 1 }`, NewRecord(RecordMap{"__entity": Long(1)}), nil},
-		{"entityMissingType", `{ "__entity": { "id": "alice" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"id": String("alice")})}), nil},
-		{"entityMissingID", `{ "__entity": { "type": "User" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": String("User")})}), nil},
-		{"entityTypeNotString", `{ "__entity": { "type": 1, "id": "alice" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": Long(1), "id": String("alice")})}), nil},
-		{"entityIDNotString", `{ "__entity": { "type": "User", "id": 1 } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": String("User"), "id": Long(1)})}), nil},
-		{"entityExtraInnerKey", `{ "__entity": { "type": "User", "id": "alice", "x": 1 } }`, EntityUID{Type: "User", ID: "alice"}, nil},
-		{"extnNotRecord", `{ "__extn": 1 }`, NewRecord(RecordMap{"__extn": Long(1)}), nil},
-		{"extnMissingFn", `{ "__extn": { "arg": "1.2.3.4" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"arg": String("1.2.3.4")})}), nil},
-		{"extnMissingArg", `{ "__extn": { "fn": "ip" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"fn": String("ip")})}), nil},
-		{"set", `[42]`, NewSet(Long(42)), nil},
-		{"record", `{"a":"b"}`, NewRecord(RecordMap{"a": String("b")}), nil},
-		{"bool", `false`, Boolean(false), nil},
-		{"surroundingWhitespace", " [42] ", NewSet(Long(42)), nil},
-		{"trailingData", `[42] 43`, zeroValue(), errJSONDecode},
-		{"duplicateKey", `{"a":"b","a":"c"}`, zeroValue(), errJSONDecode},
-		{"nestedDuplicateKey", `{"a":{"b":1,"b":2}}`, zeroValue(), errJSONDecode},
-		{"invalidUTF8", "\"\xff\"", zeroValue(), errJSONDecode},
-		{"invalidUTF8Key", "{\"\xff\":1}", zeroValue(), errJSONDecode},
-		{"nonIntegerNumber", "1.5", zeroValue(), errJSONLongOutOfRange},
-		{"negativeZero", "-0", zeroValue(), errJSONLongOutOfRange},
+		{"entity-likeRecord", `{ "type": "User", "id": "alice" }`, NewRecord(RecordMap{"type": String("User"), "id": String("alice")}), nil, nil},
+		{"explicitEntity", `{ "__entity": { "type": "User", "id": "alice" } }`, EntityUID{Type: "User", ID: "alice"}, nil, nil},
+		{"explicitEntityExtraField", `{ "__entity": { "type": "User", "id": "alice" }, "extra": "stuff" }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": String("User"), "id": String("alice")}), "extra": String("stuff")}), nil, errJSONReservedKey},
+		{"explicitLongEntity", `{ "__entity": { "type": "User::External", "id": "alice" } }`, EntityUID{Type: "User::External", ID: "alice"}, nil, nil},
+		{"invalidJSON", `!@#$`, zeroValue(), errJSONDecode, nil},
+		{"numericOverflow", "12341234123412341234", zeroValue(), errJSONLongOutOfRange, nil},
+		{"unsupportedNull", "null", zeroValue(), errJSONUnsupportedType, nil},
+		{"unsupportedNullInSet", "[1, null]", zeroValue(), errJSONUnsupportedType, nil},
+		{"unsupportedNullInRecord", `{"a": null}`, zeroValue(), errJSONUnsupportedType, nil},
+		{"explicitIP", `{ "__extn": { "fn": "ip", "arg": "222.222.222.7" } }`, testutil.Must(ParseIPAddr("222.222.222.7")), nil, nil},
+		{"explicitSubnet", `{ "__extn": { "fn": "ip", "arg": "192.168.0.0/16" } }`, testutil.Must(ParseIPAddr("192.168.0.0/16")), nil, nil},
+		{"explicitDecimal", `{ "__extn": { "fn": "decimal", "arg": "33.57" } }`, testutil.Must(ParseDecimal("33.57")), nil, nil},
+		{"explicitDatetime", `{ "__extn": { "fn": "datetime", "arg": "1970-01-01T00:00:01Z" } }`, testutil.Must(ParseDatetime("1970-01-01T00:00:01Z")), nil, nil},
+		{"explicitDuration", `{ "__extn": { "fn": "duration", "arg": "1d12h30m30s500ms" } }`, testutil.Must(ParseDuration("1d12h30m30s500ms")), nil, nil},
+		{"invalidExtension", `{ "__extn": { "fn": "asdf", "arg": "blah" } }`, zeroValue(), errJSONInvalidExtn, nil},
+		{"badIP", `{ "__extn": { "fn": "ip", "arg": "bad" } }`, zeroValue(), errIP, nil},
+		{"badDecimal", `{ "__extn": { "fn": "decimal", "arg": "bad" } }`, zeroValue(), errDecimal, nil},
+		{"badDatetime", `{ "__extn": { "fn": "datetime", "arg": "bad" } }`, zeroValue(), errDatetime, nil},
+		{"badDuration", `{ "__extn": { "fn": "duration", "arg": "bad" } }`, zeroValue(), errDuration, nil},
+		{"extnArgNotString", `{ "__extn": { "fn": "ip", "arg": 1 } }`, zeroValue(), errJSONInvalidExtn, nil},
+		{"extnArgExtn", `{ "__extn": { "fn": "ip", "arg": { "__extn": { "fn": "ip", "arg": "1.2.3.4" } } } }`, zeroValue(), errJSONInvalidExtn, nil},
+		{"invalidExtensionArgNotString", `{ "__extn": { "fn": "asdf", "arg": 1 } }`, zeroValue(), errJSONInvalidExtn, nil},
+		{"extnFnNotString", `{ "__extn": { "fn": 1, "arg": "1.2.3.4" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"fn": Long(1), "arg": String("1.2.3.4")})}), nil, errJSONReservedKey},
+		{"entityNotRecord", `{ "__entity": 1 }`, NewRecord(RecordMap{"__entity": Long(1)}), nil, errJSONReservedKey},
+		{"entityMissingType", `{ "__entity": { "id": "alice" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"id": String("alice")})}), nil, errJSONReservedKey},
+		{"entityMissingID", `{ "__entity": { "type": "User" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": String("User")})}), nil, errJSONReservedKey},
+		{"entityTypeNotString", `{ "__entity": { "type": 1, "id": "alice" } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": Long(1), "id": String("alice")})}), nil, errJSONReservedKey},
+		{"entityIDNotString", `{ "__entity": { "type": "User", "id": 1 } }`, NewRecord(RecordMap{"__entity": NewRecord(RecordMap{"type": String("User"), "id": Long(1)})}), nil, errJSONReservedKey},
+		{"entityExtraInnerKey", `{ "__entity": { "type": "User", "id": "alice", "x": 1 } }`, EntityUID{Type: "User", ID: "alice"}, nil, nil},
+		{"extnNotRecord", `{ "__extn": 1 }`, NewRecord(RecordMap{"__extn": Long(1)}), nil, errJSONReservedKey},
+		{"extnMissingFn", `{ "__extn": { "arg": "1.2.3.4" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"arg": String("1.2.3.4")})}), nil, errJSONReservedKey},
+		{"extnMissingArg", `{ "__extn": { "fn": "ip" } }`, NewRecord(RecordMap{"__extn": NewRecord(RecordMap{"fn": String("ip")})}), nil, errJSONReservedKey},
+		{"set", `[42]`, NewSet(Long(42)), nil, nil},
+		{"record", `{"a":"b"}`, NewRecord(RecordMap{"a": String("b")}), nil, nil},
+		{"bool", `false`, Boolean(false), nil, nil},
+		{"surroundingWhitespace", " [42] ", NewSet(Long(42)), nil, nil},
+		{"trailingData", `[42] 43`, zeroValue(), errJSONDecode, nil},
+		{"duplicateKey", `{"a":"b","a":"c"}`, zeroValue(), errJSONDecode, nil},
+		{"nestedDuplicateKey", `{"a":{"b":1,"b":2}}`, zeroValue(), errJSONDecode, nil},
+		{"invalidUTF8", "\"\xff\"", zeroValue(), errJSONDecode, nil},
+		{"invalidUTF8Key", "{\"\xff\":1}", zeroValue(), errJSONDecode, nil},
+		{"nonIntegerNumber", "1.5", zeroValue(), errJSONLongOutOfRange, nil},
+		{"negativeZero", "-0", zeroValue(), errJSONLongOutOfRange, nil},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -79,16 +80,20 @@ func TestJSON_Value(t *testing.T) {
 			var got Value
 			ptr := &got
 			err := UnmarshalJSON([]byte(tt.in), ptr)
-			testutil.ErrorIs(t, err, tt.err)
+			testutil.ErrorIs(t, err, tt.unmarshalErr)
 			AssertValue(t, got, tt.want)
-			if tt.err != nil {
+			if tt.unmarshalErr != nil {
 				return
 			}
 
 			// Now assert that when we Marshal/Unmarshal that value, we still
-			// have what we started with
+			// have what we started with, unless marshaling it is an expected
+			// error (e.g. marshaling reserved keys like __entity in a Record)
 			gotJSON, err := json.Marshal(ptr)
-			testutil.OK(t, err)
+			testutil.ErrorIs(t, err, tt.marshalErr)
+			if tt.marshalErr != nil {
+				return
+			}
 			var gotRetry Value
 			ptr = &gotRetry
 			err = UnmarshalJSON(gotJSON, ptr)
