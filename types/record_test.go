@@ -86,6 +86,12 @@ func TestRecord(t *testing.T) {
 				"bar": types.String("blah"),
 			}).String(),
 			`{"bar":"blah", "foo":true}`)
+		testutil.Equals(
+			t,
+			types.NewRecord(types.RecordMap{
+				"\x0b": types.Boolean(true),
+			}).String(),
+			`{"\u{b}":true}`)
 	})
 
 	t.Run("Len", func(t *testing.T) {
