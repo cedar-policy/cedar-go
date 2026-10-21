@@ -1,0 +1,24 @@
+entity Status enum ["active", "inactive"];
+entity User in [Status] {
+    status: Status,
+};
+entity Document;
+entity Tagged tags Status;
+
+action "view" appliesTo {
+    principal: User,
+    resource: Document,
+    context: {
+        required: Status,
+    },
+};
+
+action "check" appliesTo {
+    principal: Status,
+    resource: Document,
+};
+
+action "inspect" appliesTo {
+    principal: User,
+    resource: Status,
+};

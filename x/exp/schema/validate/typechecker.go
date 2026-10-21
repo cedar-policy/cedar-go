@@ -131,6 +131,9 @@ func (v *Validator) typeOfValue(val types.Value) (cedarType, error) {
 func (v *Validator) typeOfEntityUID(uid types.EntityUID) (cedarType, error) {
 	et := uid.Type
 	if v.isKnownEntityType(et) {
+		if err := v.checkEnumEntity(uid); err != nil {
+			return nil, err
+		}
 		return typeEntity{lub: singleEntityLUB(et)}, nil
 	}
 	if isActionEntity(et) {
