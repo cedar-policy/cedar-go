@@ -9,6 +9,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
+	"github.com/cedar-policy/cedar-go/internal/names"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
@@ -33,8 +34,8 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 		}
 		return ast.Scope{}.In(types.EntityUID(*s.Entity)), nil
 	case "is":
-		if s.EntityType == "" {
-			return nil, fmt.Errorf("missing entity_type")
+		if !names.IsName(s.EntityType) {
+			return nil, fmt.Errorf("invalid entity_type: %q", s.EntityType)
 		}
 		if s.In == nil {
 			return ast.Scope{}.Is(types.EntityType(s.EntityType)), nil
@@ -113,8 +114,8 @@ func (j isJSON) ToNode() (ast.Node, error) {
 	if err != nil {
 		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
-	if j.EntityType == "" {
-		return ast.Node{}, fmt.Errorf("missing entity_type")
+	if !names.IsName(j.EntityType) {
+		return ast.Node{}, fmt.Errorf("invalid entity_type: %q", j.EntityType)
 	}
 	if j.In != nil {
 		right, err := j.In.ToNode()
@@ -404,6 +405,9 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("unknown effect: %v", j.Effect)
 	}
 	for k, v := range j.Annotations {
+		if !names.IsAnyIdent(k) {
+			return fmt.Errorf("invalid annotation key: %q", k)
+		}
 		p.unwrap().Annotate(types.Ident(k), types.String(v))
 	}
 	var err error
