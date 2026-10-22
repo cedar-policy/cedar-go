@@ -140,7 +140,7 @@ If you're looking to integrate Cedar into a production system, please be sure th
 - `x/exp` - code in this directory is not subject to the semantic versioning constraints of the rest of the module and breaking changes may be made at any time.
 - Variadics may be added to functions that do not have them to expand the arguments of a function or method.
 - Concrete types may be replaced with compatible interfaces to expand the variety of arguments a function or method can take.
-- Backwards compatibility is maintained for all Go minor versions released within 6 months of a release of cedar-go.
+- Each cedar-go release supports the two most recent major versions of Go at the time of its release. A minor release of cedar-go may drop support for a Go version once the Go project no longer supports it.
 
 ## Security
 

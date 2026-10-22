@@ -3,11 +3,12 @@ package cedar
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"iter"
 	"maps"
 	"slices"
+
+	"github.com/go-json-experiment/json"
 
 	internaljson "github.com/cedar-policy/cedar-go/internal/json"
 	"github.com/cedar-policy/cedar-go/types"
@@ -110,13 +111,12 @@ func (p *PolicySet) MarshalCedar() []byte {
 //
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
 func (p *PolicySet) MarshalJSON() ([]byte, error) {
-	jsonPolicySet := internaljson.PolicySetJSON{
-		StaticPolicies: make(internaljson.PolicySet, len(p.policies)),
-	}
+	staticPolicies := make(internaljson.PolicySet, len(p.policies))
 	for k, v := range p.policies {
-		jsonPolicySet.StaticPolicies[string(k)] = (*internaljson.Policy)(v.ast)
+		staticPolicies[string(k)] = internaljson.Policy(*v.ast)
 	}
-	return json.Marshal(jsonPolicySet)
+	jsonPolicySet := internaljson.PolicySetJSON{StaticPolicies: &staticPolicies}
+	return json.Marshal(&jsonPolicySet)
 }
 
 // UnmarshalJSON parses and compiles a PolicySet in the JSON format specified by the [Cedar documentation].
@@ -128,10 +128,10 @@ func (p *PolicySet) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*p = PolicySet{
-		policies: make(PolicyMap, len(jsonPolicySet.StaticPolicies)),
+		policies: make(PolicyMap, len(*jsonPolicySet.StaticPolicies)),
 	}
-	for k, v := range jsonPolicySet.StaticPolicies {
-		p.policies[PolicyID(k)] = newPolicy((*ast.Policy)(v))
+	for k, v := range *jsonPolicySet.StaticPolicies {
+		p.policies[PolicyID(k)] = newPolicy((*ast.Policy)(&v))
 	}
 	return nil
 }

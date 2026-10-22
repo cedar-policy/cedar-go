@@ -1,10 +1,11 @@
 package json
 
 import (
-	"bytes"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"strings"
+
+	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
@@ -38,7 +39,10 @@ func (s *scopeJSON) ToPrincipalResourceNode() (isPrincipalResourceScopeNode, err
 		if s.In == nil {
 			return ast.Scope{}.Is(types.EntityType(s.EntityType)), nil
 		}
-		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), types.EntityUID(s.In.Entity)), nil
+		if s.In.Entity == nil {
+			return nil, fmt.Errorf(`missing or null entity in "in"`)
+		}
+		return ast.Scope{}.IsIn(types.EntityType(s.EntityType), types.EntityUID(*s.In.Entity)), nil
 	}
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
 }
@@ -88,7 +92,10 @@ func (j strJSON) ToNode(f func(a ast.Node, k types.String) ast.Node) (ast.Node, 
 	if err != nil {
 		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
-	return f(left, types.String(j.Attr)), nil
+	if j.Attr == nil {
+		return ast.Node{}, fmt.Errorf("missing or null attr")
+	}
+	return f(left, types.String(*j.Attr)), nil
 }
 func (j likeJSON) ToNode(f func(a ast.Node, k types.Pattern) ast.Node) (ast.Node, error) {
 	left, err := j.Left.ToNode()
@@ -96,7 +103,10 @@ func (j likeJSON) ToNode(f func(a ast.Node, k types.Pattern) ast.Node) (ast.Node
 		return ast.Node{}, fmt.Errorf("error in left: %w", err)
 	}
 
-	return f(left, j.Pattern), nil
+	if j.Pattern == nil {
+		return ast.Node{}, fmt.Errorf("missing or null pattern")
+	}
+	return f(left, *j.Pattern), nil
 }
 func (j isJSON) ToNode() (ast.Node, error) {
 	left, err := j.Left.ToNode()
@@ -145,9 +155,6 @@ func (j arrayJSON) ToNode() (ast.Node, error) {
 func (j recordJSON) ToNode() (ast.Node, error) {
 	var nodes ast.Pairs
 	for k, v := range j {
-		if v == nil {
-			return ast.Node{}, fmt.Errorf("error in record: null value for %q", k)
-		}
 		n, err := v.ToNode()
 		if err != nil {
 			return ast.Node{}, fmt.Errorf("error in record: %w", err)
@@ -157,28 +164,20 @@ func (j recordJSON) ToNode() (ast.Node, error) {
 	return ast.Record(nodes), nil
 }
 
-func (e extensionJSON) ToNode() (ast.Node, error) {
-	if len(e) != 1 {
-		return ast.Node{}, fmt.Errorf("unexpected number of extensions in node: %v", len(e))
-	}
-	var k string
-	var v arrayJSON
-	for k, v = range e {
-		_, _ = k, v
-	}
-	_, ok := extensions.ExtMap[types.Path(k)]
+func (e *extensionJSON) ToNode() (ast.Node, error) {
+	_, ok := extensions.ExtMap[types.Path(e.Name)]
 	if !ok {
-		return ast.Node{}, fmt.Errorf("`%v` is not a known extension function or method", k)
+		return ast.Node{}, fmt.Errorf("`%v` is not a known extension function or method", e.Name)
 	}
 	var argNodes []ast.Node
-	for _, n := range v {
+	for _, n := range e.Args {
 		node, err := n.ToNode()
 		if err != nil {
 			return ast.Node{}, fmt.Errorf("error in extension arg: %w", err)
 		}
 		argNodes = append(argNodes, node)
 	}
-	return ast.NewExtensionCall(types.Path(k), argNodes...), nil
+	return ast.NewExtensionCall(types.Path(e.Name), argNodes...), nil
 }
 
 func (n nodeJSON) ToNode() (ast.Node, error) {
@@ -275,33 +274,125 @@ func (n nodeJSON) ToNode() (ast.Node, error) {
 		return (*n.Record).ToNode()
 
 	// Any other method: lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	default:
+	case n.ExtensionCall != nil:
 		return n.ExtensionCall.ToNode()
+
+	default:
+		return ast.Node{}, errors.New("missing expression")
 	}
 }
 
-func (n *nodeJSON) UnmarshalJSON(b []byte) error {
-	decoder := json.NewDecoder(bytes.NewReader(b))
-	decoder.DisallowUnknownFields()
-
-	type nodeJSONAlias nodeJSON
-	if err := decoder.Decode((*nodeJSONAlias)(n)); err == nil {
-		return nil
-	} else if !strings.HasPrefix(err.Error(), "json: unknown field") {
+// UnmarshalJSONFrom decodes a JSONExpr object, which must have exactly one
+// member whose name selects the kind of expression. Any name that isn't a
+// known operator is treated as an extension function or method call where the
+// "key is treated as the name of an extension function or method. The value
+// must be a JSON array of values, each of which is itself a JsonExpr object."
+func (n *nodeJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	var newNode nodeJSON
+	if tok, err := dec.ReadToken(); err != nil {
+		return err
+	} else if tok.Kind() != jsontext.KindBeginObject {
+		return fmt.Errorf("expression must be an object, got %v", tok.Kind())
+	}
+	if dec.PeekKind() == jsontext.KindEndObject {
+		return errors.New("expression object must have exactly one member, got none")
+	}
+	tok, err := dec.ReadToken()
+	if err != nil {
 		return err
 	}
-
-	// If an unknown field was parsed, the spec tells us to treat it as an extension method:
-	// > Any other key
-	// > This key is treated as the name of an extension function or method. The value must
-	// > be a JSON array of values, each of which is itself an JsonExpr object. Note that for
-	// > method calls, the method receiver is the first argument.
-	return json.Unmarshal(b, &n.ExtensionCall)
+	name := tok.String()
+	if dec.PeekKind() == jsontext.KindNull {
+		return fmt.Errorf("expression member %q must not be null", name)
+	}
+	// This is unfortunate, but somewhat cleanly enforces the single member
+	// constraint without unmarshaling multiple times. We might consider a
+	// sumtype interface-based approach to implementing nodeJSON in the future,
+	// which might be tidier than this approach of duplicating JSON name tags.
+	fieldMapping := map[string]any{
+		"Value":        &newNode.Value,
+		"Var":          &newNode.Var,
+		"!":            &newNode.Not,
+		"neg":          &newNode.Negate,
+		"isEmpty":      &newNode.IsEmpty,
+		"==":           &newNode.Equals,
+		"!=":           &newNode.NotEquals,
+		"in":           &newNode.In,
+		"<":            &newNode.LessThan,
+		"<=":           &newNode.LessThanOrEqual,
+		">":            &newNode.GreaterThan,
+		">=":           &newNode.GreaterThanOrEqual,
+		"&&":           &newNode.And,
+		"||":           &newNode.Or,
+		"+":            &newNode.Add,
+		"-":            &newNode.Subtract,
+		"*":            &newNode.Multiply,
+		"contains":     &newNode.Contains,
+		"containsAll":  &newNode.ContainsAll,
+		"containsAny":  &newNode.ContainsAny,
+		"getTag":       &newNode.GetTag,
+		"hasTag":       &newNode.HasTag,
+		".":            &newNode.Access,
+		"has":          &newNode.Has,
+		"is":           &newNode.Is,
+		"like":         &newNode.Like,
+		"if-then-else": &newNode.IfThenElse,
+		"Set":          &newNode.Set,
+		"Record":       &newNode.Record,
+	}
+	if field, ok := fieldMapping[name]; ok {
+		err = json.UnmarshalDecode(dec, field, json.RejectUnknownMembers(true))
+	} else {
+		// If not a known field, the spec tells us to treat this as extension
+		// function or method call.
+		var args arrayJSON
+		err = json.UnmarshalDecode(dec, &args, json.RejectUnknownMembers(true))
+		newNode.ExtensionCall = &extensionJSON{Name: name, Args: args}
+	}
+	if err != nil {
+		return err
+	}
+	if tok, err := dec.ReadToken(); err != nil {
+		return err
+	} else if tok.Kind() != jsontext.KindEndObject {
+		return errors.New("expression object must have exactly one member")
+	}
+	*n = newNode
+	return nil
 }
 
+// unmarshalNonNull decodes the next value from dec into v, rejecting null.
+func unmarshalNonNull[T any](dec *jsontext.Decoder, v *T) error {
+	if dec.PeekKind() == jsontext.KindNull {
+		return errors.New("must not be null")
+	}
+	return json.UnmarshalDecode(dec, v)
+}
+
+func (a *annotationsJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNonNull(dec, (*map[string]string)(a))
+}
+
+func (c *conditionsJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNonNull(dec, (*[]conditionJSON)(c))
+}
+
+func (e *scopeEntitiesJSON) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNonNull(dec, (*[]types.ImplicitlyMarshaledEntityUID)(e))
+}
+
+// UnmarshalJSON decodes a policy, rejecting unknown members everywhere. Rust
+// Cedar also rejects them in the policy object, its conditions, expressions,
+// and "is" scopes, but ignores them in its other scopes and in the "in" object
+// of an "is" scope, e.g. {"op":"All","x":1}. That looks like a side effect of
+// how serde applies deny_unknown_fields to enums rather than a deliberate
+// choice, so cedar-go is stricter there.
 func (p *Policy) UnmarshalJSON(b []byte) error {
+	if jsontext.Value(b).Kind() == jsontext.KindNull {
+		return errors.New("policy must not be null")
+	}
 	var j policyJSON
-	if err := json.Unmarshal(b, &j); err != nil {
+	if err := json.Unmarshal(b, &j, json.RejectUnknownMembers(true)); err != nil {
 		return fmt.Errorf("error unmarshalling json: %w", err)
 	}
 	switch j.Effect {

@@ -3,7 +3,11 @@ package json
 import (
 	"encoding/json"
 	"net/netip"
+	"strings"
 	"testing"
+	"time"
+
+	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
@@ -88,85 +92,91 @@ func TestUnmarshalJSON(t *testing.T) {
 
 		{
 			"permit",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit(),
 			testutil.OK,
 		},
 		{
 			"forbid",
-			`{"effect":"forbid","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"forbid","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Forbid(),
 			testutil.OK,
 		},
 		{
 			"annotations",
-			`{"annotations":{"key":"value"},"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"annotations":{"key":"value"},"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().Annotate("key", "value"),
 			testutil.OK,
 		},
 		{
 			"principalEq",
-			`{"effect":"permit","principal":{"op":"==","entity":{"type":"T","id":"42"}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"==","entity":{"type":"T","id":"42"}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().PrincipalEq(types.NewEntityUID("T", "42")),
 			testutil.OK,
 		},
 		{
 			"principalIn",
-			`{"effect":"permit","principal":{"op":"in","entity":{"type":"T","id":"42"}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"in","entity":{"type":"T","id":"42"}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().PrincipalIn(types.NewEntityUID("T", "42")),
 			testutil.OK,
 		},
 		{
 			"principalIs",
-			`{"effect":"permit","principal":{"op":"is","entity_type":"T"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().PrincipalIs(types.EntityType("T")),
 			testutil.OK,
 		},
 		{
 			"principalIsIn",
-			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"}}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"}}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().PrincipalIsIn(types.EntityType("T"), types.NewEntityUID("P", "42")),
 			testutil.OK,
 		},
 		{
 			"actionEq",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"==","entity":{"type":"T","id":"42"}},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"==","entity":{"type":"T","id":"42"}},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().ActionEq(types.NewEntityUID("T", "42")),
 			testutil.OK,
 		},
 		{
 			"actionIn",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entity":{"type":"T","id":"42"}},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entity":{"type":"T","id":"42"}},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().ActionIn(types.NewEntityUID("T", "42")),
 			testutil.OK,
 		},
 		{
+			"actionInEmptySet",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[]},"resource":{"op":"All"},"conditions":[]}`,
+			ast.Permit().ActionInSet([]types.EntityUID{}...),
+			testutil.OK,
+		},
+		{
 			"actionInSet",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"T","id":"42"},{"type":"T","id":"43"}]},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"T","id":"42"},{"type":"T","id":"43"}]},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().ActionInSet(types.NewEntityUID("T", "42"), types.NewEntityUID("T", "43")),
 			testutil.OK,
 		},
 		{
 			"resourceEq",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"==","entity":{"type":"T","id":"42"}}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"==","entity":{"type":"T","id":"42"}},"conditions":[]}`,
 			ast.Permit().ResourceEq(types.NewEntityUID("T", "42")),
 			testutil.OK,
 		},
 		{
 			"resourceIn",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"in","entity":{"type":"T","id":"42"}}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"in","entity":{"type":"T","id":"42"}},"conditions":[]}`,
 			ast.Permit().ResourceIn(types.NewEntityUID("T", "42")),
 			testutil.OK,
 		},
 		{
 			"resourceIs",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":"T"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":"T"},"conditions":[]}`,
 			ast.Permit().ResourceIs(types.EntityType("T")),
 			testutil.OK,
 		},
 		{
 			"resourceIsIn",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"}}}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"}}},"conditions":[]}`,
 			ast.Permit().ResourceIsIn(types.EntityType("T"), types.NewEntityUID("P", "42")),
 			testutil.OK,
 		},
@@ -459,6 +469,53 @@ func TestUnmarshalJSON(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			"decimalValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"decimal","arg":"42.24"}}}}]}`,
+			ast.Permit().When(ast.Value(mustParseDecimal("42.24"))),
+			testutil.OK,
+		},
+		{
+			"ipValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"ip","arg":"10.0.0.42/8"}}}}]}`,
+			ast.Permit().When(ast.IPAddr(mustParseIPAddr("10.0.0.42/8"))),
+			testutil.OK,
+		},
+		{
+			"datetimeValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"datetime","arg":"1970-01-01T00:00:01.000Z"}}}}]}`,
+			ast.Permit().When(ast.Datetime(time.UnixMilli(1000))),
+			testutil.OK,
+		},
+		{
+			"durationValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"duration","arg":"1s"}}}}]}`,
+			ast.Permit().When(ast.Duration(time.Second)),
+			testutil.OK,
+		},
+		{
+			"extensionValuesInSetAndRecord",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"ips":[{"__extn":{"fn":"ip","arg":"10.0.0.42/8"}}]}}}]}`,
+			ast.Permit().When(ast.Value(types.NewRecord(types.RecordMap{
+				"ips": types.NewSet(types.IPAddr(mustParseIPAddr("10.0.0.42/8"))),
+			}))),
+			testutil.OK,
+		},
+		{
+			"isInRangeValues",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"isInRange":[
+				{"Value":{"__extn":{"fn":"ip","arg":"10.0.0.43"}}},
+				{"Value":{"__extn":{"fn":"ip","arg":"10.0.0.42/8"}}}
+			]}}]}`,
+			ast.Permit().When(ast.IPAddr(mustParseIPAddr("10.0.0.43")).IsInRange(ast.IPAddr(mustParseIPAddr("10.0.0.42/8")))),
+			testutil.OK,
+		},
+		{
 			"decimal",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.24"}]}}]}`,
@@ -497,73 +554,69 @@ func TestUnmarshalJSON(t *testing.T) {
 			testutil.Equals(t, p.unwrap(), tt.want)
 			b, err := json.Marshal(&p)
 			testutil.OK(t, err)
-			normInput := testNormalizeJSON(t, tt.input)
-			normOutput := testNormalizeJSON(t, string(b))
-			testutil.Equals(t, normOutput, normInput)
+			testutil.Equals(t, testutil.CanonicalizeJSON(t, b), testutil.CanonicalizeJSON(t, []byte(tt.input)))
 		})
 	}
 }
 
-func TestMarshalJSON(t *testing.T) {
-	// most cases are covered in the TestUnmarshalJSON round-trip.
-	// this covers some cases that aren't 1:1 round-tripppable, such as hard-coded IP/Decimal values.
-
+// TestUnmarshalJSONNonCanonical covers inputs that decode successfully but
+// aren't in the form that cedar-go writes, so they don't round-trip.
+func TestUnmarshalJSONNonCanonical(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name    string
-		input   *ast.Policy
-		want    string
-		errFunc func(testutil.TB, error)
+		name  string
+		input string
+		want  *ast.Policy
 	}{
 		{
-			"decimal",
-			ast.Permit().When(ast.Value(mustParseDecimal("42.24"))),
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.24"}]}}]}`,
-			testutil.OK,
+			"explicitScopeEntity",
+			`{"effect":"permit","principal":{"op":"==","entity":{"__entity":{"type":"T","id":"42"}}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			ast.Permit().PrincipalEq(types.NewEntityUID("T", "42")),
 		},
 		{
-			"ip",
-			ast.Permit().When(ast.IPAddr(mustParseIPAddr("10.0.0.42/8"))),
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"ip":[{"Value":"10.0.0.42/8"}]}}]}`,
-			testutil.OK,
+			"explicitScopeIsInEntity",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"__entity":{"type":"P","id":"42"}}}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			ast.Permit().PrincipalIsIn(types.EntityType("T"), types.NewEntityUID("P", "42")),
 		},
 		{
-			"isInRange",
-			ast.Permit().When(ast.IPAddr(mustParseIPAddr("10.0.0.43")).IsInRange(ast.IPAddr(mustParseIPAddr("10.0.0.42/8")))),
+			"explicitActionInSetEntities",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"__entity":{"type":"T","id":"42"}}]},"resource":{"op":"All"}}`,
+			ast.Permit().ActionInSet(types.NewEntityUID("T", "42")),
+		},
+		{
+			// cedar-go previously wrote "action in []" without "entities".
+			"actionInWithoutEntities",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in"},"resource":{"op":"All"}}`,
+			ast.Permit().ActionInSet([]types.EntityUID{}...),
+		},
+		{
+			// cedar-go previously omitted "conditions" when there were none.
+			// Rust Cedar requires it, but cedar-go still accepts it missing.
+			"missingConditions",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			ast.Permit(),
+		},
+		{
+			// As in Rust Cedar, a null "in" is the same as a missing one.
+			"isScopeNullIn",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":null},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			ast.Permit().PrincipalIs(types.EntityType("T")),
+		},
+		{
+			"isNullIn",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"isInRange":[
-				{"ip":[{"Value":"10.0.0.43"}]},
-				{"ip":[{"Value":"10.0.0.42/8"}]}
-			]}}]}`,
-			testutil.OK,
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"principal"},"entity_type":"T","in":null}}}]}`,
+			ast.Permit().When(ast.Principal().Is(types.EntityType("T"))),
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			pp := wrapPolicy(tt.input)
-			b, err := json.Marshal(pp)
-			tt.errFunc(t, err)
-			if err != nil {
-				return
-			}
-			normGot := testNormalizeJSON(t, string(b))
-			normWant := testNormalizeJSON(t, tt.want)
-			testutil.Equals(t, normGot, normWant)
+			var p Policy
+			testutil.OK(t, json.Unmarshal([]byte(tt.input), &p))
+			testutil.Equals(t, p.unwrap(), tt.want)
 		})
 	}
-}
-
-func testNormalizeJSON(t testutil.TB, in string) string {
-	var x any
-	err := json.Unmarshal([]byte(in), &x)
-	testutil.OK(t, err)
-	out, err := json.MarshalIndent(x, "", "    ")
-	testutil.OK(t, err)
-	return string(out)
 }
 
 func mustParseDecimal(v string) types.Decimal {
@@ -598,6 +651,10 @@ func TestUnmarshalErrors(t *testing.T) {
 			`{"effect":"unknown","principal":{"op":"=="},"action":{"op":"All"},"resource":{"op":"All"}}`,
 		},
 		{
+			"nullPolicy",
+			`null`,
+		},
+		{
 			"principalScopeEqMissingEntity",
 			`{"effect":"permit","principal":{"op":"=="},"action":{"op":"All"},"resource":{"op":"All"}}`,
 		},
@@ -607,7 +664,96 @@ func TestUnmarshalErrors(t *testing.T) {
 		},
 		{
 			"actionScopeEqMissingEntity",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"action":{"op":"=="}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"}}`,
+		},
+		{
+			"nullAnnotations",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"annotations":null}`,
+		},
+		{
+			"nullConditions",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":null}`,
+		},
+		{
+			"actionScopeInNullEntities",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":null},"resource":{"op":"All"}}`,
+		},
+		{
+			"principalScopeIsInMissingEntity",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"principalScopeIsInNullEntity",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":null}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"unknownPolicyMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[],"x":1}`,
+		},
+		{
+			// Unlike Rust Cedar, which ignores unknown members in most scopes.
+			"unknownScopeMember",
+			`{"effect":"permit","principal":{"op":"All","x":1},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"unknownScopeIsInMember",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"},"x":1}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"unknownConditionMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"Value":true},"x":1}]}`,
+		},
+		{
+			"duplicateMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"}}`,
+		},
+		{
+			"miscasedMember",
+			`{"effect":"permit","PRINCIPAL":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"miscasedScopeEntityMember",
+			`{"effect":"permit","principal":{"op":"==","entity":{"TYPE":"T","ID":"42"}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"miscasedNodeMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"value":true}}]}`,
+		},
+		{
+			"duplicateNodeMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"==":{"left":{"Value":1},"right":{"Value":1},"left":{"Value":2}}}}]}`,
+		},
+		{
+			"expressionWithNoMembers",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{}}]}`,
+		},
+		{
+			"conditionMissingBody",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when"}]}`,
+		},
+		{
+			"expressionWithTwoMembers",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":true,"Var":"principal"}}]}`,
+		},
+		{
+			"expressionWithNullAndAnotherMember",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":null,"Var":"principal"}}]}`,
+		},
+		{
+			"nullRecordValue",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Record":{"a":null}}}]}`,
+		},
+		{
+			"duplicateRecordKey",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Record":{"a":{"Value":1},"a":{"Value":2}}}}]}`,
 		},
 		{
 			"principalScopeIsMissingEntityType",
@@ -646,27 +792,27 @@ func TestUnmarshalErrors(t *testing.T) {
 		{
 			"binaryLeft",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"&&":{"left":null,"right":{"Value":24}}}}]}`,
+			"conditions":[{"kind":"when","body":{"&&":{"left":{"Var":"unknown"},"right":{"Value":24}}}}]}`,
 		},
 		{
 			"binaryRight",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"&&":{"left":{"Value":24},"right":null}}}]}`,
+			"conditions":[{"kind":"when","body":{"&&":{"left":{"Value":24},"right":{"Var":"unknown"}}}}]}`,
 		},
 		{
 			"unaryArg",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"!":{"arg":null}}}]}`,
+			"conditions":[{"kind":"when","body":{"!":{"arg":{"Var":"unknown"}}}}]}`,
 		},
 		{
 			"accessLeft",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{".":{"left":null,"attr":"key"}}}]}`,
+			"conditions":[{"kind":"when","body":{".":{"left":{"Var":"unknown"},"attr":"key"}}}]}`,
 		},
 		{
 			"patternLeft",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"like":{"left":null,"pattern":["Wildcard"]}}}]}`,
+			"conditions":[{"kind":"when","body":{"like":{"left":{"Var":"unknown"},"pattern":["Wildcard"]}}}]}`,
 		},
 		{
 			"patternWildcard",
@@ -684,39 +830,59 @@ func TestUnmarshalErrors(t *testing.T) {
 			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"principal"},"entity_type":""}}}]}`,
 		},
 		{
+			"hasMissingAttr",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"has":{"left":{"Var":"principal"}}}}]}`,
+		},
+		{
+			"accessNullAttr",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{".":{"left":{"Var":"principal"},"attr":null}}}]}`,
+		},
+		{
+			"likeMissingPattern",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"like":{"left":{"Var":"principal"}}}}]}`,
+		},
+		{
+			"likeNullPattern",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"like":{"left":{"Var":"principal"},"pattern":null}}}]}`,
+		},
+		{
 			"isLeft",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"is":{"left":null,"entity_type":"T"}}}]}`,
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"unknown"},"entity_type":"T"}}}]}`,
 		},
 		{
 			"isIn",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"resource"},"entity_type":"T","in":{"Value":null}}}}]}`,
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"resource"},"entity_type":"T","in":{"Var":"unknown"}}}}]}`,
 		},
 		{
 			"ifErrThenElse",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":null},"then":{"Value":42},"else":{"Value":24}}}}]}`,
+			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Var":"unknown"},"then":{"Value":42},"else":{"Value":24}}}}]}`,
 		},
 		{
 			"ifThenErrElse",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Value":null},"else":{"Value":24}}}}]}`,
+			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Var":"unknown"},"else":{"Value":24}}}}]}`,
 		},
 		{
 			"ifThenElseErr",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Value":42},"else":{"Value":null}}}}]}`,
+			"conditions":[{"kind":"when","body":{"if-then-else":{"if":{"Value":true},"then":{"Value":42},"else":{"Var":"unknown"}}}}]}`,
 		},
 		{
 			"setErr",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"Set":[{"Value":null},{"Value":"bananas"}]}}]}`,
+			"conditions":[{"kind":"when","body":{"Set":[{"Var":"unknown"},{"Value":"bananas"}]}}]}`,
 		},
 		{
 			"recordErr",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"Record":{"key":{"Value":null}}}}]}`,
+			"conditions":[{"kind":"when","body":{"Record":{"key":{"Var":"unknown"}}}}]}`,
 		},
 		{
 			"extensionTooMany",
@@ -726,7 +892,7 @@ func TestUnmarshalErrors(t *testing.T) {
 		{
 			"extensionArg",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"ip":[{"Value":null}]}}]}`,
+			"conditions":[{"kind":"when","body":{"ip":[{"Var":"unknown"}]}}]}`,
 		},
 		{
 			"var",
@@ -756,6 +922,28 @@ func TestUnmarshalErrors(t *testing.T) {
 	}
 }
 
+// TestNodeJSONSyntaxErrors calls UnmarshalJSONFrom directly, since decoding a
+// Policy checks the syntax of the whole input before any expression is read.
+func TestNodeJSONSyntaxErrors(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"invalidValue", `}`},
+		{"invalidMemberName", `{1:2}`},
+		{"trailingComma", `{"Value":true,}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var n nodeJSON
+			dec := jsontext.NewDecoder(strings.NewReader(tt.input))
+			testutil.Error(t, n.UnmarshalJSONFrom(dec))
+		})
+	}
+}
+
 func TestMarshalExtensions(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -766,7 +954,7 @@ func TestMarshalExtensions(t *testing.T) {
 		{
 			"decimalType",
 			ast.Permit().When(ast.Value(testutil.Must(types.NewDecimalFromInt(42)))),
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"decimal":[{"Value":"42.0"}]}}]}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"decimal","arg":"42.0"}}}}]}`,
 		},
 		{
 			"decimalExtension",
@@ -776,12 +964,17 @@ func TestMarshalExtensions(t *testing.T) {
 		{
 			"ipType",
 			ast.Permit().When(ast.Value(types.IPAddr(netip.MustParsePrefix("127.0.0.1/16")))),
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"ip":[{"Value":"127.0.0.1/16"}]}}]}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"Value":{"__extn":{"fn":"ip","arg":"127.0.0.1/16"}}}}]}`,
 		},
 		{
 			"ipExtension",
 			ast.Permit().When(ast.ExtensionCall("ip", ast.String("127.0.0.1/16"))),
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"ip":[{"Value":"127.0.0.1/16"}]}}]}`,
+		},
+		{
+			"extensionInRecord",
+			ast.Permit().When(ast.Record(ast.Pairs{{Key: "a", Value: ast.ExtensionCall("ip", ast.String("127.0.0.1/16"))}})),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"Record":{"a":{"ip":[{"Value":"127.0.0.1/16"}]}}}}]}`,
 		},
 	}
 	for _, tt := range tests {

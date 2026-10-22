@@ -1,8 +1,9 @@
 package json
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
@@ -25,7 +26,7 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		return
 	case ast.ScopeTypeInSet:
 		s.Op = "in"
-		es := make([]types.ImplicitlyMarshaledEntityUID, len(t.Entities))
+		es := make(scopeEntitiesJSON, len(t.Entities))
 		for i, e := range t.Entities {
 			es[i] = types.ImplicitlyMarshaledEntityUID(e)
 		}
@@ -38,9 +39,8 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 	case ast.ScopeTypeIsIn:
 		s.Op = "is"
 		s.EntityType = string(t.Type)
-		s.In = &scopeInJSON{
-			Entity: types.ImplicitlyMarshaledEntityUID(t.Entity),
-		}
+		e := types.ImplicitlyMarshaledEntityUID(t.Entity)
+		s.In = &scopeInJSON{Entity: &e}
 		return
 	}
 }
@@ -68,42 +68,32 @@ func arrayToJSON(dest *arrayJSON, args []ast.IsNode) {
 	*dest = res
 }
 
-func extToJSON(dest *extensionJSON, name string, src types.Value) {
-	res := arrayJSON{}
-	str := src.String()
-	val := valueJSON{v: types.String(str)}
-	res = append(res, nodeJSON{
-		Value: &val,
-	})
-	*dest = extensionJSON{
-		name: res,
-	}
-}
-
-func extCallToJSON(dest extensionJSON, src ast.NodeTypeExtensionCall) {
-	jsonArgs := arrayJSON{}
-	arrayToJSON(&jsonArgs, src.Args)
-	dest[string(src.Name)] = jsonArgs
+func extCallToJSON(dest **extensionJSON, src ast.NodeTypeExtensionCall) {
+	res := &extensionJSON{Name: string(src.Name), Args: arrayJSON{}}
+	arrayToJSON(&res.Args, src.Args)
+	*dest = res
 }
 
 func strToJSON(dest **strJSON, src ast.StrOpNode) {
 	res := &strJSON{}
 	res.Left.FromNode(src.Arg)
-	res.Attr = string(src.Value)
+	attr := string(src.Value)
+	res.Attr = &attr
 	*dest = res
 }
 
 func likeToJSON(dest **likeJSON, src ast.NodeTypeLike) {
 	res := &likeJSON{}
 	res.Left.FromNode(src.Arg)
-	res.Pattern = src.Value
+	pattern := src.Value
+	res.Pattern = &pattern
 	*dest = res
 }
 
 func recordToJSON(dest *recordJSON, src ast.NodeTypeRecord) {
 	res := recordJSON{}
 	for _, kv := range src.Elements {
-		nn := &nodeJSON{}
+		var nn nodeJSON
 		nn.FromNode(kv.Value)
 		res[string(kv.Key)] = nn
 	}
@@ -139,17 +129,6 @@ func (n *nodeJSON) FromNode(src ast.IsNode) {
 	// Value
 	// Value *json.RawMessage `json:"Value"` // could be any
 	case ast.NodeValue:
-		// Any other function: decimal, ip
-		// Decimal arrayJSON `json:"decimal"`
-		// IP      arrayJSON `json:"ip"`
-		switch tt := t.Value.(type) {
-		case types.Decimal:
-			extToJSON(&n.ExtensionCall, "decimal", tt)
-			return
-		case types.IPAddr:
-			extToJSON(&n.ExtensionCall, "ip", tt)
-			return
-		}
 		val := valueJSON{v: t.Value}
 		n.Value = &val
 		return
@@ -271,10 +250,9 @@ func (n *nodeJSON) FromNode(src ast.IsNode) {
 		return
 
 	// Any other method: ip, decimal, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual, isIpv4, isIpv6, isLoopback, isMulticast, isInRange
-	// ExtensionMethod map[string]arrayJSON `json:"-"`
+	// ExtensionCall *extensionJSON `json:"-"`
 	case ast.NodeTypeExtensionCall:
-		n.ExtensionCall = extensionJSON{}
-		extCallToJSON(n.ExtensionCall, t)
+		extCallToJSON(&n.ExtensionCall, t)
 		return
 	default:
 		panic(fmt.Sprintf("unknown node type %T", t))
@@ -284,19 +262,16 @@ func (n *nodeJSON) FromNode(src ast.IsNode) {
 }
 
 func (n *nodeJSON) MarshalJSON() ([]byte, error) {
-	if len(n.ExtensionCall) > 0 {
+	if n.ExtensionCall != nil {
 		return json.Marshal(n.ExtensionCall)
 	}
 
 	type nodeJSONAlias nodeJSON
-	return json.Marshal((*nodeJSONAlias)(n))
+	// Deterministic for the map in a Record node.
+	return json.Marshal((*nodeJSONAlias)(n), json.Deterministic(true))
 }
 
 type Policy ast.Policy
-
-func wrapPolicy(p *ast.Policy) *Policy {
-	return (*Policy)(p)
-}
 
 func (p *Policy) unwrap() *ast.Policy {
 	return (*ast.Policy)(p)
@@ -326,5 +301,6 @@ func (p *Policy) MarshalJSON() ([]byte, error) {
 		cond.Body.FromNode(c.Body)
 		j.Conditions = append(j.Conditions, cond)
 	}
-	return json.Marshal(j)
+	// Deterministic for the annotations map.
+	return json.Marshal(j, json.Deterministic(true))
 }

@@ -1,11 +1,12 @@
 package types
 
 import (
-	"encoding/json"
 	"fmt"
 	"hash/fnv"
 	"net/netip"
 	"strings"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/internal"
 )

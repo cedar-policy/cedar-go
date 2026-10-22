@@ -630,7 +630,7 @@ func TestSchema(t *testing.T) {
 		s := schema.NewSchemaFromAST(wantAST)
 		b, err := s.MarshalJSON()
 		testutil.OK(t, err)
-		stringEquals(t, string(normalizeJSON(t, b)), string(normalizeJSON(t, []byte(wantJSON))))
+		testutil.Equals(t, testutil.CanonicalizeJSON(t, b), testutil.CanonicalizeJSON(t, []byte(wantJSON)))
 	})
 
 	t.Run("Resolve", func(t *testing.T) {
@@ -755,14 +755,4 @@ func TestSchema(t *testing.T) {
 func stringEquals(t *testing.T, got, want string) {
 	t.Helper()
 	testutil.Equals(t, strings.TrimSpace(got), strings.TrimSpace(want))
-}
-
-func normalizeJSON(t *testing.T, in []byte) []byte {
-	t.Helper()
-	var out any
-	err := json.Unmarshal(in, &out)
-	testutil.OK(t, err)
-	b, err := json.MarshalIndent(out, "", "  ")
-	testutil.OK(t, err)
-	return b
 }

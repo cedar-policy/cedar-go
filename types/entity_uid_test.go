@@ -156,6 +156,16 @@ func TestEntity(t *testing.T) {
 			{"implicit - id wrong type", `{ "type": "Type", "id": 123 }`},
 			{"implicit - only type", `{ "type": "Type" }`},
 			{"implicit - only id", `{ "id": 123 }`},
+			{"implicit - miscased", `{ "Type": "Type", "ID": "id" }`},
+			{"explicit - miscased", `{ "__ENTITY": { "type": "Type", "id": "id" } }`},
+			{"explicit - inner miscased", `{ "__entity": { "Type": "Type", "ID": "id" } }`},
+			{"explicit - only type", `{ "__entity": { "type": "Type" } }`},
+			{"explicit - only id", `{ "__entity": { "id": "id" } }`},
+			{"explicit - empty", `{ "__entity": {} }`},
+			{"explicit - null", `{ "__entity": null }`},
+			{"explicit - id wrong type", `{ "__entity": { "type": "Type", "id": 123 } }`},
+			{"duplicate key", `{ "type": "Type", "type": "Type", "id": "id" }`},
+			{"invalid UTF-8", "{ \"type\": \"Type\", \"id\": \"\xff\" }"},
 		}
 
 		for _, tt := range tests {
@@ -228,6 +238,16 @@ func TestImplicitlyMarshaledEntityUID(t *testing.T) {
 			{"implicit - id wrong type", `{ "type": "Type", "id": 123 }`},
 			{"implicit - only type", `{ "type": "Type" }`},
 			{"implicit - only id", `{ "id": "id" }`},
+			{"implicit - miscased", `{ "Type": "Type", "ID": "id" }`},
+			{"explicit - miscased", `{ "__ENTITY": { "type": "Type", "id": "id" } }`},
+			{"explicit - inner miscased", `{ "__entity": { "Type": "Type", "ID": "id" } }`},
+			{"explicit - only type", `{ "__entity": { "type": "Type" } }`},
+			{"explicit - only id", `{ "__entity": { "id": "id" } }`},
+			{"explicit - empty", `{ "__entity": {} }`},
+			{"explicit - null", `{ "__entity": null }`},
+			{"explicit - id wrong type", `{ "__entity": { "type": "Type", "id": 123 } }`},
+			{"duplicate key", `{ "type": "Type", "type": "Type", "id": "id" }`},
+			{"invalid UTF-8", "{ \"type\": \"Type\", \"id\": \"\xff\" }"},
 		}
 
 		for _, tt := range tests {
@@ -276,5 +296,22 @@ func TestEntityUIDSet(t *testing.T) {
 		testutil.Equals(t, s.Contains(a), true)
 		testutil.Equals(t, s.Contains(b), true)
 		testutil.Equals(t, s.Contains(o), true)
+	})
+
+	// Checks that callers still using encoding/json (v1) can encode and decode
+	// an EntityUIDSet, which is an alias of an internal type.
+	t.Run("json roundtrip", func(t *testing.T) {
+		t.Parallel()
+		want := types.NewEntityUIDSet(types.NewEntityUID("User", "bob"), types.NewEntityUID("User", "alice"))
+		b, err := json.Marshal(want)
+		testutil.OK(t, err)
+		testutil.Equals(t, string(b), `[{"__entity":{"type":"User","id":"alice"}},{"__entity":{"type":"User","id":"bob"}}]`)
+
+		var got types.EntityUIDSet
+		testutil.OK(t, json.Unmarshal(b, &got))
+		testutil.Equals(t, got.Equal(want), true)
+
+		// Ensure v1's lenient options don't reach EntityUIDSet's own decoding.
+		testutil.Error(t, json.Unmarshal([]byte(`[{"type":"User","id":"a","id":"b"}]`), &got))
 	})
 }

@@ -2,11 +2,12 @@ package mapset
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"iter"
 	"maps"
 	"slices"
+
+	"github.com/go-json-experiment/json"
 )
 
 // Similar to the concept of a [legal peppercorn](https://en.wikipedia.org/wiki/Peppercorn_(law)), this instance of

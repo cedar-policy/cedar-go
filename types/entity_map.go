@@ -1,10 +1,12 @@
 package types
 
 import (
-	"encoding/json"
+	"fmt"
 	"maps"
 	"slices"
 	"strings"
+
+	"github.com/go-json-experiment/json"
 )
 
 // An EntityGetter is an interface for retrieving an Entity by EntityUID.
@@ -27,14 +29,22 @@ func (e EntityMap) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s)
 }
 
+// UnmarshalJSON parses an EntityMap from a JSON array of entities. As in Rust
+// Cedar, two entities with the same UID are an error.
+//
+// Unlike Rust Cedar, null is accepted as an empty EntityMap, because cedar-go
+// v1.2.0 through v1.8.0 encoded an empty EntityMap as null.
 func (e *EntityMap) UnmarshalJSON(b []byte) error {
 	var s []Entity
 	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}
-	var res = EntityMap{}
-	for _, e := range s {
-		res[e.UID] = e
+	var res = make(EntityMap, len(s))
+	for _, ent := range s {
+		if _, ok := res[ent.UID]; ok {
+			return fmt.Errorf("%w: duplicate entity %s", errJSONInvalidEntity, ent.UID)
+		}
+		res[ent.UID] = ent
 	}
 	*e = res
 	return nil

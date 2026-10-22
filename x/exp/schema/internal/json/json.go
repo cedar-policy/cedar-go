@@ -2,9 +2,11 @@
 package json
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
+
+	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
@@ -38,12 +40,12 @@ func (s *Schema) MarshalJSON() ([]byte, error) {
 		}
 		out[string(name)] = jns
 	}
-	return json.Marshal(out)
+	return json.Marshal(out, json.Deterministic(true))
 }
 
 // UnmarshalJSON parses a JSON schema into the AST.
 func (s *Schema) UnmarshalJSON(b []byte) error {
-	var raw map[string]json.RawMessage
+	var raw map[string]jsontext.Value
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
@@ -51,7 +53,7 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 	result := ast.Schema{}
 	for name, data := range raw {
 		var jns jsonNamespace
-		if err := json.Unmarshal(data, &jns); err != nil {
+		if err := json.Unmarshal(data, &jns, json.RejectUnknownMembers(true)); err != nil {
 			return fmt.Errorf("namespace %q: %w", name, err)
 		}
 		ns, err := unmarshalNamespace(jns)
@@ -91,8 +93,8 @@ type jsonNamespace struct {
 type jsonEntityType struct {
 	// Standard entity fields
 	MemberOfTypes []string          `json:"memberOfTypes,omitempty"`
-	Shape         *jsonType         `json:"shape,omitempty"`
-	Tags          *jsonType         `json:"tags,omitempty"`
+	Shape         *jsonType         `json:"shape,omitzero"`
+	Tags          *jsonType         `json:"tags,omitzero"`
 	Annotations   map[string]string `json:"annotations,omitempty"`
 
 	// Enum entity field (mutually exclusive with standard fields)
@@ -125,7 +127,7 @@ func (e *enumJSON) UnmarshalJSON(b []byte) error {
 
 type jsonAction struct {
 	MemberOf    []jsonActionParent `json:"memberOf,omitempty"`
-	AppliesTo   *jsonAppliesTo     `json:"appliesTo,omitempty"`
+	AppliesTo   *jsonAppliesTo     `json:"appliesTo,omitzero"`
 	Annotations map[string]string  `json:"annotations,omitempty"`
 }
 
@@ -137,7 +139,7 @@ type jsonActionParent struct {
 type jsonAppliesTo struct {
 	PrincipalTypes []string  `json:"principalTypes"`
 	ResourceTypes  []string  `json:"resourceTypes"`
-	Context        *jsonType `json:"context,omitempty"`
+	Context        *jsonType `json:"context,omitzero"`
 }
 
 type jsonCommonType struct {
@@ -147,14 +149,14 @@ type jsonCommonType struct {
 
 type jsonType struct {
 	Type       string              `json:"type"`
-	Element    *jsonType           `json:"element,omitempty"`
-	Attributes map[string]jsonAttr `json:"attributes,omitempty"`
+	Element    *jsonType           `json:"element,omitzero"`
+	Attributes map[string]jsonAttr `json:"attributes,omitzero"`
 	Name       string              `json:"name,omitempty"`
 }
 
 type jsonAttr struct {
 	jsonType
-	Required    *bool             `json:"required,omitempty"`
+	Required    *bool             `json:"required,omitzero"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
@@ -237,8 +239,7 @@ func marshalNamespace(name types.Path, ns ast.Namespace) (jsonNamespace, error) 
 			ja.MemberOf = append(ja.MemberOf, parent)
 		}
 		if action.AppliesTo != nil {
-			// Rust Cedar requires both lists, so write them even when empty.
-			jat := &jsonAppliesTo{PrincipalTypes: []string{}, ResourceTypes: []string{}}
+			jat := &jsonAppliesTo{}
 			for _, p := range action.AppliesTo.Principals {
 				jat.PrincipalTypes = append(jat.PrincipalTypes, string(p))
 			}
@@ -448,28 +449,27 @@ func checkTypeMembers(jt *jsonType) error {
 	if jt.Type == "" {
 		return fmt.Errorf(`missing "type"`)
 	}
-	var allowed string
+	var kind string
 	switch jt.Type {
-	case "Set":
-		allowed = "element"
-	case "Record":
-		allowed = "attributes"
+	case "Set", "Record":
+		kind = jt.Type
 	case "Entity", "Extension", "EntityOrCommon":
-		allowed = "name"
+		kind = "named"
 	}
 	for _, m := range []struct {
 		name    string
+		kind    string
 		present bool
 	}{
-		{"element", jt.Element != nil},
-		{"attributes", jt.Attributes != nil},
-		{"name", jt.Name != ""},
+		{"element", "Set", jt.Element != nil},
+		{"attributes", "Record", jt.Attributes != nil},
+		{"name", "named", jt.Name != ""},
 	} {
-		if m.present && m.name != allowed {
+		if m.present && m.kind != kind {
 			return fmt.Errorf("type %q cannot have %q", jt.Type, m.name)
 		}
 	}
-	if allowed == "name" && jt.Name == "" {
+	if kind == "named" && jt.Name == "" {
 		return fmt.Errorf(`type %q requires "name"`, jt.Type)
 	}
 	return nil
@@ -512,6 +512,9 @@ func unmarshalType(jt *jsonType) (ast.IsType, error) {
 	}
 }
 
+// unmarshalRecordType decodes a Record type. Rust Cedar requires "attributes",
+// but it may be missing here, because cedar-go previously omitted it when there
+// were no attributes.
 func unmarshalRecordType(jt *jsonType) (ast.RecordType, error) {
 	rec := ast.RecordType{}
 	for name, ja := range jt.Attributes {

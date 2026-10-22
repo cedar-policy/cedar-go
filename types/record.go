@@ -3,11 +3,13 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
+	"fmt"
 	"hash/fnv"
 	"iter"
 	"maps"
 	"slices"
+
+	"github.com/go-json-experiment/json"
 )
 
 type RecordMap = map[String]Value
@@ -125,47 +127,32 @@ func (r Record) Equal(bi Value) bool {
 	return true
 }
 
+// UnmarshalJSON decodes a Record from a JSON object, decoding its values as
+// UnmarshalJSON does. As in Rust Cedar, an object that UnmarshalJSON would
+// decode as an EntityUID or an extension value, such as
+// {"__entity": {"type": "User", "id": "alice"}}, is an error rather than a
+// Record with a single member.
 func (r *Record) UnmarshalJSON(b []byte) error {
-	var res map[string]explicitValue
-	err := json.Unmarshal(b, &res)
-	if err != nil {
+	var v explicitValue
+	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
-	if len(res) == 0 {
-		*r = Record{}
-		return nil
+	rec, ok := v.Value.(Record)
+	if !ok {
+		return fmt.Errorf("%w: %s is not a record", errJSONDecode, v.Value.MarshalCedar())
 	}
-	m := make(RecordMap, len(res))
-	for kk, vv := range res {
-		m[String(kk)] = vv.Value
+	if rec.Len() == 0 {
+		rec = Record{}
 	}
-	*r = NewRecord(m)
+	*r = rec
 	return nil
 }
 
 // MarshalJSON marshals the Record into JSON, the marshaller uses the explicit
-// JSON form for all the values in the Record.
+// JSON form for all the values in the Record. Keys are written in a bytewise
+// sorted order.
 func (r Record) MarshalJSON() ([]byte, error) {
-	w := &bytes.Buffer{}
-	w.WriteByte('{')
-	keys := slices.Collect(maps.Keys(r.m))
-	slices.Sort(keys)
-	for i, kk := range keys {
-		if i > 0 {
-			w.WriteByte(',')
-		}
-		kb, _ := json.Marshal(kk) // json.Marshal cannot error on strings
-		w.Write(kb)
-		w.WriteByte(':')
-		vv := r.m[kk]
-		vb, err := json.Marshal(vv)
-		if err != nil {
-			return nil, err
-		}
-		w.Write(vb)
-	}
-	w.WriteByte('}')
-	return w.Bytes(), nil
+	return json.Marshal(r.m, json.Deterministic(true))
 }
 
 // String produces a string representation of the Record, e.g. `{"a":1,"b":2,"c":3}`.

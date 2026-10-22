@@ -256,6 +256,20 @@ func TestPatternJSON(t *testing.T) {
 			false,
 		},
 		{
+			"duplicate key",
+			`[{"Literal": "foo", "Literal": "bar"}]`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
+			"invalid UTF-8 literal",
+			"[{\"Literal\": \"\xff\"}]",
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
 			"empty pattern",
 			`[]`,
 			testutil.OK,
@@ -304,4 +318,10 @@ func TestPatternJSON(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPatternMarshalJSONInvalidUTF8(t *testing.T) {
+	t.Parallel()
+	_, err := NewPattern(String("\xff")).MarshalJSON()
+	testutil.Error(t, err)
 }

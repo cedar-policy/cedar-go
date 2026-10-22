@@ -2,12 +2,13 @@ package types
 
 import (
 	"cmp"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/go-json-experiment/json"
 
 	"golang.org/x/exp/constraints"
 
