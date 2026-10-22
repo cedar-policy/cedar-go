@@ -8,7 +8,6 @@ import (
 	"iter"
 	"maps"
 	"slices"
-	"strconv"
 )
 
 type RecordMap = map[String]Value
@@ -185,7 +184,7 @@ func (r Record) MarshalCedar() []byte {
 			sb.WriteString(", ")
 		}
 		first = false
-		sb.WriteString(strconv.Quote(string(k)))
+		sb.WriteString(string(k.MarshalCedar()))
 		sb.WriteString(":")
 		sb.Write(v.MarshalCedar())
 	}
