@@ -16,6 +16,7 @@ var (
 	errJSONExtFnMatch      = fmt.Errorf("json extn mismatch")
 	errJSONExtNotFound     = fmt.Errorf("json extn not found")
 	errJSONEntityNotFound  = fmt.Errorf("json entity not found")
+	errJSONReservedKey     = fmt.Errorf("record uses reserved key")
 )
 
 type extn struct {

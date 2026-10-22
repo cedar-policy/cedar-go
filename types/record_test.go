@@ -421,5 +421,38 @@ func TestRecord(t *testing.T) {
 			testutil.OK(t, err)
 			testutil.Equals(t, string(got), `{"x":[{"e":4,"f":5,"z":6}],"y":{"a":0,"b":1,"c":2,"d":3}}`)
 		})
+
+		t.Run("error on reserved keys", func(t *testing.T) {
+			t.Parallel()
+
+			entityEscape := types.NewRecord(types.RecordMap{"type": types.String("User"), "id": types.String("bob")})
+			tests := []struct {
+				name string
+				in   any
+			}{
+				{"__entity", types.NewRecord(types.RecordMap{"__entity": entityEscape})},
+				{"__extn", types.NewRecord(types.RecordMap{"__extn": types.NewRecord(types.RecordMap{"fn": types.String("ip"), "arg": types.String("127.0.0.1")})})},
+				{"with other keys", types.NewRecord(types.RecordMap{"tier": types.String("guest"), "__entity": entityEscape})},
+				{"in a record", types.NewRecord(types.RecordMap{"session": types.NewRecord(types.RecordMap{"__entity": entityEscape})})},
+				{"in a set", types.NewSet(types.NewRecord(types.RecordMap{"__entity": entityEscape}))},
+				{"in entity attributes", types.Entity{Attributes: types.NewRecord(types.RecordMap{"__entity": entityEscape})}},
+				{"in entity tags", types.Entity{Tags: types.NewRecord(types.RecordMap{"__entity": entityEscape})}},
+			}
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					t.Parallel()
+					_, err := json.Marshal(tt.in)
+					testutil.Error(t, err)
+				})
+			}
+
+			t.Run("similar keys", func(t *testing.T) {
+				t.Parallel()
+				r := types.NewRecord(types.RecordMap{"__ENTITY": types.Long(1), "__entity ": types.Long(2), "_entity": types.Long(3), "entity": types.Long(4)})
+				got, err := json.Marshal(r)
+				testutil.OK(t, err)
+				testutil.Equals(t, string(got), `{"__ENTITY":1,"__entity ":2,"_entity":3,"entity":4}`)
+			})
+		})
 	})
 }
