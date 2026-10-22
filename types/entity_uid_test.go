@@ -109,6 +109,9 @@ func TestEntity(t *testing.T) {
 			{"no type", `::"id"`},
 			{"partial", `Type::"`},
 			{"unescaped unicode", `Type::"\u00ab"`},
+			{"type with space", `A B::"id"`},
+			{"type with empty segment", `A::::B::"id"`},
+			{"type with reserved keyword", `A::if::"id"`},
 		}
 
 		for _, tt := range tests {
@@ -166,6 +169,10 @@ func TestEntity(t *testing.T) {
 			{"explicit - id wrong type", `{ "__entity": { "type": "Type", "id": 123 } }`},
 			{"duplicate key", `{ "type": "Type", "type": "Type", "id": "id" }`},
 			{"invalid UTF-8", "{ \"type\": \"Type\", \"id\": \"\xff\" }"},
+			{"explicit - invalid type", `{ "__entity": { "type": "A B", "id": "id" } }`},
+			{"implicit - invalid type", `{ "type": "A::\"x\" ); permit ( principal == A", "id": "id" }`},
+			{"implicit - empty type", `{ "type": "", "id": "id" }`},
+			{"implicit - reserved type", `{ "type": "true", "id": "id" }`},
 		}
 
 		for _, tt := range tests {
@@ -248,6 +255,10 @@ func TestImplicitlyMarshaledEntityUID(t *testing.T) {
 			{"explicit - id wrong type", `{ "__entity": { "type": "Type", "id": 123 } }`},
 			{"duplicate key", `{ "type": "Type", "type": "Type", "id": "id" }`},
 			{"invalid UTF-8", "{ \"type\": \"Type\", \"id\": \"\xff\" }"},
+			{"explicit - invalid type", `{ "__entity": { "type": "A B", "id": "id" } }`},
+			{"implicit - invalid type", `{ "type": "A::\"x\" ); permit ( principal == A", "id": "id" }`},
+			{"implicit - empty type", `{ "type": "", "id": "id" }`},
+			{"implicit - reserved type", `{ "type": "true", "id": "id" }`},
 		}
 
 		for _, tt := range tests {

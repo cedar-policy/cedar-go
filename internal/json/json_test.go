@@ -702,6 +702,40 @@ func TestUnmarshalErrors(t *testing.T) {
 			`{"effect":"permit","principal":{"op":"All","x":1},"action":{"op":"All"},"resource":{"op":"All"}}`,
 		},
 		{
+			"principalScopeIsInvalidEntityType",
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T, action, resource ); permit ( principal"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"resourceScopeIsInReservedEntityType",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":"A::in","in":{"entity":{"type":"P","id":"42"}}}}`,
+		},
+		{
+			"principalScopeEqInvalidEntityType",
+			`{"effect":"permit","principal":{"op":"==","entity":{"type":"A B","id":"42"}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+		},
+		{
+			"actionScopeInInvalidEntityType",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"Action::","id":"a"}]},"resource":{"op":"All"}}`,
+		},
+		{
+			"invalidAnnotationKey",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"annotations":{"x(\"y\") permit ( principal, action, resource ); @z":"v"}}`,
+		},
+		{
+			"emptyAnnotationKey",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"annotations":{"":"v"}}`,
+		},
+		{
+			"conditionIsInvalidEntityType",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"principal"},"entity_type":"T }; permit ( principal, action, resource ) when { true"}}}]}`,
+		},
+		{
+			"conditionEntityValueInvalidType",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"Value":{"__entity":{"type":"A B","id":"42"}}}}]}`,
+		},
+		{
 			"unknownScopeIsInMember",
 			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"},"x":1}},"action":{"op":"All"},"resource":{"op":"All"}}`,
 		},

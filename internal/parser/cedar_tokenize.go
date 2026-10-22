@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/cedar-policy/cedar-go/internal/names"
 	"github.com/cedar-policy/cedar-go/internal/rust"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
@@ -34,13 +34,6 @@ type Token struct {
 	Type TokenType
 	Pos  Position
 	Text string
-}
-
-var reservedKeywords = []string{"true", "false", "if", "then", "else", "in", "like", "has", "is", "__cedar"}
-
-// IsReservedKeyword reports whether s is a reserved Cedar keyword.
-func IsReservedKeyword(s string) bool {
-	return slices.Contains(reservedKeywords, s)
 }
 
 func (t Token) isEOF() bool {
@@ -266,22 +259,10 @@ func (s *scanner) error(msg string) {
 	s.err = fmt.Errorf("%v: %v", s.position, msg)
 }
 
-func isASCIILetter(ch rune) bool {
-	return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')
-}
-
-func isASCIINumber(ch rune) bool {
-	return ch >= '0' && ch <= '9'
-}
-
-func isIdentRune(ch rune, first bool) bool {
-	return ch == '_' || isASCIILetter(ch) || isASCIINumber(ch) && !first
-}
-
 func (s *scanner) scanIdentifier() rune {
 	// we know the zeroth rune is OK; start scanning at the next one
 	ch := s.next()
-	for isIdentRune(ch, false) {
+	for names.IsIdentRune(ch, false) {
 		ch = s.next()
 	}
 	return ch
@@ -474,7 +455,7 @@ redo:
 	switch {
 	case ch == specialRuneEOF:
 		tt = TokenEOF
-	case isIdentRune(ch, true):
+	case names.IsIdentRune(ch, true):
 		ch = s.scanIdentifier()
 		tt = TokenIdent
 	case rust.IsDecimal(ch):
@@ -503,7 +484,7 @@ redo:
 
 	// last minute check for reserved keywords
 	text := s.tokenText()
-	if tt == TokenIdent && IsReservedKeyword(text) {
+	if tt == TokenIdent && names.IsReservedKeyword(text) {
 		tt = TokenReservedKeyword
 	}
 
