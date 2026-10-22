@@ -3,6 +3,7 @@ package exptypes
 import (
 	"github.com/go-json-experiment/json"
 
+	"github.com/cedar-policy/cedar-go/internal/names"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/resolved"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/validate"
@@ -139,18 +140,18 @@ func coerceValue(v types.Value, typ resolved.IsType) (val types.Value) {
 // unguided parsing leaves as a Record when it has other keys, or the implicit
 // form {"type": ..., "id": ...}. As in Rust Cedar's schema-based parsing, extra
 // keys are ignored and the explicit form takes precedence. Returns v unchanged
-// otherwise.
+// otherwise, including when the type isn't a valid Cedar name.
 func coerceEntityUID(v types.Value) types.Value {
 	rec, ok := v.(types.Record)
 	if !ok {
 		return v
 	}
 	if entity, ok := rec.Get("__entity"); ok {
-		if uid, ok := coerceValueToEntityUID(entity); ok {
+		if uid, ok := coerceValueToEntityUID(entity); ok && names.IsName(string(uid.Type)) {
 			return uid
 		}
 	}
-	if uid, ok := coerceValueToEntityUID(rec); ok {
+	if uid, ok := coerceValueToEntityUID(rec); ok && names.IsName(string(uid.Type)) {
 		return uid
 	}
 	return v

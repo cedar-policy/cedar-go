@@ -7,6 +7,7 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
+	"github.com/cedar-policy/cedar-go/internal/names"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
@@ -167,22 +168,10 @@ func (n NodeTypeNegate) marshalCedar(buf *bytes.Buffer) {
 	marshalChildNode(n.precedenceLevel(), n.NodeTypeNegate.Arg, buf)
 }
 
-func canMarshalAsIdent(s string) bool {
-	if len(s) == 0 || IsReservedKeyword(s) {
-		return false
-	}
-	for i, r := range s {
-		if !isIdentRune(r, i == 0) {
-			return false
-		}
-	}
-	return true
-}
-
 func (n NodeTypeAccess) marshalCedar(buf *bytes.Buffer) {
 	marshalChildNode(n.precedenceLevel(), n.Arg, buf)
 
-	if canMarshalAsIdent(string(n.Value)) {
+	if names.IsIdent(string(n.Value)) {
 		buf.WriteRune('.')
 		buf.WriteString(string(n.Value))
 	} else {
@@ -351,7 +340,7 @@ func (n NodeTypeOr) marshalCedar(buf *bytes.Buffer) {
 func (n NodeTypeHas) marshalCedar(buf *bytes.Buffer) {
 	marshalChildNode(n.precedenceLevel()+1, n.Arg, buf)
 	buf.WriteString(" has ")
-	if canMarshalAsIdent(string(n.Value)) {
+	if names.IsIdent(string(n.Value)) {
 		buf.WriteString(string(n.Value))
 	} else {
 		buf.Write(n.Value.MarshalCedar())
