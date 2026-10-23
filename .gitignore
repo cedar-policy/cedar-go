@@ -2,12 +2,12 @@
 tmp/
 .DS_Store
 coverage.out
-test/cedar-validation-tool/target/
-test/cedar-entity-parsing-tool/target/
+*.out
+
+# Test case generation output
 corpus-tests/
 corpus-tests-json-schemas/
+corpus-tests-json-policies/
 corpus-tests-validation/
-*.out
-.ai/
-ideas/
-agate-*
+test/cedar-validation-tool/target/
+test/cedar-entity-parsing-tool/target/
