@@ -163,6 +163,12 @@ func compareRecordTypes(a, b typeRecord) int {
 		if c := compareCedarType(aat.typ, bat.typ); c != 0 {
 			return c
 		}
+		if aat.required != bat.required {
+			if bat.required {
+				return -1
+			}
+			return 1
+		}
 	}
 	return cmp.Compare(len(ak), len(bk))
 }
@@ -381,6 +387,11 @@ func (v *Validator) lubRecord(a, b typeRecord) (cedarType, error) {
 				}
 				// Permissive mode: drop attributes with incompatible types
 				continue
+			}
+			// Strict mode: like Rust, an attribute must be required in both
+			// records or optional in both.
+			if v.strict && aAttr.required != bAttr.required {
+				return nil, fmt.Errorf("record attributes have different optionality in strict mode")
 			}
 			attrs[k] = attributeType{
 				typ:      lub,
