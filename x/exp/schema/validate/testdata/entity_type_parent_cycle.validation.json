@@ -13,8 +13,8 @@
     "perEntity": {
       "Action::view": {},
       "Application::app": {},
-      "Team::parent": {},
       "Team::child": {},
+      "Team::parent": {},
       "User::alice": {}
     }
   },

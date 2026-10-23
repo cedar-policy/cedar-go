@@ -1285,19 +1285,19 @@ func validateExtensionValue(funcName types.Path, value string) error {
 	switch funcName {
 	case "ip":
 		if _, err := types.ParseIPAddr(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as IP address: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: failed to parse as IP address: `\"%s\"`", rust.EscapeString(value))
 		}
 	case "decimal":
 		if _, err := types.ParseDecimal(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as a decimal value: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: failed to parse as a decimal value: `\"%s\"`", rust.EscapeString(value))
 		}
 	case "datetime":
 		if _, err := types.ParseDatetime(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as a datetime value: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: failed to parse as a datetime value: `\"%s\"`", rust.EscapeString(value))
 		}
 	case "duration":
 		if _, err := types.ParseDuration(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as a duration value: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: failed to parse as a duration value: `\"%s\"`", rust.EscapeString(value))
 		}
 	}
 	return nil

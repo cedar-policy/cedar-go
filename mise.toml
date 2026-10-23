@@ -3,7 +3,7 @@ go = "1.26.10"
 "go:github.com/matryer/moq" = "0.8.1"
 golangci-lint = "2.14.0"
 rust = "1.99.1"
-"cargo:cedar-policy-cli" = "4.9.1"
+"cargo:cedar-policy-cli" = "4.12.0"
 
 [tasks.ci]
 description = "Run the full CI pipeline"
