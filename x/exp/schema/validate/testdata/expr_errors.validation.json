@@ -15,8 +15,8 @@
       "for policy `policy18`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
       "for policy `policy19`, extension constructors may not be called with non-literal expressions",
       "for policy `policy1`, unexpected type: expected Bool but saw String",
-      "for policy `policy20`, error during extension function argument validation: Failed to parse as IP address: `\"not-an-ip\"`",
-      "for policy `policy21`, error during extension function argument validation: Failed to parse as a decimal value: `\"not-a-decimal\"`",
+      "for policy `policy20`, error during extension function argument validation: failed to parse as IP address: `\"not-an-ip\"`",
+      "for policy `policy21`, error during extension function argument validation: failed to parse as a decimal value: `\"not-a-decimal\"`",
       "for policy `policy22`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`",
       "for policy `policy23`, unexpected type: expected String but saw Long",
       "for policy `policy24`, unexpected type: expected Bool but saw String",
@@ -24,9 +24,9 @@
       "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
       "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
       "for policy `policy28`, unexpected type: expected Set<__cedar::internal::Any> but saw String",
-      "for policy `policy29`, error during extension function argument validation: Failed to parse as a datetime value: `\"not-a-date\"`",
+      "for policy `policy29`, error during extension function argument validation: failed to parse as a datetime value: `\"not-a-date\"`",
       "for policy `policy2`, unexpected type: expected Bool but saw String",
-      "for policy `policy30`, error during extension function argument validation: Failed to parse as a duration value: `\"not-a-dur\"`",
+      "for policy `policy30`, error during extension function argument validation: failed to parse as a duration value: `\"not-a-dur\"`",
       "for policy `policy3`, unexpected type: expected Bool but saw String",
       "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String",
       "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String",
@@ -50,8 +50,8 @@
       "for policy `policy18`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
       "for policy `policy19`, unexpected type: expected String but saw Long",
       "for policy `policy1`, unexpected type: expected Bool but saw String",
-      "for policy `policy20`, error during extension function argument validation: Failed to parse as IP address: `\"not-an-ip\"`",
-      "for policy `policy21`, error during extension function argument validation: Failed to parse as a decimal value: `\"not-a-decimal\"`",
+      "for policy `policy20`, error during extension function argument validation: failed to parse as IP address: `\"not-an-ip\"`",
+      "for policy `policy21`, error during extension function argument validation: failed to parse as a decimal value: `\"not-a-decimal\"`",
       "for policy `policy22`, unable to guarantee safety of access to tag `\"x\"` on entity type `User`",
       "for policy `policy23`, unexpected type: expected String but saw Long",
       "for policy `policy24`, unexpected type: expected Bool but saw String",
@@ -59,9 +59,9 @@
       "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
       "for policy `policy27`, unexpected type: expected __cedar::internal::AnyEntity but saw String",
       "for policy `policy28`, unexpected type: expected Set<__cedar::internal::Any> but saw String",
-      "for policy `policy29`, error during extension function argument validation: Failed to parse as a datetime value: `\"not-a-date\"`",
+      "for policy `policy29`, error during extension function argument validation: failed to parse as a datetime value: `\"not-a-date\"`",
       "for policy `policy2`, unexpected type: expected Bool but saw String",
-      "for policy `policy30`, error during extension function argument validation: Failed to parse as a duration value: `\"not-a-dur\"`",
+      "for policy `policy30`, error during extension function argument validation: failed to parse as a duration value: `\"not-a-dur\"`",
       "for policy `policy3`, unexpected type: expected Bool but saw String",
       "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String",
       "for policy `policy4`, unexpected type: expected datetime, or duration, or Long but saw String",
@@ -207,20 +207,20 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy20`, error during extension function argument validation: Failed to parse as IP address: `\"not-an-ip\"`"
+          "for policy `policy20`, error during extension function argument validation: failed to parse as IP address: `\"not-an-ip\"`"
         ],
         "permissiveErrors": [
-          "for policy `policy20`, error during extension function argument validation: Failed to parse as IP address: `\"not-an-ip\"`"
+          "for policy `policy20`, error during extension function argument validation: failed to parse as IP address: `\"not-an-ip\"`"
         ]
       },
       "policy21": {
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy21`, error during extension function argument validation: Failed to parse as a decimal value: `\"not-a-decimal\"`"
+          "for policy `policy21`, error during extension function argument validation: failed to parse as a decimal value: `\"not-a-decimal\"`"
         ],
         "permissiveErrors": [
-          "for policy `policy21`, error during extension function argument validation: Failed to parse as a decimal value: `\"not-a-decimal\"`"
+          "for policy `policy21`, error during extension function argument validation: failed to parse as a decimal value: `\"not-a-decimal\"`"
         ]
       },
       "policy22": {
@@ -299,10 +299,10 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy29`, error during extension function argument validation: Failed to parse as a datetime value: `\"not-a-date\"`"
+          "for policy `policy29`, error during extension function argument validation: failed to parse as a datetime value: `\"not-a-date\"`"
         ],
         "permissiveErrors": [
-          "for policy `policy29`, error during extension function argument validation: Failed to parse as a datetime value: `\"not-a-date\"`"
+          "for policy `policy29`, error during extension function argument validation: failed to parse as a datetime value: `\"not-a-date\"`"
         ]
       },
       "policy3": {
@@ -319,10 +319,10 @@
         "strict": false,
         "permissive": false,
         "strictErrors": [
-          "for policy `policy30`, error during extension function argument validation: Failed to parse as a duration value: `\"not-a-dur\"`"
+          "for policy `policy30`, error during extension function argument validation: failed to parse as a duration value: `\"not-a-dur\"`"
         ],
         "permissiveErrors": [
-          "for policy `policy30`, error during extension function argument validation: Failed to parse as a duration value: `\"not-a-dur\"`"
+          "for policy `policy30`, error during extension function argument validation: failed to parse as a duration value: `\"not-a-dur\"`"
         ]
       },
       "policy4": {
