@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -62,6 +63,9 @@ var corpusArchive []byte
 
 //go:embed corpus-tests-json-schemas.tar.gz
 var corpusJSONSchemasArchive []byte
+
+//go:embed corpus-tests-json-policies.tar.gz
+var corpusJSONPoliciesArchive []byte
 
 //go:embed corpus-tests-validation.tar.gz
 var corpusValidationArchive []byte
@@ -131,6 +135,60 @@ func loadTarGz(t testing.TB, archive []byte) TarFileMap {
 	return fdm
 }
 
+// normalizePatterns rewrites the like patterns in Rust Cedar's JSON for a
+// policy set the way cedar-go writes them. Rust Cedar writes each character
+// of a pattern as its own "Literal" element and keeps consecutive wildcards,
+// so it writes `like "ab**"` as
+// [{"Literal":"a"},{"Literal":"b"},"Wildcard","Wildcard"]. cedar-go writes
+// [{"Literal":"ab"},"Wildcard"], which matches the same strings.
+// Achieving encoding parity here is a bridge too far. This should be treated
+// as a bug in the Rust Cedar library.
+func normalizePatterns(t testing.TB, b []byte) []byte {
+	t.Helper()
+	dec := jsontext.NewDecoder(bytes.NewReader(b))
+	var out bytes.Buffer
+	enc := jsontext.NewEncoder(&out)
+	for {
+		ptr := dec.StackPointer()
+		if dec.PeekKind() == '[' && ptr.LastToken() == "pattern" && ptr.Parent().LastToken() == "like" {
+			var elems []any
+			testutil.OK(t, json.UnmarshalDecode(dec, &elems))
+			testutil.OK(t, json.MarshalEncode(enc, mergePatternElems(elems)))
+			continue
+		}
+		tok, err := dec.ReadToken()
+		if err == io.EOF {
+			break
+		}
+		testutil.OK(t, err)
+		testutil.OK(t, enc.WriteToken(tok))
+	}
+	return out.Bytes()
+}
+
+// mergePatternElems merges consecutive "Wildcard" elements into one and
+// consecutive "Literal" elements into one.
+func mergePatternElems(elems []any) []any {
+	var merged []any
+	for _, e := range elems {
+		if len(merged) > 0 {
+			switch prev := merged[len(merged)-1].(type) {
+			case string:
+				if e == "Wildcard" {
+					continue
+				}
+			case map[string]any:
+				if lit, ok := e.(map[string]any); ok {
+					prev["Literal"] = prev["Literal"].(string) + lit["Literal"].(string)
+					continue
+				}
+			}
+		}
+		merged = append(merged, e)
+	}
+	return merged
+}
+
 //nolint:revive // due to test cognitive complexity
 func TestCorpus(t *testing.T) {
 	t.Parallel()
@@ -146,6 +204,9 @@ func TestCorpus(t *testing.T) {
 
 	// Load JSON schemas for validation
 	jsonSchemasFdm := loadTarGz(t, corpusJSONSchemasArchive)
+
+	// Load JSON policy sets
+	jsonPoliciesFdm := loadTarGz(t, corpusJSONPoliciesArchive)
 
 	// Load validation results from Rust Cedar
 	validationFdm := loadTarGz(t, corpusValidationArchive)
@@ -227,6 +288,29 @@ func TestCorpus(t *testing.T) {
 				t.Fatal("error parsing policy set", err)
 			}
 
+			policiesFilename := strings.TrimSuffix(strings.TrimPrefix(tt.Policies, "corpus-tests/"), ".cedar")
+			jsonPoliciesPath := fmt.Sprintf("corpus-tests-json-policies/%s.cedar.json", policiesFilename)
+			rustPoliciesJSON, err := jsonPoliciesFdm.GetFileData(jsonPoliciesPath)
+			testutil.OK(t, err)
+
+			// Compare cedar-go's JSON for the policy set with Rust Cedar's
+			// JSON for the same Cedar policies.
+			t.Run("policies-vs-rust", func(t *testing.T) {
+				t.Parallel()
+
+				goJSON, err := policySet.MarshalJSON()
+				testutil.OK(t, err)
+
+				rustJSON := normalizePatterns(t, rustPoliciesJSON)
+				testutil.Equals(t, testutil.CanonicalizeJSON(t, goJSON), testutil.CanonicalizeJSON(t, rustJSON))
+			})
+
+			// Decode Rust Cedar's JSON for the policy set, so the requests
+			// below are also authorized against it.
+			var rustJSONPolicySet cedar.PolicySet
+			err = rustJSONPolicySet.UnmarshalJSON(rustPoliciesJSON)
+			testutil.OK(t, wrapErr("unmarshalling Rust Cedar's JSON policy set", err))
+
 			// Load Rust validation results for this test
 			testBasename := strings.TrimSuffix(strings.TrimPrefix(testFile, "corpus-tests/"), ".json")
 			validationPath := fmt.Sprintf("corpus-tests-validation/%s.validation.json", testBasename)
@@ -287,9 +371,10 @@ func TestCorpus(t *testing.T) {
 			testutil.Equals(t, rtEntities, entities)
 
 			policySets := map[string]*cedar.PolicySet{
-				"":                 policySet,
-				"/policy-cedar-rt": cedarRTPolicySet,
-				"/policy-json-rt":  &jsonRTPolicySet,
+				"":                  policySet,
+				"/policy-cedar-rt":  cedarRTPolicySet,
+				"/policy-json-rt":   &jsonRTPolicySet,
+				"/policy-rust-json": &rustJSONPolicySet,
 			}
 
 			for suffix, ps := range policySets {

@@ -72,7 +72,7 @@ run = "go mod tidy"
 
 [tasks."corpus:update"]
 description = "Download the latest upstream corpus tests and regenerate everything derived from them"
-depends = ["corpus:json-schemas", "corpus:validation", "testdata:validation", "testdata:entity-parsing"]
+depends = ["corpus:json-schemas", "corpus:json-policies", "corpus:validation", "testdata:validation", "testdata:entity-parsing"]
 
 [tasks."corpus:fetch"]
 description = "Download the latest upstream corpus tests, replacing corpus-tests.tar.gz if it changed"
@@ -107,6 +107,27 @@ for schema in "$tmpdir"/corpus-tests/*.cedarschema; do
 		> "$tmpdir/corpus-tests-json-schemas/$basename.cedarschema.json" 2>&1
 done
 tar -czf corpus-tests-json-schemas.tar.gz -C "$tmpdir" corpus-tests-json-schemas
+'''
+
+[tasks."corpus:json-policies"]
+description = "Convert the corpus tests' Cedar policies to JSON policy sets"
+depends = ["corpus:fetch"]
+# The tarballs aren't byte-for-byte reproducible, so only regenerate when the
+# corpus changes.
+sources = ["corpus-tests.tar.gz"]
+outputs = ["corpus-tests-json-policies.tar.gz"]
+run = '''
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+tar -xzf corpus-tests.tar.gz -C "$tmpdir"
+mkdir -p "$tmpdir/corpus-tests-json-policies"
+for policies in "$tmpdir"/corpus-tests/*.cedar; do
+	basename=$(basename "$policies" .cedar)
+	echo "  Converting $basename.cedar..."
+	cedar translate-policy --direction cedar-to-json --policies "$policies" \
+		> "$tmpdir/corpus-tests-json-policies/$basename.cedar.json"
+done
+tar -czf corpus-tests-json-policies.tar.gz -C "$tmpdir" corpus-tests-json-policies
 '''
 
 [tasks."corpus:validation"]
