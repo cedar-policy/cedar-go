@@ -2,6 +2,8 @@
 go = "1.26.10"
 "go:github.com/matryer/moq" = "0.8.1"
 golangci-lint = "2.14.0"
+rust = "1.99.1"
+"cargo:cedar-policy-cli" = "4.9.1"
 
 [tasks.ci]
 description = "Run the full CI pipeline"
@@ -89,7 +91,6 @@ fi
 [tasks."corpus:json-schemas"]
 description = "Convert the corpus tests' Cedar schemas to JSON schemas"
 depends = ["corpus:fetch"]
-tools = { "cargo:cedar-policy-cli" = "4.9.1" }
 # The tarballs aren't byte-for-byte reproducible, so only regenerate when the
 # corpus changes.
 sources = ["corpus-tests.tar.gz"]
