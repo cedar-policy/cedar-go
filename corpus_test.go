@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 
@@ -66,6 +67,9 @@ var corpusJSONSchemasArchive []byte
 
 //go:embed corpus-tests-json-policies.tar.gz
 var corpusJSONPoliciesArchive []byte
+
+//go:embed corpus-tests-json-entities.tar.gz
+var corpusJSONEntitiesArchive []byte
 
 //go:embed corpus-tests-validation.tar.gz
 var corpusValidationArchive []byte
@@ -189,6 +193,59 @@ func mergePatternElems(elems []any) []any {
 	return merged
 }
 
+// normalizeEntitiesJSON canonicalizes a JSON array of entities so that
+// encodings of the same entities compare equal:
+//   - Arrays, which hold the entities, each entity's parents, and sets, are
+//     sorted, because their order doesn't matter.
+//   - Extension values are written the way cedar-go writes them. Rust Cedar
+//     writes an extension value's argument as it appeared in the input, so it
+//     writes {"fn":"datetime","arg":"2024-01-01"} where cedar-go writes
+//     {"fn":"datetime","arg":"2024-01-01T00:00:00.000Z"}.
+//   - An entity's empty "tags" member is dropped. cedar-go always writes
+//     "tags", while Rust Cedar omits it when an entity has no tags.
+func normalizeEntitiesJSON(t testing.TB, b []byte) string {
+	t.Helper()
+	var entities []map[string]jsontext.Value
+	testutil.OK(t, json.Unmarshal(b, &entities))
+	for _, e := range entities {
+		if tags, ok := e["tags"]; ok && string(tags) == "{}" {
+			delete(e, "tags")
+		}
+	}
+	return string(normalizeJSONValue(t, testutil.Must(json.Marshal(entities))))
+}
+
+func normalizeJSONValue(t testing.TB, v jsontext.Value) jsontext.Value {
+	t.Helper()
+	switch v.Kind() {
+	case '[':
+		var elems []jsontext.Value
+		testutil.OK(t, json.Unmarshal(v, &elems))
+		for i, e := range elems {
+			elems[i] = normalizeJSONValue(t, e)
+		}
+		slices.SortFunc(elems, func(a, b jsontext.Value) int { return bytes.Compare(a, b) })
+		v = testutil.Must(json.Marshal(elems))
+	case '{':
+		var members map[string]jsontext.Value
+		testutil.OK(t, json.Unmarshal(v, &members))
+		if _, ok := members["__extn"]; ok && len(members) == 1 {
+			var val types.Value
+			testutil.OK(t, types.UnmarshalJSON(v, &val))
+			v = testutil.Must(json.Marshal(val))
+		} else {
+			for k, m := range members {
+				members[k] = normalizeJSONValue(t, m)
+			}
+			v = testutil.Must(json.Marshal(members))
+		}
+	default:
+		v = v.Clone()
+	}
+	testutil.OK(t, v.Canonicalize())
+	return v
+}
+
 //nolint:revive // due to test cognitive complexity
 func TestCorpus(t *testing.T) {
 	t.Parallel()
@@ -207,6 +264,9 @@ func TestCorpus(t *testing.T) {
 
 	// Load JSON policy sets
 	jsonPoliciesFdm := loadTarGz(t, corpusJSONPoliciesArchive)
+
+	// Load Rust Cedar's decoding of the entities
+	jsonEntitiesFdm := loadTarGz(t, corpusJSONEntitiesArchive)
 
 	// Load validation results from Rust Cedar
 	validationFdm := loadTarGz(t, corpusValidationArchive)
@@ -328,6 +388,37 @@ func TestCorpus(t *testing.T) {
 			if err != nil {
 				t.Fatal("error reading entities content", err)
 			}
+
+			// Compare cedar-go's decoding of the entities, without a schema,
+			// with Rust Cedar's.
+			t.Run("entities-vs-rust", func(t *testing.T) {
+				t.Parallel()
+
+				jsonEntitiesPath := strings.Replace(tt.Entities, "corpus-tests/", "corpus-tests-json-entities/", 1)
+				rustContent, err := jsonEntitiesFdm.GetFileData(jsonEntitiesPath)
+				testutil.OK(t, err)
+				var rust struct {
+					Accepted bool           `json:"accepted"`
+					Entities jsontext.Value `json:"entities"`
+				}
+				testutil.OK(t, json.Unmarshal(rustContent, &rust))
+
+				var goEntities cedar.EntityMap
+				err = goEntities.UnmarshalJSON(entitiesContent)
+				testutil.Equals(t, err == nil, rust.Accepted)
+				if err != nil {
+					return
+				}
+
+				// Rust Cedar's encoding decodes to the same entities.
+				var rustEntities cedar.EntityMap
+				testutil.OK(t, rustEntities.UnmarshalJSON(rust.Entities))
+				testutil.Equals(t, rustEntities, goEntities)
+
+				goJSON, err := goEntities.MarshalJSON()
+				testutil.OK(t, err)
+				testutil.Equals(t, normalizeEntitiesJSON(t, goJSON), normalizeEntitiesJSON(t, rust.Entities))
+			})
 
 			var expEntities exptypes.EntityMap
 			if err := expEntities.UnmarshalJSONWithSchema(entitiesContent, rs); err != nil {

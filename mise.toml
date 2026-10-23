@@ -72,7 +72,7 @@ run = "go mod tidy"
 
 [tasks."corpus:update"]
 description = "Download the latest upstream corpus tests and regenerate everything derived from them"
-depends = ["corpus:json-schemas", "corpus:json-policies", "corpus:validation", "testdata:validation", "testdata:entity-parsing"]
+depends = ["corpus:json-schemas", "corpus:json-policies", "corpus:json-entities", "corpus:validation", "testdata:validation", "testdata:entity-parsing"]
 
 [tasks."corpus:fetch"]
 description = "Download the latest upstream corpus tests, replacing corpus-tests.tar.gz if it changed"
@@ -130,6 +130,23 @@ done
 tar -czf corpus-tests-json-policies.tar.gz -C "$tmpdir" corpus-tests-json-policies
 '''
 
+[tasks."corpus:json-entities"]
+description = "Record how Rust Cedar decodes and re-encodes the corpus tests' entities"
+depends = ["corpus:fetch", "build:json-tool"]
+sources = ["corpus-tests.tar.gz", "test/cedar-json-tool/src/**", "test/cedar-json-tool/Cargo.*"]
+outputs = ["corpus-tests-json-entities.tar.gz"]
+run = '''
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+tar -xzf corpus-tests.tar.gz -C "$tmpdir"
+mkdir -p "$tmpdir/corpus-tests-json-entities"
+for entities in "$tmpdir"/corpus-tests/*.entities.json; do
+	test/cedar-json-tool/target/release/cedar-json-tool entities \
+		"$entities" "$tmpdir/corpus-tests-json-entities/$(basename "$entities")"
+done
+tar -czf corpus-tests-json-entities.tar.gz -C "$tmpdir" corpus-tests-json-entities
+'''
+
 [tasks."corpus:validation"]
 description = "Generate the corpus tests' expected validation results with Rust Cedar"
 depends = ["corpus:fetch", "build:validation-tool"]
@@ -182,3 +199,7 @@ run = "cargo build --release --manifest-path test/cedar-validation-tool/Cargo.to
 [tasks."build:entity-parsing-tool"]
 description = "Build cedar-entity-parsing-tool"
 run = "cargo build --release --manifest-path test/cedar-entity-parsing-tool/Cargo.toml"
+
+[tasks."build:json-tool"]
+description = "Build cedar-json-tool"
+run = "cargo build --release --manifest-path test/cedar-json-tool/Cargo.toml"
