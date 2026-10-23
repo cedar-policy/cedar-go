@@ -584,6 +584,12 @@ func TestUnmarshalJSONNonCanonical(t *testing.T) {
 			ast.Permit().ActionInSet(types.NewEntityUID("T", "42")),
 		},
 		{
+			// cedar-go writes a set with one entity as that entity.
+			"actionInSetOneEntity",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"T","id":"42"}]},"resource":{"op":"All"}}`,
+			ast.Permit().ActionInSet(types.NewEntityUID("T", "42")),
+		},
+		{
 			// cedar-go previously wrote "action in []" without "entities".
 			"actionInWithoutEntities",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in"},"resource":{"op":"All"}}`,
@@ -988,6 +994,16 @@ func TestMarshalExtensions(t *testing.T) {
 
 		})
 	}
+}
+
+// As in Rust Cedar, an action in a set with one entity is written as an
+// action in that entity.
+func TestMarshalActionInSetOneEntity(t *testing.T) {
+	t.Parallel()
+	p := (*Policy)(ast.Permit().ActionInSet(types.NewEntityUID("T", "42")))
+	out, err := p.MarshalJSON()
+	testutil.OK(t, err)
+	testutil.Equals(t, string(out), `{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entity":{"type":"T","id":"42"}},"resource":{"op":"All"},"conditions":[]}`)
 }
 
 // A Record in a Value node is written as a value, so its JSON could be

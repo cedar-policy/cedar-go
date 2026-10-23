@@ -26,6 +26,12 @@ func (s *scopeJSON) FromNode(src ast.IsScopeNode) {
 		return
 	case ast.ScopeTypeInSet:
 		s.Op = "in"
+		// As in Rust Cedar, a set with one entity is written as that entity.
+		if len(t.Entities) == 1 {
+			e := types.ImplicitlyMarshaledEntityUID(t.Entities[0])
+			s.Entity = &e
+			return
+		}
 		es := make(scopeEntitiesJSON, len(t.Entities))
 		for i, e := range t.Entities {
 			es[i] = types.ImplicitlyMarshaledEntityUID(e)
