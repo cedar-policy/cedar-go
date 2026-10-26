@@ -11,6 +11,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/internal/names"
 	"github.com/cedar-policy/cedar-go/internal/rust"
+	"github.com/cedar-policy/cedar-go/internal/scanner"
 )
 
 // Path is a series of idents separated by ::
@@ -57,29 +58,32 @@ var errInvalidUID = errors.New("invalid EntityUID")
 
 // UnmarshalCedar parses a Cedar language representation of an EntityUID.
 func (e *EntityUID) UnmarshalCedar(data []byte) error {
-	// NB: In a perfect world we'd use the full parsing from internal/parser, but
-	// today that imports cedar-go/types (this pkg) which means we'd need to carve
-	// it out to reuse it. Given that NewEntityUID(.,.) does zero validation
-	// itself, the juice is not worth the squeeze today.
-	s := string(data)
-	idx := strings.Index(s, "::\"")
-	if idx < 0 || !names.IsName(s[:idx]) {
+	// TODO: we use the scanner here but the code below it duplicates parser
+	// code, eventually we'd like to use a single function.
+	tokens, err := scanner.Tokenize(data)
+	if err != nil || !tokens[0].IsIdent() {
 		return errInvalidUID
 	}
-	typ := EntityType(s[:idx])
-	quoted := s[idx+2:] // include the leading `"`
-
-	if len(quoted) < 2 || quoted[0] != '"' || quoted[len(quoted)-1] != '"' {
-		return errInvalidUID
+	path := []string{tokens[0].Text}
+	for i := 1; i+1 < len(tokens); i += 2 {
+		if tokens[i].Text != "::" {
+			return errInvalidUID
+		}
+		switch t := tokens[i+1]; {
+		case t.IsIdent():
+			path = append(path, t.Text)
+		case t.IsString() && tokens[i+2].IsEOF():
+			id, err := t.StringValue()
+			if err != nil {
+				return errInvalidUID
+			}
+			*e = NewEntityUID(EntityType(strings.Join(path, "::")), String(id))
+			return nil
+		default:
+			return errInvalidUID
+		}
 	}
-
-	id, _, err := rust.Unquote([]byte(quoted[1:len(quoted)-1]), false)
-	if err != nil {
-		return errInvalidUID
-	}
-
-	*e = NewEntityUID(typ, String(id))
-	return nil
+	return errInvalidUID
 }
 
 // UnmarshalJSON decodes an EntityUID from its explicit form,
