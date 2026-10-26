@@ -9,19 +9,20 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/internal/mapset"
+	"github.com/cedar-policy/cedar-go/internal/scanner"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func (p *PolicySlice) UnmarshalCedar(b []byte) error {
-	tokens, err := Tokenize(b)
+	tokens, err := scanner.Tokenize(b)
 	if err != nil {
 		return err
 	}
 
 	var policySet PolicySlice
 	parser := newParser(tokens)
-	for !parser.peek().isEOF() {
+	for !parser.peek().IsEOF() {
 		var policy Policy
 		if err = policy.fromCedar(&parser); err != nil {
 			return err
@@ -48,7 +49,7 @@ func NewDecoder(r io.Reader) *Decoder {
 
 func (d *Decoder) decode(p *Policy) error {
 	if d.parser == nil {
-		tokens, err := TokenizeReader(d.r)
+		tokens, err := scanner.TokenizeReader(d.r)
 		if err != nil {
 			return err
 		}
@@ -56,7 +57,7 @@ func (d *Decoder) decode(p *Policy) error {
 		d.parser = &parser
 	}
 
-	if d.parser.peek().isEOF() {
+	if d.parser.peek().IsEOF() {
 		return io.EOF
 	}
 
@@ -72,7 +73,7 @@ func (d *Decoder) Decode(p *Policy) error {
 }
 
 func (p *Policy) UnmarshalCedar(b []byte) error {
-	tokens, err := Tokenize(b)
+	tokens, err := scanner.Tokenize(b)
 	if err != nil {
 		return err
 	}
@@ -92,7 +93,7 @@ func (p *Policy) fromCedar(parser *parser) error {
 	if err != nil {
 		return err
 	}
-	newPolicy.Position = (ast.Position)(pos)
+	newPolicy.Position = ast.Position{Offset: pos.Offset, Line: pos.Line, Column: pos.Column}
 
 	if err = parser.exact("("); err != nil {
 		return err
@@ -128,15 +129,15 @@ func (p *Policy) fromCedar(parser *parser) error {
 }
 
 type parser struct {
-	tokens []Token
+	tokens []scanner.Token
 	pos    int
 }
 
-func newParser(tokens []Token) parser {
+func newParser(tokens []scanner.Token) parser {
 	return parser{tokens: tokens, pos: 0}
 }
 
-func (p *parser) advance() Token {
+func (p *parser) advance() scanner.Token {
 	t := p.peek()
 	if p.pos < len(p.tokens)-1 {
 		p.pos++
@@ -144,7 +145,7 @@ func (p *parser) advance() Token {
 	return t
 }
 
-func (p *parser) peek() Token {
+func (p *parser) peek() scanner.Token {
 	return p.tokens[p.pos]
 }
 
@@ -164,7 +165,7 @@ func (p *parser) skipAtMostOnce(tok string) {
 }
 
 func (p *parser) errorf(s string, args ...interface{}) error {
-	var t Token
+	var t scanner.Token
 	if p.pos < len(p.tokens) {
 		t = p.tokens[p.pos]
 	}
@@ -191,7 +192,7 @@ func (p *parser) annotation(a *ast.Annotations, known *mapset.MapSet[string]) er
 	// As of 2024-09-13, the ability to use reserved keywords for annotation keys is not documented in the Cedar schema.
 	// This ability was added to the Rust implementation in this commit:
 	// https://github.com/cedar-policy/cedar/commit/5f62c6df06b59abc5634d6668198a826839c6fb7
-	if !t.isIdent() && !t.isReservedKeyword() {
+	if !t.IsIdent() && !t.IsReservedKeyword() {
 		return p.errorf("expected ident or reserved keyword")
 	}
 	name := t.Text
@@ -207,11 +208,11 @@ func (p *parser) annotation(a *ast.Annotations, known *mapset.MapSet[string]) er
 	if p.peek().Text == "(" {
 		p.advance() // consume "("
 		t = p.advance()
-		if !t.isString() {
+		if !t.IsString() {
 			return p.errorf("expected string")
 		}
 		var err error
-		if value, err = t.stringValue(); err != nil {
+		if value, err = t.StringValue(); err != nil {
 			return err
 		}
 		if err = p.exact(")"); err != nil {
@@ -282,7 +283,7 @@ func (p *parser) principal(policy *ast.Policy) error {
 func (p *parser) entity() (types.EntityUID, error) {
 	var res types.EntityUID
 	t := p.advance()
-	if !t.isIdent() {
+	if !t.IsIdent() {
 		return res, p.errorf("expected ident")
 	}
 	return p.entityFirstPathPreread(types.EntityType(t.Text))
@@ -297,10 +298,10 @@ func (p *parser) entityFirstPathPreread(firstPath types.EntityType) (types.Entit
 		}
 		t := p.advance()
 		switch {
-		case t.isIdent():
+		case t.IsIdent():
 			res.Type = types.EntityType(res.Type) + "::" + types.EntityType(t.Text)
-		case t.isString():
-			id, err := t.stringValue()
+		case t.IsString():
+			id, err := t.StringValue()
 			if err != nil {
 				return res, err
 			}
@@ -321,7 +322,7 @@ func (p *parser) pathFirstPathPreread(firstPath string) (types.EntityType, error
 		p.advance()
 		t := p.advance()
 		switch {
-		case t.isIdent():
+		case t.IsIdent():
 			res = types.EntityType(fmt.Sprintf("%v::%v", res, t.Text))
 		default:
 			return res, p.errorf("unexpected token")
@@ -331,7 +332,7 @@ func (p *parser) pathFirstPathPreread(firstPath string) (types.EntityType, error
 
 func (p *parser) path() (types.EntityType, error) {
 	t := p.advance()
-	if !t.isIdent() {
+	if !t.IsIdent() {
 		return "", p.errorf("expected ident")
 	}
 	return p.pathFirstPathPreread(t.Text)
@@ -596,7 +597,7 @@ func (p *parser) relation() (ast.Node, error) {
 
 func (p *parser) has(lhs ast.Node) (ast.Node, error) {
 	t := p.advance()
-	if t.isIdent() {
+	if t.IsIdent() {
 		firstAttr := types.String(t.Text)
 		result := lhs.Has(firstAttr)
 		currentLHS := lhs.Access(firstAttr)
@@ -605,7 +606,7 @@ func (p *parser) has(lhs ast.Node) (ast.Node, error) {
 		for p.peek().Text == "." {
 			p.advance() // consume "."
 			t := p.advance()
-			if !t.isIdent() {
+			if !t.IsIdent() {
 				return ast.Node{}, p.errorf("expected ident after dot")
 			}
 			attr := types.String(t.Text)
@@ -616,8 +617,8 @@ func (p *parser) has(lhs ast.Node) (ast.Node, error) {
 		}
 
 		return result, nil
-	} else if t.isString() {
-		str, err := t.stringValue()
+	} else if t.IsString() {
+		str, err := t.StringValue()
 		if err != nil {
 			return ast.Node{}, err
 		}
@@ -628,7 +629,7 @@ func (p *parser) has(lhs ast.Node) (ast.Node, error) {
 
 func (p *parser) like(lhs ast.Node) (ast.Node, error) {
 	t := p.advance()
-	if !t.isString() {
+	if !t.IsString() {
 		return ast.Node{}, p.errorf("expected string literal")
 	}
 	patternRaw := t.Text
@@ -721,7 +722,7 @@ func (p *parser) unary() (ast.Node, error) {
 
 	// special case for max negative long
 	tok := p.peek()
-	if len(ops) > 0 && ops[len(ops)-1] && tok.isInt() {
+	if len(ops) > 0 && ops[len(ops)-1] && tok.IsInt() {
 		p.advance()
 		i, err := strconv.ParseInt("-"+tok.Text, 10, 64)
 		if err != nil {
@@ -769,14 +770,14 @@ func (p *parser) primary() (ast.Node, error) {
 	var res ast.Node
 	t := p.advance()
 	switch {
-	case t.isInt():
-		i, err := t.intValue()
+	case t.IsInt():
+		i, err := t.IntValue()
 		if err != nil {
 			return res, err
 		}
 		res = ast.Long(i)
-	case t.isString():
-		str, err := t.stringValue()
+	case t.IsString():
+		str, err := t.StringValue()
 		if err != nil {
 			return res, err
 		}
@@ -785,7 +786,7 @@ func (p *parser) primary() (ast.Node, error) {
 		res = ast.True()
 	case t.Text == "false":
 		res = ast.False()
-	case t.isIdent():
+	case t.IsIdent():
 		// There's an ambiguity here between VAR, Entity, and ExtFun - all of which can start with an Ident. We need to
 		// look ahead one token to resolve it.
 		next := p.peek()
@@ -839,10 +840,10 @@ func (p *parser) entityOrExtFun(prefix string) (ast.Node, error) {
 		case "::":
 			t := p.advance()
 			switch {
-			case t.isIdent():
+			case t.IsIdent():
 				prefix = prefix + "::" + t.Text
-			case t.isString():
-				id, err := t.stringValue()
+			case t.IsString():
+				id, err := t.StringValue()
 				if err != nil {
 					return ast.Node{}, err
 				}
@@ -930,10 +931,10 @@ func (p *parser) recordEntry() (string, ast.Node, error) {
 	var err error
 	t := p.advance()
 	switch {
-	case t.isIdent():
+	case t.IsIdent():
 		key = t.Text
-	case t.isString():
-		str, err := t.stringValue()
+	case t.IsString():
+		str, err := t.StringValue()
 		if err != nil {
 			return key, value, err
 		}
@@ -971,7 +972,7 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 	case ".":
 		p.advance()
 		t := p.advance()
-		if !t.isIdent() {
+		if !t.IsIdent() {
 			return ast.Node{}, false, p.errorf("expected ident")
 		}
 		if p.peek().Text == "(" {
@@ -1021,10 +1022,10 @@ func (p *parser) access(lhs ast.Node) (ast.Node, bool, error) {
 	case "[":
 		p.advance()
 		t := p.advance()
-		if !t.isString() {
+		if !t.IsString() {
 			return ast.Node{}, false, p.errorf("unexpected token")
 		}
-		name, err := t.stringValue()
+		name, err := t.StringValue()
 		if err != nil {
 			return ast.Node{}, false, err
 		}

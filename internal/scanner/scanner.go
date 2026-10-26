@@ -1,4 +1,4 @@
-package parser
+package scanner
 
 import (
 	"bytes"
@@ -10,10 +10,9 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/names"
 	"github.com/cedar-policy/cedar-go/internal/rust"
-	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
-//go:generate moq -pkg parser -fmt goimports -out cedar_tokenize_mocks_test.go . reader
+//go:generate moq -pkg scanner -fmt goimports -out scanner_mocks_test.go . reader
 
 // This type alias is for test purposes only.
 type reader = io.Reader
@@ -36,27 +35,27 @@ type Token struct {
 	Text string
 }
 
-func (t Token) isEOF() bool {
+func (t Token) IsEOF() bool {
 	return t.Type == TokenEOF
 }
 
-func (t Token) isIdent() bool {
+func (t Token) IsIdent() bool {
 	return t.Type == TokenIdent
 }
 
-func (t Token) isInt() bool {
+func (t Token) IsInt() bool {
 	return t.Type == TokenInt
 }
 
-func (t Token) isReservedKeyword() bool {
+func (t Token) IsReservedKeyword() bool {
 	return t.Type == TokenReservedKeyword
 }
 
-func (t Token) isString() bool {
+func (t Token) IsString() bool {
 	return t.Type == TokenString
 }
 
-func (t Token) stringValue() (string, error) {
+func (t Token) StringValue() (string, error) {
 	s := t.Text
 	s = strings.TrimPrefix(s, "\"")
 	s = strings.TrimSuffix(s, "\"")
@@ -65,7 +64,7 @@ func (t Token) stringValue() (string, error) {
 	return res, err
 }
 
-func (t Token) intValue() (int64, error) {
+func (t Token) IntValue() (int64, error) {
 	return strconv.ParseInt(t.Text, 10, 64)
 }
 
@@ -87,7 +86,11 @@ func TokenizeReader(r io.Reader) ([]Token, error) {
 	return res, nil
 }
 
-type Position ast.Position
+type Position struct {
+	Offset int
+	Line   int
+	Column int
+}
 
 func (pos Position) String() string {
 	return fmt.Sprintf("<input>:%d:%d", pos.Line, pos.Column)
