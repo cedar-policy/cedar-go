@@ -46,6 +46,10 @@ func TestEntity(t *testing.T) {
 			{"X::Y", "abc::", `X::Y::"abc::"`},
 			{"Search::Algorithm", "A*", `Search::Algorithm::"A*"`},
 			{"Super", "*", `Super::"*"`},
+			{"T", `a"b`, `T::"a\"b"`},
+			{"T", `"`, `T::"\""`},
+			{"T", `x\`, `T::"x\\"`},
+			{"T", `\"`, `T::"\\\""`},
 		}
 		marshalFuncs := []struct {
 			name      string
@@ -112,6 +116,20 @@ func TestEntity(t *testing.T) {
 			{"type with space", `A B::"id"`},
 			{"type with empty segment", `A::::B::"id"`},
 			{"type with reserved keyword", `A::if::"id"`},
+			{"unescaped quote in id", `A::"x"y"`},
+			{"two quoted strings", `A::"x" "y"`},
+			{"empty id followed by quotes", `A::""""`},
+			{"escaped backslash then unescaped quote", `A::"x\\"y"`},
+			{"escaped closing quote", `A::"x\"`},
+			{"trailing policy text", `A::"x", action, resource ); permit ( principal == A::"id"`},
+			{"type only", `A`},
+			{"trailing separator", `A::`},
+			{"string first", `"id"::A`},
+			{"wrong separator", `A:"id"`},
+			{"id not last", `A::"x"::B`},
+			{"reserved namespace", `__cedar::A::"id"`},
+			{"invalid code point", `A::"\u{D800}"`},
+			{"unterminated comment", `A::"id" /*`},
 		}
 
 		for _, tt := range tests {
@@ -120,6 +138,24 @@ func TestEntity(t *testing.T) {
 				var got types.EntityUID
 				err := got.UnmarshalCedar([]byte(tt.input))
 				testutil.FatalIf(t, err == nil, "expected error for input %q, got nil", tt.input)
+			})
+		}
+	})
+
+	t.Run("UnmarshalCedar whitespace and comments", func(t *testing.T) {
+		t.Parallel()
+		tests := []string{
+			`A::B::"id"`,
+			` A :: B :: "id" `,
+			"A::\nB::\n\"id\"\n",
+			`/* c */ A::B::"id" // c`,
+		}
+		for _, input := range tests {
+			t.Run(input, func(t *testing.T) {
+				t.Parallel()
+				var got types.EntityUID
+				testutil.OK(t, got.UnmarshalCedar([]byte(input)))
+				testutil.Equals(t, got, types.NewEntityUID("A::B", "id"))
 			})
 		}
 	})
