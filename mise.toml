@@ -7,7 +7,7 @@ rust = "1.99.1"
 
 [tasks.ci]
 description = "Run the full CI pipeline"
-depends = ["build", "lint", "test:cover", "test:fuzz"]
+depends = ["build", "lint", "test:cover"]
 
 [tasks.build]
 description = "Verify all packages compile"

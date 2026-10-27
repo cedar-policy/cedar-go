@@ -8,6 +8,12 @@ To run everything CI runs:
 mise run ci
 ```
 
+Fuzz tests run nightly in CI for 15 minutes each. To run them locally:
+
+```bash
+mise run test:fuzz 15m
+```
+
 ## Running Tests
 
 ```bash
