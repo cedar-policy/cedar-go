@@ -317,6 +317,66 @@ func TestImplicitlyMarshaledEntityUID(t *testing.T) {
 	})
 }
 
+var (
+	validNames   = []string{"User", "NS::User", "A::B::C", "_x9", "ifx", "__cedarx"}
+	invalidNames = []string{
+		"",
+		"9User",
+		"User::",
+		"::User",
+		"NS:::User",
+		"NS::if",
+		"__cedar",
+		"A B",
+		`User::"alice"`,
+		"User ) permit ( principal",
+	}
+)
+
+func TestNewPath(t *testing.T) {
+	t.Parallel()
+
+	for _, s := range validNames {
+		t.Run(s, func(t *testing.T) {
+			t.Parallel()
+			got, err := types.NewPath(s)
+			testutil.OK(t, err)
+			testutil.Equals(t, got, types.Path(s))
+		})
+	}
+
+	for _, s := range invalidNames {
+		t.Run(s, func(t *testing.T) {
+			t.Parallel()
+			got, err := types.NewPath(s)
+			testutil.Error(t, err)
+			testutil.Equals(t, got, types.Path(""))
+		})
+	}
+}
+
+func TestNewEntityType(t *testing.T) {
+	t.Parallel()
+
+	for _, s := range validNames {
+		t.Run(s, func(t *testing.T) {
+			t.Parallel()
+			got, err := types.NewEntityType(s)
+			testutil.OK(t, err)
+			testutil.Equals(t, got, types.EntityType(s))
+		})
+	}
+
+	for _, s := range invalidNames {
+		t.Run(s, func(t *testing.T) {
+			t.Parallel()
+			got, err := types.NewEntityType(s)
+			testutil.Error(t, err)
+			testutil.Equals(t, got, types.EntityType(""))
+		})
+	}
+}
+
 func TestEntityUIDSet(t *testing.T) {
 	t.Parallel()
 

@@ -6,8 +6,6 @@ import (
 
 	"github.com/go-json-experiment/json"
 	"github.com/go-json-experiment/json/jsontext"
-
-	"github.com/cedar-policy/cedar-go/internal/scanner"
 )
 
 var (
@@ -19,7 +17,6 @@ var (
 	errJSONExtNotFound     = fmt.Errorf("json extn not found")
 	errJSONEntityNotFound  = fmt.Errorf("json entity not found")
 	errJSONReservedKey     = fmt.Errorf("record uses reserved key")
-	errJSONInvalidType     = fmt.Errorf("invalid entity type")
 )
 
 type extn struct {
@@ -90,8 +87,8 @@ func (v *explicitValue) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 		if len(m) == 1 {
 			if entity, ok := m["__entity"]; ok {
 				if uid, ok := coerceValueToEntityUID(entity.Value); ok {
-					if !scanner.IsPath(string(uid.Type)) {
-						return fmt.Errorf("%w: %q", errJSONInvalidType, uid.Type)
+					if _, err := NewEntityType(string(uid.Type)); err != nil {
+						return err
 					}
 					v.Value = uid
 					return nil

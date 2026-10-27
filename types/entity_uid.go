@@ -13,11 +13,36 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/scanner"
 )
 
-// Path is a series of idents separated by ::
+// Path is a series of idents separated by ::. Create a Path with NewPath,
+// which rejects strings that aren't valid Cedar paths. Converting an arbitrary
+// string directly to a Path is unsupported and may result in unsafe marshaled
+// Cedar text in policy.
 type Path string
 
-// EntityType is the type portion of an EntityUID
+// NewPath returns the Path specified in s, or an error if s isn't a valid
+// Cedar path.
+func NewPath(s string) (Path, error) {
+	if !scanner.IsPath(s) {
+		return "", fmt.Errorf("%w: %q", errInvalidPath, s)
+	}
+	return Path(s), nil
+}
+
+// EntityType is the type portion of an EntityUID. Create an EntityType with
+// NewEntityType, or by converting a Path created with NewPath. Converting an
+// arbitrary string directly to an EntityType is unsupported and may
+// result in unsafe marshaled Cedar text in policy.
 type EntityType Path
+
+// NewEntityType returns the EntityType named by s, or an error if s isn't a
+// valid Cedar path. See NewPath.
+func NewEntityType(s string) (EntityType, error) {
+	p, err := NewPath(s)
+	if err != nil {
+		return "", fmt.Errorf("%w: %q", errInvalidEntityType, s)
+	}
+	return EntityType(p), nil
+}
 
 // An EntityUID is the identifier for a principal, action, or resource.
 type EntityUID struct {
@@ -25,7 +50,7 @@ type EntityUID struct {
 	ID   String
 }
 
-// NewEntityUID returns an EntityUID given an EntityType and identifier
+// NewEntityUID returns an EntityUID given an EntityType and identifier.
 func NewEntityUID(typ EntityType, id String) EntityUID {
 	return EntityUID{
 		Type: typ,
@@ -53,7 +78,11 @@ func (e EntityUID) MarshalCedar() []byte {
 	return []byte(e.String())
 }
 
-var errInvalidUID = errors.New("invalid EntityUID")
+var (
+	errInvalidPath       = errors.New("invalid path")
+	errInvalidEntityType = errors.New("invalid entity type")
+	errInvalidUID        = errors.New("invalid EntityUID")
+)
 
 // UnmarshalCedar parses a Cedar language representation of an EntityUID.
 func (e *EntityUID) UnmarshalCedar(data []byte) error {
@@ -104,10 +133,11 @@ func (e *EntityUID) UnmarshalJSON(b []byte) error {
 	} else {
 		return errJSONEntityNotFound
 	}
-	if !scanner.IsPath(*typ) {
-		return fmt.Errorf("%w: %q", errJSONInvalidType, *typ)
+	t, err := NewEntityType(*typ)
+	if err != nil {
+		return err
 	}
-	e.Type = EntityType(*typ)
+	e.Type = t
 	e.ID = String(*id)
 	return nil
 }
