@@ -20,6 +20,3 @@ jobs:
 
       - name: Lint
         run: mise run lint
-
-      - name: Fuzz
-        run: mise run test:fuzz

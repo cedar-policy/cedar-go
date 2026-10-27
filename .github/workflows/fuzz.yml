@@ -1,0 +1,24 @@
+name: Nightly Fuzz
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: jdx/mise-action@v5
+
+      - name: Fuzz
+        run: mise run test:fuzz 15m
+
+      - name: Upload failing inputs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-failures
+          path: "**/testdata/fuzz/"
