@@ -73,6 +73,9 @@ func Record(elements Pairs) Node {
 
 // EntityUID creates a value node containing an EntityUID.
 //
+// Deprecated: Use Value(types.NewEntityUID(typ, id)), with a typ created by
+// types.NewEntityType. This function does not check that typ is a valid path.
+//
 //nolint:staticcheck // typ keeps its original type for compatibility
 func EntityUID(typ types.Ident, id types.String) Node {
 	return wrapNode(ast.EntityUID(types.EntityType(typ), id))
