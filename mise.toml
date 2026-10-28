@@ -1,6 +1,7 @@
 [tools]
 go = "1.26.10"
 "go:github.com/matryer/moq" = "0.8.1"
+"go:golang.org/x/exp/cmd/gorelease" = "0.0.0-20261014143641-f0251eb4aa3e"
 golangci-lint = "2.14.0"
 rust = "1.99.1"
 "cargo:cedar-policy-cli" = "4.12.0"
@@ -45,7 +46,7 @@ run = "go generate ./..."
 
 [tasks.lint]
 description = "Run all linters"
-depends = ["lint:golangci", "lint:codegen", "lint:tidy"]
+depends = ["lint:golangci", "lint:codegen", "lint:tidy", "lint:gorelease"]
 
 [tasks."lint:fix"]
 description = "Auto-fix lint violations"
@@ -62,6 +63,10 @@ run = "golangci-lint run --fix ./..."
 [tasks."lint:codegen"]
 description = "Verify all generated code matches committed output"
 run = "scripts/lint-codegen.sh"
+
+[tasks."lint:gorelease"]
+description = "Verify the public API has no incompatible changes since the latest release"
+run = "scripts/lint-gorelease.sh"
 
 [tasks."lint:tidy"]
 description = "Verify go.mod and go.sum are tidy"

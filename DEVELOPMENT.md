@@ -40,6 +40,8 @@ Many violations can be fixed automatically with:
 mise run lint:fix
 ```
 
+`mise run lint` also runs [gorelease](https://pkg.go.dev/golang.org/x/exp/cmd/gorelease) to check that the public API has no incompatible changes since the latest release. Packages under `x/exp` are exempt.
+
 ## Generating Code
 
 Mocks are generated with [moq](https://github.com/matryer/moq) via `go:generate` directives. After changing a mocked interface, regenerate them with:
