@@ -587,7 +587,7 @@ func TestParseTrailingCommas(t *testing.T) {
 		{
 			"entity list with trailing comma",
 			`permit (principal, action, resource) when {User::"alice" in [User::"bob",] };`,
-			ast.Permit().When(ast.EntityUID(types.Ident("User"), types.String("alice")).In(ast.Set(ast.EntityUID(types.Ident("User"), types.String("bob"))))),
+			ast.Permit().When(ast.EntityUID(types.EntityType("User"), types.String("alice")).In(ast.Set(ast.EntityUID(types.EntityType("User"), types.String("bob"))))),
 		},
 		{
 			"extension call with trailing comma",

@@ -73,7 +73,7 @@ func Record(elements Pairs) Node {
 
 // EntityUID creates a value node containing an EntityUID.
 func EntityUID(typ types.Ident, id types.String) Node {
-	return wrapNode(ast.EntityUID(typ, id))
+	return wrapNode(ast.EntityUID(types.EntityType(typ), id))
 }
 
 // IPAddr creates a value node containing an IPAddr.
