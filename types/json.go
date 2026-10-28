@@ -7,7 +7,7 @@ import (
 	"github.com/go-json-experiment/json"
 	"github.com/go-json-experiment/json/jsontext"
 
-	"github.com/cedar-policy/cedar-go/internal/names"
+	"github.com/cedar-policy/cedar-go/internal/scanner"
 )
 
 var (
@@ -90,7 +90,7 @@ func (v *explicitValue) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 		if len(m) == 1 {
 			if entity, ok := m["__entity"]; ok {
 				if uid, ok := coerceValueToEntityUID(entity.Value); ok {
-					if !names.IsName(string(uid.Type)) {
+					if !scanner.IsPath(string(uid.Type)) {
 						return fmt.Errorf("%w: %q", errJSONInvalidType, uid.Type)
 					}
 					v.Value = uid
