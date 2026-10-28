@@ -9,7 +9,6 @@ import (
 	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/internal/mapset"
-	"github.com/cedar-policy/cedar-go/internal/names"
 	"github.com/cedar-policy/cedar-go/internal/rust"
 	"github.com/cedar-policy/cedar-go/internal/scanner"
 )
@@ -105,7 +104,7 @@ func (e *EntityUID) UnmarshalJSON(b []byte) error {
 	} else {
 		return errJSONEntityNotFound
 	}
-	if !names.IsName(*typ) {
+	if !scanner.IsPath(*typ) {
 		return fmt.Errorf("%w: %q", errJSONInvalidType, *typ)
 	}
 	e.Type = EntityType(*typ)

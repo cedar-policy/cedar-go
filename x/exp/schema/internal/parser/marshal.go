@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/cedar-policy/cedar-go/internal/names"
+	"github.com/cedar-policy/cedar-go/internal/scanner"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/ast"
 )
@@ -312,7 +312,7 @@ func isValidIdent(s string) bool {
 			}
 		}
 	}
-	return !names.IsReservedKeyword(s)
+	return !scanner.IsReservedKeyword(s)
 }
 
 // quoteCedar produces a double-quoted string literal using only Cedar-valid

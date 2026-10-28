@@ -3,7 +3,7 @@ package exptypes
 import (
 	"github.com/go-json-experiment/json"
 
-	"github.com/cedar-policy/cedar-go/internal/names"
+	"github.com/cedar-policy/cedar-go/internal/scanner"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/resolved"
 	"github.com/cedar-policy/cedar-go/x/exp/schema/validate"
@@ -147,11 +147,11 @@ func coerceEntityUID(v types.Value) types.Value {
 		return v
 	}
 	if entity, ok := rec.Get("__entity"); ok {
-		if uid, ok := coerceValueToEntityUID(entity); ok && names.IsName(string(uid.Type)) {
+		if uid, ok := coerceValueToEntityUID(entity); ok && scanner.IsPath(string(uid.Type)) {
 			return uid
 		}
 	}
-	if uid, ok := coerceValueToEntityUID(rec); ok && names.IsName(string(uid.Type)) {
+	if uid, ok := coerceValueToEntityUID(rec); ok && scanner.IsPath(string(uid.Type)) {
 		return uid
 	}
 	return v

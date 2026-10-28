@@ -8,7 +8,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/cedar-policy/cedar-go/internal/names"
 	"github.com/cedar-policy/cedar-go/internal/rust"
 )
 
@@ -265,7 +264,7 @@ func (s *scanner) error(msg string) {
 func (s *scanner) scanIdentifier() rune {
 	// we know the zeroth rune is OK; start scanning at the next one
 	ch := s.next()
-	for names.IsIdentRune(ch, false) {
+	for IsIdentRune(ch, false) {
 		ch = s.next()
 	}
 	return ch
@@ -458,7 +457,7 @@ redo:
 	switch {
 	case ch == specialRuneEOF:
 		tt = TokenEOF
-	case names.IsIdentRune(ch, true):
+	case IsIdentRune(ch, true):
 		ch = s.scanIdentifier()
 		tt = TokenIdent
 	case rust.IsDecimal(ch):
@@ -487,7 +486,7 @@ redo:
 
 	// last minute check for reserved keywords
 	text := s.tokenText()
-	if tt == TokenIdent && names.IsReservedKeyword(text) {
+	if tt == TokenIdent && IsReservedKeyword(text) {
 		tt = TokenReservedKeyword
 	}
 
