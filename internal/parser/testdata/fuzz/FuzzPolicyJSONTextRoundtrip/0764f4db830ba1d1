@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("{\"effect\":\"permit\",\"principal\":{\"op\":\"All\"},\"action\":{\"op\":\"All\"},\"resource\":{\"op\":\"All\"},\"conditions\":[{\"kind\":\"when\",\"body\":{\"isInRange\":[]}}]}")
