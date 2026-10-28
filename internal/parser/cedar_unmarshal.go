@@ -220,7 +220,7 @@ func (p *parser) annotation(a *ast.Annotations, known *mapset.MapSet[string]) er
 		}
 	}
 
-	a.Annotation(types.Ident(name), types.String(value))
+	a.Annotation(types.AnnotationKey(name), types.String(value))
 	return nil
 }
 

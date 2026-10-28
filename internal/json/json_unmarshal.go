@@ -408,7 +408,7 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 		if !scanner.IsAnyIdent(k) {
 			return fmt.Errorf("invalid annotation key: %q", k)
 		}
-		p.unwrap().Annotate(types.Ident(k), types.String(v))
+		p.unwrap().Annotate(types.AnnotationKey(k), types.String(v))
 	}
 	var err error
 	p.Principal, err = j.Principal.ToPrincipalResourceNode()
