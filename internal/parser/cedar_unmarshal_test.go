@@ -155,9 +155,9 @@ when { -context };`,
 			ast.Permit().When(ast.Negate(ast.Context())),
 		},
 		{
-			"mutliple negate operators",
+			"multiple negate operators",
 			`permit ( principal, action, resource )
-when { !--1 };`,
+when { !-(-1) };`,
 			ast.Permit().When(ast.Not(ast.Negate(ast.Long(-1)))),
 		},
 		{
@@ -487,6 +487,43 @@ when { (if true then 2 else 3) * 4 == 8 };`,
 			var buf bytes.Buffer
 			policy.MarshalCedar(&buf)
 			testutil.Equals(t, buf.String(), tt.Text)
+		})
+	}
+}
+
+func TestParseNegateMarshalsParenthesized(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		Name           string
+		Text           string
+		ExpectedPolicy *ast.Policy
+		Marshaled      string
+	}{
+		{
+			"negate zero literal",
+			`permit ( principal, action, resource ) when { --0 };`,
+			ast.Permit().When(ast.Negate(ast.Long(0))),
+			"when { -(0) };",
+		},
+		{
+			"negate positive literal",
+			`permit ( principal, action, resource ) when { -(5) };`,
+			ast.Permit().When(ast.Negate(ast.Long(5))),
+			"when { -(5) };",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
+
+			var policy parser.Policy
+			testutil.OK(t, policy.UnmarshalCedar([]byte(tt.Text)))
+			policy.Position = ast.Position{}
+			testutil.Equals(t, &policy, (*parser.Policy)(tt.ExpectedPolicy))
+
+			var buf bytes.Buffer
+			policy.MarshalCedar(&buf)
+			testutil.Equals(t, buf.String(), "permit ( principal, action, resource )\n"+tt.Marshaled)
 		})
 	}
 }
