@@ -847,7 +847,7 @@ func (p *parser) entityOrExtFun(prefix string) (ast.Node, error) {
 				if err != nil {
 					return ast.Node{}, err
 				}
-				return ast.EntityUID(types.Ident(prefix), types.String(id)), nil
+				return ast.EntityUID(types.EntityType(prefix), types.String(id)), nil
 			default:
 				return ast.Node{}, p.errorf("unexpected token")
 			}
