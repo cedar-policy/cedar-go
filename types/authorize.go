@@ -120,4 +120,4 @@ const (
 
 // An Annotations is a map of key, value pairs found in the policy. Annotations
 // have no impact on policy evaluation.
-type Annotations map[Ident]String
+type Annotations map[AnnotationKey]String

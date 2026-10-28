@@ -190,7 +190,7 @@ func coerceExtension(v types.Value, typ resolved.ExtensionType) types.Value {
 	if !ok {
 		return v
 	}
-	switch types.Ident(typ) {
+	switch typ {
 	case "ipaddr":
 		if parsed, err := types.ParseIPAddr(string(s)); err == nil {
 			return parsed
