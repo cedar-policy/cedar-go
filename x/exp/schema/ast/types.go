@@ -36,7 +36,7 @@ func (BoolType) isType() { _ = "hack for code coverage" }
 func Bool() BoolType { return BoolType{} }
 
 // ExtensionType represents a Cedar extension type (e.g. ipaddr, decimal).
-type ExtensionType types.Ident
+type ExtensionType string
 
 func (ExtensionType) isType() { _ = "hack for code coverage" }
 

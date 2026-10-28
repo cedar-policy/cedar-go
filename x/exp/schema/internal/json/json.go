@@ -345,7 +345,7 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 		if len(jct.Annotations) > 0 {
 			ct.Annotations = unmarshalAnnotations(jct.Annotations)
 		}
-		ns.CommonTypes[types.Ident(ctName)] = ct
+		ns.CommonTypes[ast.Ident(ctName)] = ct
 	}
 
 	for etName, jet := range jns.EntityTypes {
@@ -368,7 +368,7 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 			if ns.Enums == nil {
 				ns.Enums = ast.Enums{}
 			}
-			ns.Enums[types.Ident(etName)] = enum
+			ns.Enums[ast.Ident(etName)] = enum
 		} else {
 			entity := ast.Entity{}
 			if len(jet.Annotations) > 0 {
@@ -397,7 +397,7 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 			if ns.Entities == nil {
 				ns.Entities = ast.Entities{}
 			}
-			ns.Entities[types.Ident(etName)] = entity
+			ns.Entities[ast.Ident(etName)] = entity
 		}
 	}
 
@@ -537,7 +537,7 @@ func unmarshalRecordType(jt *jsonType) (ast.RecordType, error) {
 func unmarshalAnnotations(m map[string]string) ast.Annotations {
 	a := make(ast.Annotations, len(m))
 	for k, v := range m {
-		a[types.Ident(k)] = types.String(v)
+		a[types.AnnotationKey(k)] = types.String(v)
 	}
 	return a
 }

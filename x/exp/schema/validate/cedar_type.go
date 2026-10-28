@@ -33,9 +33,9 @@ type typeRecord struct {
 type entityAttrSource struct {
 	lub  entityLUB
 	attr types.String // the entity attribute name (e.g., "r" in resource.r["key"])
-}                                             // Record with attribute types
-type typeEntity struct{ lub entityLUB }       // Entity with LUB of types
-type typeExtension struct{ name types.Ident } // Extension type (ipaddr, decimal, etc.)
+}                                                        // Record with attribute types
+type typeEntity struct{ lub entityLUB }                  // Entity with LUB of types
+type typeExtension struct{ name resolved.ExtensionType } // Extension type (ipaddr, decimal, etc.)
 
 func (typeNever) isCedarType()     { _ = "hack for code coverage" }
 func (typeTrue) isCedarType()      { _ = "hack for code coverage" }
@@ -426,7 +426,7 @@ func schemaTypeToCedarType(t resolved.IsType) cedarType {
 	case resolved.BoolType:
 		return typeBool{}
 	case resolved.ExtensionType:
-		return typeExtension{name: types.Ident(tv)}
+		return typeExtension{name: tv}
 	case resolved.SetType:
 		return typeSet{element: schemaTypeToCedarType(tv.Element)}
 	case resolved.RecordType:

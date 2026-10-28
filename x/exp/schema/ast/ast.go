@@ -6,19 +6,23 @@ import (
 )
 
 // Annotations maps annotation keys to their string values.
-type Annotations map[types.Ident]types.String
+type Annotations map[types.AnnotationKey]types.String
+
+// Ident is the unqualified name of an entity type or common type declared in
+// a namespace. It's a single identifier that isn't a reserved keyword.
+type Ident string
 
 // Entities maps entity type names to their definitions.
-type Entities map[types.Ident]Entity
+type Entities map[Ident]Entity
 
 // Enums maps entity type names to their enum definitions.
-type Enums map[types.Ident]Enum
+type Enums map[Ident]Enum
 
 // Actions maps action names to their definitions.
 type Actions map[types.String]Action
 
 // CommonTypes maps common type names to their definitions.
-type CommonTypes map[types.Ident]CommonType
+type CommonTypes map[Ident]CommonType
 
 // Namespaces maps namespace paths to their definitions.
 type Namespaces map[types.Path]Namespace
