@@ -14,6 +14,8 @@ import (
 type AnnotationKey string
 
 // Ident is the former name of AnnotationKey.
+//
+// Deprecated: Use AnnotationKey.
 type Ident = AnnotationKey
 
 var errInvalidAnnotationKey = errors.New("invalid annotation key")

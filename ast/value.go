@@ -72,6 +72,8 @@ func Record(elements Pairs) Node {
 }
 
 // EntityUID creates a value node containing an EntityUID.
+//
+//nolint:staticcheck // typ keeps its original type for compatibility
 func EntityUID(typ types.Ident, id types.String) Node {
 	return wrapNode(ast.EntityUID(types.EntityType(typ), id))
 }

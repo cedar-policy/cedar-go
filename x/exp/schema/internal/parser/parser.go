@@ -287,7 +287,7 @@ func (p *parser) parseEntity(annotations ast.Annotations, schema *ast.Schema) er
 	return nil
 }
 
-func (p *parser) parseEnumEntity(annotations ast.Annotations, names []types.Ident, schema *ast.Schema) error {
+func (p *parser) parseEnumEntity(annotations ast.Annotations, names []ast.Ident, schema *ast.Schema) error {
 	if err := p.expect(tokenLBracket); err != nil {
 		return err
 	}
@@ -425,7 +425,7 @@ func (p *parser) parseTypeDecl(annotations ast.Annotations, schema *ast.Schema) 
 	if schema.CommonTypes == nil {
 		schema.CommonTypes = ast.CommonTypes{}
 	}
-	ident := types.Ident(name)
+	ident := ast.Ident(name)
 	if _, ok := schema.CommonTypes[ident]; ok {
 		return p.errorf("type %q is declared twice", name)
 	}
@@ -445,7 +445,7 @@ func (p *parser) parseAnnotations() (ast.Annotations, error) {
 		if p.tok.Type != tokenIdent && p.tok.Type != tokenReservedKeyword {
 			return nil, p.errorf("expected annotation name, got %s", tokenDesc(p.tok))
 		}
-		key := types.Ident(p.tok.Text)
+		key := types.AnnotationKey(p.tok.Text)
 		if err := p.readToken(); err != nil {
 			return nil, err
 		}
@@ -543,12 +543,12 @@ func (p *parser) parsePathForRef() (path types.Path, str types.String, qualified
 }
 
 // parseIdents parses IDENT { ',' IDENT }
-func (p *parser) parseIdents() ([]types.Ident, error) {
+func (p *parser) parseIdents() ([]ast.Ident, error) {
 	if p.tok.Type != tokenIdent {
 		return nil, p.errorf("expected identifier, got %s", tokenDesc(p.tok))
 	}
-	var result []types.Ident
-	result = append(result, types.Ident(p.tok.Text))
+	var result []ast.Ident
+	result = append(result, ast.Ident(p.tok.Text))
 	if err := p.readToken(); err != nil {
 		return nil, err
 	}
@@ -559,7 +559,7 @@ func (p *parser) parseIdents() ([]types.Ident, error) {
 		if p.tok.Type != tokenIdent {
 			return nil, p.errorf("expected identifier after ',', got %s", tokenDesc(p.tok))
 		}
-		result = append(result, types.Ident(p.tok.Text))
+		result = append(result, ast.Ident(p.tok.Text))
 		if err := p.readToken(); err != nil {
 			return nil, err
 		}
