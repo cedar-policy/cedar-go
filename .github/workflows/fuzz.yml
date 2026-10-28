@@ -13,8 +13,26 @@ jobs:
 
       - uses: jdx/mise-action@v5
 
+      - name: Locate fuzz cache
+        id: fuzzcache
+        run: echo "dir=$(go env GOCACHE)/fuzz" >> "$GITHUB_OUTPUT"
+
+      - name: Restore fuzz corpus
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.fuzzcache.outputs.dir }}
+          key: fuzz-corpus-${{ github.run_id }}
+          restore-keys: fuzz-corpus-
+
       - name: Fuzz
         run: mise run test:fuzz 15m
+
+      - name: Save fuzz corpus
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.fuzzcache.outputs.dir }}
+          key: fuzz-corpus-${{ github.run_id }}
 
       - name: Upload failing inputs
         if: failure()
