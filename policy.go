@@ -41,6 +41,34 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+type JSONOption func(*jsonOptions)
+
+type jsonOptions struct {
+	mode json.Mode
+}
+
+func WithLegacyJSON() JSONOption {
+	return func(o *jsonOptions) {
+		o.mode = json.ModeGoLegacy
+	}
+}
+
+func newJSONOptions(opts []JSONOption) jsonOptions {
+	var o jsonOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+	return o
+}
+
+func NewPolicyFromJSON(b []byte, opts ...JSONOption) (*Policy, error) {
+	var jsonPolicy json.Policy
+	if err := jsonPolicy.UnmarshalJSONMode(b, newJSONOptions(opts).mode); err != nil {
+		return nil, err
+	}
+	return newPolicy((*internalast.Policy)(&jsonPolicy)), nil
+}
+
 // MarshalCedar encodes a single Policy statement in the human-readable format specified by the [Cedar documentation].
 //
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/syntax-grammar.html

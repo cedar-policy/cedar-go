@@ -12,7 +12,7 @@ import (
 func TestIsAuthorized(t *testing.T) {
 	t.Parallel()
 	cuzco := cedar.NewEntityUID("coder", "cuzco")
-	dropTable := cedar.NewEntityUID("table", "drop")
+	dropTable := cedar.NewEntityUID("Action", "drop")
 	tests := []struct {
 		Name                        string
 		Policy                      string
@@ -207,7 +207,7 @@ func TestIsAuthorized(t *testing.T) {
 		},
 		{
 			Name:      "permit-action-equals",
-			Policy:    `permit(principal,action == table::"drop",resource);`,
+			Policy:    `permit(principal,action == Action::"drop",resource);`,
 			Entities:  cedar.EntityMap{},
 			Principal: cuzco,
 			Action:    dropTable,
@@ -218,11 +218,11 @@ func TestIsAuthorized(t *testing.T) {
 		},
 		{
 			Name:   "permit-action-in",
-			Policy: `permit(principal,action in scary::"stuff",resource);`,
+			Policy: `permit(principal,action in Action::"stuff",resource);`,
 			Entities: cedar.EntityMap{
 				dropTable: cedar.Entity{
 					UID:     dropTable,
-					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("scary", "stuff")),
+					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("Action", "stuff")),
 				},
 			},
 			Principal: cuzco,
@@ -234,11 +234,11 @@ func TestIsAuthorized(t *testing.T) {
 		},
 		{
 			Name:   "permit-action-in-set",
-			Policy: `permit(principal,action in [scary::"stuff"],resource);`,
+			Policy: `permit(principal,action in [Action::"stuff"],resource);`,
 			Entities: cedar.EntityMap{
 				dropTable: cedar.Entity{
 					UID:     dropTable,
-					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("scary", "stuff")),
+					Parents: cedar.NewEntityUIDSet(cedar.NewEntityUID("Action", "stuff")),
 				},
 			},
 			Principal: cuzco,
