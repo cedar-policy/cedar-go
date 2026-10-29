@@ -2,6 +2,7 @@ package json
 
 import (
 	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go/types"
 )
@@ -89,7 +90,8 @@ func (e *extensionJSON) MarshalJSON() ([]byte, error) {
 }
 
 type valueJSON struct {
-	v types.Value
+	v   types.Value
+	raw jsontext.Value
 }
 
 func (e *valueJSON) MarshalJSON() ([]byte, error) {
@@ -97,7 +99,8 @@ func (e *valueJSON) MarshalJSON() ([]byte, error) {
 }
 
 func (e *valueJSON) UnmarshalJSON(b []byte) error {
-	return types.UnmarshalJSON(b, &e.v)
+	e.raw = jsontext.Value(b).Clone()
+	return nil
 }
 
 type nodeJSON struct {

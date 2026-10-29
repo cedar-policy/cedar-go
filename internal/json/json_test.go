@@ -570,42 +570,29 @@ func TestUnmarshalJSONNonCanonical(t *testing.T) {
 	}{
 		{
 			"explicitScopeEntity",
-			`{"effect":"permit","principal":{"op":"==","entity":{"__entity":{"type":"T","id":"42"}}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"==","entity":{"__entity":{"type":"T","id":"42"}}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().PrincipalEq(types.NewEntityUID("T", "42")),
 		},
 		{
 			"explicitScopeIsInEntity",
-			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"__entity":{"type":"P","id":"42"}}}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"__entity":{"type":"P","id":"42"}}}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().PrincipalIsIn(types.EntityType("T"), types.NewEntityUID("P", "42")),
 		},
 		{
 			"explicitActionInSetEntities",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"__entity":{"type":"Action","id":"42"}}]},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"__entity":{"type":"Action","id":"42"}}]},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().ActionInSet(types.NewEntityUID("Action", "42")),
 		},
 		{
 			// cedar-go writes a set with one entity as that entity.
 			"actionInSetOneEntity",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"Action","id":"42"}]},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"Action","id":"42"}]},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().ActionInSet(types.NewEntityUID("Action", "42")),
-		},
-		{
-			// cedar-go previously wrote "action in []" without "entities".
-			"actionInWithoutEntities",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in"},"resource":{"op":"All"}}`,
-			ast.Permit().ActionInSet([]types.EntityUID{}...),
-		},
-		{
-			// cedar-go previously omitted "conditions" when there were none.
-			// Rust Cedar requires it, but cedar-go still accepts it missing.
-			"missingConditions",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`,
-			ast.Permit(),
 		},
 		{
 			// As in Rust Cedar, a null "in" is the same as a missing one.
 			"isScopeNullIn",
-			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":null},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":null},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().PrincipalIs(types.EntityType("T")),
 		},
 		{
@@ -613,12 +600,6 @@ func TestUnmarshalJSONNonCanonical(t *testing.T) {
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"principal"},"entity_type":"T","in":null}}}]}`,
 			ast.Permit().When(ast.Principal().Is(types.EntityType("T"))),
-		},
-		{
-			"extensionMethodNoArgs",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"isInRange":[]}}]}`,
-			ast.Permit().When(ast.ExtensionCall("isInRange")),
 		},
 	}
 	for _, tt := range tests {
@@ -628,6 +609,116 @@ func TestUnmarshalJSONNonCanonical(t *testing.T) {
 			testutil.OK(t, json.Unmarshal([]byte(tt.input), &p))
 			testutil.Equals(t, p.unwrap(), tt.want)
 		})
+	}
+}
+
+func TestUnmarshalJSONModes(t *testing.T) {
+	t.Parallel()
+	const scopes = `"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}`
+	when := func(body string) string {
+		return `{` + scopes + `,"conditions":[{"kind":"when","body":` + body + `}]}`
+	}
+	tests := []struct {
+		name       string
+		input      string
+		goWant     *ast.Policy
+		legacyWant *ast.Policy
+		strictWant *ast.Policy
+	}{
+		{
+			"missingConditions",
+			`{` + scopes + `}`,
+			nil, nil, nil,
+		},
+		{
+			"actionInWithoutEntities",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in"},"resource":{"op":"All"},"conditions":[]}`,
+			nil,
+			ast.Permit().ActionInSet([]types.EntityUID{}...),
+			nil,
+		},
+		{
+			"lowercaseAll",
+			`{"effect":"permit","principal":{"op":"all"},"action":{"op":"all"},"resource":{"op":"all"},"conditions":[]}`,
+			ast.Permit(), ast.Permit(), ast.Permit(),
+		},
+		{
+			"duplicateMember",
+			`{` + scopes + `,"effect":"forbid","conditions":[]}`,
+			ast.Forbid(), nil, ast.Forbid(),
+		},
+		{
+			"duplicateNodeMember",
+			when(`{"==":{"left":{"Value":1},"right":{"Value":1},"left":{"Value":2}}}`),
+			ast.Permit().When(ast.Long(2).Equal(ast.Long(1))),
+			nil,
+			ast.Permit().When(ast.Long(2).Equal(ast.Long(1))),
+		},
+		{
+			"duplicateRecordKey",
+			when(`{"Value":{"a":1,"a":2}}`),
+			ast.Permit().When(ast.Value(types.NewRecord(types.RecordMap{"a": types.Long(2)}))),
+			nil,
+			ast.Permit().When(ast.Record(ast.Pairs{{Key: "a", Value: ast.Long(2)}})),
+		},
+		{
+			"extensionMethodNoArgs",
+			when(`{"isInRange":[]}`),
+			ast.Permit().When(ast.ExtensionCall("isInRange")),
+			ast.Permit().When(ast.ExtensionCall("isInRange")),
+			ast.Permit().When(ast.ExtensionCall("isInRange")),
+		},
+		{
+			"valueSet",
+			when(`{"Value":[3,1,1]}`),
+			ast.Permit().When(ast.Value(types.NewSet(types.Long(3), types.Long(1)))),
+			ast.Permit().When(ast.Value(types.NewSet(types.Long(3), types.Long(1)))),
+			ast.Permit().When(ast.Set(ast.Long(3), ast.Long(1), ast.Long(1))),
+		},
+		{
+			"valueExtension",
+			when(`{"Value":{"__extn":{"fn":"decimal","arg":"1.20"}}}`),
+			ast.Permit().When(ast.Value(mustParseDecimal("1.20"))),
+			ast.Permit().When(ast.Value(mustParseDecimal("1.20"))),
+			ast.Permit().When(ast.ExtensionCall("decimal", ast.String("1.20"))),
+		},
+		{
+			"valueInvalidExtension",
+			when(`{"Value":[{"__extn":{"fn":"decimal","arg":"x"}}]}`),
+			ast.Permit().When(ast.Set(ast.ExtensionCall("decimal", ast.String("x")))),
+			ast.Permit().When(ast.Set(ast.ExtensionCall("decimal", ast.String("x")))),
+			ast.Permit().When(ast.Set(ast.ExtensionCall("decimal", ast.String("x")))),
+		},
+		{
+			"valueUnknownExtension",
+			when(`{"Value":{"__extn":{"fn":"foo","arg":1}}}`),
+			ast.Permit().When(ast.ExtensionCall("foo", ast.Long(1))),
+			ast.Permit().When(ast.ExtensionCall("foo", ast.Long(1))),
+			ast.Permit().When(ast.ExtensionCall("foo", ast.Long(1))),
+		},
+	}
+	for _, tt := range tests {
+		for _, m := range []struct {
+			name string
+			mode Mode
+			want *ast.Policy
+		}{
+			{"go", ModeGo, tt.goWant},
+			{"legacy", ModeGoLegacy, tt.legacyWant},
+			{"strict", ModeStrict, tt.strictWant},
+		} {
+			t.Run(tt.name+"/"+m.name, func(t *testing.T) {
+				t.Parallel()
+				var p Policy
+				err := p.UnmarshalJSONMode([]byte(tt.input), m.mode)
+				if m.want == nil {
+					testutil.Error(t, err)
+					return
+				}
+				testutil.OK(t, err)
+				testutil.Equals(t, p.unwrap(), m.want)
+			})
+		}
 	}
 }
 
@@ -660,7 +751,7 @@ func TestUnmarshalErrors(t *testing.T) {
 	}{
 		{
 			"effect",
-			`{"effect":"unknown","principal":{"op":"=="},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"unknown","principal":{"op":"=="},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"nullPolicy",
@@ -668,19 +759,19 @@ func TestUnmarshalErrors(t *testing.T) {
 		},
 		{
 			"principalScopeEqMissingEntity",
-			`{"effect":"permit","principal":{"op":"=="},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"=="},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"principalScopeInMissingEntity",
-			`{"effect":"permit","principal":{"op":"in"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"in"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"actionScopeEqMissingEntity",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"nullAnnotations",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"annotations":null}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"annotations":null,"conditions":[]}`,
 		},
 		{
 			"nullConditions",
@@ -688,15 +779,15 @@ func TestUnmarshalErrors(t *testing.T) {
 		},
 		{
 			"actionScopeInNullEntities",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":null},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":null},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"principalScopeIsInMissingEntity",
-			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"principalScopeIsInNullEntity",
-			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":null}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":null}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"unknownPolicyMember",
@@ -705,31 +796,31 @@ func TestUnmarshalErrors(t *testing.T) {
 		{
 			// Unlike Rust Cedar, which ignores unknown members in most scopes.
 			"unknownScopeMember",
-			`{"effect":"permit","principal":{"op":"All","x":1},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All","x":1},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"principalScopeIsInvalidEntityType",
-			`{"effect":"permit","principal":{"op":"is","entity_type":"T, action, resource ); permit ( principal"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T, action, resource ); permit ( principal"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"resourceScopeIsInReservedEntityType",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":"A::in","in":{"entity":{"type":"P","id":"42"}}}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":"A::in","in":{"entity":{"type":"P","id":"42"}}},"conditions":[]}`,
 		},
 		{
 			"principalScopeEqInvalidEntityType",
-			`{"effect":"permit","principal":{"op":"==","entity":{"type":"A B","id":"42"}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"==","entity":{"type":"A B","id":"42"}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"actionScopeInInvalidEntityType",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"Action::","id":"a"}]},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"Action::","id":"a"}]},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"invalidAnnotationKey",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"annotations":{"x(\"y\") permit ( principal, action, resource ); @z":"v"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"annotations":{"x(\"y\") permit ( principal, action, resource ); @z":"v"},"conditions":[]}`,
 		},
 		{
 			"emptyAnnotationKey",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"annotations":{"":"v"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"annotations":{"":"v"},"conditions":[]}`,
 		},
 		{
 			"conditionIsInvalidEntityType",
@@ -743,7 +834,7 @@ func TestUnmarshalErrors(t *testing.T) {
 		},
 		{
 			"unknownScopeIsInMember",
-			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"},"x":1}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"is","entity_type":"T","in":{"entity":{"type":"P","id":"42"},"x":1}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"unknownConditionMember",
@@ -751,25 +842,20 @@ func TestUnmarshalErrors(t *testing.T) {
 		},
 		{
 			"duplicateMember",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"action":{"op":"=="},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"miscasedMember",
-			`{"effect":"permit","PRINCIPAL":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","PRINCIPAL":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"miscasedScopeEntityMember",
-			`{"effect":"permit","principal":{"op":"==","entity":{"TYPE":"T","ID":"42"}},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"==","entity":{"TYPE":"T","ID":"42"}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"miscasedNodeMember",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"value":true}}]}`,
-		},
-		{
-			"duplicateNodeMember",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"==":{"left":{"Value":1},"right":{"Value":1},"left":{"Value":2}}}}]}`,
 		},
 		{
 			"expressionWithNoMembers",
@@ -797,21 +883,16 @@ func TestUnmarshalErrors(t *testing.T) {
 			"conditions":[{"kind":"when","body":{"Record":{"a":null}}}]}`,
 		},
 		{
-			"duplicateRecordKey",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"Record":{"a":{"Value":1},"a":{"Value":2}}}}]}`,
-		},
-		{
 			"principalScopeIsMissingEntityType",
-			`{"effect":"permit","principal":{"op":"is"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"is"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"resourceScopeIsEmptyEntityType",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":""}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"is","entity_type":""},"conditions":[]}`,
 		},
 		{
 			"principalScopeIsNullEntityType",
-			`{"effect":"permit","principal":{"op":"is","entity_type":null},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"is","entity_type":null},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"recordNullValue",
@@ -820,15 +901,15 @@ func TestUnmarshalErrors(t *testing.T) {
 		},
 		{
 			"scopeUnknownOp",
-			`{"effect":"permit","principal":{"op":"???"},"action":{"op":"All"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"???"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"actionUnknownOp",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"???"},"resource":{"op":"All"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"???"},"resource":{"op":"All"},"conditions":[]}`,
 		},
 		{
 			"resourceUnknownOp",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"???"}}`,
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"???"},"conditions":[]}`,
 		},
 		{
 			"conditionUnknown",

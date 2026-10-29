@@ -26,7 +26,8 @@ func newPolicy() *cedar.Policy {
     "resource": {
         "op": "in",
         "entity": { "type": "Folder", "id": "abc" }
-    }
+    },
+    "conditions": []
 }`)
 
 	var policy cedar.Policy

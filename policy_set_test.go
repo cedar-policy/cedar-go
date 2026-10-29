@@ -53,7 +53,7 @@ func TestUpsertPolicy(t *testing.T) {
 
 		var policy1 cedar.Policy
 		testutil.OK(t, policy1.UnmarshalJSON(
-			[]byte(`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}`),
+			[]byte(`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`),
 		))
 
 		ps := cedar.NewPolicySet()
@@ -157,7 +157,7 @@ func TestPolicySetJSON(t *testing.T) {
 	t.Run("UnmarshalOK", func(t *testing.T) {
 		t.Parallel()
 		var ps cedar.PolicySet
-		err := ps.UnmarshalJSON([]byte(`{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"}}}}`))
+		err := ps.UnmarshalJSON([]byte(`{"staticPolicies":{"policy0":{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}}}`))
 		testutil.OK(t, err)
 		testutil.Equals(t, len(ps.Map()), 1)
 	})
