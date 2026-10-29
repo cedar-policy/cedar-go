@@ -8,17 +8,55 @@ on:
 jobs:
   fuzz:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v4
 
       - uses: jdx/mise-action@v5
 
+      - name: Locate fuzz cache
+        id: fuzzcache
+        run: echo "dir=$(go env GOCACHE)/fuzz" >> "$GITHUB_OUTPUT"
+
+      - name: Restore fuzz corpus
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.fuzzcache.outputs.dir }}
+          key: fuzz-corpus-${{ github.run_id }}
+          restore-keys: fuzz-corpus-
+
       - name: Fuzz
-        run: mise run test:fuzz 15m
+        shell: bash
+        run: mise run test:fuzz 15m 2>&1 | tee fuzz.log
+
+      - name: Save fuzz corpus
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.fuzzcache.outputs.dir }}
+          key: fuzz-corpus-${{ github.run_id }}
+
+      - name: Collect failing inputs
+        if: failure()
+        run: scripts/fuzz-report.sh collect "$RUNNER_TEMP/fuzz-failures"
 
       - name: Upload failing inputs
+        id: upload
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: fuzz-failures
-          path: "**/testdata/fuzz/"
+          path: ${{ runner.temp }}/fuzz-failures/
+          if-no-files-found: ignore
+
+      - name: Report failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: Nightly fuzz failure
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+          SHA: ${{ github.sha }}
+        run: scripts/fuzz-report.sh issue fuzz.log

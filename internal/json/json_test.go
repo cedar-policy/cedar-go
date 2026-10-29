@@ -949,6 +949,11 @@ func TestUnmarshalErrors(t *testing.T) {
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"not_an_extension_function":[]}}]}`,
 		},
+		{
+			"extensionMethodNoArgs",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"isInRange":[]}}]}`,
+		},
 	}
 
 	for _, tt := range tests {

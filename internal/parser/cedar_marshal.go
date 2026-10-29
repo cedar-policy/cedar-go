@@ -8,6 +8,7 @@ import (
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/internal/scanner"
+	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
@@ -164,7 +165,19 @@ func (n NodeTypeNot) marshalCedar(buf *bytes.Buffer) {
 }
 
 func (n NodeTypeNegate) marshalCedar(buf *bytes.Buffer) {
+	// the writer parenthesizes negations of anything that is written starting
+	// with a digit because otherwise the parser folds the negation into the long
+	// literal, and we lose a negation at each round-trip.
+	// this is all done to match rust's behavior
 	buf.WriteRune('-')
+	if v, ok := n.NodeTypeNegate.Arg.(ast.NodeValue); ok {
+		if _, ok := v.Value.(types.Long); ok {
+			buf.WriteRune('(')
+			NodeValue{v, primaryPrecedenceNode{}}.marshalCedar(buf)
+			buf.WriteRune(')')
+			return
+		}
+	}
 	marshalChildNode(n.precedenceLevel(), n.NodeTypeNegate.Arg, buf)
 }
 

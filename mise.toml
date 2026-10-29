@@ -36,6 +36,7 @@ usage = 'arg "<fuzztime>" help="How long to run each fuzz test" default="60s"'
 run = [
   "go test -run '^$' -fuzz '^FuzzTokenize$' -fuzztime ${usage_fuzztime} ./internal/scanner",
   "go test -run '^$' -fuzz '^FuzzParse$' -fuzztime ${usage_fuzztime} ./internal/parser",
+  "go test -run '^$' -fuzz '^FuzzPolicyJSONTextRoundtrip$' -fuzztime ${usage_fuzztime} ./internal/parser",
 ]
 
 [tasks.generate]

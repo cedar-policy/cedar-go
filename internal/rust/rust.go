@@ -8,7 +8,9 @@ import (
 
 func nextRune(b []byte, i int) (rune, int, error) {
 	ch, size := utf8.DecodeRune(b[i:])
-	if ch == utf8.RuneError {
+	// This check is a bit confusing: RuneError with size > 1 indicates
+	// a valid U+FFFD character, rather than a bad unicode rune.
+	if ch == utf8.RuneError && size <= 1 {
 		return ch, i, fmt.Errorf("bad unicode rune")
 	}
 	return ch, i + size, nil
