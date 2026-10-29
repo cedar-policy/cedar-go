@@ -134,14 +134,14 @@ func TestUnmarshalJSON(t *testing.T) {
 		},
 		{
 			"actionEq",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"==","entity":{"type":"T","id":"42"}},"resource":{"op":"All"},"conditions":[]}`,
-			ast.Permit().ActionEq(types.NewEntityUID("T", "42")),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"==","entity":{"type":"Action","id":"42"}},"resource":{"op":"All"},"conditions":[]}`,
+			ast.Permit().ActionEq(types.NewEntityUID("Action", "42")),
 			testutil.OK,
 		},
 		{
 			"actionIn",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entity":{"type":"T","id":"42"}},"resource":{"op":"All"},"conditions":[]}`,
-			ast.Permit().ActionIn(types.NewEntityUID("T", "42")),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entity":{"type":"Action","id":"42"}},"resource":{"op":"All"},"conditions":[]}`,
+			ast.Permit().ActionIn(types.NewEntityUID("Action", "42")),
 			testutil.OK,
 		},
 		{
@@ -152,8 +152,8 @@ func TestUnmarshalJSON(t *testing.T) {
 		},
 		{
 			"actionInSet",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"T","id":"42"},{"type":"T","id":"43"}]},"resource":{"op":"All"},"conditions":[]}`,
-			ast.Permit().ActionInSet(types.NewEntityUID("T", "42"), types.NewEntityUID("T", "43")),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"Action","id":"42"},{"type":"Action","id":"43"}]},"resource":{"op":"All"},"conditions":[]}`,
+			ast.Permit().ActionInSet(types.NewEntityUID("Action", "42"), types.NewEntityUID("Action", "43")),
 			testutil.OK,
 		},
 		{
@@ -580,14 +580,14 @@ func TestUnmarshalJSONNonCanonical(t *testing.T) {
 		},
 		{
 			"explicitActionInSetEntities",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"__entity":{"type":"T","id":"42"}}]},"resource":{"op":"All"}}`,
-			ast.Permit().ActionInSet(types.NewEntityUID("T", "42")),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"__entity":{"type":"Action","id":"42"}}]},"resource":{"op":"All"}}`,
+			ast.Permit().ActionInSet(types.NewEntityUID("Action", "42")),
 		},
 		{
 			// cedar-go writes a set with one entity as that entity.
 			"actionInSetOneEntity",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"T","id":"42"}]},"resource":{"op":"All"}}`,
-			ast.Permit().ActionInSet(types.NewEntityUID("T", "42")),
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"Action","id":"42"}]},"resource":{"op":"All"}}`,
+			ast.Permit().ActionInSet(types.NewEntityUID("Action", "42")),
 		},
 		{
 			// cedar-go previously wrote "action in []" without "entities".
@@ -953,6 +953,18 @@ func TestUnmarshalErrors(t *testing.T) {
 			"extensionMethodNoArgs",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"isInRange":[]}}]}`,
+		},
+		{
+			"actionEqNotAction",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"==","entity":{"type":"T","id":"42"}},"resource":{"op":"All"},"conditions":[]}`,
+		},
+		{
+			"actionInNotAction",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entity":{"type":"Action::T","id":"42"}},"resource":{"op":"All"},"conditions":[]}`,
+		},
+		{
+			"actionInSetNotAction",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"in","entities":[{"type":"Action","id":"1"},{"type":"T","id":"42"}]},"resource":{"op":"All"},"conditions":[]}`,
 		},
 	}
 

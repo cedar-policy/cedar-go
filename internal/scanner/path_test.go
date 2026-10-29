@@ -32,3 +32,26 @@ func TestIsPath(t *testing.T) {
 		})
 	}
 }
+
+func TestIsActionType(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		in   string
+		want bool
+	}{
+		{"Action", true},
+		{"NS::Action", true},
+		{"A::B::Action", true},
+		{"action", false},
+		{"Actions", false},
+		{"Action::Foo", false},
+		{"table", false},
+		{"", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.in, func(t *testing.T) {
+			t.Parallel()
+			testutil.Equals(t, IsActionType(tt.in), tt.want)
+		})
+	}
+}

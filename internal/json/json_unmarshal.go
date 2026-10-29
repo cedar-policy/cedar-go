@@ -56,18 +56,36 @@ func (s *scopeJSON) ToActionNode() (ast.IsActionScopeNode, error) {
 		if s.Entity == nil {
 			return nil, fmt.Errorf("missing entity")
 		}
-		return ast.Scope{}.Eq(types.EntityUID(*s.Entity)), nil
+		e := types.EntityUID(*s.Entity)
+		if err := checkActionEntity(e); err != nil {
+			return nil, err
+		}
+		return ast.Scope{}.Eq(e), nil
 	case "in":
 		if s.Entity != nil {
-			return ast.Scope{}.In(types.EntityUID(*s.Entity)), nil
+			e := types.EntityUID(*s.Entity)
+			if err := checkActionEntity(e); err != nil {
+				return nil, err
+			}
+			return ast.Scope{}.In(e), nil
 		}
 		es := make([]types.EntityUID, len(s.Entities))
 		for i, e := range s.Entities {
 			es[i] = types.EntityUID(e)
+			if err := checkActionEntity(es[i]); err != nil {
+				return nil, err
+			}
 		}
 		return ast.Scope{}.InSet(es), nil
 	}
 	return nil, fmt.Errorf("unknown op: %v", s.Op)
+}
+
+func checkActionEntity(e types.EntityUID) error {
+	if !scanner.IsActionType(string(e.Type)) {
+		return fmt.Errorf("expected an entity uid with type `Action` but got `%s`", e.MarshalCedar())
+	}
+	return nil
 }
 
 func (j binaryJSON) ToNode(f func(a, b ast.Node) ast.Node) (ast.Node, error) {

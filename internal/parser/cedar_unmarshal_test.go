@@ -26,11 +26,11 @@ var sow = types.EntityUID{
 	ID:   "sow",
 }
 var farming = types.EntityUID{
-	Type: "ActionType",
+	Type: "ActionType::Action",
 	ID:   "farming",
 }
 var forestry = types.EntityUID{
-	Type: "ActionType",
+	Type: "ActionType::Action",
 	ID:   "forestry",
 }
 var apple = types.EntityUID{
@@ -109,7 +109,7 @@ permit ( principal, action, resource );`,
 			"scope in",
 			`permit (
     principal in Group::"folkHeroes",
-    action in ActionType::"farming",
+    action in ActionType::Action::"farming",
     resource in Genus::"malus"
 );`,
 			ast.Permit().PrincipalIn(folkHeroes).ActionIn(farming).ResourceIn(malus),
@@ -118,7 +118,7 @@ permit ( principal, action, resource );`,
 			"scope action in entities",
 			`permit (
     principal,
-    action in [ActionType::"farming", ActionType::"forestry"],
+    action in [ActionType::Action::"farming", ActionType::Action::"forestry"],
     resource
 );`,
 			ast.Permit().ActionInSet(farming, forestry),
