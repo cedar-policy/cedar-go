@@ -184,12 +184,9 @@ func (j recordJSON) ToNode() (ast.Node, error) {
 }
 
 func (e *extensionJSON) ToNode() (ast.Node, error) {
-	info, ok := extensions.ExtMap[types.Path(e.Name)]
+	_, ok := extensions.ExtMap[types.Path(e.Name)]
 	if !ok {
 		return ast.Node{}, fmt.Errorf("`%v` is not a known extension function or method", e.Name)
-	}
-	if info.IsMethod && len(e.Args) == 0 {
-		return ast.Node{}, fmt.Errorf("method-style extension function `%v` requires a receiver argument", e.Name)
 	}
 	var argNodes []ast.Node
 	for _, n := range e.Args {

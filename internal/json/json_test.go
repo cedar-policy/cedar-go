@@ -614,6 +614,12 @@ func TestUnmarshalJSONNonCanonical(t *testing.T) {
 			"conditions":[{"kind":"when","body":{"is":{"left":{"Var":"principal"},"entity_type":"T","in":null}}}]}`,
 			ast.Permit().When(ast.Principal().Is(types.EntityType("T"))),
 		},
+		{
+			"extensionMethodNoArgs",
+			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
+			"conditions":[{"kind":"when","body":{"isInRange":[]}}]}`,
+			ast.Permit().When(ast.ExtensionCall("isInRange")),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -948,11 +954,6 @@ func TestUnmarshalErrors(t *testing.T) {
 			"unknown-extension-function",
 			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
 			"conditions":[{"kind":"when","body":{"not_an_extension_function":[]}}]}`,
-		},
-		{
-			"extensionMethodNoArgs",
-			`{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},
-			"conditions":[{"kind":"when","body":{"isInRange":[]}}]}`,
 		},
 		{
 			"actionEqNotAction",
