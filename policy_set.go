@@ -123,17 +123,26 @@ func (p *PolicySet) MarshalJSON() ([]byte, error) {
 //
 // [Cedar documentation]: https://docs.cedarpolicy.com/policies/json-format.html
 func (p *PolicySet) UnmarshalJSON(b []byte) error {
-	var jsonPolicySet internaljson.PolicySetJSON
-	if err := json.Unmarshal(b, &jsonPolicySet); err != nil {
+	ps, err := NewPolicySetFromJSON(b)
+	if err != nil {
 		return err
 	}
-	*p = PolicySet{
+	*p = *ps
+	return nil
+}
+
+func NewPolicySetFromJSON(b []byte, opts ...JSONOption) (*PolicySet, error) {
+	var jsonPolicySet internaljson.PolicySetJSON
+	if err := jsonPolicySet.UnmarshalJSONMode(b, newJSONOptions(opts).mode); err != nil {
+		return nil, err
+	}
+	ps := &PolicySet{
 		policies: make(PolicyMap, len(*jsonPolicySet.StaticPolicies)),
 	}
 	for k, v := range *jsonPolicySet.StaticPolicies {
-		p.policies[PolicyID(k)] = newPolicy((*ast.Policy)(&v))
+		ps.policies[PolicyID(k)] = newPolicy((*ast.Policy)(&v))
 	}
-	return nil
+	return ps, nil
 }
 
 // IsAuthorized uses the combination of the PolicySet and Entities to determine

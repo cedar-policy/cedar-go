@@ -94,6 +94,16 @@ func TestUnmarshalJSONPolicyErr(t *testing.T) {
 	testutil.Error(t, err)
 }
 
+func TestNewPolicyFromJSON(t *testing.T) {
+	t.Parallel()
+	const dup = `{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[],"effect":"forbid"}`
+	p, err := cedar.NewPolicyFromJSON([]byte(dup))
+	testutil.OK(t, err)
+	testutil.Equals(t, p.Effect(), cedar.Forbid)
+	_, err = cedar.NewPolicyFromJSON([]byte(dup), cedar.WithLegacyJSON())
+	testutil.Error(t, err)
+}
+
 func TestUnmarshalCedarPolicyErr(t *testing.T) {
 	t.Parallel()
 	var p cedar.Policy
