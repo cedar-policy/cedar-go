@@ -28,7 +28,8 @@ jobs:
           restore-keys: fuzz-corpus-
 
       - name: Fuzz
-        run: mise run test:fuzz 15m
+        shell: bash
+        run: mise run test:fuzz 15m 2>&1 | tee fuzz.log
 
       - name: Save fuzz corpus
         if: always()
@@ -37,23 +38,25 @@ jobs:
           path: ${{ steps.fuzzcache.outputs.dir }}
           key: fuzz-corpus-${{ github.run_id }}
 
+      - name: Collect failing inputs
+        if: failure()
+        run: scripts/fuzz-report.sh collect "$RUNNER_TEMP/fuzz-failures"
+
       - name: Upload failing inputs
+        id: upload
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: fuzz-failures
-          path: "**/testdata/fuzz/"
+          path: ${{ runner.temp }}/fuzz-failures/
+          if-no-files-found: ignore
 
       - name: Report failure
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
           TITLE: Nightly fuzz failure
-          BODY: "The nightly fuzz run failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        run: |
-          number=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$TITLE\" in:title" --json number,title --jq "map(select(.title == env.TITLE)) | .[0].number // empty")
-          if [ -n "$number" ]; then
-            gh issue comment "$number" --repo "$GITHUB_REPOSITORY" --body "$BODY"
-          else
-            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
-          fi
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+          SHA: ${{ github.sha }}
+        run: scripts/fuzz-report.sh issue fuzz.log
