@@ -59,6 +59,7 @@ func Resolve(s *ast.Schema) (*Schema, error) {
 	r := &resolverState{
 		entityTypes: make(map[types.EntityType]bool),
 		enumTypes:   make(map[types.EntityType]bool),
+		actionTypes: make(map[types.EntityType]bool),
 		commonTypes: make(map[types.Path]ast.IsType),
 		actions:     make(map[types.EntityUID]bool),
 	}
@@ -126,6 +127,7 @@ func Resolve(s *ast.Schema) (*Schema, error) {
 type resolverState struct {
 	entityTypes map[types.EntityType]bool
 	enumTypes   map[types.EntityType]bool
+	actionTypes map[types.EntityType]bool
 	commonTypes map[types.Path]ast.IsType
 	actions     map[types.EntityUID]bool
 }
@@ -144,7 +146,9 @@ func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, 
 		r.commonTypes[qualifyPath(nsName, name)] = ct.Type
 	}
 	for name := range actions {
-		r.actions[types.NewEntityUID(qualifyActionType(nsName), name)] = true
+		actionType := qualifyActionType(nsName)
+		r.actionTypes[actionType] = true
+		r.actions[types.NewEntityUID(actionType, name)] = true
 	}
 	return nil
 }
@@ -267,7 +271,7 @@ func (r *resolverState) resolveEntities(nsName types.Path, entities ast.Entities
 			Annotations: Annotations(entity.Annotations),
 		}
 		for _, ref := range entity.ParentTypes {
-			et, err := r.resolveEntityTypeRef(nsName, ref)
+			et, err := r.resolveEntityTypeRef(nsName, ref, r.isDeclaredEntityType)
 			if err != nil {
 				return fmt.Errorf("entity %q: %w", qualName, err)
 			}
@@ -325,14 +329,14 @@ func (r *resolverState) resolveActions(nsName types.Path, actions ast.Actions, r
 		if action.AppliesTo != nil {
 			at := &AppliesTo{}
 			for _, p := range action.AppliesTo.Principals {
-				et, err := r.resolveEntityTypeRef(nsName, p)
+				et, err := r.resolveEntityTypeRef(nsName, p, r.isDeclaredEntityType)
 				if err != nil {
 					return fmt.Errorf("action %q principal: %w", name, err)
 				}
 				at.Principals = append(at.Principals, et)
 			}
 			for _, res := range action.AppliesTo.Resources {
-				et, err := r.resolveEntityTypeRef(nsName, res)
+				et, err := r.resolveEntityTypeRef(nsName, res, r.isDeclaredEntityType)
 				if err != nil {
 					return fmt.Errorf("action %q resource: %w", name, err)
 				}
@@ -377,7 +381,7 @@ func (r *resolverState) resolveType(ns types.Path, t ast.IsType) (IsType, error)
 	case ast.RecordType:
 		return r.resolveRecordType(ns, t)
 	case ast.EntityTypeRef:
-		et, err := r.resolveEntityTypeRef(ns, t)
+		et, err := r.resolveEntityTypeRef(ns, t, r.isValueEntityType)
 		if err != nil {
 			return nil, err
 		}
@@ -405,12 +409,20 @@ func (r *resolverState) resolveRecordType(ns types.Path, rec ast.RecordType) (Re
 	return result, nil
 }
 
-func (r *resolverState) resolveEntityTypeRef(ns types.Path, ref ast.EntityTypeRef) (types.EntityType, error) {
+func (r *resolverState) isDeclaredEntityType(et types.EntityType) bool {
+	return r.entityTypes[et] || r.enumTypes[et]
+}
+
+func (r *resolverState) isValueEntityType(et types.EntityType) bool {
+	return r.isDeclaredEntityType(et) || r.actionTypes[et]
+}
+
+func (r *resolverState) resolveEntityTypeRef(ns types.Path, ref ast.EntityTypeRef, isEntityType func(types.EntityType) bool) (types.EntityType, error) {
 	path := types.Path(ref)
 	// If it's already a qualified path (contains ::), resolve directly
 	if strings.Contains(string(path), "::") {
 		et := types.EntityType(path)
-		if r.entityTypes[et] || r.enumTypes[et] {
+		if isEntityType(et) {
 			return et, nil
 		}
 		return "", fmt.Errorf("undefined entity type %q", path)
@@ -418,88 +430,48 @@ func (r *resolverState) resolveEntityTypeRef(ns types.Path, ref ast.EntityTypeRe
 	// Unqualified: try NS::Name first, then bare Name
 	if ns != "" {
 		qualified := types.EntityType(string(ns) + "::" + string(path))
-		if r.entityTypes[qualified] || r.enumTypes[qualified] {
+		if isEntityType(qualified) {
 			return qualified, nil
 		}
 	}
 	bare := types.EntityType(path)
-	if r.entityTypes[bare] || r.enumTypes[bare] {
+	if isEntityType(bare) {
 		return bare, nil
 	}
 	return "", fmt.Errorf("undefined entity type %q", path)
 }
 
-// resolveTypeRef resolves a type reference (TypeRef) following the Cedar disambiguation rules:
-// 1. Check if NS::N is declared as a common type
-// 2. Check if NS::N is declared as an entity type
-// 3. Check if N (empty namespace) is declared as a common type
-// 4. Check if N (empty namespace) is declared as an entity type
-// 5. Check if N is a built-in type
-// 6. Error
 func (r *resolverState) resolveTypeRef(ns types.Path, ref ast.TypeRef) (IsType, error) {
-	// Qualified: resolve directly
-	if strings.Contains(string(ref), "::") {
-		return r.resolveQualifiedTypeRef(ref)
-	}
-
-	// Unqualified: follow disambiguation rules
-	if ns != "" {
-		qualifiedPath := types.Path(string(ns) + "::" + string(ref))
-		// 1. Check NS::N as common type
-		if ct, ok := r.commonTypes[qualifiedPath]; ok {
-			return r.resolveType(ns, ct)
-		}
-		// 2. Check NS::N as entity type
-		qualifiedET := types.EntityType(qualifiedPath)
-		if r.entityTypes[qualifiedET] || r.enumTypes[qualifiedET] {
-			return EntityType(qualifiedET), nil
-		}
-	}
-
-	// 3. Check N as common type in empty namespace
-	path := types.Path(ref)
-	if ct, ok := r.commonTypes[path]; ok {
-		return r.resolveType("", ct)
-	}
-
-	// 4. Check N as entity type in empty namespace
-	bareET := types.EntityType(ref)
-	if r.entityTypes[bareET] || r.enumTypes[bareET] {
-		return EntityType(bareET), nil
-	}
-
-	// 5. Check built-in types
-	if t := lookupBuiltin(path); t != nil {
-		return t, nil
-	}
-
-	return nil, fmt.Errorf("undefined type %q", ref)
-}
-
-func (r *resolverState) resolveQualifiedTypeRef(ref ast.TypeRef) (IsType, error) {
+	path := r.resolveTypeRefPath(ns, ref)
 	// Check for __cedar:: prefix first
-	if strings.HasPrefix(string(ref), "__cedar::") {
-		builtinName := ref[len("__cedar::"):]
-		if t := lookupBuiltin(types.Path(builtinName)); t != nil {
+	if strings.HasPrefix(string(path), "__cedar::") {
+		builtinName := path[len("__cedar::"):]
+		if t := lookupBuiltin(builtinName); t != nil {
 			return t, nil
 		}
 		return nil, fmt.Errorf("undefined built-in type %q", ref)
 	}
 
 	// Try as common type first
-	path := types.Path(ref)
 	if ct, ok := r.commonTypes[path]; ok {
 		ns := extractNamespace(path)
 		return r.resolveType(ns, ct)
 	}
 	// Try as entity type
-	et := types.EntityType(ref)
-	if r.entityTypes[et] || r.enumTypes[et] {
+	et := types.EntityType(path)
+	if r.isValueEntityType(et) {
 		return EntityType(et), nil
+	}
+	if !strings.Contains(string(path), "::") {
+		if t := lookupBuiltin(path); t != nil {
+			return t, nil
+		}
 	}
 	return nil, fmt.Errorf("undefined type %q", ref)
 }
 
+// resolveTypeRefPath selects the declaration used by both value resolution
+// and common-type dependency analysis.
 func (r *resolverState) resolveTypeRefPath(ns types.Path, ref ast.TypeRef) types.Path {
 	if strings.Contains(string(ref), "::") {
 		return types.Path(ref)
@@ -507,6 +479,9 @@ func (r *resolverState) resolveTypeRefPath(ns types.Path, ref ast.TypeRef) types
 	if ns != "" {
 		qualifiedPath := types.Path(string(ns) + "::" + string(ref))
 		if _, ok := r.commonTypes[qualifiedPath]; ok {
+			return qualifiedPath
+		}
+		if r.isValueEntityType(types.EntityType(qualifiedPath)) {
 			return qualifiedPath
 		}
 	}
