@@ -1,0 +1,52 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unexpected type: expected Long but saw datetime",
+      "for policy `policy1`, unexpected type: expected Long but saw datetime",
+      "for policy `policy2`, unexpected type: expected datetime but saw duration"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unexpected type: expected Long but saw datetime",
+      "for policy `policy1`, unexpected type: expected Long but saw datetime",
+      "for policy `policy2`, unexpected type: expected datetime but saw duration"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unexpected type: expected Long but saw datetime"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unexpected type: expected Long but saw datetime"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unexpected type: expected Long but saw datetime"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unexpected type: expected Long but saw datetime"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unexpected type: expected datetime but saw duration"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unexpected type: expected datetime but saw duration"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}
