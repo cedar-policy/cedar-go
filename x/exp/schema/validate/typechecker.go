@@ -500,6 +500,15 @@ func (v *Validator) typeOfComparison(env *requestEnv, left, right ast.IsNode, ca
 	if rightExpectErr != nil {
 		errs = append(errs, rightExpectErr)
 	}
+	if len(errs) == 0 && cedarTypeName(lt) != cedarTypeName(rt) {
+		if _, ok := lt.(typeLong); ok {
+			errs = append(errs, unexpectedTypeErr("Long", rt))
+		} else if _, ok := rt.(typeLong); ok {
+			errs = append(errs, unexpectedTypeErr("Long", lt))
+		} else {
+			errs = append(errs, unexpectedTypeErr(cedarTypeName(lt), rt))
+		}
+	}
 
 	if len(errs) > 0 {
 		return typeBool{}, caps, errors.Join(errs...)
