@@ -8,6 +8,7 @@ on:
 jobs:
   fuzz:
     runs-on: ubuntu-latest
+    if: github.repository == 'cedar-policy/cedar-go'
     permissions:
       contents: read
       issues: write
