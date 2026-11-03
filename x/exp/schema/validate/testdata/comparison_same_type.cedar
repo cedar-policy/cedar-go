@@ -1,3 +1,13 @@
 permit(principal, action, resource) when { 1 < datetime("2020-01-01") };
 permit(principal, action, resource) when { datetime("2020-01-01") < 1 };
 permit(principal, action, resource) when { datetime("2020-01-01") < duration("1h") };
+permit(principal, action, resource) when { 1 <= duration("1h") };
+permit(principal, action, resource) when { duration("1h") > 1 };
+permit(principal, action, resource) when { duration("1h") >= datetime("2020-01-01") };
+permit(principal, action, resource) when { datetime("2020-01-01") > duration("1h") };
+permit(principal, action, resource) when { context.n >= context.ts };
+permit(principal, action, resource) when { context.dur <= context.n };
+permit(principal, action, resource) when { context.ts < context.dur };
+permit(principal, action, resource) when { datetime("2020-01-01") <= context.ts };
+permit(principal, action, resource) when { context.dur > duration("1h") };
+permit(principal, action, resource) when { 1 >= context.n };
