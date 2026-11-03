@@ -42,16 +42,16 @@ func (v *Validator) typeOfExpr(env *requestEnv, expr ast.IsNode, caps capability
 		return v.typeOfEquality(env, n.Left, n.Right, true, caps)
 
 	case ast.NodeTypeLessThan:
-		return v.typeOfComparison(env, n.Left, n.Right, caps, expectComparable, expectComparable)
+		return v.typeOfComparison(env, n.Left, n.Right, caps)
 
 	case ast.NodeTypeLessThanOrEqual:
-		return v.typeOfComparison(env, n.Left, n.Right, caps, expectComparable, expectComparable)
+		return v.typeOfComparison(env, n.Left, n.Right, caps)
 
 	case ast.NodeTypeGreaterThan:
-		return v.typeOfComparison(env, n.Left, n.Right, caps, expectComparable, expectComparable)
+		return v.typeOfComparison(env, n.Left, n.Right, caps)
 
 	case ast.NodeTypeGreaterThanOrEqual:
-		return v.typeOfComparison(env, n.Left, n.Right, caps, expectComparable, expectComparable)
+		return v.typeOfComparison(env, n.Left, n.Right, caps)
 
 	case ast.NodeTypeAdd:
 		return v.typeOfArith(env, n.Left, n.Right, caps)
@@ -453,61 +453,58 @@ func (v *Validator) typeOfEquality(env *requestEnv, left, right ast.IsNode, nega
 	return typeBool{}, caps, nil
 }
 
-type typeExpectation func(cedarType) error
-
-var expectComparable typeExpectation = func(t cedarType) error {
-	if _, ok := t.(typeLong); ok {
-		return nil
+// isComparisonOpType reports whether t supports < and <=, mirroring Rust's
+// is_valid_comparison_op_type.
+func isComparisonOpType(t cedarType) bool {
+	switch t := t.(type) {
+	case typeLong:
+		return true
+	case typeExtension:
+		return t.name == "datetime" || t.name == "duration"
+	case typeNever, typeTrue, typeFalse, typeBool, typeString, typeSet, typeRecord, typeEntity:
 	}
-	if ext, ok := t.(typeExtension); ok {
-		if ext.name == "datetime" || ext.name == "duration" {
-			return nil
-		}
-	}
-	return unexpectedTypeErr("datetime, or duration, or Long", t)
+	return false
 }
 
-func (v *Validator) typeOfComparison(env *requestEnv, left, right ast.IsNode, caps capabilitySet, expectLeft, expectRight typeExpectation) (cedarType, capabilitySet, error) {
+// comparisonOpTypes lists the types that support < and <=, in the order
+// Rust's expected_comparison_op_types reports them.
+const comparisonOpTypes = "datetime, or duration, or Long"
+
+// typeOfComparison typechecks <, <=, >, and >=.
+func (v *Validator) typeOfComparison(env *requestEnv, left, right ast.IsNode, caps capabilitySet) (cedarType, capabilitySet, error) {
 	lt, _, leftErr := v.typeOfExpr(env, left, caps)
 	rt, _, rightErr := v.typeOfExpr(env, right, caps)
 
-	var leftExpectErr, rightExpectErr error
-	if expectLeft != nil && lt != nil {
-		leftExpectErr = expectLeft(lt)
-	}
-	if expectRight != nil && rt != nil {
-		rightExpectErr = expectRight(rt)
-	}
-
 	var errs []error
 	if leftErr != nil {
-		if ue, ok := leftErr.(interface{ Unwrap() []error }); ok {
-			errs = append(errs, ue.Unwrap()...)
-		} else {
-			errs = append(errs, leftErr)
-		}
-	}
-	if leftExpectErr != nil {
-		errs = append(errs, leftExpectErr)
+		collectErrors(&errs, leftErr)
 	}
 	if rightErr != nil {
-		if ue, ok := rightErr.(interface{ Unwrap() []error }); ok {
-			errs = append(errs, ue.Unwrap()...)
-		} else {
-			errs = append(errs, rightErr)
-		}
+		collectErrors(&errs, rightErr)
 	}
-	if rightExpectErr != nil {
-		errs = append(errs, rightExpectErr)
-	}
-	if len(errs) == 0 && cedarTypeName(lt) != cedarTypeName(rt) {
-		if _, ok := lt.(typeLong); ok {
-			errs = append(errs, unexpectedTypeErr("Long", rt))
-		} else if _, ok := rt.(typeLong); ok {
-			errs = append(errs, unexpectedTypeErr("Long", lt))
-		} else {
-			errs = append(errs, unexpectedTypeErr(cedarTypeName(lt), rt))
-		}
+
+	// The rather strange special casing of Long below exists to mirror
+	// Rust Cedar's behavior and resulting error strings.
+	_, leftLong := lt.(typeLong)
+	_, rightLong := rt.(typeLong)
+	switch {
+	case lt == nil || rt == nil:
+	// N.B. checking isComparisonOpType first here makes using == safe:
+	// every comparable type is a comparable Go value.
+	case isComparisonOpType(lt) && isComparisonOpType(rt) && lt == rt:
+	case leftLong:
+		errs = append(errs, unexpectedTypeErr(cedarTypeName(lt), rt))
+	case rightLong:
+		errs = append(errs, unexpectedTypeErr(cedarTypeName(rt), lt))
+	case isComparisonOpType(lt):
+		errs = append(errs, unexpectedTypeErr(cedarTypeName(lt), rt))
+	case isComparisonOpType(rt):
+		errs = append(errs, unexpectedTypeErr(cedarTypeName(rt), lt))
+	default:
+		errs = append(errs,
+			unexpectedTypeErr(comparisonOpTypes, lt),
+			unexpectedTypeErr(comparisonOpTypes, rt),
+		)
 	}
 
 	if len(errs) > 0 {
