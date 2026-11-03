@@ -9,6 +9,8 @@ import (
 type Validator struct {
 	schema *resolved.Schema
 	strict bool
+
+	envs []requestEnv
 }
 
 // Option configures a Validator.
@@ -26,6 +28,7 @@ func New(s *resolved.Schema, opts ...Option) *Validator {
 	for _, opt := range opts {
 		opt(v)
 	}
+	v.envs = v.generateRequestEnvs()
 	return v
 }
 
