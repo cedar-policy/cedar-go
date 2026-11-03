@@ -1,2 +1,6 @@
 entity User;
-action view appliesTo { principal: User, resource: User };
+action view appliesTo {
+  principal: User,
+  resource: User,
+  context: { n: Long, ts: datetime, dur: duration },
+};
