@@ -15,3 +15,10 @@ func IsPath(s string) bool {
 	}
 	return true
 }
+
+func IsActionType(s string) bool {
+	if i := strings.LastIndex(s, "::"); i >= 0 {
+		s = s[i+2:]
+	}
+	return s == "Action"
+}

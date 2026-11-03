@@ -6,7 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/internal/json"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
 func fuzzRoundtripJSONSeeds(f *testing.F) [][]byte {
@@ -31,6 +33,22 @@ func marshalCedarText(p *Policy) []byte {
 	return buf.Bytes()
 }
 
+func hasCallWithoutText(p *Policy) bool {
+	found := false
+	for _, c := range p.Conditions {
+		ast.Inspect(ast.NewNode(c.Body), func(n ast.IsNode) bool {
+			if call, ok := n.(ast.NodeTypeExtensionCall); ok {
+				info, known := extensions.ExtMap[call.Name]
+				if !known || (info.IsMethod && len(call.Args) == 0) {
+					found = true
+				}
+			}
+			return !found
+		})
+	}
+	return found
+}
+
 func FuzzPolicyJSONTextRoundtrip(f *testing.F) {
 	for _, text := range fuzzSeedPolicies {
 		var p Policy
@@ -52,7 +70,7 @@ func FuzzPolicyJSONTextRoundtrip(f *testing.F) {
 	}
 	f.Fuzz(func(t *testing.T, in []byte) {
 		var p0 json.Policy
-		if err := p0.UnmarshalJSON(in); err != nil {
+		if err := p0.UnmarshalJSON(in); err != nil || hasCallWithoutText((*Policy)(&p0)) {
 			return
 		}
 		textA := marshalCedarText((*Policy)(&p0))

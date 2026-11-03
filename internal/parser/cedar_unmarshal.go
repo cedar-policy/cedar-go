@@ -345,7 +345,7 @@ func (p *parser) action(policy *ast.Policy) error {
 	switch p.peek().Text {
 	case "==":
 		p.advance()
-		entity, err := p.entity()
+		entity, err := p.actionEntity()
 		if err != nil {
 			return err
 		}
@@ -359,12 +359,17 @@ func (p *parser) action(policy *ast.Policy) error {
 			if err != nil {
 				return err
 			}
+			for _, e := range entities {
+				if err := checkActionEntity(e); err != nil {
+					return p.errorf("%v", err)
+				}
+			}
 			policy.ActionInSet(entities...)
 			p.advance() // entlist guarantees "]"
 			return nil
 		}
 
-		entity, err := p.entity()
+		entity, err := p.actionEntity()
 		if err != nil {
 			return err
 		}
@@ -373,6 +378,24 @@ func (p *parser) action(policy *ast.Policy) error {
 	}
 
 	return nil
+}
+
+func checkActionEntity(e types.EntityUID) error {
+	if !scanner.IsActionType(string(e.Type)) {
+		return fmt.Errorf("expected an entity uid with type `Action` but got `%s`", e.MarshalCedar())
+	}
+	return nil
+}
+
+func (p *parser) actionEntity() (types.EntityUID, error) {
+	entity, err := p.entity()
+	if err != nil {
+		return entity, err
+	}
+	if err := checkActionEntity(entity); err != nil {
+		return entity, p.errorf("%v", err)
+	}
+	return entity, nil
 }
 
 func (p *parser) entlist() ([]types.EntityUID, error) {

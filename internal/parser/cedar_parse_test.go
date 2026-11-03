@@ -22,17 +22,17 @@ func TestParse(t *testing.T) {
 		{"ex1", `//@test_annotation("This is the annotation")
 		permit(
 		  principal == User::"alice",
-		  action == PhotoOp::"view",
+		  action == PhotoOp::Action::"view",
 		  resource == Photo::"VacationPhoto94.jpg"
 		);`, false},
 		{"ex2", `permit(
 				principal in Team::"admins",
-				action in [PhotoOp::"view", PhotoOp::"edit", PhotoOp::"delete"],
+				action in [PhotoOp::Action::"view", PhotoOp::Action::"edit", PhotoOp::Action::"delete"],
 				resource in Album::"jane_vacation"
 			  );`, false},
 		{"ex3", `permit(
 				principal == User::"alice",
-				action in PhotoflashRole::"admin",
+				action in PhotoflashRole::Action::"admin",
 				resource in Album::"jane_vacation"
 			  );`, false},
 		{"simplest", `permit(
@@ -42,19 +42,19 @@ func TestParse(t *testing.T) {
 			  );`, false},
 		{"in", `permit(
 				principal in Team::"eng",
-				action in PhotoflashRole::"admin",
+				action in PhotoflashRole::Action::"admin",
 				resource in Album::"jane_vacation"
 			  );
 
 			  permit(
 				principal in Team::"eng",
-				action in [PhotoflashRole::"admin"],
+				action in [PhotoflashRole::Action::"admin"],
 				resource in Album::"jane_vacation"
 			  );
 
 			  permit(
 				principal in Team::"eng",
-				action in [PhotoflashRole::"admin", PhotoflashRole::"operator"],
+				action in [PhotoflashRole::Action::"admin", PhotoflashRole::Action::"operator"],
 				resource in Album::"jane_vacation"
 			  );
 			  `, false},
@@ -71,7 +71,7 @@ func TestParse(t *testing.T) {
 
 			  forbid(
 				principal in Team::"admins",
-				action in [PhotoOp::"view", PhotoOp::"edit", PhotoOp::"delete"],
+				action in [PhotoOp::Action::"view", PhotoOp::Action::"edit", PhotoOp::Action::"delete"],
 				resource in Album::"jane_vacation"
 			  );
 			  `, false},
@@ -323,6 +323,9 @@ func TestParse(t *testing.T) {
 		{"invalidAccess", `permit(principal, action, resource) when { context["\*"] == 42 };`, true},
 		{"invalidRecordKey", `permit(principal, action, resource) when { { "\*":42 } };`, true},
 		{"invalidIs", `permit (principal is 1, action, resource);`, true},
+		{"actionEqNotAction", `permit (principal, action == table::"drop", resource);`, true},
+		{"actionInNotAction", `permit (principal, action in Action::Foo::"view", resource);`, true},
+		{"actionInSetNotAction", `permit (principal, action in [Action::"view", table::"drop"], resource);`, true},
 		{"invalidIsLong", `permit (principal is X::1, action, resource);`, true},
 		{"duplicateAnnotations", `@key("value") @key("value") permit (principal, action, resource);`, true},
 		{"duplicateBareAnnotations", `@key @key permit (principal, action, resource);`, true},

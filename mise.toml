@@ -32,11 +32,14 @@ go tool cover -func=coverage.out | sed 's/%$//' | awk '
 [tasks."test:fuzz"]
 description = "Run each fuzz test for <fuzztime> (e.g. mise run test:fuzz 10s)"
 usage = 'arg "<fuzztime>" help="How long to run each fuzz test" default="60s"'
+depends = ["build:fuzz-tool"]
 # go test can only fuzz one target at a time.
 run = [
   "go test -run '^$' -fuzz '^FuzzTokenize$' -fuzztime ${usage_fuzztime} ./internal/scanner",
   "go test -run '^$' -fuzz '^FuzzParse$' -fuzztime ${usage_fuzztime} ./internal/parser",
   "go test -run '^$' -fuzz '^FuzzPolicyJSONTextRoundtrip$' -fuzztime ${usage_fuzztime} ./internal/parser",
+  "go test -run '^$' -fuzz '^FuzzRustCedarText$' -fuzztime ${usage_fuzztime} ./internal/parser",
+  "go test -run '^$' -fuzz '^FuzzRustCedarJSON$' -fuzztime ${usage_fuzztime} ./internal/parser",
 ]
 
 [tasks.generate]
@@ -204,3 +207,7 @@ run = "cargo build --release --manifest-path test/cedar-entity-parsing-tool/Carg
 [tasks."build:json-tool"]
 description = "Build cedar-json-tool"
 run = "cargo build --release --manifest-path test/cedar-json-tool/Cargo.toml"
+
+[tasks."build:fuzz-tool"]
+description = "Build cedar-fuzz-tool"
+run = "cargo build --release --manifest-path test/cedar-fuzz-tool/Cargo.toml"
