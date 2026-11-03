@@ -87,7 +87,7 @@ func checkRecord(rec types.Record, expected resolved.RecordType) error {
 
 // checkExtensionValue checks that a value matches an extension type.
 func checkExtensionValue(v types.Value, expected resolved.ExtensionType) error {
-	switch types.Ident(expected) {
+	switch expected {
 	case "ipaddr":
 		if _, ok := v.(types.IPAddr); !ok {
 			return extensionMismatchError("IPAddr", v)

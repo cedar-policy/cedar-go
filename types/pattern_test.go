@@ -20,6 +20,20 @@ func TestPattern(t *testing.T) {
 		pattern2 := NewPattern(String("foobar"))
 		testutil.Equals(t, pattern1, pattern2)
 	})
+	t.Run("empty literal", func(t *testing.T) {
+		t.Parallel()
+		pattern := NewPattern(String(""))
+		testutil.Equals(t, pattern, NewPattern())
+		testutil.Equals(t, string(pattern.MarshalCedar()), `""`)
+		testutil.JSONMarshalsTo(t, pattern, "[]")
+	})
+	t.Run("wildcard after empty literal", func(t *testing.T) {
+		t.Parallel()
+		pattern := NewPattern(String(""), Wildcard{})
+		testutil.Equals(t, pattern, NewPattern(Wildcard{}))
+		testutil.Equals(t, string(pattern.MarshalCedar()), `"*"`)
+		testutil.JSONMarshalsTo(t, pattern, `["Wildcard"]`)
+	})
 	t.Run("panicOnNil", func(t *testing.T) {
 		t.Parallel()
 		testutil.Panic(t, func() {
@@ -47,6 +61,32 @@ func TestPattern(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestPatternEqual(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		a, b Pattern
+		want bool
+	}{
+		{"empty", NewPattern(), NewPattern(), true},
+		{"emptyString", NewPattern(""), NewPattern(), true},
+		{"emptyStringBeforeWildcard", NewPattern("", Wildcard{}), NewPattern(Wildcard{}), true},
+		{"literal", NewPattern("foo"), NewPattern("fo", "o"), true},
+		{"differentLiteral", NewPattern("foo"), NewPattern("bar"), false},
+		{"wildcards", NewPattern("a", Wildcard{}, Wildcard{}, "b"), NewPattern("a", Wildcard{}, "b"), true},
+		{"wildcardPosition", NewPattern("a", Wildcard{}), NewPattern(Wildcard{}, "a"), false},
+		{"literalAndWildcard", NewPattern("*"), NewPattern(Wildcard{}), false},
+		{"differentLength", NewPattern("a", Wildcard{}), NewPattern("a", Wildcard{}, "b", Wildcard{}), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			testutil.Equals(t, tt.a.Equal(tt.b), tt.want)
+			testutil.Equals(t, tt.b.Equal(tt.a), tt.want)
+		})
+	}
 }
 
 func TestPatternMatch(t *testing.T) {
@@ -216,6 +256,20 @@ func TestPatternJSON(t *testing.T) {
 			false,
 		},
 		{
+			"duplicate key",
+			`[{"Literal": "foo", "Literal": "bar"}]`,
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
+			"invalid UTF-8 literal",
+			"[{\"Literal\": \"\xff\"}]",
+			testutil.Error,
+			Pattern{},
+			false,
+		},
+		{
 			"empty pattern",
 			`[]`,
 			testutil.OK,
@@ -226,8 +280,8 @@ func TestPatternJSON(t *testing.T) {
 			"empty string literal",
 			`[{"Literal":""}]`,
 			testutil.OK,
-			NewPattern(String("")),
-			true,
+			NewPattern(),
+			false,
 		},
 		{
 			"wildcard then empty string literal",
@@ -264,4 +318,10 @@ func TestPatternJSON(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPatternMarshalJSONInvalidUTF8(t *testing.T) {
+	t.Parallel()
+	_, err := NewPattern(String("\xff")).MarshalJSON()
+	testutil.Error(t, err)
 }

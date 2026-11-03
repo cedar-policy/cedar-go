@@ -65,9 +65,8 @@ func Record(elements Pairs) Node {
 	return NewNode(res)
 }
 
-func EntityUID(typ types.Ident, id types.String) Node {
-	e := types.NewEntityUID(types.EntityType(typ), types.String(id))
-	return Value(e)
+func EntityUID(typ types.EntityType, id types.String) Node {
+	return Value(types.NewEntityUID(typ, id))
 }
 
 func IPAddr[T netip.Prefix | types.IPAddr](i T) Node {

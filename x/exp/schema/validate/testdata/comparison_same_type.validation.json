@@ -1,0 +1,296 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy0`, unexpected type: expected Long but saw datetime",
+      "for policy `policy13`, unexpected type: expected datetime but saw String",
+      "for policy `policy14`, unexpected type: expected Long but saw String",
+      "for policy `policy15`, unexpected type: expected datetime but saw String",
+      "for policy `policy16`, unexpected type: expected duration but saw String",
+      "for policy `policy17`, unexpected type: expected Long but saw decimal",
+      "for policy `policy18`, unexpected type: expected duration but saw decimal",
+      "for policy `policy19`, unexpected type: expected datetime, or duration, or Long but saw String",
+      "for policy `policy19`, unexpected type: expected datetime, or duration, or Long but saw String",
+      "for policy `policy1`, unexpected type: expected Long but saw datetime",
+      "for policy `policy20`, unexpected type: expected datetime, or duration, or Long but saw __cedar::internal::True",
+      "for policy `policy20`, unexpected type: expected datetime, or duration, or Long but saw decimal",
+      "for policy `policy21`, unexpected type: expected Long but saw String",
+      "for policy `policy21`, unexpected type: expected Long but saw datetime",
+      "for policy `policy22`, attribute `missing` in context for Action::\"view\" not found",
+      "for policy `policy23`, unexpected type: expected Long but saw Bool",
+      "for policy `policy23`, unexpected type: expected Long but saw String",
+      "for policy `policy2`, unexpected type: expected datetime but saw duration",
+      "for policy `policy3`, unexpected type: expected Long but saw duration",
+      "for policy `policy4`, unexpected type: expected Long but saw duration",
+      "for policy `policy5`, unexpected type: expected duration but saw datetime",
+      "for policy `policy6`, unexpected type: expected datetime but saw duration",
+      "for policy `policy7`, unexpected type: expected Long but saw datetime",
+      "for policy `policy8`, unexpected type: expected Long but saw duration",
+      "for policy `policy9`, unexpected type: expected datetime but saw duration"
+    ],
+    "permissiveErrors": [
+      "for policy `policy0`, unexpected type: expected Long but saw datetime",
+      "for policy `policy13`, unexpected type: expected datetime but saw String",
+      "for policy `policy14`, unexpected type: expected Long but saw String",
+      "for policy `policy15`, unexpected type: expected datetime but saw String",
+      "for policy `policy16`, unexpected type: expected duration but saw String",
+      "for policy `policy17`, unexpected type: expected Long but saw decimal",
+      "for policy `policy18`, unexpected type: expected duration but saw decimal",
+      "for policy `policy19`, unexpected type: expected datetime, or duration, or Long but saw String",
+      "for policy `policy19`, unexpected type: expected datetime, or duration, or Long but saw String",
+      "for policy `policy1`, unexpected type: expected Long but saw datetime",
+      "for policy `policy20`, unexpected type: expected datetime, or duration, or Long but saw __cedar::internal::True",
+      "for policy `policy20`, unexpected type: expected datetime, or duration, or Long but saw decimal",
+      "for policy `policy21`, unexpected type: expected Long but saw String",
+      "for policy `policy21`, unexpected type: expected Long but saw datetime",
+      "for policy `policy22`, attribute `missing` in context for Action::\"view\" not found",
+      "for policy `policy23`, unexpected type: expected Long but saw Bool",
+      "for policy `policy23`, unexpected type: expected Long but saw String",
+      "for policy `policy2`, unexpected type: expected datetime but saw duration",
+      "for policy `policy3`, unexpected type: expected Long but saw duration",
+      "for policy `policy4`, unexpected type: expected Long but saw duration",
+      "for policy `policy5`, unexpected type: expected duration but saw datetime",
+      "for policy `policy6`, unexpected type: expected datetime but saw duration",
+      "for policy `policy7`, unexpected type: expected Long but saw datetime",
+      "for policy `policy8`, unexpected type: expected Long but saw duration",
+      "for policy `policy9`, unexpected type: expected datetime but saw duration"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy0`, unexpected type: expected Long but saw datetime"
+        ],
+        "permissiveErrors": [
+          "for policy `policy0`, unexpected type: expected Long but saw datetime"
+        ]
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`, unexpected type: expected Long but saw datetime"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`, unexpected type: expected Long but saw datetime"
+        ]
+      },
+      "policy10": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy11": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy12": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy13": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy13`, unexpected type: expected datetime but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy13`, unexpected type: expected datetime but saw String"
+        ]
+      },
+      "policy14": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy14`, unexpected type: expected Long but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy14`, unexpected type: expected Long but saw String"
+        ]
+      },
+      "policy15": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy15`, unexpected type: expected datetime but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy15`, unexpected type: expected datetime but saw String"
+        ]
+      },
+      "policy16": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy16`, unexpected type: expected duration but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy16`, unexpected type: expected duration but saw String"
+        ]
+      },
+      "policy17": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy17`, unexpected type: expected Long but saw decimal"
+        ],
+        "permissiveErrors": [
+          "for policy `policy17`, unexpected type: expected Long but saw decimal"
+        ]
+      },
+      "policy18": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy18`, unexpected type: expected duration but saw decimal"
+        ],
+        "permissiveErrors": [
+          "for policy `policy18`, unexpected type: expected duration but saw decimal"
+        ]
+      },
+      "policy19": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy19`, unexpected type: expected datetime, or duration, or Long but saw String",
+          "for policy `policy19`, unexpected type: expected datetime, or duration, or Long but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy19`, unexpected type: expected datetime, or duration, or Long but saw String",
+          "for policy `policy19`, unexpected type: expected datetime, or duration, or Long but saw String"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unexpected type: expected datetime but saw duration"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unexpected type: expected datetime but saw duration"
+        ]
+      },
+      "policy20": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy20`, unexpected type: expected datetime, or duration, or Long but saw __cedar::internal::True",
+          "for policy `policy20`, unexpected type: expected datetime, or duration, or Long but saw decimal"
+        ],
+        "permissiveErrors": [
+          "for policy `policy20`, unexpected type: expected datetime, or duration, or Long but saw __cedar::internal::True",
+          "for policy `policy20`, unexpected type: expected datetime, or duration, or Long but saw decimal"
+        ]
+      },
+      "policy21": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy21`, unexpected type: expected Long but saw String",
+          "for policy `policy21`, unexpected type: expected Long but saw datetime"
+        ],
+        "permissiveErrors": [
+          "for policy `policy21`, unexpected type: expected Long but saw String",
+          "for policy `policy21`, unexpected type: expected Long but saw datetime"
+        ]
+      },
+      "policy22": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy22`, attribute `missing` in context for Action::\"view\" not found"
+        ],
+        "permissiveErrors": [
+          "for policy `policy22`, attribute `missing` in context for Action::\"view\" not found"
+        ]
+      },
+      "policy23": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy23`, unexpected type: expected Long but saw Bool",
+          "for policy `policy23`, unexpected type: expected Long but saw String"
+        ],
+        "permissiveErrors": [
+          "for policy `policy23`, unexpected type: expected Long but saw Bool",
+          "for policy `policy23`, unexpected type: expected Long but saw String"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`, unexpected type: expected Long but saw duration"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`, unexpected type: expected Long but saw duration"
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy4`, unexpected type: expected Long but saw duration"
+        ],
+        "permissiveErrors": [
+          "for policy `policy4`, unexpected type: expected Long but saw duration"
+        ]
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy5`, unexpected type: expected duration but saw datetime"
+        ],
+        "permissiveErrors": [
+          "for policy `policy5`, unexpected type: expected duration but saw datetime"
+        ]
+      },
+      "policy6": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy6`, unexpected type: expected datetime but saw duration"
+        ],
+        "permissiveErrors": [
+          "for policy `policy6`, unexpected type: expected datetime but saw duration"
+        ]
+      },
+      "policy7": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy7`, unexpected type: expected Long but saw datetime"
+        ],
+        "permissiveErrors": [
+          "for policy `policy7`, unexpected type: expected Long but saw datetime"
+        ]
+      },
+      "policy8": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy8`, unexpected type: expected Long but saw duration"
+        ],
+        "permissiveErrors": [
+          "for policy `policy8`, unexpected type: expected Long but saw duration"
+        ]
+      },
+      "policy9": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy9`, unexpected type: expected datetime but saw duration"
+        ],
+        "permissiveErrors": [
+          "for policy `policy9`, unexpected type: expected datetime but saw duration"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

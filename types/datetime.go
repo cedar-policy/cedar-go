@@ -1,11 +1,12 @@
 package types
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
 	"unicode"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/internal"
 )

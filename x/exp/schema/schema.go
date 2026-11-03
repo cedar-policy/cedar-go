@@ -31,6 +31,9 @@ func (s *Schema) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON parses a Schema in the JSON format.
+//
+// Unlike Rust Cedar, which rejects null for most schema members, null is
+// generally accepted and treated like a missing member or the zero value.
 func (s *Schema) UnmarshalJSON(b []byte) error {
 	var jsonSchema json.Schema
 	if err := jsonSchema.UnmarshalJSON(b); err != nil {

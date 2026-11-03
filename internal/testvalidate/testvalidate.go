@@ -3,9 +3,10 @@
 package testvalidate
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"

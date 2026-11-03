@@ -2,9 +2,11 @@ package types
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go/internal/rust"
 )
@@ -33,15 +35,9 @@ func NewPattern(components ...any) Pattern {
 	for _, c := range components {
 		switch v := c.(type) {
 		case string:
-			if len(comps) == 0 {
-				comps = []patternComponent{{Wildcard: false, Literal: ""}}
-			}
-			comps[len(comps)-1].Literal += string(v)
+			comps = appendLiteral(comps, v)
 		case String:
-			if len(comps) == 0 {
-				comps = []patternComponent{{Wildcard: false, Literal: ""}}
-			}
-			comps[len(comps)-1].Literal += string(v)
+			comps = appendLiteral(comps, string(v))
 		case Wildcard:
 			if len(comps) == 0 || comps[len(comps)-1].Literal != "" {
 				comps = append(comps, patternComponent{Wildcard: true, Literal: ""})
@@ -51,6 +47,22 @@ func NewPattern(components ...any) Pattern {
 		}
 	}
 	return Pattern{comps: comps}
+}
+
+func appendLiteral(comps []patternComponent, s string) []patternComponent {
+	if s == "" {
+		return comps
+	}
+	if len(comps) == 0 {
+		return []patternComponent{{Literal: s}}
+	}
+	comps[len(comps)-1].Literal += s
+	return comps
+}
+
+// Equal reports whether p and other are the same pattern.
+func (p Pattern) Equal(other Pattern) bool {
+	return slices.Equal(p.comps, other.comps)
 }
 
 func (p Pattern) MarshalCedar() []byte {
@@ -147,7 +159,10 @@ func (p Pattern) MarshalJSON() ([]byte, error) {
 			if comp.Wildcard {
 				buf.WriteString(", ")
 			}
-			kb, _ := json.Marshal(comp.Literal)
+			kb, err := json.Marshal(comp.Literal)
+			if err != nil {
+				return nil, err
+			}
 			buf.WriteString(`{"Literal":`)
 			buf.Write(kb)
 			buf.WriteByte('}')
@@ -162,9 +177,8 @@ func (p Pattern) MarshalJSON() ([]byte, error) {
 }
 
 func (p *Pattern) UnmarshalJSON(b []byte) error {
-	dec := json.NewDecoder(bytes.NewReader(b))
 	var objs []any
-	if err := dec.Decode(&objs); err != nil {
+	if err := json.Unmarshal(b, &objs); err != nil {
 		return err
 	}
 

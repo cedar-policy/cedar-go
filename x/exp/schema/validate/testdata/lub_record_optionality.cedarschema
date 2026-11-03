@@ -1,0 +1,12 @@
+entity User;
+
+action "act" appliesTo {
+    principal: User,
+    resource: User,
+    context: {
+        rec: { req: Long, opt?: Long },
+        rec2: { req: Long, opt?: Long },
+        rec3: { req: Long, opt: Long },
+        nest: { inner: { a?: Long } },
+    },
+};

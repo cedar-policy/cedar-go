@@ -4,6 +4,9 @@ import "fmt"
 
 // A Request is the Principal, Action, Resource, and Context portion of an
 // authorization request.
+//
+// The Cedar specification doesn't define a JSON encoding for Request. JSON
+// struct tags are provided for convenience.
 type Request struct {
 	Principal EntityUID `json:"principal"`
 	Action    EntityUID `json:"action"`
@@ -52,12 +55,18 @@ func (a *Decision) UnmarshalJSON(b []byte) error {
 }
 
 // A Diagnostic details the errors and reasons for an authorization decision.
+//
+// The Cedar specification doesn't define a JSON encoding for Diagnostic. Its
+// JSON struct tags are provided for convenience.
 type Diagnostic struct {
 	Reasons []DiagnosticReason `json:"reasons,omitempty"`
 	Errors  []DiagnosticError  `json:"errors,omitempty"`
 }
 
 // A DiagnosticReason details the PolicyID within a PolicySet and the Position within the text document, if applicable.
+//
+// The Cedar specification doesn't define a JSON encoding for DiagnosticReason.
+// JSON struct tags are provided for convenience.
 type DiagnosticReason struct {
 	PolicyID PolicyID `json:"policy"`
 	Position Position `json:"position"`
@@ -65,6 +74,9 @@ type DiagnosticReason struct {
 
 // An DiagnosticError details the PolicyID within a PolicySet, the Position within the text document if applicable, and
 // the resulting error message.
+//
+// The Cedar specification doesn't define a JSON encoding for DiagnosticError.
+// JSON struct tags are provided for convenience.
 type DiagnosticError struct {
 	PolicyID PolicyID `json:"policy"`
 	Position Position `json:"position"`
@@ -79,6 +91,9 @@ func (e DiagnosticError) String() string {
 type PolicyID string
 
 // A Position describes an arbitrary source position including the file, line, and column location.
+//
+// The Cedar specification doesn't define a JSON encoding for Position. JSON
+// struct tags are provided for convenience.
 type Position struct {
 	// Filename is the optional name of the source file for the enclosing policy, "" if the source is unknown or not a named file
 	Filename string `json:"filename"`
@@ -105,4 +120,4 @@ const (
 
 // An Annotations is a map of key, value pairs found in the policy. Annotations
 // have no impact on policy evaluation.
-type Annotations map[Ident]String
+type Annotations map[AnnotationKey]String

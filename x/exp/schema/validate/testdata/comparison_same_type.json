@@ -1,0 +1,7 @@
+{
+    "schema": "testdata/comparison_same_type.cedarschema",
+    "policies": "testdata/comparison_same_type.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/comparison_same_type.entities.json",
+    "requests": []
+}

@@ -60,7 +60,7 @@ func TestParseMultiNameEntity(t *testing.T) {
 	schema, err := parser.ParseSchema("", []byte(src))
 	testutil.OK(t, err)
 	testutil.Equals(t, len(schema.Entities), 3)
-	for _, name := range []types.Ident{"A", "B", "C"} {
+	for _, name := range []ast.Ident{"A", "B", "C"} {
 		_, ok := schema.Entities[name]
 		testutil.Equals(t, ok, true)
 	}

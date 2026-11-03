@@ -86,6 +86,12 @@ func TestRecord(t *testing.T) {
 				"bar": types.String("blah"),
 			}).String(),
 			`{"bar":"blah", "foo":true}`)
+		testutil.Equals(
+			t,
+			types.NewRecord(types.RecordMap{
+				"\x0b": types.Boolean(true),
+			}).String(),
+			`{"\u{b}":true}`)
 	})
 
 	t.Run("Len", func(t *testing.T) {
@@ -365,5 +371,88 @@ func TestRecord(t *testing.T) {
 		})
 
 		testutil.Equals(t, got, types.RecordMap{"foo": types.Long(42), "bar": types.Long(1337)})
+	})
+
+	// Add some rather paranoid testing to ensure that future Go versions don't
+	// change the behavior of json.Deterministic(true) with respect to map
+	// encoding, which ensures that cedar-go maintains parity with the Rust
+	// implementation's encoding.
+	t.Run("MarshalJSON", func(t *testing.T) {
+		t.Run("sorted", func(t *testing.T) {
+			t.Parallel()
+			r := types.NewRecord(types.RecordMap{
+				"b": types.Long(1), "a": types.Long(2), "B": types.Long(3), "A": types.Long(4),
+				"aa": types.Long(5), "a\x00": types.Long(6), "": types.Long(7), "_": types.Long(8),
+				// Characters that JSON escapes
+				"\t": types.Long(9), "\x1f": types.Long(10), "\"": types.Long(11), "\\": types.Long(12),
+				// The last printable ASCII character, and DEL, which JSON
+				// doesn't escape
+				"~": types.Long(13), "\x7f": types.Long(14),
+				// é decomposed (e + U+0301 COMBINING ACUTE ACCENT) and
+				// precomposed, which aren't normalized
+				"e\u0301": types.Long(15), "\u00e9": types.Long(16),
+				// 2-byte UTF-8 on either side of the Latin-1 boundary
+				"\u00ff": types.Long(17), "\u0100": types.Long(18),
+				// 3-byte UTF-8: LINE SEPARATOR (which JavaScript doesn't allow
+				// in string literals), a CJK character, the first private-use
+				// character, and the replacement character
+				"\u2028": types.Long(19), "\u4e2d": types.Long(20), "\ue000": types.Long(21), "\ufffd": types.Long(22),
+				// 4-byte UTF-8 (surrogate pairs in UTF-16), including the
+				// highest code point. Bytewise, these sort after everything
+				// above; in UTF-16 code unit order (e.g. RFC 8785) they'd sort
+				// before U+E000.
+				"\U0001f600": types.Long(23), "\U0010ffff": types.Long(24),
+			})
+			got, err := r.MarshalJSON()
+			testutil.OK(t, err)
+			want := `{"":7,"\t":9,"\u001f":10,"\"":11,"A":4,"B":3,"\\":12,"_":8,"a":2,"a\u0000":6,"aa":5,"b":1,` +
+				"\"e\u0301\":15,\"~\":13,\"\x7f\":14,\"\u00e9\":16,\"\u00ff\":17,\"\u0100\":18," +
+				"\"\u2028\":19,\"\u4e2d\":20,\"\ue000\":21,\"\ufffd\":22,\"\U0001f600\":23,\"\U0010ffff\":24}"
+			testutil.Equals(t, string(got), want)
+		})
+
+		t.Run("nested sorted", func(t *testing.T) {
+			t.Parallel()
+			r := types.NewRecord(types.RecordMap{
+				"y": types.NewRecord(types.RecordMap{"a": types.Long(0), "d": types.Long(3), "b": types.Long(1), "c": types.Long(2)}),
+				"x": types.NewSet(types.NewRecord(types.RecordMap{"f": types.Long(5), "e": types.Long(4), "z": types.Long(6)})),
+			})
+			got, err := r.MarshalJSON()
+			testutil.OK(t, err)
+			testutil.Equals(t, string(got), `{"x":[{"e":4,"f":5,"z":6}],"y":{"a":0,"b":1,"c":2,"d":3}}`)
+		})
+
+		t.Run("error on reserved keys", func(t *testing.T) {
+			t.Parallel()
+
+			entityEscape := types.NewRecord(types.RecordMap{"type": types.String("User"), "id": types.String("bob")})
+			tests := []struct {
+				name string
+				in   any
+			}{
+				{"__entity", types.NewRecord(types.RecordMap{"__entity": entityEscape})},
+				{"__extn", types.NewRecord(types.RecordMap{"__extn": types.NewRecord(types.RecordMap{"fn": types.String("ip"), "arg": types.String("127.0.0.1")})})},
+				{"with other keys", types.NewRecord(types.RecordMap{"tier": types.String("guest"), "__entity": entityEscape})},
+				{"in a record", types.NewRecord(types.RecordMap{"session": types.NewRecord(types.RecordMap{"__entity": entityEscape})})},
+				{"in a set", types.NewSet(types.NewRecord(types.RecordMap{"__entity": entityEscape}))},
+				{"in entity attributes", types.Entity{Attributes: types.NewRecord(types.RecordMap{"__entity": entityEscape})}},
+				{"in entity tags", types.Entity{Tags: types.NewRecord(types.RecordMap{"__entity": entityEscape})}},
+			}
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					t.Parallel()
+					_, err := json.Marshal(tt.in)
+					testutil.Error(t, err)
+				})
+			}
+
+			t.Run("similar keys", func(t *testing.T) {
+				t.Parallel()
+				r := types.NewRecord(types.RecordMap{"__ENTITY": types.Long(1), "__entity ": types.Long(2), "_entity": types.Long(3), "entity": types.Long(4)})
+				got, err := json.Marshal(r)
+				testutil.OK(t, err)
+				testutil.Equals(t, string(got), `{"__ENTITY":1,"__entity ":2,"_entity":3,"entity":4}`)
+			})
+		})
 	})
 }

@@ -1,20 +1,48 @@
 package types
 
 import (
-	"encoding/json"
 	"errors"
+	"fmt"
 	"hash/fnv"
 	"strings"
 
+	"github.com/go-json-experiment/json"
+
 	"github.com/cedar-policy/cedar-go/internal/mapset"
 	"github.com/cedar-policy/cedar-go/internal/rust"
+	"github.com/cedar-policy/cedar-go/internal/scanner"
 )
 
-// Path is a series of idents separated by ::
+// Path is a series of idents separated by ::. Create a Path with NewPath,
+// which rejects strings that aren't valid Cedar paths. Converting an arbitrary
+// string directly to a Path is unsupported and may result in unsafe marshaled
+// Cedar text in policy.
 type Path string
 
-// EntityType is the type portion of an EntityUID
+// NewPath returns the Path specified in s, or an error if s isn't a valid
+// Cedar path.
+func NewPath(s string) (Path, error) {
+	if !scanner.IsPath(s) {
+		return "", fmt.Errorf("%w: %q", errInvalidPath, s)
+	}
+	return Path(s), nil
+}
+
+// EntityType is the type portion of an EntityUID. Create an EntityType with
+// NewEntityType, or by converting a Path created with NewPath. Converting an
+// arbitrary string directly to an EntityType is unsupported and may
+// result in unsafe marshaled Cedar text in policy.
 type EntityType Path
+
+// NewEntityType returns the EntityType named by s, or an error if s isn't a
+// valid Cedar path. See NewPath.
+func NewEntityType(s string) (EntityType, error) {
+	p, err := NewPath(s)
+	if err != nil {
+		return "", fmt.Errorf("%w: %q", errInvalidEntityType, s)
+	}
+	return EntityType(p), nil
+}
 
 // An EntityUID is the identifier for a principal, action, or resource.
 type EntityUID struct {
@@ -22,7 +50,7 @@ type EntityUID struct {
 	ID   String
 }
 
-// NewEntityUID returns an EntityUID given an EntityType and identifier
+// NewEntityUID returns an EntityUID given an EntityType and identifier.
 func NewEntityUID(typ EntityType, id String) EntityUID {
 	return EntityUID{
 		Type: typ,
@@ -50,61 +78,75 @@ func (e EntityUID) MarshalCedar() []byte {
 	return []byte(e.String())
 }
 
-var errInvalidUID = errors.New("invalid EntityUID")
+var (
+	errInvalidPath       = errors.New("invalid path")
+	errInvalidEntityType = errors.New("invalid entity type")
+	errInvalidUID        = errors.New("invalid EntityUID")
+)
 
 // UnmarshalCedar parses a Cedar language representation of an EntityUID.
 func (e *EntityUID) UnmarshalCedar(data []byte) error {
-	// NB: In a perfect world we'd use the full parsing from internal/parser, but
-	// today that imports cedar-go/types (this pkg) which means we'd need to carve
-	// it out to reuse it. Given that NewEntityUID(.,.) does zero validation
-	// itself, the juice is not worth the squeeze today.
-	s := string(data)
-	idx := strings.Index(s, "::\"")
-	if idx <= 0 {
-		// If idx == 0, the entity has no type, which is invalid.
+	// TODO: we use the scanner here but the code below it duplicates parser
+	// code, eventually we'd like to use a single function.
+	tokens, err := scanner.Tokenize(data)
+	if err != nil || !tokens[0].IsIdent() {
 		return errInvalidUID
 	}
-
-	typ := EntityType(s[:idx])
-	quoted := s[idx+2:] // include the leading `"`
-
-	if len(quoted) < 2 || quoted[0] != '"' || quoted[len(quoted)-1] != '"' {
-		return errInvalidUID
+	path := []string{tokens[0].Text}
+	for i := 1; i+1 < len(tokens); i += 2 {
+		if tokens[i].Text != "::" {
+			return errInvalidUID
+		}
+		switch t := tokens[i+1]; {
+		case t.IsIdent():
+			path = append(path, t.Text)
+		case t.IsString() && tokens[i+2].IsEOF():
+			id, err := t.StringValue()
+			if err != nil {
+				return errInvalidUID
+			}
+			*e = NewEntityUID(EntityType(strings.Join(path, "::")), String(id))
+			return nil
+		default:
+			return errInvalidUID
+		}
 	}
-
-	id, _, err := rust.Unquote([]byte(quoted[1:len(quoted)-1]), false)
-	if err != nil {
-		return errInvalidUID
-	}
-
-	*e = NewEntityUID(typ, String(id))
-	return nil
+	return errInvalidUID
 }
 
+// UnmarshalJSON decodes an EntityUID from its explicit form,
+// {"__entity": {"type": ..., "id": ...}}, or its implicit form,
+// {"type": ..., "id": ...}.
 func (e *EntityUID) UnmarshalJSON(b []byte) error {
 	var res entityValueJSON
 	if err := json.Unmarshal(b, &res); err != nil {
 		return err
 	}
+	var typ, id *string
 	if res.Entity != nil {
-		e.Type = EntityType(res.Entity.Type)
-		e.ID = String(res.Entity.ID)
-		return nil
+		if res.Entity.Type == nil || res.Entity.ID == nil {
+			return errJSONEntityNotFound
+		}
+		typ, id = res.Entity.Type, res.Entity.ID
 	} else if res.Type != nil && res.ID != nil { // require both Type and ID to parse "implicit" JSON
-		e.Type = EntityType(*res.Type)
-		e.ID = String(*res.ID)
-		return nil
+		typ, id = res.Type, res.ID
+	} else {
+		return errJSONEntityNotFound
 	}
-	return errJSONEntityNotFound
+	t, err := NewEntityType(*typ)
+	if err != nil {
+		return err
+	}
+	e.Type = t
+	e.ID = String(*id)
+	return nil
 }
 
 // MarshalJSON marshals the EntityUID into JSON using the explicit form.
 func (e EntityUID) MarshalJSON() ([]byte, error) {
+	typ, id := string(e.Type), string(e.ID)
 	return json.Marshal(entityValueJSON{
-		Entity: &extEntity{
-			Type: string(e.Type),
-			ID:   string(e.ID),
-		},
+		Entity: &extEntity{Type: &typ, ID: &id},
 	})
 }
 

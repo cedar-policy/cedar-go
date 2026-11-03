@@ -8,6 +8,12 @@ To run everything CI runs:
 mise run ci
 ```
 
+Fuzz tests run nightly in CI for 15 minutes each. To run them locally:
+
+```bash
+mise run test:fuzz 15m
+```
+
 ## Running Tests
 
 ```bash
@@ -56,9 +62,7 @@ To download the latest corpus tests and regenerate everything derived from them:
 mise run corpus:update
 ```
 
-This runs `corpus:fetch` to download the latest tarball, then regenerates the JSON schemas (`corpus:json-schemas`) and the expected validation results (`corpus:validation`) from it, along with the Rust-generated testdata (`testdata:validation`, `testdata:entity-parsing`). These can also be run individually; `mise tasks` lists them. Derived tarballs are only rebuilt when their inputs change, so pass `--force` to rebuild them anyway.
-
-The generators need a Rust toolchain (`cargo`). mise installs the pinned Cedar CLI the first time it's needed.
+This runs `corpus:fetch` to download the latest tarball, then regenerates the JSON schemas (`corpus:json-schemas`), the JSON policy sets (`corpus:json-policies`), Rust Cedar's decoding of the entities (`corpus:json-entities`) and the expected validation results (`corpus:validation`) from it, along with the Rust-generated testdata (`testdata:validation`, `testdata:entity-parsing`). These can also be run individually; `mise tasks` lists them. Derived tarballs are only rebuilt when their inputs change, so pass `--force` to rebuild them anyway.
 
 Then, run the tests and fix any that may be broken:
 

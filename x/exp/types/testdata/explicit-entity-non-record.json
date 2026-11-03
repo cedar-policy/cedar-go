@@ -1,0 +1,4 @@
+{
+  "schema": "explicit-entity-non-record.cedarschema",
+  "entities": "explicit-entity-non-record.entities.json"
+}

@@ -46,6 +46,10 @@ func TestEntity(t *testing.T) {
 			{"X::Y", "abc::", `X::Y::"abc::"`},
 			{"Search::Algorithm", "A*", `Search::Algorithm::"A*"`},
 			{"Super", "*", `Super::"*"`},
+			{"T", `a"b`, `T::"a\"b"`},
+			{"T", `"`, `T::"\""`},
+			{"T", `x\`, `T::"x\\"`},
+			{"T", `\"`, `T::"\\\""`},
 		}
 		marshalFuncs := []struct {
 			name      string
@@ -109,6 +113,23 @@ func TestEntity(t *testing.T) {
 			{"no type", `::"id"`},
 			{"partial", `Type::"`},
 			{"unescaped unicode", `Type::"\u00ab"`},
+			{"type with space", `A B::"id"`},
+			{"type with empty segment", `A::::B::"id"`},
+			{"type with reserved keyword", `A::if::"id"`},
+			{"unescaped quote in id", `A::"x"y"`},
+			{"two quoted strings", `A::"x" "y"`},
+			{"empty id followed by quotes", `A::""""`},
+			{"escaped backslash then unescaped quote", `A::"x\\"y"`},
+			{"escaped closing quote", `A::"x\"`},
+			{"trailing policy text", `A::"x", action, resource ); permit ( principal == A::"id"`},
+			{"type only", `A`},
+			{"trailing separator", `A::`},
+			{"string first", `"id"::A`},
+			{"wrong separator", `A:"id"`},
+			{"id not last", `A::"x"::B`},
+			{"reserved namespace", `__cedar::A::"id"`},
+			{"invalid code point", `A::"\u{D800}"`},
+			{"unterminated comment", `A::"id" /*`},
 		}
 
 		for _, tt := range tests {
@@ -117,6 +138,24 @@ func TestEntity(t *testing.T) {
 				var got types.EntityUID
 				err := got.UnmarshalCedar([]byte(tt.input))
 				testutil.FatalIf(t, err == nil, "expected error for input %q, got nil", tt.input)
+			})
+		}
+	})
+
+	t.Run("UnmarshalCedar whitespace and comments", func(t *testing.T) {
+		t.Parallel()
+		tests := []string{
+			`A::B::"id"`,
+			` A :: B :: "id" `,
+			"A::\nB::\n\"id\"\n",
+			`/* c */ A::B::"id" // c`,
+		}
+		for _, input := range tests {
+			t.Run(input, func(t *testing.T) {
+				t.Parallel()
+				var got types.EntityUID
+				testutil.OK(t, got.UnmarshalCedar([]byte(input)))
+				testutil.Equals(t, got, types.NewEntityUID("A::B", "id"))
 			})
 		}
 	})
@@ -156,6 +195,20 @@ func TestEntity(t *testing.T) {
 			{"implicit - id wrong type", `{ "type": "Type", "id": 123 }`},
 			{"implicit - only type", `{ "type": "Type" }`},
 			{"implicit - only id", `{ "id": 123 }`},
+			{"implicit - miscased", `{ "Type": "Type", "ID": "id" }`},
+			{"explicit - miscased", `{ "__ENTITY": { "type": "Type", "id": "id" } }`},
+			{"explicit - inner miscased", `{ "__entity": { "Type": "Type", "ID": "id" } }`},
+			{"explicit - only type", `{ "__entity": { "type": "Type" } }`},
+			{"explicit - only id", `{ "__entity": { "id": "id" } }`},
+			{"explicit - empty", `{ "__entity": {} }`},
+			{"explicit - null", `{ "__entity": null }`},
+			{"explicit - id wrong type", `{ "__entity": { "type": "Type", "id": 123 } }`},
+			{"duplicate key", `{ "type": "Type", "type": "Type", "id": "id" }`},
+			{"invalid UTF-8", "{ \"type\": \"Type\", \"id\": \"\xff\" }"},
+			{"explicit - invalid type", `{ "__entity": { "type": "A B", "id": "id" } }`},
+			{"implicit - invalid type", `{ "type": "A::\"x\" ); permit ( principal == A", "id": "id" }`},
+			{"implicit - empty type", `{ "type": "", "id": "id" }`},
+			{"implicit - reserved type", `{ "type": "true", "id": "id" }`},
 		}
 
 		for _, tt := range tests {
@@ -228,6 +281,20 @@ func TestImplicitlyMarshaledEntityUID(t *testing.T) {
 			{"implicit - id wrong type", `{ "type": "Type", "id": 123 }`},
 			{"implicit - only type", `{ "type": "Type" }`},
 			{"implicit - only id", `{ "id": "id" }`},
+			{"implicit - miscased", `{ "Type": "Type", "ID": "id" }`},
+			{"explicit - miscased", `{ "__ENTITY": { "type": "Type", "id": "id" } }`},
+			{"explicit - inner miscased", `{ "__entity": { "Type": "Type", "ID": "id" } }`},
+			{"explicit - only type", `{ "__entity": { "type": "Type" } }`},
+			{"explicit - only id", `{ "__entity": { "id": "id" } }`},
+			{"explicit - empty", `{ "__entity": {} }`},
+			{"explicit - null", `{ "__entity": null }`},
+			{"explicit - id wrong type", `{ "__entity": { "type": "Type", "id": 123 } }`},
+			{"duplicate key", `{ "type": "Type", "type": "Type", "id": "id" }`},
+			{"invalid UTF-8", "{ \"type\": \"Type\", \"id\": \"\xff\" }"},
+			{"explicit - invalid type", `{ "__entity": { "type": "A B", "id": "id" } }`},
+			{"implicit - invalid type", `{ "type": "A::\"x\" ); permit ( principal == A", "id": "id" }`},
+			{"implicit - empty type", `{ "type": "", "id": "id" }`},
+			{"implicit - reserved type", `{ "type": "true", "id": "id" }`},
 		}
 
 		for _, tt := range tests {
@@ -248,6 +315,66 @@ func TestImplicitlyMarshaledEntityUID(t *testing.T) {
 		testutil.OK(t, json.Unmarshal(b, &got))
 		testutil.Equals(t, got, want)
 	})
+}
+
+var (
+	validNames   = []string{"User", "NS::User", "A::B::C", "_x9", "ifx", "__cedarx"}
+	invalidNames = []string{
+		"",
+		"9User",
+		"User::",
+		"::User",
+		"NS:::User",
+		"NS::if",
+		"__cedar",
+		"A B",
+		`User::"alice"`,
+		"User ) permit ( principal",
+	}
+)
+
+func TestNewPath(t *testing.T) {
+	t.Parallel()
+
+	for _, s := range validNames {
+		t.Run(s, func(t *testing.T) {
+			t.Parallel()
+			got, err := types.NewPath(s)
+			testutil.OK(t, err)
+			testutil.Equals(t, got, types.Path(s))
+		})
+	}
+
+	for _, s := range invalidNames {
+		t.Run(s, func(t *testing.T) {
+			t.Parallel()
+			got, err := types.NewPath(s)
+			testutil.Error(t, err)
+			testutil.Equals(t, got, types.Path(""))
+		})
+	}
+}
+
+func TestNewEntityType(t *testing.T) {
+	t.Parallel()
+
+	for _, s := range validNames {
+		t.Run(s, func(t *testing.T) {
+			t.Parallel()
+			got, err := types.NewEntityType(s)
+			testutil.OK(t, err)
+			testutil.Equals(t, got, types.EntityType(s))
+		})
+	}
+
+	for _, s := range invalidNames {
+		t.Run(s, func(t *testing.T) {
+			t.Parallel()
+			got, err := types.NewEntityType(s)
+			testutil.Error(t, err)
+			testutil.Equals(t, got, types.EntityType(""))
+		})
+	}
 }
 
 func TestEntityUIDSet(t *testing.T) {
@@ -276,5 +403,22 @@ func TestEntityUIDSet(t *testing.T) {
 		testutil.Equals(t, s.Contains(a), true)
 		testutil.Equals(t, s.Contains(b), true)
 		testutil.Equals(t, s.Contains(o), true)
+	})
+
+	// Checks that callers still using encoding/json (v1) can encode and decode
+	// an EntityUIDSet, which is an alias of an internal type.
+	t.Run("json roundtrip", func(t *testing.T) {
+		t.Parallel()
+		want := types.NewEntityUIDSet(types.NewEntityUID("User", "bob"), types.NewEntityUID("User", "alice"))
+		b, err := json.Marshal(want)
+		testutil.OK(t, err)
+		testutil.Equals(t, string(b), `[{"__entity":{"type":"User","id":"alice"}},{"__entity":{"type":"User","id":"bob"}}]`)
+
+		var got types.EntityUIDSet
+		testutil.OK(t, json.Unmarshal(b, &got))
+		testutil.Equals(t, got.Equal(want), true)
+
+		// Ensure v1's lenient options don't reach EntityUIDSet's own decoding.
+		testutil.Error(t, json.Unmarshal([]byte(`[{"type":"User","id":"a","id":"b"}]`), &got))
 	})
 }

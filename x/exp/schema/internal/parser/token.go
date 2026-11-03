@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	cedarparser "github.com/cedar-policy/cedar-go/internal/parser"
 	"github.com/cedar-policy/cedar-go/internal/rust"
+	"github.com/cedar-policy/cedar-go/internal/scanner"
 )
 
 type tokenType int
@@ -205,7 +205,7 @@ func (l *lexer) next() (token, error) {
 	if isIdentStart(r) {
 		text := l.scanIdent()
 		tt := tokenIdent
-		if cedarparser.IsReservedKeyword(text) {
+		if scanner.IsReservedKeyword(text) {
 			tt = tokenReservedKeyword
 		}
 		return token{Type: tt, Pos: pos, Text: text}, nil

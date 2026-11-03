@@ -33,9 +33,9 @@ type typeRecord struct {
 type entityAttrSource struct {
 	lub  entityLUB
 	attr types.String // the entity attribute name (e.g., "r" in resource.r["key"])
-}                                             // Record with attribute types
-type typeEntity struct{ lub entityLUB }       // Entity with LUB of types
-type typeExtension struct{ name types.Ident } // Extension type (ipaddr, decimal, etc.)
+}                                                        // Record with attribute types
+type typeEntity struct{ lub entityLUB }                  // Entity with LUB of types
+type typeExtension struct{ name resolved.ExtensionType } // Extension type (ipaddr, decimal, etc.)
 
 func (typeNever) isCedarType()     { _ = "hack for code coverage" }
 func (typeTrue) isCedarType()      { _ = "hack for code coverage" }
@@ -162,6 +162,12 @@ func compareRecordTypes(a, b typeRecord) int {
 		bat := b.attrs[types.String(bk[i])]
 		if c := compareCedarType(aat.typ, bat.typ); c != 0 {
 			return c
+		}
+		if aat.required != bat.required {
+			if bat.required {
+				return -1
+			}
+			return 1
 		}
 	}
 	return cmp.Compare(len(ak), len(bk))
@@ -382,6 +388,11 @@ func (v *Validator) lubRecord(a, b typeRecord) (cedarType, error) {
 				// Permissive mode: drop attributes with incompatible types
 				continue
 			}
+			// Strict mode: like Rust, an attribute must be required in both
+			// records or optional in both.
+			if v.strict && aAttr.required != bAttr.required {
+				return nil, fmt.Errorf("record attributes have different optionality in strict mode")
+			}
 			attrs[k] = attributeType{
 				typ:      lub,
 				required: aAttr.required && bAttr.required,
@@ -415,7 +426,7 @@ func schemaTypeToCedarType(t resolved.IsType) cedarType {
 	case resolved.BoolType:
 		return typeBool{}
 	case resolved.ExtensionType:
-		return typeExtension{name: types.Ident(tv)}
+		return typeExtension{name: tv}
 	case resolved.SetType:
 		return typeSet{element: schemaTypeToCedarType(tv.Element)}
 	case resolved.RecordType:

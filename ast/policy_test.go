@@ -28,7 +28,8 @@ func TestPolicy_MarshalJSON(t *testing.T) {
 		},
 		"resource": {
 			"op": "All"
-		}
+		},
+		"conditions": []
 	}`
 		testutil.JSONMarshalsTo(t, p, expected)
 

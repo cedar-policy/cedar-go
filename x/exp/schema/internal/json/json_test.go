@@ -356,3 +356,99 @@ func TestMarshalActionParentWithoutType(t *testing.T) {
 	testutil.OK(t, err)
 	testutil.Equals(t, string(b), `{"":{"entityTypes":{},"actions":{"view":{"memberOf":[{"id":"write"}]},"write":{}}}}`)
 }
+
+func TestMarshalSorted(t *testing.T) {
+	t.Parallel()
+	s := ast.Schema{
+		Entities: ast.Entities{
+			"b": ast.Entity{
+				Annotations: ast.Annotations{"z": "1", "y": "2"},
+				Shape: ast.RecordType{
+					"q": ast.Attribute{Type: ast.StringType{}},
+					"p": ast.Attribute{Type: ast.LongType{}, Optional: true},
+				},
+			},
+			"a": ast.Entity{},
+		},
+		Actions: ast.Actions{
+			"view": ast.Action{AppliesTo: &ast.AppliesTo{}},
+			"edit": ast.Action{},
+		},
+		Namespaces: ast.Namespaces{
+			"NS2": ast.Namespace{},
+			"NS1": ast.Namespace{CommonTypes: ast.CommonTypes{
+				"T2": ast.CommonType{Type: ast.BoolType{}},
+				"T1": ast.CommonType{Type: ast.StringType{}},
+			}},
+		},
+	}
+	b, err := (*schemajson.Schema)(&s).MarshalJSON()
+	testutil.OK(t, err)
+	// Every map is written sorted by key.
+	testutil.Equals(t, string(b), `{"":{"entityTypes":{"a":{},"b":{"shape":{"type":"Record","attributes":{"p":{"type":"Long","required":false},"q":{"type":"String"}}},"annotations":{"y":"2","z":"1"}}},"actions":{"edit":{},"view":{"appliesTo":{"principalTypes":[],"resourceTypes":[]}}}},"NS1":{"entityTypes":{},"actions":{},"commonTypes":{"T1":{"type":"String"},"T2":{"type":"Boolean"}}},"NS2":{"entityTypes":{},"actions":{}}}`)
+}
+
+func TestUnmarshalErrors(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"duplicateNamespace", `{"NS":{"entityTypes":{},"actions":{}},"NS":{"entityTypes":{},"actions":{}}}`},
+		{"duplicateEntityType", `{"":{"entityTypes":{"A":{},"A":{}},"actions":{}}}`},
+		{"duplicateMember", `{"":{"entityTypes":{},"entityTypes":{},"actions":{}}}`},
+		{"invalidUTF8", "{\"\":{\"entityTypes\":{\"\xff\":{}},\"actions\":{}}}"},
+		{"trailingData", `{"":{"entityTypes":{},"actions":{}}} {}`},
+		{"unknownNamespaceMember", `{"":{"entityTypes":{},"actions":{},"x":1}}`},
+		{"unknownEntityTypeMember", `{"":{"entityTypes":{"A":{"x":1}},"actions":{}}}`},
+		{"unknownActionMember", `{"":{"entityTypes":{},"actions":{"a":{"x":1}}}}`},
+		{"unknownActionParentMember", `{"":{"entityTypes":{},"actions":{"a":{"memberOf":[{"id":"b","x":1}]},"b":{}}}}`},
+		{"unknownAppliesToMember", `{"":{"entityTypes":{},"actions":{"a":{"appliesTo":{"principalTypes":[],"resourceTypes":[],"x":1}}}}}`},
+		{"unknownTypeMember", `{"":{"entityTypes":{"A":{"tags":{"type":"String","x":1}}},"actions":{}}}`},
+		{"unknownAttributeMember", `{"":{"entityTypes":{"A":{"shape":{"type":"Record","attributes":{"f":{"type":"String","x":1}}}}},"actions":{}}}`},
+		{"unknownCommonTypeMember", `{"":{"entityTypes":{},"actions":{},"commonTypes":{"T":{"type":"String","required":false}}}}`},
+		{"annotationsOnSetElement", `{"":{"entityTypes":{"A":{"tags":{"type":"Set","element":{"type":"String","annotations":{}}}}},"actions":{}}}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var s schemajson.Schema
+			testutil.Error(t, s.UnmarshalJSON([]byte(tt.input)))
+		})
+	}
+}
+
+func TestUnmarshalMiscasedMember(t *testing.T) {
+	t.Parallel()
+	// Member names are matched case-sensitively, so a miscased member is an
+	// unknown member, which is rejected.
+	var s schemajson.Schema
+	testutil.Error(t, s.UnmarshalJSON([]byte(`{"":{"entityTypes":{},"EntityTypes":{"A":{}},"actions":{}}}`)))
+}
+
+func TestRecordAttributes(t *testing.T) {
+	t.Parallel()
+	t.Run("MarshalEmpty", func(t *testing.T) {
+		t.Parallel()
+		// Rust Cedar requires "attributes" in a Record type, so it's written
+		// even when there are none.
+		s := ast.Schema{
+			Entities: ast.Entities{"A": ast.Entity{
+				Shape: ast.RecordType{},
+				Tags:  ast.RecordType{},
+			}},
+		}
+		b, err := (*schemajson.Schema)(&s).MarshalJSON()
+		testutil.OK(t, err)
+		testutil.Equals(t, string(b), `{"":{"entityTypes":{"A":{"shape":{"type":"Record","attributes":{}},"tags":{"type":"Record","attributes":{}}}},"actions":{}}}`)
+	})
+
+	t.Run("UnmarshalMissing", func(t *testing.T) {
+		t.Parallel()
+		// cedar-go previously omitted "attributes" when there were none, so a
+		// Record without it still decodes, unlike in Rust Cedar.
+		var s schemajson.Schema
+		testutil.OK(t, s.UnmarshalJSON([]byte(`{"":{"entityTypes":{"A":{"shape":{"type":"Record"},"tags":{"type":"Record"}}},"actions":{}}}`)))
+		testutil.Equals(t, (*ast.Schema)(&s).Entities["A"], ast.Entity{Shape: ast.RecordType{}, Tags: ast.RecordType{}})
+	})
+}

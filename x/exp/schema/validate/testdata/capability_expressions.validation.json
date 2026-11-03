@@ -1,0 +1,72 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy2`, unable to guarantee safety of access to tag `context.other` on entity type `User`",
+      "for policy `policy5`, unable to guarantee safety of access to tag `context.key` on entity type `User`",
+      "for policy `policy7`, unable to guarantee safety of access to optional attribute `foo`"
+    ],
+    "permissiveErrors": [
+      "for policy `policy2`, unable to guarantee safety of access to tag `context.other` on entity type `User`",
+      "for policy `policy5`, unable to guarantee safety of access to tag `context.key` on entity type `User`",
+      "for policy `policy7`, unable to guarantee safety of access to optional attribute `foo`"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`, unable to guarantee safety of access to tag `context.other` on entity type `User`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`, unable to guarantee safety of access to tag `context.other` on entity type `User`"
+        ]
+      },
+      "policy3": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy4": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy5": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy5`, unable to guarantee safety of access to tag `context.key` on entity type `User`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy5`, unable to guarantee safety of access to tag `context.key` on entity type `User`"
+        ]
+      },
+      "policy6": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy7": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy7`, unable to guarantee safety of access to optional attribute `foo`"
+        ],
+        "permissiveErrors": [
+          "for policy `policy7`, unable to guarantee safety of access to optional attribute `foo`"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {}
+  },
+  "requestValidation": []
+}

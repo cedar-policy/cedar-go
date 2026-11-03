@@ -154,7 +154,7 @@ func (r *resolverState) registerDecls(nsName types.Path, entities ast.Entities, 
 // See https://github.com/cedar-policy/rfcs/blob/main/text/0070-disallow-empty-namespace-shadowing.md
 func checkShadowing(s *ast.Schema) error {
 	// Collect bare (empty namespace) entity and common type basenames
-	bareTypes := make(map[types.Ident]bool)
+	bareTypes := make(map[ast.Ident]bool)
 	for name := range s.Entities {
 		bareTypes[name] = true
 	}
@@ -617,14 +617,14 @@ func collectTypeRefs(t ast.IsType) []ast.TypeRef {
 	}
 }
 
-func qualifyEntityType(ns types.Path, name types.Ident) types.EntityType {
+func qualifyEntityType(ns types.Path, name ast.Ident) types.EntityType {
 	if ns != "" {
 		return types.EntityType(string(ns) + "::" + string(name))
 	}
 	return types.EntityType(name)
 }
 
-func qualifyPath(ns types.Path, name types.Ident) types.Path {
+func qualifyPath(ns types.Path, name ast.Ident) types.Path {
 	if ns != "" {
 		return types.Path(string(ns) + "::" + string(name))
 	}

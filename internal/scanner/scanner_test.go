@@ -1,4 +1,4 @@
-package parser
+package scanner
 
 import (
 	"fmt"
@@ -170,7 +170,7 @@ func TestIntTokenValues(t *testing.T) {
 			testutil.OK(t, err)
 			testutil.Equals(t, len(got), 2)
 			testutil.Equals(t, got[0].Type, TokenInt)
-			gotInt, err := got[0].intValue()
+			gotInt, err := got[0].IntValue()
 			if err != nil {
 				testutil.Equals(t, tt.wantOk, false)
 				testutil.Equals(t, err.Error(), tt.wantErr)
@@ -224,7 +224,7 @@ func TestStringTokenValues(t *testing.T) {
 			testutil.OK(t, err)
 			testutil.Equals(t, len(got), 2)
 			testutil.Equals(t, got[0].Type, TokenString)
-			gotStr, err := got[0].stringValue()
+			gotStr, err := got[0].StringValue()
 			if err != nil {
 				testutil.Equals(t, tt.wantOk, false)
 				testutil.Equals(t, err.Error(), tt.wantErr)
@@ -297,4 +297,41 @@ func TestScanner(t *testing.T) {
 		out := s.tokenText()
 		testutil.Equals(t, out, "")
 	})
+}
+
+func TestTokenizeEmpty(t *testing.T) {
+	t.Parallel()
+	got, err := Tokenize(nil)
+	testutil.OK(t, err)
+	testutil.Equals(t, got, []Token{{Type: TokenEOF}})
+}
+
+func TestTokenizeEquals(t *testing.T) {
+	t.Parallel()
+	got, err := Tokenize([]byte("== ="))
+	testutil.OK(t, err)
+	testutil.Equals(t, got, []Token{
+		{Type: TokenOperator, Text: "==", Pos: Position{Offset: 0, Line: 1, Column: 1}},
+		{Type: TokenUnknown, Text: "=", Pos: Position{Offset: 3, Line: 1, Column: 4}},
+		{Type: TokenEOF, Pos: Position{Offset: 4, Line: 1, Column: 5}},
+	})
+}
+
+func TestTokenPredicates(t *testing.T) {
+	t.Parallel()
+	got, err := Tokenize([]byte(`a 1 if "s" ::`))
+	testutil.OK(t, err)
+	type preds struct{ eof, ident, integer, keyword, str bool }
+	want := []preds{
+		{ident: true},
+		{integer: true},
+		{keyword: true},
+		{str: true},
+		{},
+		{eof: true},
+	}
+	testutil.Equals(t, len(got), len(want))
+	for i, tok := range got {
+		testutil.Equals(t, preds{tok.IsEOF(), tok.IsIdent(), tok.IsInt(), tok.IsReservedKeyword(), tok.IsString()}, want[i])
+	}
 }

@@ -73,6 +73,9 @@ func TestRustUnquote(t *testing.T) {
 			{`a\x80b`, false, "", "bad hex escape sequence"},
 
 			{string([]byte{0x80, 0x81}), false, "", "bad unicode rune"},
+			{"a\ufffdb", true, "a\ufffdb", ""},
+			{`a\u{fffd}b`, true, "a\ufffdb", ""},
+			{"a\\\ufffdb", false, "", "bad char escape"},
 			{`a\u`, false, "", "bad unicode rune"},
 			{`a\uz`, false, "", "bad unicode escape sequence"},
 			{`a\u{}b`, false, "", "bad unicode escape sequence"},

@@ -292,3 +292,21 @@ func TestJSONMarshalsTo(t *testing.T) {
 	})
 
 }
+
+func TestCanonicalizeJSON(t *testing.T) {
+	t.Parallel()
+	t.Run("Okay", func(t *testing.T) {
+		tb := newTB()
+		got := CanonicalizeJSON(tb, []byte(`{"b":[1,{"d":true,"c":null}],"a":"x"}`))
+		Equals(t, got, "{\n\t\"a\": \"x\",\n\t\"b\": [\n\t\t1,\n\t\t{\n\t\t\t\"c\": null,\n\t\t\t\"d\": true\n\t\t}\n\t]\n}")
+		Equals(t, len(tb.HelperCalls()), 3)
+		Equals(t, len(tb.FatalfCalls()), 0)
+	})
+
+	t.Run("ErrNotJSON", func(t *testing.T) {
+		tb := newTB()
+		CanonicalizeJSON(tb, []byte(`asdf`))
+		Equals(t, len(tb.HelperCalls()), 3)
+		Equals(t, len(tb.FatalfCalls()), 2)
+	})
+}

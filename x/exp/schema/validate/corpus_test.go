@@ -2,9 +2,10 @@ package validate_test
 
 import (
 	"embed"
-	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/go-json-experiment/json"
 
 	"github.com/cedar-policy/cedar-go"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
@@ -78,7 +79,7 @@ func TestCorpus(t *testing.T) {
 			entitiesContent, err := testdataFS.ReadFile(tt.Entities)
 			testutil.OK(t, err)
 			var entities cedar.EntityMap
-			testutil.OK(t, json.Unmarshal(entitiesContent, &entities))
+			testutil.OK(t, entities.UnmarshalJSON(entitiesContent))
 
 			// Build requests
 			var requests []cedar.Request

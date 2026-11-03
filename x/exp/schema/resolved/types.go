@@ -33,7 +33,7 @@ type BoolType struct{}
 func (BoolType) isType() { _ = "hack for code coverage" }
 
 // ExtensionType represents a Cedar extension type.
-type ExtensionType types.Ident
+type ExtensionType string
 
 func (ExtensionType) isType() { _ = "hack for code coverage" }
 

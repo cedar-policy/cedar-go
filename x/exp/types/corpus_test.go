@@ -2,9 +2,11 @@ package exptypes_test
 
 import (
 	"embed"
-	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/go-json-experiment/json"
+	"github.com/go-json-experiment/json/jsontext"
 
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/x/exp/schema"
@@ -84,7 +86,7 @@ func TestCorpus(t *testing.T) {
 			})
 
 			// Test Entity.UnmarshalJSONWithSchema for each entity
-			var entities []json.RawMessage
+			var entities []jsontext.Value
 			if err := json.Unmarshal(entitiesContent, &entities); err != nil {
 				// Can't parse as array (e.g., bad JSON) - test Entity with raw bytes
 				if len(expected.PerEntity) == 0 {

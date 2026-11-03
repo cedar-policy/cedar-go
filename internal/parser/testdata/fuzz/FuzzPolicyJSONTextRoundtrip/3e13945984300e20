@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("{\"effect\":\"permit\",\"principal\":{\"op\":\"All\"},\"action\":{\"op\":\"in\"},\"resource\":{\"op\":\"==\",\"entity\":{\"type\":\"A\",\"id\":\"\"}},\"conditions\":[{\"kind\":\"when\",\"body\":{\"&&\":{\"left\":{\"Value\":true},\"right\":{\"contains\":{\"left\":{\"Set\":[{\"Record\":{\"\\ufffd\":{\"duration\":[]}}}]},\"right\":{\"Set\":[]}}}}}}]}")

@@ -7,6 +7,8 @@ import (
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
+	"github.com/cedar-policy/cedar-go/internal/scanner"
+	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
@@ -163,26 +165,26 @@ func (n NodeTypeNot) marshalCedar(buf *bytes.Buffer) {
 }
 
 func (n NodeTypeNegate) marshalCedar(buf *bytes.Buffer) {
+	// the writer parenthesizes negations of anything that is written starting
+	// with a digit because otherwise the parser folds the negation into the long
+	// literal, and we lose a negation at each round-trip.
+	// this is all done to match rust's behavior
 	buf.WriteRune('-')
-	marshalChildNode(n.precedenceLevel(), n.NodeTypeNegate.Arg, buf)
-}
-
-func canMarshalAsIdent(s string) bool {
-	if len(s) == 0 || IsReservedKeyword(s) {
-		return false
-	}
-	for i, r := range s {
-		if !isIdentRune(r, i == 0) {
-			return false
+	if v, ok := n.NodeTypeNegate.Arg.(ast.NodeValue); ok {
+		if _, ok := v.Value.(types.Long); ok {
+			buf.WriteRune('(')
+			NodeValue{v, primaryPrecedenceNode{}}.marshalCedar(buf)
+			buf.WriteRune(')')
+			return
 		}
 	}
-	return true
+	marshalChildNode(n.precedenceLevel(), n.NodeTypeNegate.Arg, buf)
 }
 
 func (n NodeTypeAccess) marshalCedar(buf *bytes.Buffer) {
 	marshalChildNode(n.precedenceLevel(), n.Arg, buf)
 
-	if canMarshalAsIdent(string(n.Value)) {
+	if scanner.IsIdent(string(n.Value)) {
 		buf.WriteRune('.')
 		buf.WriteString(string(n.Value))
 	} else {
@@ -351,7 +353,7 @@ func (n NodeTypeOr) marshalCedar(buf *bytes.Buffer) {
 func (n NodeTypeHas) marshalCedar(buf *bytes.Buffer) {
 	marshalChildNode(n.precedenceLevel()+1, n.Arg, buf)
 	buf.WriteString(" has ")
-	if canMarshalAsIdent(string(n.Value)) {
+	if scanner.IsIdent(string(n.Value)) {
 		buf.WriteString(string(n.Value))
 	} else {
 		buf.Write(n.Value.MarshalCedar())

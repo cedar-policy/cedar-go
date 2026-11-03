@@ -42,16 +42,16 @@ func (v *Validator) typeOfExpr(env *requestEnv, expr ast.IsNode, caps capability
 		return v.typeOfEquality(env, n.Left, n.Right, true, caps)
 
 	case ast.NodeTypeLessThan:
-		return v.typeOfComparison(env, n.Left, n.Right, caps, expectComparable, expectComparable)
+		return v.typeOfComparison(env, n.Left, n.Right, caps)
 
 	case ast.NodeTypeLessThanOrEqual:
-		return v.typeOfComparison(env, n.Left, n.Right, caps, expectComparable, expectComparable)
+		return v.typeOfComparison(env, n.Left, n.Right, caps)
 
 	case ast.NodeTypeGreaterThan:
-		return v.typeOfComparison(env, n.Left, n.Right, caps, expectComparable, expectComparable)
+		return v.typeOfComparison(env, n.Left, n.Right, caps)
 
 	case ast.NodeTypeGreaterThanOrEqual:
-		return v.typeOfComparison(env, n.Left, n.Right, caps, expectComparable, expectComparable)
+		return v.typeOfComparison(env, n.Left, n.Right, caps)
 
 	case ast.NodeTypeAdd:
 		return v.typeOfArith(env, n.Left, n.Right, caps)
@@ -453,52 +453,58 @@ func (v *Validator) typeOfEquality(env *requestEnv, left, right ast.IsNode, nega
 	return typeBool{}, caps, nil
 }
 
-type typeExpectation func(cedarType) error
-
-var expectComparable typeExpectation = func(t cedarType) error {
-	if _, ok := t.(typeLong); ok {
-		return nil
+// isComparisonOpType reports whether t supports < and <=, mirroring Rust's
+// is_valid_comparison_op_type.
+func isComparisonOpType(t cedarType) bool {
+	switch t := t.(type) {
+	case typeLong:
+		return true
+	case typeExtension:
+		return t.name == "datetime" || t.name == "duration"
+	case typeNever, typeTrue, typeFalse, typeBool, typeString, typeSet, typeRecord, typeEntity:
 	}
-	if ext, ok := t.(typeExtension); ok {
-		if ext.name == "datetime" || ext.name == "duration" {
-			return nil
-		}
-	}
-	return unexpectedTypeErr("datetime, or duration, or Long", t)
+	return false
 }
 
-func (v *Validator) typeOfComparison(env *requestEnv, left, right ast.IsNode, caps capabilitySet, expectLeft, expectRight typeExpectation) (cedarType, capabilitySet, error) {
+// comparisonOpTypes lists the types that support < and <=, in the order
+// Rust's expected_comparison_op_types reports them.
+const comparisonOpTypes = "datetime, or duration, or Long"
+
+// typeOfComparison typechecks <, <=, >, and >=.
+func (v *Validator) typeOfComparison(env *requestEnv, left, right ast.IsNode, caps capabilitySet) (cedarType, capabilitySet, error) {
 	lt, _, leftErr := v.typeOfExpr(env, left, caps)
 	rt, _, rightErr := v.typeOfExpr(env, right, caps)
 
-	var leftExpectErr, rightExpectErr error
-	if expectLeft != nil && lt != nil {
-		leftExpectErr = expectLeft(lt)
-	}
-	if expectRight != nil && rt != nil {
-		rightExpectErr = expectRight(rt)
-	}
-
 	var errs []error
 	if leftErr != nil {
-		if ue, ok := leftErr.(interface{ Unwrap() []error }); ok {
-			errs = append(errs, ue.Unwrap()...)
-		} else {
-			errs = append(errs, leftErr)
-		}
-	}
-	if leftExpectErr != nil {
-		errs = append(errs, leftExpectErr)
+		collectErrors(&errs, leftErr)
 	}
 	if rightErr != nil {
-		if ue, ok := rightErr.(interface{ Unwrap() []error }); ok {
-			errs = append(errs, ue.Unwrap()...)
-		} else {
-			errs = append(errs, rightErr)
-		}
+		collectErrors(&errs, rightErr)
 	}
-	if rightExpectErr != nil {
-		errs = append(errs, rightExpectErr)
+
+	// The rather strange special casing of Long below exists to mirror
+	// Rust Cedar's behavior and resulting error strings.
+	_, leftLong := lt.(typeLong)
+	_, rightLong := rt.(typeLong)
+	switch {
+	case lt == nil || rt == nil:
+	// N.B. checking isComparisonOpType first here makes using == safe:
+	// every comparable type is a comparable Go value.
+	case isComparisonOpType(lt) && isComparisonOpType(rt) && lt == rt:
+	case leftLong:
+		errs = append(errs, unexpectedTypeErr(cedarTypeName(lt), rt))
+	case rightLong:
+		errs = append(errs, unexpectedTypeErr(cedarTypeName(rt), lt))
+	case isComparisonOpType(lt):
+		errs = append(errs, unexpectedTypeErr(cedarTypeName(lt), rt))
+	case isComparisonOpType(rt):
+		errs = append(errs, unexpectedTypeErr(cedarTypeName(rt), lt))
+	default:
+		errs = append(errs,
+			unexpectedTypeErr(comparisonOpTypes, lt),
+			unexpectedTypeErr(comparisonOpTypes, rt),
+		)
 	}
 
 	if len(errs) > 0 {
@@ -779,20 +785,11 @@ func (v *Validator) typeOfHas(env *requestEnv, n ast.NodeTypeHas, caps capabilit
 
 	resultType := v.hasResultType(t, n.Value)
 
-	if _, isBool := resultType.(typeBool); isBool {
-		if varName := exprVarName(n.Arg); varName != "" {
-			if caps.has(capability{varName: varName, attr: n.Value}) {
-				resultType = typeTrue{}
-			}
-		}
+	if _, isBool := resultType.(typeBool); isBool && caps.hasAttribute(n.Arg, n.Value) {
+		resultType = typeTrue{}
 	}
 
-	newCaps := caps
-	if varName := exprVarName(n.Arg); varName != "" {
-		newCaps = caps.add(capability{varName: varName, attr: n.Value})
-	}
-
-	return resultType, newCaps, nil
+	return resultType, caps.addAttribute(n.Arg, n.Value), nil
 }
 
 func (v *Validator) hasResultType(t cedarType, attr types.String) cedarType {
@@ -852,11 +849,8 @@ func (v *Validator) typeOfAccess(env *requestEnv, n ast.NodeTypeAccess, caps cap
 	}
 
 	// Check if the attribute is optional and requires a `has` guard
-	if !attrType.required {
-		varName := exprVarName(n.Arg)
-		if varName == "" || !caps.has(capability{varName: varName, attr: n.Value}) {
-			errs = append(errs, v.unsafeOptionalAccessError(env, t, n.Value, exprVarName(n.Arg)))
-		}
+	if !attrType.required && !caps.hasAttribute(n.Arg, n.Value) {
+		errs = append(errs, v.unsafeOptionalAccessError(env, n, t, caps))
 	}
 
 	// Tag the result with entity source when accessing entity attributes that return records
@@ -906,27 +900,44 @@ func (v *Validator) attrNotFoundError(env *requestEnv, t cedarType, attr types.S
 	return fmt.Errorf("attribute `%s` on entity types %s not found", attr, joinComma(names))
 }
 
-// unsafeOptionalAccessError formats the "unsafe optional access" error matching Rust Cedar's format.
-func (v *Validator) unsafeOptionalAccessError(env *requestEnv, t cedarType, attr types.String, varName types.String) error {
-	if _, ok := t.(typeRecord); ok {
-		// Context attribute - include path and action
-		fullPath := string(attr)
-		if varName != "" && varName != "context" {
-			// nested path like context.session.token
-			fullPath = string(varName)[len("context."):] + "." + string(attr)
+// unsafeOptionalAccessError formats the "unsafe optional access" error matching
+// Rust Cedar's format. Like Rust's AttributeAccess, it follows the access back
+// through record attribute accesses to the nearest entity-typed expression or
+// to context, collecting the attribute path on the way. Any other target, such
+// as a record-typed tag, is reported by the path alone. t is the type of n.Arg.
+func (v *Validator) unsafeOptionalAccessError(env *requestEnv, n ast.NodeTypeAccess, t cedarType, caps capabilitySet) error {
+	attrs := []string{string(n.Value)}
+	expr := n.Arg
+	for {
+		if te, ok := t.(typeEntity); ok {
+			if len(te.lub.elements) == 1 {
+				return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity type `%s`", attrPath(attrs), te.lub.elements[0])
+			}
+			names := make([]string, len(te.lub.elements))
+			for i, et := range te.lub.elements {
+				names[i] = fmt.Sprintf("`%s`", et)
+			}
+			return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity types %s", attrPath(attrs), joinComma(names))
 		}
-		return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` in context for %s", fullPath, env.actionUID)
+		if nd, ok := expr.(ast.NodeTypeVariable); ok && nd.Name == "context" {
+			return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` in context for %s", attrPath(attrs), env.actionUID)
+		}
+		nd, ok := expr.(ast.NodeTypeAccess)
+		if !ok {
+			return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s`", attrPath(attrs))
+		}
+		attrs = append(attrs, string(nd.Value))
+		expr = nd.Arg
+		t, _, _ = v.typeOfExpr(env, expr, caps)
 	}
-	// Must be entity type (caller guarantees record or entity via isEntityOrRecordType check)
-	te := t.(typeEntity)
-	if len(te.lub.elements) == 1 {
-		return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity type `%s`", attr, te.lub.elements[0])
-	}
-	names := make([]string, len(te.lub.elements))
-	for i, et := range te.lub.elements {
-		names[i] = fmt.Sprintf("`%s`", et)
-	}
-	return fmt.Errorf("unable to guarantee safety of access to optional attribute `%s` on entity types %s", attr, joinComma(names))
+}
+
+// attrPath joins attribute names, collected from the innermost access outwards,
+// into a dotted path: ["token", "session"] becomes "session.token".
+func attrPath(attrs []string) string {
+	path := slices.Clone(attrs)
+	slices.Reverse(path)
+	return strings.Join(path, ".")
 }
 
 // formatEntityAttrPath formats a nested entity attribute path.
@@ -1008,15 +1019,7 @@ func (v *Validator) typeOfHasTag(env *requestEnv, n ast.NodeTypeHasTag, caps cap
 		}
 	}
 
-	newCaps := caps
-	if varName := exprVarName(n.Left); varName != "" {
-		tagKey := tagCapabilityKey(n.Right)
-		if tagKey != "" {
-			newCaps = caps.add(capability{varName: varName, attr: types.String("__tag:" + tagKey)})
-		}
-	}
-
-	return typeBool{}, newCaps, nil
+	return typeBool{}, caps.addTag(n.Left, n.Right), nil
 }
 
 func (v *Validator) typeOfGetTag(env *requestEnv, n ast.NodeTypeGetTag, caps capabilitySet) (cedarType, capabilitySet, error) {
@@ -1059,13 +1062,7 @@ func (v *Validator) typeOfGetTag(env *requestEnv, n ast.NodeTypeGetTag, caps cap
 		}
 	}
 
-	varName := exprVarName(n.Left)
-	tagKey := tagCapabilityKey(n.Right)
-	hasCapability := varName != "" && tagKey != "" && caps.has(capability{varName: varName, attr: types.String("__tag:" + tagKey)})
-
-	if hasCapability {
-		// Capability is only set by hasTag when entity supports tags
-	} else {
+	if !caps.hasTag(n.Left, n.Right) {
 		rewrittenTagExpr := rewriteConstITE(n.Right)
 		tagExpr := parser.MarshalExpr(rewrittenTagExpr)
 
@@ -1294,19 +1291,19 @@ func validateExtensionValue(funcName types.Path, value string) error {
 	switch funcName {
 	case "ip":
 		if _, err := types.ParseIPAddr(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as IP address: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: failed to parse as IP address: `\"%s\"`", rust.EscapeString(value))
 		}
 	case "decimal":
 		if _, err := types.ParseDecimal(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as a decimal value: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: failed to parse as a decimal value: `\"%s\"`", rust.EscapeString(value))
 		}
 	case "datetime":
 		if _, err := types.ParseDatetime(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as a datetime value: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: failed to parse as a datetime value: `\"%s\"`", rust.EscapeString(value))
 		}
 	case "duration":
 		if _, err := types.ParseDuration(value); err != nil {
-			return fmt.Errorf("error during extension function argument validation: Failed to parse as a duration value: `\"%s\"`", rust.EscapeString(value))
+			return fmt.Errorf("error during extension function argument validation: failed to parse as a duration value: `\"%s\"`", rust.EscapeString(value))
 		}
 	}
 	return nil
@@ -1350,18 +1347,6 @@ func isEntityOrSetOfEntity(t cedarType) bool {
 		return isEntityType(st.element)
 	}
 	return false
-}
-
-func exprVarName(n ast.IsNode) types.String {
-	if nd, ok := n.(ast.NodeTypeVariable); ok {
-		return nd.Name
-	}
-	if nd, ok := n.(ast.NodeTypeAccess); ok {
-		if parent := exprVarName(nd.Arg); parent != "" {
-			return parent + "." + nd.Value
-		}
-	}
-	return ""
 }
 
 func exprContainsVariable(n ast.IsNode, target types.String) bool {
@@ -1532,16 +1517,4 @@ func (v *Validator) exprToActionEUIDs(env *requestEnv, n ast.IsNode) []types.Ent
 func (v *Validator) isActionInSet(action types.EntityUID, targets []types.EntityUID) bool {
 	descendants := v.getActionsInSet(targets)
 	return slices.Contains(descendants, action)
-}
-
-func tagCapabilityKey(n ast.IsNode) types.String {
-	nv, ok := n.(ast.NodeValue)
-	if !ok {
-		return ""
-	}
-	s, ok := nv.Value.(types.String)
-	if !ok {
-		return ""
-	}
-	return s
 }
