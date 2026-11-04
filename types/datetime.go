@@ -146,7 +146,7 @@ func ParseDatetime(s string) (Datetime, error) {
 	}
 
 	if len(s) == 0 {
-		return Datetime{time.Date(year, time.Month(month), int(day), 0, 0, 0, 0, time.UTC).UnixMilli()}, nil
+		return datetimeFromTime(time.Date(year, time.Month(month), int(day), 0, 0, 0, 0, time.UTC))
 	}
 
 	if s, err = expectChar(s, 'T'); err != nil {
@@ -222,12 +222,15 @@ func ParseDatetime(s string) (Datetime, error) {
 		int(hour), int(minute), int(second),
 		int(time.Duration(milli)*time.Millisecond), time.UTC).Add(-offset)
 
-	// Check for boundary conditions before calling UnixMilli(), which has undefined behavior outside of these
-	// boundaries
+	return datetimeFromTime(t)
+}
+
+// datetimeFromTime checks for boundary conditions before calling UnixMilli(), which has undefined behavior outside of
+// these boundaries
+func datetimeFromTime(t time.Time) (Datetime, error) {
 	if t.Before(minDatetime) || t.After(maxDatetime) {
 		return Datetime{}, fmt.Errorf("%w: timestamp out of range", errDatetime)
 	}
-
 	return Datetime{value: t.UnixMilli()}, nil
 }
 

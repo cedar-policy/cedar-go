@@ -63,6 +63,8 @@ func TestDatetime(t *testing.T) {
 			{"-292275055-05-17T16:47:04.192Z", "-292275055-05-17T16:47:04.192Z"},
 			{"-292275055-05-17T15:47:04.192-0100", "-292275055-05-17T16:47:04.192Z"},
 			{"-292275055-05-17T17:47:04.192+0100", "-292275055-05-17T16:47:04.192Z"},
+			{"+292278994-08-17", "+292278994-08-17T00:00:00.000Z"},
+			{"-292275055-05-18", "-292275055-05-18T00:00:00.000Z"},
 		}
 		for ti, tt := range tests {
 			tt := tt
@@ -148,6 +150,10 @@ func TestDatetime(t *testing.T) {
 			{"-292275055-05-17T16:47:04.191Z", "error parsing datetime value: timestamp out of range"},
 			{"-292275055-05-17T15:47:04.191-0100", "error parsing datetime value: timestamp out of range"},
 			{"-292275055-05-17T17:47:04.191+0100", "error parsing datetime value: timestamp out of range"},
+			{"+292278994-08-18", "error parsing datetime value: timestamp out of range"},
+			{"+999999999-01-01", "error parsing datetime value: timestamp out of range"},
+			{"-292275055-05-17", "error parsing datetime value: timestamp out of range"},
+			{"-999999999-01-01", "error parsing datetime value: timestamp out of range"},
 		}
 		for ti, tt := range tests {
 			tt := tt
