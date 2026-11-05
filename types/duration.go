@@ -164,7 +164,7 @@ func (d Duration) LessThan(bi Value) (bool, error) {
 	return d.value < b.value, nil
 }
 
-// LessThan returns true if value is less than or equal to the
+// LessThanOrEqual returns true if value is less than or equal to the
 // argument and they are both Duration values, or an error indicating
 // they aren't comparable otherwise
 func (d Duration) LessThanOrEqual(bi Value) (bool, error) {
@@ -175,7 +175,7 @@ func (d Duration) LessThanOrEqual(bi Value) (bool, error) {
 	return d.value <= b.value, nil
 }
 
-// MarshalCedar produces a valid MarshalCedar language representation of the Duration, e.g. `decimal("12.34")`.
+// MarshalCedar produces a valid MarshalCedar language representation of the Duration, e.g. `duration("1h10m")`.
 func (d Duration) MarshalCedar() []byte { return []byte(`duration("` + d.String() + `")`) }
 
 // String produces a string representation of the Duration
