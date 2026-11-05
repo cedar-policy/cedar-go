@@ -102,8 +102,12 @@ func TestDuration(t *testing.T) {
 			err  func(testutil.TB, error)
 		}{
 			{"ok", types.NewDuration(time.Millisecond * 42), time.Millisecond * 42, testutil.OK},
-			{"maxPlusOne", types.NewDurationFromMillis(math.MaxInt64/1000 + 1), 0, testutil.Error},
-			{"minMinusOne", types.NewDurationFromMillis(math.MinInt64/1000 - 1), 0, testutil.Error},
+			{"max", types.NewDurationFromMillis(int64(math.MaxInt64 / time.Millisecond)), time.Millisecond * (math.MaxInt64 / time.Millisecond), testutil.OK},
+			{"min", types.NewDurationFromMillis(int64(math.MinInt64 / time.Millisecond)), time.Millisecond * (math.MinInt64 / time.Millisecond), testutil.OK},
+			{"maxPlusOne", types.NewDurationFromMillis(int64(math.MaxInt64/time.Millisecond) + 1), 0, testutil.Error},
+			{"minMinusOne", types.NewDurationFromMillis(int64(math.MinInt64/time.Millisecond) - 1), 0, testutil.Error},
+			{"maxInt64", types.NewDurationFromMillis(math.MaxInt64), 0, testutil.Error},
+			{"minInt64", types.NewDurationFromMillis(math.MinInt64), 0, testutil.Error},
 		}
 		for _, tt := range tests {
 			tt := tt
