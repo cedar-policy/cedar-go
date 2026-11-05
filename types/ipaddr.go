@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net/netip"
+	"strconv"
 	"strings"
 
 	"github.com/go-json-experiment/json"
@@ -44,10 +45,19 @@ func (i IPAddr) MarshalCedar() []byte { return []byte(`ip("` + i.String() + `")`
 
 // String produces a string representation of the IPAddr, e.g. `127.0.0.1`.
 func (i IPAddr) String() string {
+	addr := formatAddr(i.Addr())
 	if i.Prefix().Bits() == i.Addr().BitLen() {
-		return i.Addr().String()
+		return addr
 	}
-	return i.Prefix().String()
+	return addr + "/" + strconv.Itoa(i.Prefix().Bits())
+}
+
+func formatAddr(a netip.Addr) string {
+	if !a.Is4In6() {
+		return a.String()
+	}
+	b := a.As16()
+	return fmt.Sprintf("::ffff:%x:%x", uint16(b[12])<<8|uint16(b[13]), uint16(b[14])<<8|uint16(b[15]))
 }
 
 func (i IPAddr) Prefix() netip.Prefix {
@@ -143,14 +153,6 @@ func (i *IPAddr) UnmarshalJSON(b []byte) error {
 
 // MarshalJSON marshals the IPAddr into JSON using the explicit form.
 func (i IPAddr) MarshalJSON() ([]byte, error) {
-	if i.Prefix().Bits() == i.Prefix().Addr().BitLen() {
-		return json.Marshal(extValueJSON{
-			Extn: &extn{
-				Fn:  "ip",
-				Arg: i.Addr().String(),
-			},
-		})
-	}
 	return json.Marshal(extValueJSON{
 		Extn: &extn{
 			Fn:  "ip",

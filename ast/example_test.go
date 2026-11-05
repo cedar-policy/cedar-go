@@ -110,5 +110,5 @@ func ExampleRecord() {
 	// Output:
 	// forbid ( principal, action, resource )
 	// when { {"x":"value1", "y":"value2"}.x == "value1" }
-	// when { {"x":(1 + context.fooCount), "y":8}.x == 3 };
+	// when { {"x":1 + context.fooCount, "y":8}.x == 3 };
 }
