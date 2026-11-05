@@ -61,15 +61,19 @@ func ParseDuration(s string) (Duration, error) {
 	i := 0
 	unitI := 0
 
-	negative := int64(1)
+	// A negative duration may reach math.MinInt64, whose magnitude is one
+	// more than math.MaxInt64, so magnitudes are accumulated in a uint64.
+	negative := false
+	limit := uint64(math.MaxInt64)
 	if s[i] == '-' {
-		negative = int64(-1)
+		negative = true
+		limit++
 		i++
 	}
 
 	var (
-		total    int64
-		value    int64
+		total    uint64
+		value    uint64
 		unit     string
 		hasValue bool
 	)
@@ -77,8 +81,8 @@ func ParseDuration(s string) (Duration, error) {
 	// ([0-9]+)(d|h|m|s|ms) ...
 	for i < len(s) && unitI < len(unitOrder) {
 		if unicode.IsDigit(rune(s[i])) {
-			digit := int64(s[i] - '0')
-			if value > (math.MaxInt64-digit)/10 {
+			digit := uint64(s[i] - '0')
+			if value > (limit-digit)/10 {
 				return Duration{}, fmt.Errorf("%w: overflow", errDuration)
 			}
 			value = value*10 + digit
@@ -109,15 +113,15 @@ func ParseDuration(s string) (Duration, error) {
 				return Duration{}, fmt.Errorf("%w: unexpected unit '%s'", errDuration, unit)
 			}
 
-			millis := unitToMillis[unit]
-			if millis > 0 && value > math.MaxInt64/millis {
+			millis := uint64(unitToMillis[unit])
+			if value > limit/millis {
 				return Duration{}, fmt.Errorf("%w: overflow", errDuration)
 			}
 			product := value * millis
-			if total > math.MaxInt64-product {
+			if total > limit-product {
 				return Duration{}, fmt.Errorf("%w: overflow", errDuration)
 			}
-			total = total + product
+			total += product
 			i++
 			hasValue = false
 			value = 0
@@ -136,7 +140,11 @@ func ParseDuration(s string) (Duration, error) {
 		return Duration{}, fmt.Errorf("%w: invalid duration", errDuration)
 	}
 
-	return Duration{value: negative * total}, nil
+	if negative {
+		// Negating in uint64 wraps 1<<63 to itself, which converts to math.MinInt64.
+		return Duration{value: int64(-total)}, nil
+	}
+	return Duration{value: int64(total)}, nil
 }
 
 // Equal returns true if the input represents the same duration
