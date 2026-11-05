@@ -1,0 +1,1 @@
+{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"&&":{"left":{"isInRange":[{"Value":{"__extn":{"fn":"ip","arg":"::ffff:c000:0280"}}},{"Value":{"__extn":{"fn":"ip","arg":"::ffff:c000:0/120"}}}]},"right":{"!":{"arg":{"isLoopback":[{"Value":{"__extn":{"fn":"ip","arg":"::ffff:7f00:1"}}}]}}}}}}]}

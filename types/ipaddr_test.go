@@ -11,112 +11,108 @@ import (
 
 func TestIP(t *testing.T) {
 	t.Parallel()
-	t.Run("ParseAndString", func(t *testing.T) {
+	t.Run("ParseRoundtripEquality", func(t *testing.T) {
 		t.Parallel()
 
-		tests := []struct {
-			in     string
-			parses bool
-			out    string
+		valid := []struct {
+			in      string
+			aliases []string
 		}{
-			{"0.0.0.0", true, "0.0.0.0"},
-			{"0.0.0.1", true, "0.0.0.1"},
-			{"127.0.0.1", true, "127.0.0.1"},
-			{"127.0.0.1/32", true, "127.0.0.1"},
-			{"127.0.0.1/24", true, "127.0.0.1/24"},
-			{"127.1.2.3/8", true, "127.1.2.3/8"},
-			{"::/128", true, "::"},
-			{"::1/128", true, "::1"},
-			{"2001:db8::1", true, "2001:db8::1"},
-			{"2001:db8::1:0:0:1", true, "2001:db8::1:0:0:1"},
-			{"fe80::1%eth0", false, ""},
-			{"fe80::1%1", false, ""},
-			{"fe80::1%eth0/64", false, ""},
-			{"2001:db8::1%eth0", false, ""},
-			{"::ffff:192.0.2.128", false, ""},
-			{"::ffff:c000:0280", true, "::ffff:192.0.2.128"},
-			{"2001:db8::1/32", true, "2001:db8::1/32"},
-			{"2001:db8::1:0:0:1/96", true, "2001:db8::1:0:0:1/96"},
-			{"::ffff:192.0.2.128/24", false, ""},
-			{"::ffff:192.0.2.128/120", false, ""},
-			{"::ffff:c000:0280/24", true, "::ffff:192.0.2.128/24"},
-			{"::ffff:c000:0280/120", true, "::ffff:192.0.2.128/120"},
-			{"6b6b:f00::32ff:ffff:6368/00", false, ""}, // leading zero(s)
-			{"garbage", false, ""},
-			{"c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5/68", true, "c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5/68"},
+			{"0.0.0.0", []string{"0.0.0.0/32"}},
+			{"0.0.0.1", nil},
+			{"127.0.0.1", []string{"127.0.0.1/32"}},
+			{"127.0.0.1/24", nil},
+			{"127.1.2.3/8", nil},
+			{"1.2.3.4", []string{"1.2.3.4/32"}},
+			{"1.2.3.4/24", nil},
+			{"1.2.3.0/24", nil},
+			{"1.2.3.255/24", nil},
+			{"1.2.3.0/25", nil},
+			{"192.0.2.128", nil},
+			{"192.0.2.128/24", nil},
+			{"192.0.2.0/24", nil},
+			{"::", []string{"::/128"}},
+			{"::1", []string{"::1/128"}},
+			{"::/0", nil},
+			{"::/24", nil},
+			{"2001:db8::1", nil},
+			{"2001:db8::1:0:0:1", nil},
+			{"2001:db8::1/32", nil},
+			{"2001:db8::1/64", nil},
+			{"2001:db8::/32", nil},
+			{"2001:db8::1:0:0:1/96", nil},
+			{"2001:db8:0:0:1::/96", nil},
+			{"2001:db8:85a3::8a2e:370:7334", nil},
+			{"2001:db8::ff00:42:8329", []string{"2001:0db8:0000:0000:0000:ff00:0042:8329"}},
+			{"fe80::1", nil},
+			{"fe80::/10", nil},
+			{"ff02::1", nil},
+			{"ff00::/8", nil},
+			{"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", nil},
+			{"::c000:280", nil},
+			{"::fffe:c000:280", nil},
+			{"64:ff9b::c000:280", nil},
+			{"::ffff:0:c000:280", nil},
+			{"::ffff:7f00:1", nil},
+			{"::ffff:c000:280", []string{"::ffff:c000:0280", "::ffff:c000:0280/128"}},
+			{"::ffff:c000:280/24", []string{"::ffff:c000:0280/24"}},
+			{"::ffff:c000:280/120", []string{"::ffff:c000:0280/120"}},
+			{"::ffff:0:0", nil},
+			{"::ffff:0:0/96", nil},
+			{"::ffff:ffff:ffff", nil},
+			{"c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5/68", nil},
+			{"c5c5:c5c5:c5c5:c5c5:c5c5:5cc5:c5c5:c5c5/68", nil},
 		}
-		for _, tt := range tests {
+		invalid := []string{
+			"fe80::1%eth0",
+			"fe80::1%1",
+			"fe80::1%eth0/64",
+			"2001:db8::1%eth0",
+			"::ffff:192.0.2.128",
+			"::ffff:192.0.2.128/24",
+			"::ffff:192.0.2.128/120",
+			"6b6b:f00::32ff:ffff:6368/00", // leading zero(s)
+			"garbage",
+		}
+		for _, tt := range valid {
 			tt := tt
-			var testName string
-			if tt.parses {
-				testName = fmt.Sprintf("%s-parses-and-prints-as-%s", tt.in, tt.out)
-			} else {
-				testName = fmt.Sprintf("%s-does-not-parse", tt.in)
-			}
-			t.Run(testName, func(t *testing.T) {
+			t.Run(fmt.Sprintf("%s-parses-and-prints", tt.in), func(t *testing.T) {
 				t.Parallel()
 				i, err := types.ParseIPAddr(tt.in)
-				if tt.parses {
+				testutil.OK(t, err)
+				testutil.Equals(t, i.String(), tt.in)
+
+				b, err := json.Marshal(i)
+				testutil.OK(t, err)
+				var j types.IPAddr
+				testutil.OK(t, json.Unmarshal(b, &j))
+				testutil.Equals(t, j, i)
+
+				testutil.Equals(t, string(i.MarshalCedar()), `ip("`+tt.in+`")`)
+
+				for _, a := range tt.aliases {
+					ai, err := types.ParseIPAddr(a)
 					testutil.OK(t, err)
-					testutil.Equals(t, i.String(), tt.out)
-				} else {
-					testutil.Error(t, err)
+					testutil.FatalIf(t, !i.Equal(ai), "expected ip(%v).Equal(ip(%v))", tt.in, a)
+					testutil.FatalIf(t, !i.Contains(ai), "ip(%v) and ip(%v) compare Equal but !ip(%v).contains(ip(%v))", tt.in, a, tt.in, a)
+					testutil.FatalIf(t, !ai.Contains(i), "ip(%v) and ip(%v) compare Equal but !ip(%v).contains(ip(%v))", a, tt.in, a, tt.in)
+				}
+				for _, o := range valid {
+					if o.in == tt.in {
+						continue
+					}
+					oi, err := types.ParseIPAddr(o.in)
+					testutil.OK(t, err)
+					testutil.FatalIf(t, i.Equal(oi), "expected !ip(%v).Equal(ip(%v))", tt.in, o.in)
 				}
 			})
 		}
-	})
-
-	t.Run("Equal", func(t *testing.T) {
-		t.Parallel()
-		tests := []struct {
-			lhs, rhs string
-			equal    bool
-		}{
-			{"0.0.0.0", "0.0.0.0", true},
-			{"0.0.0.0", "0.0.0.0/32", true},
-			{"127.0.0.1", "127.0.0.1", true},
-			{"127.0.0.1", "127.0.0.1/32", true},
-			{"::", "::", true},
-			{"::", "::/128", true},
-			{"::1", "::1", true},
-			{"::1", "::1/128", true},
-			{"::", "0.0.0.0", false},
-			{"::1", "127.0.0.1", false},
-			{"::ffff:c000:0280", "192.0.2.128", false},
-			{"1.2.3.4", "1.2.3.4", true},
-			{"1.2.3.4", "1.2.3.4/32", true},
-			{"1.2.3.4/32", "1.2.3.4/32", true},
-			{"1.2.3.4/24", "1.2.3.4/24", true},
-			{"1.2.3.0/24", "1.2.3.255/24", false},
-			{"1.2.3.0/24", "1.2.3.0/25", false},
-			{"::ffff:c000:0280/24", "::/24", false},
-			{"::ffff:c000:0280/120", "192.0.2.0/24", false},
-			{"2001:db8::1/32", "2001:db8::/32", false},
-			{"2001:db8::1:0:0:1/96", "2001:db8:0:0:1::/96", false},
-			{"c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5/68", "c5c5:c5c5:c5c5:c5c5:c5c5:5cc5:c5c5:c5c5/68", false},
-		}
-		for _, tt := range tests {
-			tt := tt
-			t.Run(fmt.Sprintf("ip(%v).Equal(ip(%v))", tt.lhs, tt.rhs), func(t *testing.T) {
+		for _, in := range invalid {
+			in := in
+			t.Run(fmt.Sprintf("%s-does-not-parse", in), func(t *testing.T) {
 				t.Parallel()
-				lhs, err := types.ParseIPAddr(tt.lhs)
-				testutil.OK(t, err)
-				rhs, err := types.ParseIPAddr(tt.rhs)
-				testutil.OK(t, err)
-				equal := lhs.Equal(rhs)
-				if equal != tt.equal {
-					t.Fatalf("expected ip(%v).Equal(ip(%v)) to be %v instead of %v", tt.lhs, tt.rhs, tt.equal, equal)
-				}
-				if equal {
-					testutil.FatalIf(
-						t,
-						!lhs.Contains(rhs),
-						"ip(%v) and ip(%v) compare Equal but !ip(%v).contains(ip(%v))", tt.lhs, tt.rhs, tt.lhs, tt.rhs)
-					testutil.FatalIf(
-						t,
-						!rhs.Contains(lhs),
-						"ip(%v) and ip(%v) compare Equal but !ip(%v).contains(ip(%v))", tt.rhs, tt.lhs, tt.rhs, tt.lhs)
-				}
+				_, err := types.ParseIPAddr(in)
+				testutil.Error(t, err)
 			})
 		}
 	})

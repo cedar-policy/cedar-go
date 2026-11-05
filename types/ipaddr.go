@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net/netip"
+	"strconv"
 	"strings"
 
 	"github.com/go-json-experiment/json"
@@ -15,6 +16,8 @@ var errIP = internal.ErrIP
 
 // An IPAddr is value that represents an IP address. It can be either IPv4 or IPv6.
 // The value can represent an individual address or a range of addresses.
+// There's some special casing around 4in6 addresses which are formatted a bit
+// differently.
 type IPAddr netip.Prefix
 
 // ParseIPAddr takes a string representation of an IP address and converts it into an IPAddr type.
@@ -42,12 +45,19 @@ func (i IPAddr) Equal(bi Value) bool {
 // MarshalCedar produces a valid MarshalCedar language representation of the IPAddr, e.g. `ip("127.0.0.1")`.
 func (i IPAddr) MarshalCedar() []byte { return []byte(`ip("` + i.String() + `")`) }
 
-// String produces a string representation of the IPAddr, e.g. `127.0.0.1`.
+// String produces a string representation of the IPAddr, e.g. `127.0.0.1`.  There are a number of supported
+// formats, and we need to handle 4in6 textual addresses specifically.
 func (i IPAddr) String() string {
-	if i.Prefix().Bits() == i.Addr().BitLen() {
-		return i.Addr().String()
+	a := i.Addr()
+	addr := a.String()
+	if a.Is4In6() {
+		b := a.As16()
+		addr = fmt.Sprintf("::ffff:%x:%x", uint16(b[12])<<8|uint16(b[13]), uint16(b[14])<<8|uint16(b[15]))
 	}
-	return i.Prefix().String()
+	if i.Prefix().Bits() == a.BitLen() {
+		return addr
+	}
+	return addr + "/" + strconv.Itoa(i.Prefix().Bits())
 }
 
 func (i IPAddr) Prefix() netip.Prefix {
@@ -143,14 +153,6 @@ func (i *IPAddr) UnmarshalJSON(b []byte) error {
 
 // MarshalJSON marshals the IPAddr into JSON using the explicit form.
 func (i IPAddr) MarshalJSON() ([]byte, error) {
-	if i.Prefix().Bits() == i.Prefix().Addr().BitLen() {
-		return json.Marshal(extValueJSON{
-			Extn: &extn{
-				Fn:  "ip",
-				Arg: i.Addr().String(),
-			},
-		})
-	}
 	return json.Marshal(extValueJSON{
 		Extn: &extn{
 			Fn:  "ip",
