@@ -44,6 +44,10 @@ func TestDuration(t *testing.T) {
 			{"-2m3600s", "-1h2m"},
 			{"2147483648ms", "24d20h31m23s648ms"},
 			{"106751991167d7h12m55s807ms", "106751991167d7h12m55s807ms"},
+			{"-106751991167d7h12m55s807ms", "-106751991167d7h12m55s807ms"},
+			{"-106751991167d7h12m55s808ms", "-106751991167d7h12m55s808ms"},
+			{"-9223372036854775807ms", "-106751991167d7h12m55s807ms"},
+			{"-9223372036854775808ms", "-106751991167d7h12m55s808ms"},
 		}
 		for ti, tt := range tests {
 			tt := tt
@@ -74,6 +78,10 @@ func TestDuration(t *testing.T) {
 			{"106751991168d", "error parsing duration value: overflow"},
 			{"9223372036854775808ms", "error parsing duration value: overflow"},
 			{"106751991167d7h12m55s808ms", "error parsing duration value: overflow"},
+			{"-106751991167d7h12m55s809ms", "error parsing duration value: overflow"},
+			{"-106751991168d", "error parsing duration value: overflow"},
+			{"-9223372036854775809ms", "error parsing duration value: overflow"},
+			{"-9223372036854775s809ms", "error parsing duration value: overflow"},
 		}
 		for ti, tt := range tests {
 			tt := tt
@@ -201,13 +209,6 @@ func TestDuration(t *testing.T) {
 		testutil.Equals(t, dur.ToMinutes(), 1591)
 		testutil.Equals(t, dur.ToSeconds(), 95503)
 		testutil.Equals(t, dur.ToMilliseconds(), 95503017)
-	})
-
-	t.Run("StringExtremes", func(t *testing.T) {
-		t.Parallel()
-		testutil.Equals(t, types.NewDurationFromMillis(math.MaxInt64).String(), "106751991167d7h12m55s807ms")
-		testutil.Equals(t, types.NewDurationFromMillis(-math.MaxInt64).String(), "-106751991167d7h12m55s807ms")
-		testutil.Equals(t, types.NewDurationFromMillis(math.MinInt64).String(), "-106751991167d7h12m55s808ms")
 	})
 
 	t.Run("MarshalCedar", func(t *testing.T) {
