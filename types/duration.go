@@ -177,43 +177,20 @@ func (d Duration) String() string {
 		return "0ms"
 	}
 
-	remaining := d.value
+	// Use uint64 so that negating math.MinInt64 does not overflow.
+	remaining := uint64(d.value)
 	if d.value < 0 {
-		remaining = -d.value
+		remaining = -remaining
 		res.WriteByte('-')
 	}
 
-	days := remaining / consts.MillisPerDay
-	if days > 0 {
-		res.WriteString(strconv.FormatInt(days, 10))
-		res.WriteByte('d')
-	}
-	remaining %= consts.MillisPerDay
-
-	hours := remaining / consts.MillisPerHour
-	if hours > 0 {
-		res.WriteString(strconv.FormatInt(hours, 10))
-		res.WriteByte('h')
-	}
-	remaining %= consts.MillisPerHour
-
-	minutes := remaining / consts.MillisPerMinute
-	if minutes > 0 {
-		res.WriteString(strconv.FormatInt(minutes, 10))
-		res.WriteByte('m')
-	}
-	remaining %= consts.MillisPerMinute
-
-	seconds := remaining / consts.MillisPerSecond
-	if seconds > 0 {
-		res.WriteString(strconv.FormatInt(seconds, 10))
-		res.WriteByte('s')
-	}
-	remaining %= consts.MillisPerSecond
-
-	if remaining > 0 {
-		res.WriteString(strconv.FormatInt(remaining, 10))
-		res.WriteString("ms")
+	for _, unit := range unitOrder {
+		millis := uint64(unitToMillis[unit])
+		if n := remaining / millis; n > 0 {
+			res.WriteString(strconv.FormatUint(n, 10))
+			res.WriteString(unit)
+		}
+		remaining %= millis
 	}
 
 	return res.String()
