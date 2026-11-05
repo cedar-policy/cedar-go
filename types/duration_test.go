@@ -203,6 +203,13 @@ func TestDuration(t *testing.T) {
 		testutil.Equals(t, dur.ToMilliseconds(), 95503017)
 	})
 
+	t.Run("StringExtremes", func(t *testing.T) {
+		t.Parallel()
+		testutil.Equals(t, types.NewDurationFromMillis(math.MaxInt64).String(), "106751991167d7h12m55s807ms")
+		testutil.Equals(t, types.NewDurationFromMillis(-math.MaxInt64).String(), "-106751991167d7h12m55s807ms")
+		testutil.Equals(t, types.NewDurationFromMillis(math.MinInt64).String(), "-106751991167d7h12m55s808ms")
+	})
+
 	t.Run("MarshalCedar", func(t *testing.T) {
 		t.Parallel()
 		testutil.Equals(t, string(types.NewDuration(42*time.Millisecond).MarshalCedar()), `duration("42ms")`)
