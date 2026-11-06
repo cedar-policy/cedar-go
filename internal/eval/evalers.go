@@ -3,6 +3,8 @@ package eval
 import (
 	"errors"
 	"fmt"
+	"math"
+	"time"
 
 	"github.com/cedar-policy/cedar-go/internal/consts"
 	"github.com/cedar-policy/cedar-go/internal/extensions"
@@ -1399,7 +1401,11 @@ func (n *toDateEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.NewDatetimeFromMillis(lhs.Milliseconds() - (lhs.Milliseconds() % consts.MillisPerDay)), nil
+	date := time.UnixMilli(lhs.Milliseconds()).Truncate(24 * time.Hour)
+	if date.Before(time.UnixMilli(math.MinInt64)) {
+		return zeroValue(), fmt.Errorf("%w while attempting to compute date", errOverflow)
+	}
+	return types.NewDatetime(date), nil
 }
 
 type toTimeEval struct {
@@ -1415,7 +1421,8 @@ func (n *toTimeEval) Eval(env Env) (types.Value, error) {
 	if err != nil {
 		return zeroValue(), err
 	}
-	return types.NewDurationFromMillis(lhs.Milliseconds() % consts.MillisPerDay), nil
+	t := time.UnixMilli(lhs.Milliseconds())
+	return types.NewDuration(t.Sub(t.Truncate(24 * time.Hour))), nil
 }
 
 type toMillisecondsEval struct {

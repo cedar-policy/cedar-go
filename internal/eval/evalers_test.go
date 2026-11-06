@@ -2371,6 +2371,12 @@ func TestDatetimeToDate(t *testing.T) {
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
 		{"Success", newLiteralEval(aTime), types.NewDatetime(time.UnixMilli(24 * 60 * 60 * 1000)), nil},
+		{"Epoch", newLiteralEval(testutil.Must(types.ParseDatetime("1970-01-01T00:00:00Z"))), testutil.Must(types.ParseDatetime("1970-01-01")), nil},
+		{"NegativeOneMilli", newLiteralEval(testutil.Must(types.ParseDatetime("1969-12-31T23:59:59.999Z"))), testutil.Must(types.ParseDatetime("1969-12-31")), nil},
+		{"NegativeExactDay", newLiteralEval(testutil.Must(types.ParseDatetime("1969-12-31T00:00:00Z"))), testutil.Must(types.ParseDatetime("1969-12-31")), nil},
+		{"NegativeDayPlusOne", newLiteralEval(testutil.Must(types.ParseDatetime("1969-12-30T23:59:59.999Z"))), testutil.Must(types.ParseDatetime("1969-12-30")), nil},
+		{"MaxInt64", newLiteralEval(types.NewDatetimeFromMillis(math.MaxInt64)), types.NewDatetimeFromMillis(math.MaxInt64 - math.MaxInt64%consts.MillisPerDay), nil},
+		{"Overflow", newLiteralEval(types.NewDatetimeFromMillis(math.MinInt64)), zeroValue(), errOverflow},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -2466,6 +2472,11 @@ func TestDatetimeToTime(t *testing.T) {
 		{"Error", newErrorEval(errTest), zeroValue(), errTest},
 		{"TypeError", newLiteralEval(types.Long(1)), zeroValue(), ErrType},
 		{"Success", newLiteralEval(aTime), types.NewDuration(10 * time.Hour), nil},
+		{"Epoch", newLiteralEval(testutil.Must(types.ParseDatetime("1970-01-01T00:00:00Z"))), types.NewDuration(0), nil},
+		{"NegativeOneMilli", newLiteralEval(testutil.Must(types.ParseDatetime("1969-12-31T23:59:59.999Z"))), types.NewDuration(24*time.Hour - time.Millisecond), nil},
+		{"NegativeExactDay", newLiteralEval(testutil.Must(types.ParseDatetime("1969-12-31T00:00:00Z"))), types.NewDuration(0), nil},
+		{"NegativeTenHours", newLiteralEval(testutil.Must(types.ParseDatetime("1969-12-31T14:00:00Z"))), types.NewDuration(14 * time.Hour), nil},
+		{"MinInt64", newLiteralEval(types.NewDatetimeFromMillis(math.MinInt64)), types.NewDurationFromMillis(math.MinInt64%consts.MillisPerDay + consts.MillisPerDay), nil},
 	}
 	for _, tt := range tests {
 		tt := tt
