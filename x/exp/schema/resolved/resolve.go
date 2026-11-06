@@ -441,6 +441,26 @@ func (r *resolverState) resolveEntityTypeRef(ns types.Path, ref ast.EntityTypeRe
 	return "", fmt.Errorf("undefined entity type %q", path)
 }
 
+// resolveTypeRef resolves a reference to a common or entity type (a bare name
+// in the Cedar format, or an "EntityOrCommon" type in the JSON format) that
+// appears in namespace ns. As in Rust Cedar, the first match wins:
+//
+//  1. A reference prefixed with "__cedar::" names a built-in type, which no
+//     declaration can shadow.
+//  2. If ns is non-empty and ref is unqualified, ns::ref as a common type.
+//  3. If ns is non-empty and ref is unqualified, ns::ref as an entity type.
+//  4. ref as written, as a common type.
+//  5. ref as written, as an entity type.
+//  6. If ref is unqualified, a built-in type such as Long or ipaddr (see
+//     lookupBuiltin).
+//
+// Entity types include enumerated entity types and the implicit ns::Action
+// type of every namespace that declares at least one action. That type can be
+// used as an attribute, tag or context type, but not as a parent type or in
+// appliesTo, which are resolved with isDeclaredEntityType.
+//
+// Steps 2 and 3 are done by resolveTypeRefPath, which detectCommonTypeCycles
+// also uses, so both agree on which declaration a reference names.
 func (r *resolverState) resolveTypeRef(ns types.Path, ref ast.TypeRef) (IsType, error) {
 	path := r.resolveTypeRefPath(ns, ref)
 	// Check for __cedar:: prefix first
@@ -470,8 +490,10 @@ func (r *resolverState) resolveTypeRef(ns types.Path, ref ast.TypeRef) (IsType, 
 	return nil, fmt.Errorf("undefined type %q", ref)
 }
 
-// resolveTypeRefPath selects the declaration used by both value resolution
-// and common-type dependency analysis.
+// resolveTypeRefPath returns the name that ref refers to from namespace ns,
+// without deciding what kind of type that name is: ns::ref if ref is
+// unqualified and ns::ref is a declared common or entity type, and ref as
+// written otherwise. See resolveTypeRef for the full lookup order.
 func (r *resolverState) resolveTypeRefPath(ns types.Path, ref ast.TypeRef) types.Path {
 	if strings.Contains(string(ref), "::") {
 		return types.Path(ref)
