@@ -258,7 +258,7 @@ func (n NodeTypeHasTag) marshalCedar(buf *bytes.Buffer) {
 func (n NodeTypeSet) marshalCedar(buf *bytes.Buffer) {
 	buf.WriteRune('[')
 	for i := range n.Elements {
-		marshalChildNode(n.precedenceLevel(), n.Elements[i], buf)
+		marshalChildNode(ifPrecedence, n.Elements[i], buf)
 		if i != len(n.Elements)-1 {
 			buf.WriteString(", ")
 		}
@@ -271,7 +271,7 @@ func (n NodeTypeRecord) marshalCedar(buf *bytes.Buffer) {
 	for i := range n.Elements {
 		buf.Write(n.Elements[i].Key.MarshalCedar())
 		buf.WriteString(":")
-		marshalChildNode(n.precedenceLevel(), n.NodeTypeRecord.Elements[i].Value, buf)
+		marshalChildNode(ifPrecedence, n.NodeTypeRecord.Elements[i].Value, buf)
 		if i != len(n.Elements)-1 {
 			buf.WriteString(", ")
 		}

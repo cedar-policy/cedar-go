@@ -34,13 +34,16 @@ func TestIP(t *testing.T) {
 			{"fe80::1%eth0/64", false, ""},
 			{"2001:db8::1%eth0", false, ""},
 			{"::ffff:192.0.2.128", false, ""},
-			{"::ffff:c000:0280", true, "::ffff:192.0.2.128"},
+			{"::ffff:c000:0280", true, "::ffff:c000:280"},
 			{"2001:db8::1/32", true, "2001:db8::1/32"},
 			{"2001:db8::1:0:0:1/96", true, "2001:db8::1:0:0:1/96"},
 			{"::ffff:192.0.2.128/24", false, ""},
 			{"::ffff:192.0.2.128/120", false, ""},
-			{"::ffff:c000:0280/24", true, "::ffff:192.0.2.128/24"},
-			{"::ffff:c000:0280/120", true, "::ffff:192.0.2.128/120"},
+			{"::ffff:c000:0280/24", true, "::ffff:c000:280/24"},
+			{"::ffff:c000:0280/120", true, "::ffff:c000:280/120"},
+			{"::ffff:0:0", true, "::ffff:0:0"},
+			{"::ffff:0:0/96", true, "::ffff:0:0/96"},
+			{"::ffff:ffff:ffff", true, "::ffff:ffff:ffff"},
 			{"6b6b:f00::32ff:ffff:6368/00", false, ""}, // leading zero(s)
 			{"garbage", false, ""},
 			{"c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5/68", true, "c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5:c5c5/68"},
@@ -301,6 +304,59 @@ func TestIP(t *testing.T) {
 		err := json.Unmarshal([]byte(expected), &i2)
 		testutil.OK(t, err)
 		testutil.Equals(t, i1, i2)
+	})
+
+	t.Run("Marshal/Unmarshal Roundtrip", func(t *testing.T) {
+		t.Parallel()
+		tests := []string{
+			"192.0.2.128",
+			"192.0.2.128/24",
+			"2001:db8::1",
+			"2001:db8::1/64",
+			"::",
+			"::/0",
+			"::1",
+			"::1/128",
+			"fe80::1",
+			"fe80::/10",
+			"ff02::1",
+			"ff00::/8",
+			"2001:db8:85a3::8a2e:370:7334",
+			"2001:0db8:0000:0000:0000:ff00:0042:8329",
+			"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+			"::c000:280",
+			"::fffe:c000:280",
+			"64:ff9b::c000:280",
+			"::ffff:0:c000:280",
+			"::ffff:c000:0280",
+			"::ffff:c000:0280/24",
+			"::ffff:c000:0280/120",
+			"::ffff:c000:0280/128",
+			"::ffff:7f00:1",
+			"::ffff:0:0/96",
+			"::ffff:ffff:ffff",
+		}
+		for _, tt := range tests {
+			tt := tt
+			t.Run(tt, func(t *testing.T) {
+				t.Parallel()
+				i, err := types.ParseIPAddr(tt)
+				testutil.OK(t, err)
+
+				s, err := types.ParseIPAddr(i.String())
+				testutil.OK(t, err)
+				testutil.Equals(t, s, i)
+
+				b, err := json.Marshal(i)
+				testutil.OK(t, err)
+				var j types.IPAddr
+				testutil.OK(t, json.Unmarshal(b, &j))
+				testutil.Equals(t, j, i)
+
+				c := string(i.MarshalCedar())
+				testutil.Equals(t, c, `ip("`+i.String()+`")`)
+			})
+		}
 	})
 
 	t.Run("UnmarshalJSON/error", func(t *testing.T) {

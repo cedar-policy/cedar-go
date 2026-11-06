@@ -6,8 +6,25 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/cedar-policy/cedar-go/internal/eval"
 	"github.com/cedar-policy/cedar-go/internal/json"
+	"github.com/cedar-policy/cedar-go/types"
+	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
+
+var fuzzEvalEnv = eval.Env{
+	Entities:  types.EntityMap{},
+	Principal: types.NewEntityUID("P", "p"),
+	Action:    types.NewEntityUID("Action", "a"),
+	Resource:  types.NewEntityUID("R", "r"),
+	Context:   types.NewRecord(nil),
+}
+
+func evalPolicy(p *ast.Policy) (types.Boolean, bool) {
+	e := eval.Compile(p)
+	v, err := e.Eval(fuzzEvalEnv)
+	return v, err == nil
+}
 
 func fuzzRoundtripJSONSeeds(f *testing.F) [][]byte {
 	paths, err := filepath.Glob(filepath.Join("testdata", "roundtrip-seeds", "*.json"))
@@ -63,6 +80,11 @@ func FuzzPolicyJSONTextRoundtrip(f *testing.F) {
 		textB := marshalCedarText(&p1)
 		if !bytes.Equal(textA, textB) {
 			t.Fatalf("text mismatch:\na: %s\nb: %s", textA, textB)
+		}
+		v0, ok0 := evalPolicy((*ast.Policy)(&p0))
+		v1, ok1 := evalPolicy((*ast.Policy)(&p1))
+		if v0 != v1 || ok0 != ok1 {
+			t.Fatalf("eval mismatch:\njson: %s\ntext: %s\njson eval: %v (ok=%v)\ntext eval: %v (ok=%v)", in, textA, v0, ok0, v1, ok1)
 		}
 	})
 }
