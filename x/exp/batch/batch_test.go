@@ -201,6 +201,31 @@ func TestBatch(t *testing.T) {
 			},
 		},
 
+		{"variableContextMultipleAccess",
+			ast.Permit().
+				When(ast.Context().Access("a").Equal(ast.Long(42))).
+				When(ast.Context().Access("b").Equal(ast.Long(42))).
+				When(ast.Context().Access("c").Equal(ast.Long(42))),
+			types.EntityMap{},
+			Request{
+				Principal: p1,
+				Action:    a1,
+				Resource:  r1,
+				Context: types.NewRecord(types.RecordMap{
+					"a": Variable("key"),
+					"b": Variable("key"),
+					"c": Variable("key"),
+				}),
+				Variables: Variables{
+					"key": []types.Value{types.Long(41), types.Long(42)},
+				},
+			},
+			[]Result{
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{"a": types.Long(41), "b": types.Long(41), "c": types.Long(41)})}, Decision: false, Values: Values{"key": types.Long(41)}},
+				{Request: types.Request{Principal: p1, Action: a1, Resource: r1, Context: types.NewRecord(types.RecordMap{"a": types.Long(42), "b": types.Long(42), "c": types.Long(42)})}, Decision: true, Values: Values{"key": types.Long(42)}, Diagnostic: types.Diagnostic{Reasons: []types.DiagnosticReason{{PolicyID: "0"}}}},
+			},
+		},
+
 		{"ignoreContext",
 			ast.Permit().
 				When(ast.Context().Access("key").Equal(ast.Long(42))).
@@ -743,6 +768,11 @@ func TestCloneSub(t *testing.T) {
 			"set",
 			types.NewSet(Variable("bananas")), "bananas", types.String("hello"),
 			types.NewSet(types.String("hello")), true,
+		},
+		{
+			"recordMultipleAttributes",
+			types.NewRecord(types.RecordMap{"a": Variable("bananas"), "b": Variable("bananas"), "c": Variable("bananas")}), "bananas", types.String("hello"),
+			types.NewRecord(types.RecordMap{"a": types.String("hello"), "b": types.String("hello"), "c": types.String("hello")}), true,
 		},
 		{
 			"recordNoChange",

@@ -343,7 +343,7 @@ func cloneSub(r types.Value, k types.String, v types.Value) (types.Value, bool) 
 	case types.Record:
 		var newMap types.RecordMap
 		for kk, vv := range t.All() {
-			if vv, delta := cloneSub(vv, k, v); delta && newMap == nil {
+			if vv, delta := cloneSub(vv, k, v); delta {
 				if newMap == nil {
 					newMap = t.Map()
 				}
