@@ -1,0 +1,44 @@
+[
+    {
+        "uid": { "type": "Status", "id": "active" },
+        "attrs": {},
+        "parents": []
+    },
+    {
+        "uid": { "type": "Status", "id": "bogus" },
+        "attrs": {},
+        "parents": []
+    },
+    {
+        "uid": { "type": "User", "id": "alice" },
+        "attrs": { "status": { "__entity": { "type": "Status", "id": "active" } } },
+        "parents": [{ "type": "Status", "id": "inactive" }]
+    },
+    {
+        "uid": { "type": "User", "id": "bob" },
+        "attrs": { "status": { "__entity": { "type": "Status", "id": "bogus" } } },
+        "parents": []
+    },
+    {
+        "uid": { "type": "User", "id": "carol" },
+        "attrs": { "status": { "__entity": { "type": "Status", "id": "active" } } },
+        "parents": [{ "type": "Status", "id": "bogus" }]
+    },
+    {
+        "uid": { "type": "Document", "id": "doc1" },
+        "attrs": {},
+        "parents": []
+    },
+    {
+        "uid": { "type": "Tagged", "id": "t1" },
+        "attrs": {},
+        "parents": [],
+        "tags": { "level": { "__entity": { "type": "Status", "id": "active" } } }
+    },
+    {
+        "uid": { "type": "Tagged", "id": "t2" },
+        "attrs": {},
+        "parents": [],
+        "tags": { "level": { "__entity": { "type": "Status", "id": "bogus" } } }
+    }
+]

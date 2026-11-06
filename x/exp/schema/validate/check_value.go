@@ -16,7 +16,7 @@ func (e *entityDeserError) Error() string { return e.msg }
 func newDeserError(msg string) error { return &entityDeserError{msg: msg} }
 
 // checkValue validates that a runtime value matches the expected schema type.
-func checkValue(v types.Value, expected resolved.IsType) error {
+func (vd *Validator) checkValue(v types.Value, expected resolved.IsType) error {
 	switch expected := expected.(type) {
 	case resolved.StringType:
 		if _, ok := v.(types.String); !ok {
@@ -38,13 +38,14 @@ func checkValue(v types.Value, expected resolved.IsType) error {
 		if uid.Type != types.EntityType(expected) {
 			return fmt.Errorf("expected entity type %q, got %q", expected, uid.Type)
 		}
+		return vd.checkEnumEntity(uid)
 	case resolved.SetType:
 		set, ok := v.(types.Set)
 		if !ok {
 			return newDeserError(fmt.Sprintf("expected Set, got %T", v))
 		}
 		for elem := range set.All() {
-			if err := checkValue(elem, expected.Element); err != nil {
+			if err := vd.checkValue(elem, expected.Element); err != nil {
 				return fmt.Errorf("set element: %w", err)
 			}
 		}
@@ -53,7 +54,7 @@ func checkValue(v types.Value, expected resolved.IsType) error {
 		if !ok {
 			return newDeserError(fmt.Sprintf("expected Record, got %T", v))
 		}
-		return checkRecord(rec, expected)
+		return vd.checkRecord(rec, expected)
 	case resolved.ExtensionType:
 		return checkExtensionValue(v, expected)
 	}
@@ -61,7 +62,7 @@ func checkValue(v types.Value, expected resolved.IsType) error {
 }
 
 // checkRecord validates a record against a record schema type.
-func checkRecord(rec types.Record, expected resolved.RecordType) error {
+func (vd *Validator) checkRecord(rec types.Record, expected resolved.RecordType) error {
 	// Check all required attributes are present
 	for name, attr := range expected {
 		v, ok := rec.Get(name)
@@ -71,7 +72,7 @@ func checkRecord(rec types.Record, expected resolved.RecordType) error {
 			}
 			continue
 		}
-		if err := checkValue(v, attr.Type); err != nil {
+		if err := vd.checkValue(v, attr.Type); err != nil {
 			return fmt.Errorf("attribute %q: %w", name, err)
 		}
 	}
