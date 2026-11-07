@@ -407,6 +407,9 @@ func TestUnmarshalErrors(t *testing.T) {
 		{"unknownTypeMember", `{"":{"entityTypes":{"A":{"tags":{"type":"String","x":1}}},"actions":{}}}`},
 		{"unknownAttributeMember", `{"":{"entityTypes":{"A":{"shape":{"type":"Record","attributes":{"f":{"type":"String","x":1}}}}},"actions":{}}}`},
 		{"unknownCommonTypeMember", `{"":{"entityTypes":{},"actions":{},"commonTypes":{"T":{"type":"String","required":false}}}}`},
+		{"shapeCommonTypeRef", `{"":{"commonTypes":{"R":{"type":"Record","attributes":{"a":{"type":"Long"}}}},"entityTypes":{"A":{"shape":{"type":"R"}}},"actions":{}}}`},
+		{"shapeEntityOrCommonRef", `{"":{"commonTypes":{"R":{"type":"Record","attributes":{}}},"entityTypes":{"A":{"shape":{"type":"EntityOrCommon","name":"R"}}},"actions":{}}}`},
+		{"shapeNonRecord", `{"":{"entityTypes":{"A":{"shape":{"type":"String"}}},"actions":{}}}`},
 		{"annotationsOnSetElement", `{"":{"entityTypes":{"A":{"tags":{"type":"Set","element":{"type":"String","annotations":{}}}}},"actions":{}}}`},
 	}
 	for _, tt := range tests {
