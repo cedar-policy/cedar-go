@@ -381,6 +381,9 @@ func unmarshalNamespace(jns jsonNamespace) (ast.Namespace, error) {
 				if err := checkTypeMembers(jet.Shape); err != nil {
 					return ast.Namespace{}, fmt.Errorf("entity %q shape: %w", etName, err)
 				}
+				if jet.Shape.Type != "Record" {
+					return ast.Namespace{}, fmt.Errorf("entity %q shape: type %q is not supported, must be \"Record\"", etName, jet.Shape.Type)
+				}
 				rec, err := unmarshalRecordType(jet.Shape)
 				if err != nil {
 					return ast.Namespace{}, fmt.Errorf("entity %q shape: %w", etName, err)
