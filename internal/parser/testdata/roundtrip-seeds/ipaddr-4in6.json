@@ -1,0 +1,1 @@
+{"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[{"kind":"when","body":{"==":{"left":{"Value":{"__extn":{"fn":"ip","arg":"::ffff:c000:0280"}}},"right":{"Value":{"__extn":{"fn":"ip","arg":"::ffff:c000:0280/120"}}}}}}]}

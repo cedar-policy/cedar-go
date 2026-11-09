@@ -3,6 +3,7 @@ package parser
 import (
 	"bytes"
 
+	"github.com/cedar-policy/cedar-go/internal/extensions"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
 )
 
@@ -140,8 +141,15 @@ type NodeTypeGetTag struct {
 
 type NodeTypeExtensionCall struct {
 	ast.NodeTypeExtensionCall
-	accessPrecedenceNode
 }
+
+func (n NodeTypeExtensionCall) precedenceLevel() nodePrecedenceLevel {
+	if extensions.ExtMap[n.Name].IsMethod {
+		return accessPrecedence
+	}
+	return primaryPrecedence
+}
+
 type NodeTypeContains struct {
 	ast.NodeTypeContains
 	accessPrecedenceNode
