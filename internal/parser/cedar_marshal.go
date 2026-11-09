@@ -436,7 +436,7 @@ func astNodeToMarshalNode(astNode ast.IsNode) IsNode {
 	case ast.NodeTypeGetTag:
 		return NodeTypeGetTag{v, accessPrecedenceNode{}}
 	case ast.NodeTypeExtensionCall:
-		return NodeTypeExtensionCall{v, accessPrecedenceNode{}}
+		return NodeTypeExtensionCall{v}
 	case ast.NodeTypeContains:
 		return NodeTypeContains{v, accessPrecedenceNode{}}
 	case ast.NodeTypeContainsAll:
