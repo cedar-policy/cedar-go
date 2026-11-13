@@ -3,6 +3,8 @@ package json
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/go-json-experiment/json"
 	"github.com/go-json-experiment/json/jsontext"
@@ -407,11 +409,12 @@ func (p *Policy) UnmarshalJSON(b []byte) error {
 	default:
 		return fmt.Errorf("unknown effect: %v", j.Effect)
 	}
-	for k, v := range j.Annotations {
+	// Sort annotations for predictable output
+	for _, k := range slices.Sorted(maps.Keys(j.Annotations)) {
 		if !scanner.IsAnyIdent(k) {
 			return fmt.Errorf("invalid annotation key: %q", k)
 		}
-		p.unwrap().Annotate(types.AnnotationKey(k), types.String(v))
+		p.unwrap().Annotate(types.AnnotationKey(k), types.String(j.Annotations[k]))
 	}
 	var err error
 	p.Principal, err = j.Principal.ToPrincipalResourceNode()
