@@ -109,6 +109,19 @@ func TestUnmarshalJSON(t *testing.T) {
 			testutil.OK,
 		},
 		{
+			// Annotations are added in key order, whatever their order in the
+			// JSON object.
+			"annotationsKeyOrder",
+			`{"annotations":{"zeta":"1","alpha":"2","mid":"3","beta":"4","omega":"5"},"effect":"permit","principal":{"op":"All"},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
+			ast.Permit().
+				Annotate("alpha", "2").
+				Annotate("beta", "4").
+				Annotate("mid", "3").
+				Annotate("omega", "5").
+				Annotate("zeta", "1"),
+			testutil.OK,
+		},
+		{
 			"principalEq",
 			`{"effect":"permit","principal":{"op":"==","entity":{"type":"T","id":"42"}},"action":{"op":"All"},"resource":{"op":"All"},"conditions":[]}`,
 			ast.Permit().PrincipalEq(types.NewEntityUID("T", "42")),
