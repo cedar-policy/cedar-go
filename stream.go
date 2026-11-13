@@ -44,7 +44,7 @@ func (e *Decoder) Decode(p *Policy) error {
 
 	err := e.dec.Decode(&parserPolicy)
 	if err != nil {
-		return err
+		return wrapParseError(err)
 	}
 
 	*p = *NewPolicyFromAST((*ast.Policy)(&parserPolicy))
