@@ -2,6 +2,7 @@ package cedar
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	"github.com/cedar-policy/cedar-go/internal/parser"
@@ -17,6 +18,10 @@ type PolicyList []*Policy
 func NewPolicyListFromBytes(fileName string, document []byte) (PolicyList, error) {
 	var policySlice PolicyList
 	if err := policySlice.UnmarshalCedar(document); err != nil {
+		var parseErr *ParseError
+		if errors.As(err, &parseErr) {
+			parseErr.Position.Filename = fileName
+		}
 		return nil, err
 	}
 	for _, p := range policySlice {
@@ -30,7 +35,7 @@ func NewPolicyListFromBytes(fileName string, document []byte) (PolicyList, error
 func (p *PolicyList) UnmarshalCedar(b []byte) error {
 	var res parser.PolicySlice
 	if err := res.UnmarshalCedar(b); err != nil {
-		return fmt.Errorf("parser error: %w", err)
+		return fmt.Errorf("parser error: %w", wrapParseError(err))
 	}
 	policySlice := make([]*Policy, 0, len(res))
 	for _, p := range res {

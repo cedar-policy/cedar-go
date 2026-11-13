@@ -149,6 +149,19 @@ func (p *parser) peek() scanner.Token {
 	return p.tokens[p.pos]
 }
 
+// Error is the error returned when a token stream is not valid Cedar.
+type Error struct {
+	Pos   scanner.Position // position of the offending token
+	Token string           // text of the offending token, "" at end of input
+	Err   error
+}
+
+func (e *Error) Error() string {
+	return fmt.Sprintf("parse error at %v %q: %v", e.Pos, e.Token, e.Err)
+}
+
+func (e *Error) Unwrap() error { return e.Err }
+
 func (p *parser) exact(tok string) error {
 	t := p.advance()
 	if t.Text != tok {
@@ -169,8 +182,7 @@ func (p *parser) errorf(s string, args ...interface{}) error {
 	if p.pos < len(p.tokens) {
 		t = p.tokens[p.pos]
 	}
-	err := fmt.Errorf(s, args...)
-	return fmt.Errorf("parse error at %v %q: %w", t.Pos, t.Text, err)
+	return &Error{Pos: t.Pos, Token: t.Text, Err: fmt.Errorf(s, args...)}
 }
 
 func (p *parser) annotations() (ast.Annotations, error) {
