@@ -48,6 +48,16 @@ func (v *Validator) Policy(policyID string, policy *ast.Policy) error {
 		errs = append(errs, flattenErrors(err)...)
 	}
 
+	// Like Rust, check enum entity IDs in the scope separately so that an
+	// undeclared ID does not change the entity types the scope constrains to.
+	for _, scope := range []ast.IsScopeNode{policy.Principal, policy.Resource} {
+		if uid, ok := scopeEntity(scope); ok {
+			if err := v.checkEnumEntity(uid); err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+
 	// Check action application
 	actionAppErr := v.validateActionApplication(principalTypes, resourceTypes, actionUIDs)
 	if actionAppErr != nil {
@@ -83,8 +93,11 @@ func (v *Validator) Policy(policyID string, policy *ast.Policy) error {
 	var result []error
 	for _, e := range errs {
 		var tie *typeIncompatError
+		var iee *invalidEnumEntityError
 		if errors.As(e, &tie) || policyID == "" {
 			result = append(result, e)
+		} else if errors.As(e, &iee) {
+			result = append(result, fmt.Errorf("for policy `%s`: %w", policyID, e))
 		} else {
 			result = append(result, fmt.Errorf("for policy `%s`, %s", policyID, e.Error()))
 		}
@@ -459,4 +472,19 @@ func (v *Validator) typecheckConditions(envs []requestEnv, conditions []ast.Cond
 		}
 	}
 	return errors.Join(allErrs...)
+}
+
+// scopeEntity returns the entity UID named by a principal or resource scope,
+// if the scope names one.
+func scopeEntity(scope ast.IsScopeNode) (uid types.EntityUID, ok bool) {
+	switch sc := scope.(type) {
+	case ast.ScopeTypeAll, ast.ScopeTypeInSet, ast.ScopeTypeIs:
+	case ast.ScopeTypeEq:
+		uid, ok = sc.Entity, true
+	case ast.ScopeTypeIn:
+		uid, ok = sc.Entity, true
+	case ast.ScopeTypeIsIn:
+		uid, ok = sc.Entity, true
+	}
+	return uid, ok
 }
