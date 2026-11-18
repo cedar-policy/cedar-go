@@ -1,0 +1,100 @@
+{
+    "schema": "testdata/entity_enum_invalid.cedarschema",
+    "policies": "testdata/entity_enum_invalid.cedar",
+    "shouldValidate": false,
+    "entities": "testdata/entity_enum_invalid.entities.json",
+    "requests": [
+        {
+            "description": "valid enum values in principal and context",
+            "principal": {
+                "type": "Status",
+                "id": "active"
+            },
+            "action": {
+                "type": "Action",
+                "id": "check"
+            },
+            "resource": {
+                "type": "Document",
+                "id": "doc1"
+            },
+            "context": {},
+            "validateRequest": true
+        },
+        {
+            "description": "undeclared enum value as principal",
+            "principal": {
+                "type": "Status",
+                "id": "bogus"
+            },
+            "action": {
+                "type": "Action",
+                "id": "check"
+            },
+            "resource": {
+                "type": "Document",
+                "id": "doc1"
+            },
+            "context": {},
+            "validateRequest": true
+        },
+        {
+            "description": "undeclared enum value in context",
+            "principal": {
+                "type": "User",
+                "id": "alice"
+            },
+            "action": {
+                "type": "Action",
+                "id": "view"
+            },
+            "resource": {
+                "type": "Document",
+                "id": "doc1"
+            },
+            "context": {
+                "required": {
+                    "__entity": {
+                        "type": "Status",
+                        "id": "bogus"
+                    }
+                }
+            },
+            "validateRequest": true
+        },
+        {
+            "description": "valid enum value as resource",
+            "principal": {
+                "type": "User",
+                "id": "alice"
+            },
+            "action": {
+                "type": "Action",
+                "id": "inspect"
+            },
+            "resource": {
+                "type": "Status",
+                "id": "active"
+            },
+            "context": {},
+            "validateRequest": true
+        },
+        {
+            "description": "undeclared enum value as resource",
+            "principal": {
+                "type": "User",
+                "id": "alice"
+            },
+            "action": {
+                "type": "Action",
+                "id": "inspect"
+            },
+            "resource": {
+                "type": "Status",
+                "id": "bogus"
+            },
+            "context": {},
+            "validateRequest": true
+        }
+    ]
+}

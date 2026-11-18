@@ -23,9 +23,11 @@ func (v *Validator) Entity(entity types.Entity) error {
 		return v.validateEntity(entity, schemaEntity)
 	}
 
-	// Enum entities are accepted if the type exists
+	// Enum entities are accepted if the ID is one of the declared values.
+	// Unlike Rust, attributes, parents and tags on an enum entity are not
+	// rejected here.
 	if _, ok := v.schema.Enums[et]; ok {
-		return nil
+		return v.checkEnumEntity(entity.UID)
 	}
 
 	return newDeserError(fmt.Sprintf("entity type %q not found in schema", et))
@@ -100,10 +102,13 @@ func (v *Validator) validateEntity(entity types.Entity, schemaEntity resolved.En
 		if !slices.Contains(schemaEntity.ParentTypes, parent.Type) {
 			return fmt.Errorf("invalid parent type %q for entity type %q", parent.Type, entity.UID.Type)
 		}
+		if err := v.checkEnumEntity(parent); err != nil {
+			return err
+		}
 	}
 
 	// Validate attributes
-	if err := checkRecord(entity.Attributes, schemaEntity.Shape); err != nil {
+	if err := v.checkRecord(entity.Attributes, schemaEntity.Shape); err != nil {
 		return err
 	}
 
@@ -114,7 +119,7 @@ func (v *Validator) validateEntity(entity types.Entity, schemaEntity resolved.En
 		}
 	} else {
 		for tagVal := range entity.Tags.Values() {
-			if err := checkValue(tagVal, schemaEntity.Tags); err != nil {
+			if err := v.checkValue(tagVal, schemaEntity.Tags); err != nil {
 				return err
 			}
 		}

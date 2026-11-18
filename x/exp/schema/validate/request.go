@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -33,7 +34,11 @@ func (v *Validator) Request(req types.Request) error {
 	}
 
 	// Validate context
-	if err := checkRecord(req.Context, action.AppliesTo.Context); err != nil {
+	if err := v.checkRecord(req.Context, action.AppliesTo.Context); err != nil {
+		var iee *invalidEnumEntityError
+		if errors.As(err, &iee) {
+			return iee
+		}
 		return fmt.Errorf("context `%s` is not valid for `%s`", formatContextRecord(req.Context), req.Action)
 	}
 
@@ -42,7 +47,7 @@ func (v *Validator) Request(req types.Request) error {
 
 func (v *Validator) validateRequestEntityType(uid types.EntityUID, role string) error {
 	if v.isKnownEntityType(uid.Type) {
-		return nil
+		return v.checkEnumEntity(uid)
 	}
 	return fmt.Errorf("%s type `%s` is not declared in the schema", role, uid.Type)
 }
