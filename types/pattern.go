@@ -95,56 +95,27 @@ func (p Pattern) MarshalCedar() []byte {
 //	term:
 //		'*'         matches any sequence of non-Separator characters
 //		c           matches character c (c != '*')
-func (p Pattern) Match(arg String) (matched bool) {
-Pattern:
+func (p Pattern) Match(arg String) bool {
+	s := string(arg)
 	for i, comp := range p.comps {
-		lastChunk := i == len(p.comps)-1
-		if comp.Wildcard && comp.Literal == "" {
+		var ok bool
+		switch {
+		case !comp.Wildcard:
+			// Only a pattern's first component has no wildcard before it.
+			s, ok = strings.CutPrefix(s, comp.Literal)
+		case comp.Literal == "":
+			// A trailing wildcard matches whatever is left.
 			return true
+		case i == len(p.comps)-1:
+			return strings.HasSuffix(s, comp.Literal)
+		default:
+			_, s, ok = strings.Cut(s, comp.Literal)
 		}
-		// Look for Match at current position.
-		t, ok := matchChunk(comp.Literal, string(arg))
-		// if we're the last chunk, make sure we've exhausted the name
-		// otherwise we'll give a false result even if we could still Match
-		// using the star
-		if ok && (len(t) == 0 || !lastChunk) {
-			arg = String(t)
-			continue
+		if !ok {
+			return false
 		}
-		if comp.Wildcard {
-			// Look for Match skipping i+1 bytes.
-			for i := 0; i < len(arg); i++ {
-				t, ok := matchChunk(comp.Literal, string(arg[i+1:]))
-				if ok {
-					// if we're the last chunk, make sure we exhausted the name
-					if lastChunk && len(t) > 0 {
-						continue
-					}
-					arg = String(t)
-					continue Pattern
-				}
-			}
-		}
-		return false
 	}
-	return len(arg) == 0
-}
-
-// matchChunk checks whether chunk matches the beginning of s.
-// If so, it returns the remainder of s (after the Match).
-// Chunk is all single-character operators: literals, char classes, and ?.
-func matchChunk(chunk, s string) (rest string, ok bool) {
-	for len(chunk) > 0 {
-		if len(s) == 0 {
-			return
-		}
-		if chunk[0] != s[0] {
-			return
-		}
-		s = s[1:]
-		chunk = chunk[1:]
-	}
-	return s, true
+	return len(s) == 0
 }
 
 func (p Pattern) MarshalJSON() ([]byte, error) {
