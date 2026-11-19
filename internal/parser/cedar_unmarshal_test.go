@@ -2,12 +2,14 @@ package parser_test
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 	"testing"
 
 	"github.com/cedar-policy/cedar-go/internal/parser"
+	"github.com/cedar-policy/cedar-go/internal/scanner"
 	"github.com/cedar-policy/cedar-go/internal/testutil"
 	"github.com/cedar-policy/cedar-go/types"
 	"github.com/cedar-policy/cedar-go/x/exp/ast"
@@ -967,4 +969,17 @@ when { principal has a && principal.a has b && principal.a.b has c };`,
 			testutil.Equals(t, buf.String(), tt.ExpectedMashlledCedar)
 		})
 	}
+}
+
+func TestParseErrorType(t *testing.T) {
+	t.Parallel()
+
+	var policy parser.Policy
+	err := policy.UnmarshalCedar([]byte("permit (principal, action, resource) when { 1 + };"))
+	var parseErr *parser.Error
+	testutil.Equals(t, errors.As(err, &parseErr), true)
+	testutil.Equals(t, parseErr.Pos, scanner.Position{Offset: 49, Line: 1, Column: 50})
+	testutil.Equals(t, parseErr.Token, ";")
+	testutil.Equals(t, parseErr.Unwrap().Error(), "invalid primary")
+	testutil.Equals(t, err.Error(), `parse error at <input>:1:50 ";": invalid primary`)
 }
