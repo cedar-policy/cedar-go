@@ -1,0 +1,128 @@
+{
+  "policyValidation": {
+    "strict": false,
+    "permissive": false,
+    "strictErrors": [
+      "for policy `policy1`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid",
+      "for policy `policy2`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid",
+      "for policy `policy3`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid",
+      "for policy `policy4`: entity `Status::\"o\\'k\"` is of an enumerated entity type, but `\"o\\'k\"` is not declared as a valid eid"
+    ],
+    "permissiveErrors": [
+      "for policy `policy1`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid",
+      "for policy `policy2`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid",
+      "for policy `policy3`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid",
+      "for policy `policy4`: entity `Status::\"o\\'k\"` is of an enumerated entity type, but `\"o\\'k\"` is not declared as a valid eid"
+    ],
+    "perPolicy": {
+      "policy0": {
+        "strict": true,
+        "permissive": true
+      },
+      "policy1": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy1`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+        ],
+        "permissiveErrors": [
+          "for policy `policy1`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+        ]
+      },
+      "policy2": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy2`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+        ],
+        "permissiveErrors": [
+          "for policy `policy2`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+        ]
+      },
+      "policy3": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy3`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+        ],
+        "permissiveErrors": [
+          "for policy `policy3`: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+        ]
+      },
+      "policy4": {
+        "strict": false,
+        "permissive": false,
+        "strictErrors": [
+          "for policy `policy4`: entity `Status::\"o\\'k\"` is of an enumerated entity type, but `\"o\\'k\"` is not declared as a valid eid"
+        ],
+        "permissiveErrors": [
+          "for policy `policy4`: entity `Status::\"o\\'k\"` is of an enumerated entity type, but `\"o\\'k\"` is not declared as a valid eid"
+        ]
+      }
+    }
+  },
+  "entityValidation": {
+    "perEntity": {
+      "Document::doc1": {},
+      "Status::active": {},
+      "Status::bogus": {
+        "errors": [
+          "entity does not conform to the schema: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+        ]
+      },
+      "Tagged::t1": {},
+      "Tagged::t2": {
+        "errors": [
+          "entity does not conform to the schema: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+        ]
+      },
+      "User::alice": {},
+      "User::bob": {
+        "errors": [
+          "entity does not conform to the schema: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+        ]
+      },
+      "User::carol": {
+        "errors": [
+          "entity does not conform to the schema: entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+        ]
+      }
+    }
+  },
+  "requestValidation": [
+    {
+      "description": "valid enum values in principal and context",
+      "strict": true,
+      "permissive": true
+    },
+    {
+      "description": "undeclared enum value as principal",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+      ]
+    },
+    {
+      "description": "undeclared enum value in context",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+      ]
+    },
+    {
+      "description": "valid enum value as resource",
+      "strict": true,
+      "permissive": true
+    },
+    {
+      "description": "undeclared enum value as resource",
+      "strict": false,
+      "permissive": false,
+      "errors": [
+        "entity `Status::\"bogus\"` is of an enumerated entity type, but `\"bogus\"` is not declared as a valid eid"
+      ]
+    }
+  ]
+}
