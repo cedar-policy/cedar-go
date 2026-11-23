@@ -17,6 +17,34 @@ func TestTypes(t *testing.T) {
 	testutil.Equals(t, cedar.NewDatetime(ts), types.NewDatetime(ts))
 	testutil.Equals(t, cedar.NewDuration(time.Second), types.NewDuration(time.Second))
 	testutil.Equals(t,
+		testutil.Must(cedar.NewPath("Foo::Bar")),
+		testutil.Must(types.NewPath("Foo::Bar")),
+	)
+	testutil.Equals(t,
+		testutil.Must(cedar.NewEntityType("Foo::Bar")),
+		testutil.Must(types.NewEntityType("Foo::Bar")),
+	)
+	testutil.Equals(t,
+		testutil.Must(cedar.NewAnnotationKey("if")),
+		testutil.Must(types.NewAnnotationKey("if")),
+	)
+	testutil.Equals(t,
+		testutil.Must(cedar.ParseDatetime("1970-01-01")),
+		testutil.Must(types.ParseDatetime("1970-01-01")),
+	)
+	testutil.Equals(t,
+		testutil.Must(cedar.ParseDecimal("1.5")),
+		testutil.Must(types.ParseDecimal("1.5")),
+	)
+	testutil.Equals(t,
+		testutil.Must(cedar.ParseDuration("1h30m")),
+		testutil.Must(types.ParseDuration("1h30m")),
+	)
+	testutil.Equals(t,
+		testutil.Must(cedar.ParseIPAddr("10.0.0.0/8")),
+		testutil.Must(types.ParseIPAddr("10.0.0.0/8")),
+	)
+	testutil.Equals(t,
 		cedar.NewPattern("test", cedar.Wildcard{}),
 		types.NewPattern("test", types.Wildcard{}),
 	)
