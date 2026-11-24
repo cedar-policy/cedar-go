@@ -59,7 +59,7 @@ func (p *Policy) MarshalCedar() []byte {
 func (p *Policy) UnmarshalCedar(b []byte) error {
 	var cedarPolicy parser.Policy
 	if err := cedarPolicy.UnmarshalCedar(b); err != nil {
-		return err
+		return wrapParseError(err)
 	}
 	*p = *newPolicy((*internalast.Policy)(&cedarPolicy))
 	return nil

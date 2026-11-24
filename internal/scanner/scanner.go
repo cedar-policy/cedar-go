@@ -95,6 +95,16 @@ func (pos Position) String() string {
 	return fmt.Sprintf("<input>:%d:%d", pos.Line, pos.Column)
 }
 
+// Error is the error returned when the source text cannot be tokenized.
+type Error struct {
+	Pos     Position
+	Message string
+}
+
+func (e *Error) Error() string {
+	return fmt.Sprintf("%v: %v", e.Pos, e.Message)
+}
+
 const (
 	specialRuneEOF = rune(-(iota + 1))
 	specialRuneBOF
@@ -258,7 +268,7 @@ func (s *scanner) next() rune {
 
 func (s *scanner) error(msg string) {
 	s.tokEnd = s.srcPos - s.lastCharLen // make sure token text is terminated
-	s.err = fmt.Errorf("%v: %v", s.position, msg)
+	s.err = &Error{Pos: s.position, Message: msg}
 }
 
 func (s *scanner) scanIdentifier() rune {
